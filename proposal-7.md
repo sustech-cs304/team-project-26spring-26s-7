@@ -71,6 +71,8 @@
 * **存储策略：** 热数据（当前行程）存储于本地关系型数据库 (RDB)；冷数据（历史行程）归档于云端 PostGIS 空间数据库。
 
 ## 架构图
+
+```mermaid
 graph TD
     %% 定义颜色与样式
     classDef need fill:#262057,stroke:#fff,stroke-width:2px,color:#fff,rx:10px,ry:10px;
@@ -132,7 +134,7 @@ graph TD
     US4 --> T4
     US4 --> T5
     US4 --> AC4
-    
+```
     US5 --> T6
     
     %% 将右侧的 User Story 连到共同的 Acceptance Criteria
