@@ -1,0 +1,11 @@
+# claude code
+.claude_state/
+.claude/
+CLAUDE.local.md
+dual_cc.md
+
+# tmp file
+tmp/
+Temp/
+temp/
+
