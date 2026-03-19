@@ -1,76 +1,63 @@
-# Preliminary Requirement Analysis
-经过讨论，第七小组最终选择鸿蒙应用开发赛道。以下是本次项目开发的初步需求分析。
+# Project Proposal: HarmonyOS Location-Based Travel Journal App
 
-## 1. Functional Requirements
+## Part I. Preliminary Requirement Analysis
 
-以下是本次项目拟开发系统的5个核心功能特性。
+This system utilizes an offline-first, three-tier architecture (Client, Local Backend, Cloud) to deliver a seamless and secure location-based journaling experience. 
 
-### 1. 打造专属的时空地图
-将你的照片、故事和心情直接“钉”在它们发生的精确地理位置上。把一张空白的世界地图，逐渐点亮成一个只属于你的、基于地理位置的沉浸式生活日记，让每一次打卡都变得立体可见。
+### 1. Functional Requirements
 
-### 2. 亲手编排并动态重温旅途
-你可以自由挑选、组合特定的记忆节点，将其归档为一次专属旅程。系统会智能梳理这些节点，并为你渲染出一条连贯的旅行轨迹。点击播放，地图便会沿着你精心编排的路线平滑穿梭，以电影般的动态视觉效果，带你沉浸式重温这段独一无二的故事。
+The proposed system includes the following 5 distinct and orthogonal features:
 
-### 3. 跨平台一键路线分享
-一键即可生成精美的旅行路线专属网页链接，并轻松分享至微信、微博等各大社交平台。你的朋友无需下载和注册任何应用，直接通过网络浏览器就能流畅观看你的完整旅程，并留下评论互动。
+* **Interactive Spatiotemporal Map:** Users can pin photos, stories, and moods to their exact geographical coordinates. This feature transforms a blank world map into a personalized, location-based immersive life journal, making every check-in visually anchored to a real-world location.
+* **Dynamic Journey Replay:** Users can select and group specific memory nodes to archive a trip. The system intelligently parses these nodes to render a continuous travel trajectory. By clicking play, users can immersively replay their journey through cinematic, dynamic map animations.
+* **Cross-Platform Route Sharing:** With a single click, users can generate a beautifully formatted, dedicated web link for their travel route and share it seamlessly to social platforms like WeChat and Weibo. Friends can view the complete journey and interact via comments directly on a web browser without installing the app.
+* **AI-Powered Social Media Copywriting:** By selecting photos and check-in locations, users can trigger the built-in AI assistant. The AI analyzes the visual aesthetics of the images and the geographical features of the location to instantly generate multiple sets of engaging, style-varied captions tailored for social media posting.
+* **Multi-Device Seamless Synchronization:** Map nodes, travel routes, and drafts automatically sync in real-time across mobile phones, tablets, and web browsers. Users can record moments on the go via the mobile app and seamlessly continue editing their detailed journal on a desktop browser.
 
-### 4. AI 智能生成社交文案
-当你不知道该写什么时，只需选中你想分享的照片和打卡地点，内置的智能 AI 助手就能根据图片的视觉氛围和地理位置特征，瞬间生成多套引人入胜、风格各异的社交网络文案，让你随时随地完美发帖。
+### 2. Non-Functional Requirements
 
-### 5. 多设备无缝漫游与协同
-你的所有地图节点、旅行路线和草稿都会在手机、平板和电脑网页端之间实时自动同步。在旅途中使用手机 APP 便捷记录瞬间，回家后在电脑大屏浏览器上无缝接力，继续精修你的万字游记。
+* **Performance:**
+    * **Map Rendering Frame Rate:** The system will dynamically and selectively render nodes and routes (e.g., using clustering algorithms) to maintain high frame rates and prevent lag when data points are dense.
+    * **AI Response Time (TTFB):** Ensure a low Time-To-First-Byte (TTFB) when calling the LLM for copywriting to provide a snappy user experience.
+* **Security & Privacy:**
+    * **Mandatory Metadata Stripping:** All EXIF data (device model, absolute coordinates, timestamps) must be forcibly stripped from uploaded raw images at the local processing layer before syncing or sharing.
+    * **Anti-Unauthorized Sharing:** Shared web links must use strong cryptographic signatures (HMAC-SHA256) and include a Time-To-Live (TTL) expiration. Sequential IDs (e.g., `/share/123`) are strictly prohibited to prevent web scraping.
+    * **AI Content Compliance:** All AI-generated social media copy must pass sensitive word and risk-control filters before database persistence.
+* **Reliability & Availability:**
+    * **Offline-First Architecture:** The mobile app must function normally in zero-network environments. Users can continue to add nodes and edit drafts, with changes prioritizing local storage.
+    * **Eventual Consistency Sync:** Upon network recovery, multi-device synchronization uses background retry queues with timestamp/version-based conflict resolution, ensuring a 99.9% sync success rate.
+* **Resource Constraints:**
+    * **Battery Consumption:** Background processes must suspend unnecessary GPS polling and WebSocket heartbeats. Background power consumption must not exceed 1% of the total battery per hour.
+    * **Bandwidth Degradation:** In non-Wi-Fi environments, the system strictly controls cellular data usage by automatically disabling the preloading of original images/videos and fetching low-resolution placeholders instead.
 
-## 2. Non-Functional Requirements
+### 3. Technical Requirements
 
-### 1. 性能需求
-* **地图渲染帧率：** 地图上节点或者渲染路线过多时需要选择部分渲染来保证性能和帧率。
-* **媒体加载延迟：** 所有节点的图片必须快速加载。
-* **AI 响应市场 (AI Response TTFB)：** 调用大模型生成文案时需要保证响应速度。
+The system's operating environment and technical stack are defined as follows:
 
+* **Front-End & Client OS (HarmonyOS):**
+    * **Core Framework:** ArkTS language paired with the ArkUI declarative UI framework for native component rendering.
+    * **Location Services:** HarmonyOS native `LocationHub` API for high-precision, low-power GPS coordinate acquisition and tracking.
+    * **Local Persistence:** HarmonyOS Relational Database (RDB) and the local file system serve as the core data hubs for the Offline-First architecture.
+* **Cloud & Infrastructure (Distributed Services):**
+    * **Architecture & Sync:** A distributed sync server based on Eventual Consistency, utilizing version queues to handle multi-device data conflicts.
+    * **Spatial Database:** Cloud-based PostGIS extension (PostgreSQL) optimized for efficient spatial indexing and clustering queries of massive geographical nodes.
+    * **Object Storage:** Cloud OSS (Object Storage Service) for centralizing media files post-preprocessing.
+* **AI & Computing Services:**
+    * **Local Edge AI:** Lightweight local Machine Learning models for on-device OCR and basic text vectorization to reduce cloud latency and protect privacy.
+    * **Cloud LLM:** Remote Large Language Model APIs (integrated via an AI Gateway) handling complex multimodal understanding, stylized copy generation, and content compliance moderation.
 
-### 2. 安全与隐私需求
-* **强制元数据清洗：** 系统在接收用户上传的原始图片时，必须在网关或文件处理服务层强制剥离全部 Exif 数据（包含设备型号、绝对经纬度、拍摄时间等），或者就把图片保存在本地。
-* **防越权共享：** 对外分享的一键链接必须采用强加密签名（如 HMAC-SHA256），且包含有效期（TTL）。禁止使用可遍历的自增 ID（如 `/share/1234`）作为路由，防止爬虫批量抓取用户轨迹。
-* **AI生成内容安全合规：** 所有通过 AI 助手生成的社交文案，在持久化到数据库之前，必须经过敏感词和违规内容的文本风控过滤。
+### 4. Data Requirements
 
-### 3. 可靠性与可用性需求
-* **离线优先架构 (Offline-First)：** 移动端应用必须能在完全断网的模式下正常工作。用户可以继续添加节点、编辑草稿，所有修改必须优先写入本地存储（SQLite/IndexedDB）。
-* **最终一致性同步 (Eventual Consistency)：** 在网络恢复后，多端数据同步必须使用后台队列重试机制，并基于时间戳或版本号实现冲突解决策略，保证同步成功率达到 **99.9%**。
+* **What data is needed:**
+    * **Geospatial Data:** Real-time GPS coordinates, movement trajectory points, altitude, and timestamps.
+    * **Media & Content Data:** User-selected photos, videos, and manually entered text drafts.
+    * **AI Context Data:** Extracted visual tags from images, POI (Point of Interest) names, and surrounding geographical feature metadata.
+* **How to acquire and process data:**
+    * **Acquisition Channels:** Geospatial data is exclusively gathered via `LocationHub` following explicit user authorization. Media is accessed safely via the HarmonyOS system-level **Photo Picker**, strictly adhering to the principle of least privilege (no full album access required).
+    * **Cleansing & Desensitization:** All media files undergo mandatory EXIF metadata stripping locally before ever leaving the device for cloud synchronization or external sharing.
+    * **Storage Strategy:** Hot data (current active trips) is written at high frequency to the local RDB. Cold data (historical trips and archived routes) is asynchronously pushed to the cloud PostGIS and OSS databases during network idle periods.
 
-### 4. 资源消耗限制
-* **功耗控制 (Battery Consumption)：** 处于后台运行状态时，必须停止一切非必要的 GPS 轮询和 WebSocket 心跳维持，后台耗电量每小时不得超过总电量的 **1%**。
-* **流量降级 (Bandwidth Degradation)：** 在非 Wi-Fi 环境下，系统必须默认停止原图和视频的自动预加载，转而仅请求低分辨率占位图，严格控制用户的蜂窝网络流量消耗。
-
-## 3.Technical requirements:
-
-### 1. 前端与系统技术栈
-* **核心框架：** 基于 **ArkTS** 的 **ArkUI** 声明式开发框架。
-* **地图服务：** 需要进一步调研。
-* **本地持久化：** 需要进一步调研。
-* **跨端协同：** 需要进一步调研。
-
-### 2. 后端与 AI 基础设施
-* **后端框架：** 需要进一步调研。
-* **通信机制：** 需要进一步调研。
-* **数据库：** 需要进一步调研。
-
-
-### 3. 媒体与云服务
-* **对象存储：** 需要进一步调研。
-* **AI 能力：** 需要进一步调研。
-
-## 4.Data requirements
-
-### 1. 数据类型与获取方式
-* **地理空间数据：** 通过鸿蒙系统 `LocationHub` 获取实时 GPS 坐标，需经过用户显式授权。
-* **媒体资源：** 通过系统级照片选择器（Photo Picker）访问用户图片和视频，遵循“最小权限原则”，不申请全量相册权限。
-* **AI 上下文数据：** 提取图片的视觉标签和地理位置名称，作为 Prompt 输入大模型以生成文案。
-
-### 2. 数据处理与隐私
-* **预处理：** 所有上传图片在服务端强制擦除 EXIF 敏感信息，并自动生成多尺寸缩略图以优化加载。
-* **存储策略：** 热数据（当前行程）存储于本地关系型数据库 (RDB)；冷数据（历史行程）归档于云端 PostGIS 空间数据库。
-
-## 架构图
+# Structure
 
 ```mermaid
 graph TD
