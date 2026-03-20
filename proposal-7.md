@@ -1,57 +1,60 @@
-# Project Proposal: HarmonyOS Location-Based Travel Journal App
+# Project Proposal: HarmonyOS Travel Diary App
 
-## Part I. Preliminary Requirement Analysis
+## Part I. Preliminary Requirements Analysis
 
 ### Project Overview
 
-**TravelPin** is a HarmonyOS-native location-based travel journal application. It allows users to pin photos and memories to precise geographic coordinates, replay animated travel routes, and share journeys to social platforms with AI-generated captions. 
+**TravelPin** is a location-based travel diary application.
 
-The system adopts an offline-first, three-tier architecture (Client, Local Backend, Cloud) to ensure a seamless experience even without network connectivity, while prioritizing user privacy through mandatory metadata stripping and end-to-end security controls.
+Users can pin photos and captions precisely to map coordinates, generate dynamic travel clips with one click, and leverage AI to intelligently generate social media copy in various styles.
+The system adopts a three-tier architecture comprising a local frontend, server backend, and remote cloud. It prioritizes an "offline-first" approach, enabling smooth recording even without a network connection. Meanwhile, through mandatory metadata stripping and encrypted signature sharing, the system comprehensively ensures user privacy and data security.
 
 ### 1. Functional Requirements
 
-The proposed system includes the following 5 distinct and orthogonal features:
+This system includes the following 5 orthogonal functional features:
 
-* **Interactive Spatiotemporal Map:** A personalized, location-anchored life journal built on a world map.
-    * Pin photos, text stories, and mood tags to exact GPS coordinates as "memory nodes."
-    * Browse and filter nodes by time range, location region, or custom tags.
-    * Support cluster rendering when nodes are dense; tap a cluster to expand individual entries.
-* **Dynamic Journey Replay:** Cinematic animated playback of archived travel routes.
-    * Select and group memory nodes into a named trip; the system auto-generates a continuous trajectory.
-    * Play, pause, and scrub through the route with smooth map-camera animations.
-    * Overlay timestamped photos and notes along the timeline during playback.
-* **Cross-Platform Route Sharing:** One-click generation of shareable web links for travel routes.
-    * Generate a cryptographically signed, time-limited URL (HMAC-SHA256 + TTL) for any route.
-    * Share the link directly to WeChat, Weibo, or system clipboard.
-    * Recipients view the full journey on a read-only web page — no app installation required; support commenting and reactions.
-* **AI-Assisted Route Sharing Copywriting:** Seamlessly integrated with the cross-platform sharing feature, this tool helps users overcome writer's block when sharing journeys.
-    * Users can input a simple draft or let the system use the journey's metadata (visited POIs, total distance, duration) as context.
-    * The built-in cloud LLM transforms basic context into polished social media captions in user-selected tones (e.g., Poetic, Adventurous, Concise).
-    * This text-to-text approach ensures fast response times and protects user visual privacy — no photos are sent to the cloud LLM.
-* **Multi-Device Seamless Synchronization:** Automatic real-time sync of all data across HarmonyOS devices and web browsers.
-    * Memory nodes, routes, and drafts sync across phones, tablets, and the web portal.
-    * Record moments on the go via mobile and continue editing on a larger screen.
-    * Conflict resolution via timestamp-and-version-based strategy ensures data integrity.
+**Interactive Map:** * Pin photos, text stories, and mood tags to a real map as "memory nodes".
+* Browse and filter nodes by time range, geographic area, or custom tags.
+* Prevent lag when nodes are dense; support cluster rendering, and allow users to click on clusters to expand and view the details of each item.
+
+**Dynamic Journey Playback:**
+* Select and combine memory nodes into a travel route.
+* Generate a travel clip full of memories with one click.
+
+**Cross-Platform Route Sharing:** * Generate an encrypted, signed, and time-limited URL for any route.
+* Support direct sharing to WeChat or copying to the system clipboard.
+* Receivers can view the complete journey without installing the App.
+
+**AI-Assisted Copywriting:**
+* Users can input simple drafts, and the system will generate social media copy combined with journey meta-information.
+* Support users in selecting tone styles (e.g., poetic, concise, humorous).
+
+**Seamless Multi-Device Sync:**
+* Support one-click authorization login with a Huawei account.
+* Sync memory nodes, routes, and drafts across phones, tablets, and computers.
+* Record easily on the phone and continue editing on a large computer screen.
 
 ### 2. Non-Functional Requirements
 
-* **Usability:**
-    * Core journaling workflows (pin a node, start a route, share) should be completable within 3 taps from the home screen.
-    * The app should provide clear visual feedback for all background operations (syncing, AI generation) so users are never left wondering about system status.
-* **Performance:**
-    * **Map Rendering:** Dynamically cluster and selectively render nodes/routes to maintain smooth frame rates (target ≥ 55 fps) even with thousands of data points.
-    * **AI Response Time:** LLM copywriting requests should deliver the first token within 2 seconds (TTFB) to keep the interaction responsive.
-    * **App Launch:** Cold start to interactive map screen should complete within 3 seconds on standard HarmonyOS devices.
-* **Security & Privacy:**
-    * **Mandatory Metadata Stripping:** All EXIF data (device model, coordinates, timestamps) is forcibly stripped at the local layer before any sync or share operation.
-    * **Secure Sharing:** Shared links use HMAC-SHA256 signatures with TTL expiration; sequential/guessable IDs are prohibited.
-    * **AI Content Compliance:** All AI-generated copy passes content moderation filters before being shown to the user or persisted.
-* **Reliability & Availability:**
-    * **Offline-First:** The app remains fully functional (create nodes, edit drafts, browse history) with zero network connectivity; local storage is the primary data source.
-    * **Eventual Consistency Sync:** On reconnection, queued changes sync via background retry with version-based conflict resolution, targeting a high sync success rate (> 99%).
-* **Resource Efficiency:**
-    * **Battery:** Background processes suspend unnecessary GPS polling and WebSocket heartbeats to minimize power drain.
-    * **Bandwidth:** Under cellular networks, the system automatically fetches low-resolution thumbnails instead of originals and defers bulk sync to Wi-Fi.
+**Usability**
+* **Interaction Efficiency:** Core operations (add/delete/modify nodes, create routes) should be completed within a few clicks on the main page.
+* **Learning Curve:** System interface design and interaction operations must remain simple to help users get started quickly.
+* **Status Feedback:** The interface must provide clear and non-blocking visual or haptic feedback for all background actions to avoid user confusion about the system status.
+* **Accessibility & Adaptability:** The system supports dynamic font scaling to serve users of different age groups.
+
+**Performance**
+* **Map Rendering:** Dynamically cluster and selectively render nodes and routes to ensure smooth rendering even in scenarios with many data points.
+* **AI Response Time:** LLM copywriting requests should output the first token (TTFB) in a very short time and adopt streaming to maintain a sense of instantaneous interaction.
+* **App Startup:** On standard HarmonyOS devices, a cold start to an interactive map page should be completed within a very short time.
+
+**Security & Privacy**
+* **Mandatory Metadata Stripping:** All privacy data (e.g., device models, coordinates, timestamps) must be forcibly stripped at the local layer prior to any sync or share operations.
+* **Secure Sharing:** Share links must be signed using HMAC-SHA256 and include a TTL expiration time; the use of guessable sequential IDs is prohibited.
+* **AI Content Compliance:** All AI-generated copy must pass through a content moderation filter before being displayed to the user or persistently stored.
+
+**Reliability & Availability**
+* **Offline-First:** In completely network-free environments, the application can still normally use basic functions (e.g., creating nodes, editing drafts, browsing history); the system must use local storage as the primary data source.
+* **Data Recovery:** Provide a fault-tolerance mechanism, allowing users to recover data within a set period of time after deletion.
 
 ### 3. Technical Requirements
 
