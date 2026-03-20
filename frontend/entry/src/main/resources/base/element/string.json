@@ -2,15 +2,19 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "module description"
+      "value": "TravelPin 主模块"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "description"
+      "value": "TravelPin 旅行日记"
     },
     {
       "name": "EntryAbility_label",
-      "value": "label"
+      "value": "TravelPin"
+    },
+    {
+      "name": "location_reason",
+      "value": "用于在地图上记录您的旅行足迹和记忆节点位置"
     }
   ]
 }

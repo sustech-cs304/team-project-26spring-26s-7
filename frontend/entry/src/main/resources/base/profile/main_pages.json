@@ -1,5 +1,12 @@
 {
   "src": [
-    "pages/Index"
+    "pages/Index",
+    "pages/LoginPage",
+    "pages/MainPage",
+    "pages/NodeEditPage",
+    "pages/NodeDetailPage",
+    "pages/TripDetailPage",
+    "pages/TripReplayPage",
+    "pages/SharePage"
   ]
 }
