@@ -56,3 +56,5 @@ local.properties
 **/*.hsp
 **/*.app
 
+# structure
+structure/security
