@@ -11,62 +11,77 @@ graph TD
     classDef task fill:#7D7D7D,stroke:#fff,stroke-width:2px,color:#fff,rx:4px,ry:4px;
     classDef criteria fill:#9BD18A,stroke:#fff,stroke-width:2px,color:#fff,rx:4px,ry:4px;
 
-    %% 节点定义 (基于 Proposal 需求分析)
-    UN["<b>User Need</b><br/>As a user, I want to structurally record, organize, and share my life<br/>and travel memories based on geographical locations using a HarmonyOS app"]:::need
+    %% 高层用户需求
+    UN["<b>User Need</b><br/>As a user, I want to securely record, organize, replay,<br/>and share travel memories based on map locations<br/>across my HarmonyOS devices"]:::need
 
-    E1["<b>Epic 1: Core Map & Memory</b><br/>Manage location nodes, dynamic<br/>trajectories, and data synchronization"]:::epic
-    E2["<b>Epic 2: Social & AI Features</b><br/>Generate AI copy and share<br/>travel routes cross-platform"]:::epic
+    %% 史诗 Epic 划分 (重构为 4 个模块)
+    E1["<b>Epic 1: Core Map & Memory</b><br/>Location nodes & Filtering"]:::epic
+    E2["<b>Epic 2: Journey Playback & Export</b><br/>Animation & Video Export"]:::epic
+    E3["<b>Epic 3: Social Sharing & AI</b><br/>Web Link & AI Copy Generation"]:::epic
+    E4["<b>Epic 4: Cloud & Sync</b><br/>Data Backup & Multi-device"]:::epic
 
-    US1["<b>User story (Map Check-in)</b><br/>As a regular user, I want to add<br/>memory nodes at specific GPS<br/>coordinates on the map"]:::story
-    US2["<b>User story (Trajectory)</b><br/>As a traveler, I want to combine<br/>multiple nodes into a route and<br/>play it dynamically"]:::story
-    US3["<b>User story (Sync)</b><br/>As a multi-device user, I want<br/>my data to sync automatically<br/>between phone and PC"]:::story
-
-    US4["<b>User story (AI Copy)</b><br/>As a social media sharer, I want<br/>the system to automatically generate<br/>social media copy"]:::story
-    US5["<b>User story (Sharing)</b><br/>As a content creator, I want to<br/>generate a web link for my travel<br/>route with one click"]:::story
-
-    T1["Tasks<br/>Fetch GPS & Photo Picker"]:::task
-    T2["Tasks<br/>Render map animation"]:::task
-    T3["Tasks<br/>Cloud queue & retry sync"]:::task
-    T4["Tasks<br/>Invoke LLM API"]:::task
-    T5["Generate secure<br/>route URL"]:::task
-    T6["Develop read-only<br/>H5 page"]:::task
-
-    AC1["Acceptance criteria<br/>(Strip Exif metadata)"]:::criteria
-    AC2["Acceptance criteria<br/>(Clustering & Frame rate)"]:::criteria
-    AC3["Acceptance criteria<br/>(99.9% sync success)"]:::criteria
-    AC4["Acceptance criteria<br/>(Content risk filter)"]:::criteria
-
-    AC5["<b>It's done when the user can:</b><br/>1. Get AI-generated copy based on image & location features.<br/>2. Generate a secure external link (HMAC-SHA256, TTL).<br/>3. View the shared read-only H5 route on an external browser."]:::criteria
-
-    %% 层级连接
     UN --> E1
     UN --> E2
+    UN --> E3
+    UN --> E4
 
-    %% 模拟图中左侧直接从 User Need 连到 User Story 的线
-    UN -.- US1
-
+    %% ================= Epic 1 =================
+    US1["<b>US #3 (Check-in) [P0]</b><br/>Attach photos, notes, and mood<br/>tags to specific map coordinates"]:::story
+    US2["<b>US #54 (Filter) [P0]</b><br/>Filter map nodes by time<br/>range or custom tags"]:::story
+    
     E1 --> US1
     E1 --> US2
-    E1 --> US3
 
+    %% ================= Epic 2 =================
+    US3["<b>US #6 (Trajectory) [P0]</b><br/>Combine photos/notes into a<br/>dynamic, animated route"]:::story
+    US4["<b>US #66 (Playback Control) [P0]</b><br/>Control playback speed and<br/>pause at specific nodes"]:::story
+    US5["<b>US #53 (Export) [P0]</b><br/>Export animated journey as a<br/>video or rich-media card"]:::story
+
+    E2 --> US3
     E2 --> US4
     E2 --> US5
 
+    %% ================= Epic 3 =================
+    US6["<b>US #2 (Web Link) [P1]</b><br/>Share route via a time-limited<br/>web link for external viewing"]:::story
+    US7["<b>US #5 (AI Copy) [P1]</b><br/>Use AI to generate social media<br/>posts based on selected data"]:::story
+
+    E3 --> US6
+    E3 --> US7
+
+    %% ================= Epic 4 =================
+    US8["<b>US #72 (Backup) [P1]</b><br/>Continuously back up travel data<br/>via Huawei Cloud Space"]:::story
+    US9["<b>US #4 (Sync) [P2]</b><br/>Auto-sync nodes recorded on<br/>phone to tablet"]:::story
+
+    E4 --> US8
+    E4 --> US9
+
+    %% ================= Tasks =================
+    T1["Tasks<br/>Fetch GPS & Photo Picker<br/>Build tagging/filtering logic"]:::task
+    T2["Tasks<br/>Animation Engine & Playback Controls<br/>Video Rendering Pipeline"]:::task
+    T3["Tasks<br/>Extract metadata for LLM API<br/>Generate Secure H5 Web Page"]:::task
+    T4["Tasks<br/>Huawei Account Auth &<br/>Distributed Data Sync"]:::task
+
     US1 --> T1
-    US1 --> AC1
+    US2 --> T1
+    
+    US3 --> T2
+    US4 --> T2
+    US5 --> T2
+    
+    US6 --> T3
+    US7 --> T3
+    
+    US8 --> T4
+    US9 --> T4
 
-    US2 --> T2
-    US2 --> AC2
+    %% ================= Acceptance Criteria =================
+    AC1["<b>Acceptance Criteria (Core)</b><br/>Uses minimum permissions; Raw photos do not leave device.<br/>Sub-second response time for map filtering."]:::criteria
+    AC2["<b>Acceptance Criteria (Media)</b><br/>Smooth cinematic playback without lag.<br/>Exported video/card maintains high resolution."]:::criteria
+    AC3["<b>Acceptance Criteria (Social)</b><br/>Sends only desensitized metadata to LLM. Web links<br/>must use HMAC-SHA256 signature and TTL expiration."]:::criteria
+    AC4["<b>Acceptance Criteria (Sync)</b><br/>Offline-first capability; 99.9% sync success rate.<br/>Sensitive data encrypted via HarmonyOS TEE."]:::criteria
 
-    US3 --> T3
-    US3 --> AC3
-
-    US4 --> T4
-    US4 --> T5
-    US4 --> AC4
-    US5 --> T6
-
-    %% 将右侧的 User Story 连到共同的 Acceptance Criteria
-    US4 --> AC5
-    US5 --> AC5
+    T1 --> AC1
+    T2 --> AC2
+    T3 --> AC3
+    T4 --> AC4
 ```
