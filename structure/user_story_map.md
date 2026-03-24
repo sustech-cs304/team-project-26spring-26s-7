@@ -14,10 +14,10 @@ graph TD
     %% 高层用户需求
     UN["<b>User Need</b><br/>As a user, I want to securely record, organize, replay,<br/>and share travel memories based on map locations<br/>across my HarmonyOS devices"]:::need
 
-    %% 史诗 Epic 划分 (重构为 4 个模块)
+    %% 史诗 Epic 划分 (重构 Epic 2 和 Epic 3 的边界)
     E1["<b>Epic 1: Core Map & Memory</b><br/>Location nodes & Filtering"]:::epic
-    E2["<b>Epic 2: Journey Playback & Export</b><br/>Animation & Video Export"]:::epic
-    E3["<b>Epic 3: Social Sharing & AI</b><br/>Web Link & AI Copy Generation"]:::epic
+    E2["<b>Epic 2: Journey Playback</b><br/>Dynamic Route & Animation"]:::epic
+    E3["<b>Epic 3: Social, Export & AI</b><br/>Media Export, Web Link & AI Copy"]:::epic
     E4["<b>Epic 4: Cloud & Sync</b><br/>Data Backup & Multi-device"]:::epic
 
     UN --> E1
@@ -35,16 +35,16 @@ graph TD
     %% ================= Epic 2 =================
     US3["<b>US #6 (Trajectory) [P0]</b><br/>Combine photos/notes into a<br/>dynamic, animated route"]:::story
     US4["<b>US #66 (Playback Control) [P0]</b><br/>Control playback speed and<br/>pause at specific nodes"]:::story
-    US5["<b>US #53 (Export) [P0]</b><br/>Export animated journey as a<br/>video or rich-media card"]:::story
 
     E2 --> US3
     E2 --> US4
-    E2 --> US5
 
     %% ================= Epic 3 =================
+    US5["<b>US #53 (Export) [P0]</b><br/>Export animated journey as a<br/>video or rich-media card"]:::story
     US6["<b>US #2 (Web Link) [P1]</b><br/>Share route via a time-limited<br/>web link for external viewing"]:::story
     US7["<b>US #5 (AI Copy) [P1]</b><br/>Use AI to generate social media<br/>posts based on selected data"]:::story
 
+    E3 --> US5
     E3 --> US6
     E3 --> US7
 
@@ -57,8 +57,8 @@ graph TD
 
     %% ================= Tasks =================
     T1["Tasks<br/>Fetch GPS & Photo Picker<br/>Build tagging/filtering logic"]:::task
-    T2["Tasks<br/>Animation Engine & Playback Controls<br/>Video Rendering Pipeline"]:::task
-    T3["Tasks<br/>Extract metadata for LLM API<br/>Generate Secure H5 Web Page"]:::task
+    T2["Tasks<br/>Animation Engine & Playback Controls<br/>Node clustering rendering"]:::task
+    T3["Tasks<br/>Video Rendering Pipeline<br/>Generate Secure H5 Web Page<br/>Extract metadata for LLM API"]:::task
     T4["Tasks<br/>Huawei Account Auth &<br/>Distributed Data Sync"]:::task
 
     US1 --> T1
@@ -66,8 +66,8 @@ graph TD
     
     US3 --> T2
     US4 --> T2
-    US5 --> T2
     
+    US5 --> T3
     US6 --> T3
     US7 --> T3
     
@@ -76,8 +76,8 @@ graph TD
 
     %% ================= Acceptance Criteria =================
     AC1["<b>Acceptance Criteria (Core)</b><br/>Uses minimum permissions; Raw photos do not leave device.<br/>Sub-second response time for map filtering."]:::criteria
-    AC2["<b>Acceptance Criteria (Media)</b><br/>Smooth cinematic playback without lag.<br/>Exported video/card maintains high resolution."]:::criteria
-    AC3["<b>Acceptance Criteria (Social)</b><br/>Sends only desensitized metadata to LLM. Web links<br/>must use HMAC-SHA256 signature and TTL expiration."]:::criteria
+    AC2["<b>Acceptance Criteria (Animation)</b><br/>Smooth cinematic playback without lag.<br/>Accurate pause/speed controls."]:::criteria
+    AC3["<b>Acceptance Criteria (Social/Export)</b><br/>Exported media maintains high resolution. Web links<br/>use HMAC-SHA256 signature and TTL. LLM output filtered."]:::criteria
     AC4["<b>Acceptance Criteria (Sync)</b><br/>Offline-first capability; 99.9% sync success rate.<br/>Sensitive data encrypted via HarmonyOS TEE."]:::criteria
 
     T1 --> AC1
