@@ -1,0 +1,13 @@
+python remote.py \
+  --auto-tunnel \
+  --base-url http://127.0.0.1:8000 \
+  --remote-forward-host 127.0.0.1 \
+  --remote-forward-port 8000 \
+  --model Qwen-VL-Chat-Int4 \
+  --image "E:\SoftwareEngineering\proj\1.jpg" \
+  --question "这张图里有什么？" \
+  --temperature 1.0 \
+  --top-p 0.8 \
+  --ssh-host 172.18.35.215 \
+  --ssh-user cse12310817 \
+  --cleanup-remote
