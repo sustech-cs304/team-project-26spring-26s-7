@@ -17,24 +17,7 @@ Core features:
 - AI-powered social media caption generation
 - Multi-device sync with offline-first architecture
 
-## Tech Stack
 
-### Frontend (HarmonyOS App)
-- **Framework**: ArkTS + ArkUI (declarative UI)
-- **Location**: HarmonyOS `LocationHub` API
-- **Media**: System Photo Picker (minimal permission model)
-- **Local Storage**: RDB (Relational Database) + File System
-
-### Backend & AI
-- **Architecture**: Offline-first with eventual consistency sync
-- **Local AI**: LLM for OCR/summarization, ML for text vectorization
-- **Cloud**: PostGIS for spatial data, Object Storage for media
-- **Sync**: Distributed sync server with conflict resolution
-
-### Security & Privacy
--强制 EXIF data stripping on upload
-- HMAC-SHA256 signed share links with TTL
-- AI content moderation before persistence
 
 ## Repository Structure
 
@@ -48,22 +31,6 @@ team-project-26spring-26s-7/
 │   └── *.png          # Generated architecture diagrams
 ```
 
-## WBS Team Assignment
-
-| Member | Role | Tasks |
-|--------|------|-------|
-| A | UI/UX Lead | Visual design, prototype, frontend scaffolding |
-| B | Interaction Lead | HarmonyOS FileSystem API, map integration |
-| C | Infrastructure Lead | Server deployment, local LLM deployment |
-| D | AI/Backend Lead | Remote LLM API, application logic |
-| E | Compliance Lead | App store compliance, security audit |
-
-## Architecture Layers
-
-1. **Front End** (HarmonyOS App): Map UI, trajectory playback, media picker, share module
-2. **Local Back End** (Offline First): Privacy filter (EXIF removal), RDB, sync manager, local ML/LLM
-3. **Cloud** (Distributed Services): Sync server, PostGIS, OSS, web portal, AI gateway
-
 ## Development Notes
 
 - **Git Flow**: Main branch is protected; PRs for changes
@@ -71,8 +38,136 @@ team-project-26spring-26s-7/
 - **Language**: Chinese/English bilingual; add space between CJK and Latin characters (盘古之白)
 - **Commit Style**: Conventional Commits (feat:, fix:, docs:, etc.)
 
-## Key Files to Reference
+## TravelPin 项目上下文 (关键)
 
-- `README.md`: 5 core functional requirements, non-functional requirements (performance, security, reliability)
-- `structure/wbs_dictionary.md`: Team task breakdown and responsibilities
-- `structure/software_architecture.md`: 3-tier architecture with data flow
+**每次新对话开始时，必须先读取以下文件了解项目进度：**
+
+1. `./memory/01_project_state.md` - 当前架构状态（全量读取）
+2. `./memory/03_task_backlog.md` - 任务清单（全量读取）
+3. `./memory/02_change_log.md` - 变更历史（**仅读取最新 10 行**）
+
+**当前分支**: frontend
+
+---
+
+## Change Log RAG 检索策略
+
+**原则**: change_log 会随着项目增长变长，不应每次都全量读取。采用"最新状态 + 按需检索"的方式。
+
+### 默认行为
+```bash
+# 仅获取最新变更（最新 10 行）
+tail -10 memory/02_change_log.md
+```
+
+### 按需检索命令
+
+当工作中遇到问题需要查找相关修改记录时，使用以下命令：
+
+```bash
+# 1. 按文件路径搜索 - 查找特定文件的修改历史
+grep -n "feature/map-travel" memory/02_change_log.md
+grep -n "common/api" memory/02_change_log.md
+
+# 2. 按操作类型搜索 - 查找特定类型的变更
+grep -n "CREATE" memory/02_change_log.md    # 查找所有创建操作
+grep -n "UPDATE" memory/02_change_log.md    # 查找所有更新操作
+grep -n "FIX" memory/02_change_log.md       # 查找所有修复操作
+
+# 3. 按模块/功能搜索
+grep -n "auth" memory/02_change_log.md      # 查找认证相关
+grep -n "RDB\|database" memory/02_change_log.md  # 查找数据库相关
+grep -n "AI\|copy" memory/02_change_log.md  # 查找 AI 相关
+
+# 4. 按日期搜索
+grep -n "2026-03-22" memory/02_change_log.md  # 查找特定日期
+
+# 5. 组合搜索 - 查找特定文件的 CREATE 操作
+grep -n "CREATE.*common/auth" memory/02_change_log.md
+
+# 6. 查看变更上下文（匹配行前后各 3 行）
+grep -B3 -A3 "MapTravelComponent" memory/02_change_log.md
+
+# 7. 获取最近的模块创建记录
+grep -n "### \[.*\] - CREATE" memory/02_change_log.md | tail -5
+```
+
+### 检索场景示例
+
+| 场景 | 命令 |
+|------|------|
+| 调试 MapTravelComponent 问题 | `grep -B5 -A5 "MapTravelComponent" memory/02_change_log.md` |
+| 查找 common 目录最近修改 | `grep -n "common/" memory/02_change_log.md \| tail -10` |
+| 查找某功能是谁创建的 | `grep -B10 "feature/ai-copy" memory/02_change_log.md \| grep "CREATE"` |
+| 查找所有占位文件创建记录 | `grep -n "stub\|placeholder" memory/02_change_log.md -i` |
+
+---
+
+## Git 版本控制
+
+```bash
+# 查看最近提交
+git log --oneline -10
+
+# 查看特定文件的提交历史
+git log --oneline -- common/api/HttpClient.ets
+
+# 查看某次提交的详细变更
+git show <commit-hash>
+```
+
+---
+
+## Memory 更新协作原则
+
+**核心原则**: 用户目前不会主动更新 memory，所有 memory 维护工作由 AI 负责评估和执行。
+
+### 自动更新规则
+
+| 触发场景 | AI 行为 | 是否需要用户提醒 |
+|---------|--------|-----------------|
+| 创建/修改/删除文件 | 自动更新 `change_log.md` | ❌ 否 |
+| 完成一个任务并汇报 | 自动更新 `task_backlog.md` (状态→🔄) | ❌ 否 |
+| 用户确认任务完成 | 更新 `task_backlog.md` (状态→✅) | ✅ 是 |
+| 架构决策变化 | 更新 `project_state.md` | ✅ 是 |
+| 团队分工确定 | 更新 `task_backlog.md` 负责人 | ✅ 是 |
+
+### 协作流程图
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  类型                        │  谁负责更新 Memory                │
+├─────────────────────────────────────────────────────────────────┤
+│  AI 创建/修改文件              │  AI 自动更新 change_log            │
+│  AI 完成一个任务并汇报         │  AI 更新 backlog（状态→🔄）        │
+│  用户确认任务完成               │  用户提醒 AI 更新 backlog（→✅）      │
+│  架构决策变化                 │  用户提醒 AI 更新 project_state        │
+│  团队分工确定                 │  用户提醒 AI 更新 backlog 负责人        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### AI 评估责任
+
+由于用户不会主动提醒更新 memory，AI 需要：
+1. **自行判断**何时完成了需要记录的任务
+2. **主动更新** backlog 中对应任务的状态
+3. **在 change_log 中记录**所有文件级别的变更
+4. **在遇到架构疑问时**主动询问用户而非假设
+
+---
+
+## 架构决策记录
+
+**双后端架构** (2026-03-22 确认):
+- 图片/媒体 → 华为云存储 (不出华为生态)
+- 元数据 → 自建服务器 (AI 文案生成)
+- 原始照片永不上传到自建服务器
+
+**职责边界**:
+- 本仓库 (`base/`): 纯 HarmonyOS 前端
+- 自建服务器：AI Gateway API、内容审核、分享验证
+- Web 门户：独立仓库
+
+
+## MCP 使用提醒
+在遇到 arkts 语言报错或者不确定如何书写时，请积极调用 arkts-assistant MCP 来辅助开发。
