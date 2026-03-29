@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI'
-import { RouterUrls, AppColors, AppDimens } from '../common/Constants'
+import { RouterUrls, AppColors, AppDimens } from '../common'
 
 /**
  * P01 启动页 — 品牌展示 + 自动跳转
