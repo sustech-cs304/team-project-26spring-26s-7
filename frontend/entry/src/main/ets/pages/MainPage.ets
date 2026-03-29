@@ -1,4 +1,4 @@
-import { AppColors, AppDimens } from '../common/Constants'
+import { AppColors, AppDimens } from '../common'
 import { MapHomeView } from '../views/MapHomeView'
 import { TripListView } from '../views/TripListView'
 import { ProfileView } from '../views/ProfileView'

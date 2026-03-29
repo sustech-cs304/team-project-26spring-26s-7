@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../common/Constants'
-import { RouterParam } from '../model/DataModels'
+import { AppColors, AppDimens, RouterUrls } from '../common'
+import { RouterParam } from '../common'
 
 /**
  * P03 节点创建/编辑页

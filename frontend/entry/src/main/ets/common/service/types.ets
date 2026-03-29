@@ -1,6 +1,21 @@
+/*
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * 核心数据模型定义
- * ArkTS 要求所有对象字面量必须对应显式声明的 class/interface
+ * Service Layer 统一类型定义
  */
 
 /** 地图上的记忆节点 Pin */
@@ -84,7 +99,7 @@ export class RouterParam {
   longitude: number = 0
 }
 
-/** 记忆节点 */
+/** 记忆节点 - 完整数据模型 */
 export interface MemoryNode {
   id: string
   title: string
@@ -100,7 +115,7 @@ export interface MemoryNode {
   updatedAt: number
 }
 
-/** 旅行路线 */
+/** 旅行路线 - 完整数据模型 */
 export interface Trip {
   id: string
   name: string

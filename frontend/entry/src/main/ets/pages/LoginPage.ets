@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI'
-import { RouterUrls, AppColors, AppDimens } from '../common/Constants'
+import { RouterUrls, AppColors, AppDimens } from '../common'
 
 /**
  * P-Login 登录页 — 华为账号一键登录

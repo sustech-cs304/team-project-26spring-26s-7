@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens } from '../common/Constants'
-import { ToneOption, SharePlatform, RouterParam } from '../model/DataModels'
+import { AppColors, AppDimens } from '../common'
+import { ToneOption, SharePlatform, RouterParam } from '../common'
 
 /**
  * P08 分享页 — 生成链接 + AI 文案 + 平台选择

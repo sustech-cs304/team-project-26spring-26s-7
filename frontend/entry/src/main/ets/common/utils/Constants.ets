@@ -1,5 +1,20 @@
+/*
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
- * 应用全局常量
+ * 应用 UI 颜色和主题定义
  */
 export class AppColors {
   static readonly PRIMARY: string = '#1890FF'
@@ -14,6 +29,9 @@ export class AppColors {
   static readonly SUCCESS: string = '#52C41A'
 }
 
+/**
+ * 应用尺寸和间距定义
+ */
 export class AppDimens {
   static readonly PADDING_SM: number = 8
   static readonly PADDING_MD: number = 16
@@ -28,6 +46,9 @@ export class AppDimens {
   static readonly FONT_TITLE: number = 24
 }
 
+/**
+ * 路由 URL 常量
+ */
 export class RouterUrls {
   static readonly INDEX: string = 'pages/Index'
   static readonly LOGIN: string = 'pages/LoginPage'
