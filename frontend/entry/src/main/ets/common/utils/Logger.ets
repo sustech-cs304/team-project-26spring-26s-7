@@ -13,10 +13,31 @@
  * limitations under the License.
  */
 
-// Feature: Social Share 统一导出入口
+/**
+ * 简易日志工具类
+ *
+ * ---
+ * 说明：这是一个占位实现，用于 data/ 目录下的 Repository 类
+ * 队友完成后可替换为完整的 Logger 实现
+ * ---
+ */
 
-// Pages 导出
-export { SharePage } from './pages/SharePage';
+export class Logger {
+  info(tag: string, msg: string): void {
+    console.info(`${tag}: ${msg}`);
+  }
 
-// Components 导出
-export { QRCodeShare } from './components/QRCodeShare';
+  debug(tag: string, msg: string): void {
+    console.debug(`${tag}: ${msg}`);
+  }
+
+  warn(tag: string, msg: string): void {
+    console.warn(`${tag}: ${msg}`);
+  }
+
+  error(tag: string, msg: string): void {
+    console.error(`${tag}: ${msg}`);
+  }
+}
+
+export const logger = new Logger();

@@ -5,33 +5,20 @@ import { TripSummary, RouterParam } from '../../../common'
 /**
  * 旅行列表 Tab 内容视图
  * 展示所有旅行路线卡片
+ *
+ * 注意：当前使用硬编码模拟数据
+ * 数据层集成后，可通过 getDataService() 获取真实数据
  */
 @Component
 export struct TripListView {
+  // 模拟数据（数据层完成前使用）
   @State trips: TripSummary[] = [
     new TripSummary('1', '深圳三日游', '2026.03.15 ~ 03.17', '5', '128'),
     new TripSummary('2', '广州周末', '2026.03.01 ~ 03.02', '3', '45'),
     new TripSummary('3', '珠海一日行', '2026.02.20', '4', '67'),
   ]
 
-  @State showCreateDialog: boolean = false
   @State newTripName: string = ''
-
-  dialogController: CustomDialogController = new CustomDialogController({
-    builder: CreateTripDialog({
-      tripName: this.newTripName,
-      onConfirm: (name: string) => {
-        const newId = (this.trips.length + 1).toString()
-        const newTrip = new TripSummary(newId, name, '今天', '0', '0')
-        this.trips = [newTrip, ...this.trips]
-        router.pushUrl({
-          url: RouterUrls.TRIP_DETAIL,
-          params: { tripId: newId } as RouterParam
-        })
-      }
-    }),
-    autoCancel: true
-  })
 
   build() {
     Column() {
@@ -46,12 +33,15 @@ export struct TripListView {
           .height(32)
           .fontSize(AppDimens.FONT_SM)
           .backgroundColor(AppColors.PRIMARY)
-          .onClick(() => this.dialogController.open())
+          .onClick(() => {
+            // TODO: 数据层完成后实现创建旅行逻辑
+            // 当前仅用于 UI 展示
+          })
       }
       .width('100%')
       .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: AppDimens.PADDING_MD })
 
-      // 旅行卡片列表
+      // 空数据状态（当 trips.length === 0 时显示）
       if (this.trips.length === 0) {
         Column() {
           Text('🧳')
@@ -131,52 +121,5 @@ export struct TripListView {
     .width('100%')
     .height('100%')
     .backgroundColor(AppColors.BACKGROUND)
-  }
-}
-
-/**
- * 新建旅行对话框
- */
-@CustomDialog
-struct CreateTripDialog {
-  controller: CustomDialogController = new CustomDialogController({ builder: undefined })
-  @State tripName: string = ''
-  onConfirm: (name: string) => void = () => {}
-
-  build() {
-    Column() {
-      Text('新建旅行')
-        .fontSize(AppDimens.FONT_XL)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(AppColors.TEXT_PRIMARY)
-
-      TextInput({ placeholder: '旅行名称，如「深圳三日游」' })
-        .onChange((value: string) => { this.tripName = value })
-        .margin({ top: 16 })
-
-      Row({ space: 12 }) {
-        Button('取消')
-          .layoutWeight(1)
-          .height(40)
-          .fontSize(AppDimens.FONT_MD)
-          .backgroundColor(AppColors.BACKGROUND)
-          .fontColor(AppColors.TEXT_SECONDARY)
-          .onClick(() => this.controller.close())
-        Button('创建')
-          .layoutWeight(1)
-          .height(40)
-          .fontSize(AppDimens.FONT_MD)
-          .backgroundColor(AppColors.PRIMARY)
-          .enabled(this.tripName.length > 0)
-          .onClick(() => {
-            this.onConfirm(this.tripName)
-            this.controller.close()
-          })
-      }
-      .width('100%')
-      .margin({ top: 24 })
-    }
-    .padding(AppDimens.PADDING_LG)
-    .width('90%')
   }
 }

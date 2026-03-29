@@ -17,6 +17,12 @@
 
 // Utils 导出
 export { AppColors, AppDimens, RouterUrls } from './utils/Constants';
+export { logger } from './utils/Logger';
+
+// Data Layer 导出
+export { RdbHelper, SensitivityLevel } from './data/index';
+export { TravelRepository } from './data/index';
+export { MemoryNodeRepository } from './data/index';
 
 // Service Layer 类型导出
 export type {
@@ -36,3 +42,12 @@ export {
   SharePlatform,
   RouterParam
 } from './service/types';
+
+// Service Layer 服务导出
+export { IDataService } from './service/IDataService';
+export { MockDataService } from './service/MockDataService';
+export { DataServiceStub } from './service/DataServiceStub';
+export { CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput } from './service/IDataService';
+
+// 配置导出
+export { getDataService } from './ServiceConfig';

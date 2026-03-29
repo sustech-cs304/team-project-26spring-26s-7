@@ -1,4 +1,4 @@
-import { router } from '@kit.ArkUI'
+import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens, RouterUrls } from '../../../common'
 import { RouterParam } from '../../../common'
 
@@ -36,6 +36,16 @@ struct NodeEditPage {
 
   private handlePickPhoto(): void {
     // TODO: 调用系统 Photo Picker，选择后本地剥离 EXIF
+  }
+
+  private handleNavigateToAI(): void {
+    router.pushUrl({
+      url: RouterUrls.AI_COPY,
+      params: {
+        defaultPrompt: this.content,
+        defaultTitle: this.title
+      }
+    })
   }
 
   build() {
@@ -150,6 +160,27 @@ struct NodeEditPage {
           .backgroundColor(AppColors.CARD_BG)
           .borderRadius(AppDimens.RADIUS_SM)
           .alignItems(HorizontalAlign.Start)
+
+          // AI 助手按钮 (放在内容下方，更显眼)
+          Row() {
+            Text('🤖 AI 助手')
+              .fontSize(AppDimens.FONT_MD)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(AppColors.PRIMARY)
+            Text('  帮你润色内容')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.TEXT_SECONDARY)
+            Blank()
+            Text('→')
+              .fontSize(AppDimens.FONT_LG)
+              .fontColor(AppColors.PRIMARY)
+          }
+          .width('100%')
+          .padding(AppDimens.PADDING_MD)
+          .backgroundColor(AppColors.PRIMARY + '10')
+          .borderRadius(AppDimens.RADIUS_SM)
+          .margin({ bottom: 12, top: 8 })
+          .onClick(() => this.handleNavigateToAI())
 
           // 心情选择
           Column() {

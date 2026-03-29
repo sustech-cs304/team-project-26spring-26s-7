@@ -6,7 +6,7 @@
 
 ## Format
 ```
-[YYYY-MM-DD] - [Action] - [Location] - [Description] - [Git Commit]
+[YYYY-MM-DD-HH-MM-SS] - [Action] - [Location] - [Description] - [Git Commit]
 ```
 
 ---
@@ -28,6 +28,17 @@
 - [2026-03-29] - CREATE - feature/social-share/ - 社交分享功能目录
 - [2026-03-29] - MOVE - NodeEditPage, NodeDetailPage, TripDetailPage, TripReplayPage → feature/map-travel/pages/
 - [2026-03-29] - MOVE - MapHomeView, TripListView → feature/map-travel/views/
+- [2026-03-29] - CREATE - feature/ai-copy/ - AI 文案生成功能模块目录
+- [2026-03-29] - CREATE - feature/ai-copy/components/AiCopyGenerator.ets - AI 文案生成器组件
+- [2026-03-29] - CREATE - feature/ai-copy/pages/AiCopyPage.ets - AI 文案页面 (5 种风格、3 种长度、提示词输入)
+- [2026-03-29] - CREATE - feature/ai-copy/index.ets - AI 文案模块统一导出
+- [2026-03-29] - UPDATE - main_pages.json - 添加 feature/ai-copy/pages/AiCopyPage 路由
+- [2026-03-29] - UPDATE - RouterUrls - 添加 AI_COPY 路由常量
+- [2026-03-29] - UPDATE - NodeEditPage.ets - 添加"AI 助手"按钮，点击跳转到 AiCopyPage
+- [2026-03-29] - BUILD - 编译验证通过 (BUILD SUCCESSFUL)
+- [2026-03-29] - FIX - AiCopyGenerator.ets - 修复 ArkTS 类型错误 (添加 TravelData 接口)
+- [2026-03-29] - FIX - AiCopyPage.ets - 修复 ArkTS 类型错误 (添加 StyleOption 接口，router 导入，columnsTemplate 类型)
+- [2026-03-29] - BUILD - 二次编译验证通过 (所有错误已修复)
 - [2026-03-29] - MOVE - ProfileView → feature/profile/views/
 - [2026-03-29] - MOVE - SharePage → feature/social-share/pages/
 - [2026-03-29] - UPDATE - pages/Index.ets - 修复导入路径：'../common/Constants' → '../common'
@@ -38,3 +49,27 @@
 - [2026-03-29] - BUILD - 编译验证成功 - BUILD SUCCESSFUL in 16s 673ms (7d1132a)
 - [2026-03-29] - UPDATE - CLAUDE.md - 添加 ArkTS 编译验证工作流、缓存清理指令、终极任务
 - [2026-03-29] - UPDATE - memory/01_project_state.md - 记录三层架构完成状态
+- [2026-03-29] - GIT - commit 0749f15 - docs: 更新三层架构重构文档和 Memory 记录
+- [2026-03-29] - CREATE - common/data/RdbHelper.ets - 数据库助手占位文件（STUB）
+- [2026-03-29] - CREATE - common/data/TravelRepository.ets - 旅行数据仓库占位文件（STUB）
+- [2026-03-29] - CREATE - common/data/MemoryNodeRepository.ets - 节点数据仓库占位文件（STUB）
+- [2026-03-29] - CREATE - common/data/index.ets - Data Layer 统一导出
+- [2026-03-29] - CREATE - common/service/IDataService.ets - 数据服务接口定义
+- [2026-03-29] - CREATE - common/service/MockDataService.ets - Mock 数据服务实现
+- [2026-03-29] - CREATE - common/service/DataServiceStub.ets - 数据库占位服务（空数据）
+- [2026-03-29] - CREATE - common/ServiceConfig.ets - 数据源配置开关
+- [2026-03-29] - CREATE - common/utils/Logger.ets - 简易日志工具类
+- [2026-03-29] - UPDATE - common/index.ets - 添加 Data/Service Layer 导出
+- [2026-03-29] - UPDATE - common/service/types.ets - 修复 Trip 和 MemoryNode 类型定义
+- [2026-03-29] - UPDATE - TripListView.ets - 简化为硬编码数据（数据层完成前）
+- [2026-03-29] - BUILD - 编译验证成功 - BUILD SUCCESSFUL in 16s 129ms
+- [2026-03-29] - CREATE - feature/social-share/pages/ShareSelectPage.ets - 分享选择页面（列出所有路线供选择）
+- [2026-03-29] - CREATE - feature/social-share/components/QRCodeShare.ets - 二维码分享组件（含 generateShareLink 占位方法）
+- [2026-03-29] - UPDATE - SharePage.ets - 删除 AI 辅助文案区，保留分享链接、文案编辑、分享平台选择
+- [2026-03-29] - UPDATE - social-share/index.ets - 添加 ShareSelectPage 和 QRCodeShare 导出
+- [2026-03-29] - UPDATE - main_pages.json - 添加 ShareSelectPage 路由配置
+- [2026-03-29] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 16s 543ms
+- [2026-03-29] - REMOVE - feature/social-share/pages/ShareSelectPage.ets - 移除分享选择页面（无触发入口）
+- [2026-03-29] - UPDATE - social-share/index.ets - 移除 ShareSelectPage 导出
+- [2026-03-29] - UPDATE - main_pages.json - 移除 ShareSelectPage 路由配置
+- [2026-03-29] - BUILD - 编译验证通过（清理缓存后）- BUILD SUCCESSFUL in 18s 420ms

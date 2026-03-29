@@ -99,9 +99,24 @@ export class RouterParam {
   longitude: number = 0
 }
 
+/** 旅行路线 - 完整数据模型 */
+export interface Trip {
+  id: string
+  name: string
+  description?: string
+  coverPhoto?: string
+  startDate: number
+  endDate: number
+  nodeIds: string[]
+  totalDistance: number
+  createdAt: number
+  updatedAt: number
+}
+
 /** 记忆节点 - 完整数据模型 */
 export interface MemoryNode {
   id: string
+  travelId: string
   title: string
   content: string
   latitude: number
@@ -110,20 +125,6 @@ export interface MemoryNode {
   photos: string[]
   mood: string
   tags: string[]
-  tripId?: string
-  createdAt: number
-  updatedAt: number
-}
-
-/** 旅行路线 - 完整数据模型 */
-export interface Trip {
-  id: string
-  name: string
-  coverPhoto?: string
-  startDate: number
-  endDate: number
-  nodeIds: string[]
-  totalDistance: number
   createdAt: number
   updatedAt: number
 }
