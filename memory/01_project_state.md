@@ -1,6 +1,6 @@
 # Project State
 
-**Last Updated**: 2026-03-29 (三层架构重构完成)
+**Last Updated**: 2026-03-29-18-04-43 (分享功能迭代完成)
 **Project**: TravelPin - HarmonyOS Travel Journal App
 **Repository**: D:\Mydata\1University\3Junior\Software_Engineering\frontendv1\team-project-26spring-26s-7
 **Current Branch**: incremental-dev-20260329
@@ -57,11 +57,27 @@ entry/src/main/ets/
 - `feature/*/views/*.ets` → `import ... from '../../../common'`
 - `feature/*/pages/*.ets` → `import ... from '../../../common'`
 
-**编译状态**: ✅ BUILD SUCCESSFUL (2026-03-29 验证)
+**编译状态**: ✅ BUILD SUCCESSFUL (2026-03-29-18-01-03 验证)
 
 ---
 
-## 3. 与 Base 项目的对比
+## 3. 功能模块状态 (2026-03-29 更新)
+
+| 功能模块 | 页面/组件 | 状态 | 说明 |
+|---------|----------|------|------|
+| **地图旅行** | MapHomeView, NodeEditPage, NodeDetailPage | ✅ 完整 | 地图展示、节点编辑/详情 |
+| **旅行路线** | TripListView, TripDetailPage, TripReplayPage | ✅ 完整 | 列表、详情、回放 |
+| **AI 文案** | AiCopyPage, AiCopyGenerator | ✅ 完整 | 5 种风格、3 种长度 |
+| **社交分享** | SharePage, QRCodeShare | ✅ 完整 | 分享链接、平台选择、二维码占位 |
+| **个人中心** | ProfileView | ⚠️ 仅 UI | 设置、账号管理待实现 |
+| **认证** | LoginPage | ⚠️ 占位 | 华为账号 SDK 待集成 |
+
+**已删除**:
+- `ShareSelectPage.ets` - 无触发入口，已移除
+
+---
+
+## 4. 与 Base 项目的对比
 
 | 项目 | 位置 | 状态 | 用途 |
 |------|------|------|------|
@@ -79,7 +95,7 @@ entry/src/main/ets/
 
 ---
 
-## 4. 下一步工作
+## 5. 下一步工作
 
 1. **对比 base/项目** - 识别缺失的功能模块
 2. **迁移 common 层** - API 客户端、数据模型、认证模块
@@ -89,8 +105,6 @@ entry/src/main/ets/
 ---
 
 **Git Commits**:
+- 06bfee2: refactor: 分享功能迭代 - 移除 ShareSelectPage 并完善 QRCodeShare 组件
+- 0749f15: docs: 更新三层架构重构文档和 Memory 记录
 - 7d1132a: refactor: Phase 4 - 配置模块导入和编译验证
-- 9e09d1e: fix: 更新 main_pages.json 路由配置为 feature 层路径
-- 18b527f: refactor: Phase 2 - 创建 feature 层目录结构
-- 1d1377b: fix: 修复遗漏的 common 导入路径
-- d4ef8a8: refactor: 重构为三层架构 - Phase 1 (common 层) 完成
