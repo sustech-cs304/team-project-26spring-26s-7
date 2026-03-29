@@ -139,6 +139,16 @@ export struct ProfileView {
           }
           .margin({ left: 12 })
           .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
+
+          // 编辑按钮
+          Text('编辑')
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.PRIMARY)
+            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+            .onClick(() => {
+              router.pushUrl({ url: RouterUrls.PROFILE_EDIT })
+            })
         }
         .width('100%')
         .padding(AppDimens.PADDING_LG)

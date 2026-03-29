@@ -62,8 +62,11 @@
 - [2026-03-29] - UPDATE - common/index.ets - 添加 Data/Service Layer 导出
 - [2026-03-29] - UPDATE - common/service/types.ets - 修复 Trip 和 MemoryNode 类型定义
 - [2026-03-29] - UPDATE - TripListView.ets - 简化为硬编码数据（数据层完成前）
-- [2026-03-29-18-04-43] - GIT - commit 06bfee2 - refactor: 分享功能迭代 - 移除 ShareSelectPage 并完善 QRCodeShare 组件
-- [2026-03-29-18-01-03] - BUILD - 编译验证通过（清理缓存后）- BUILD SUCCESSFUL in 17s 109ms
+- [2026-03-29-18-18-27] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 17s 590ms
+- [2026-03-29-18-18-00] - UPDATE - ProfileView.ets - 用户信息卡片添加"编辑"按钮入口
+- [2026-03-29-18-17-55] - UPDATE - main_pages.json - 添加 ProfileEditPage 路由配置
+- [2026-03-29-18-17-50] - UPDATE - Constants.ets - 添加 PROFILE_EDIT 路由常量
+- [2026-03-29-18-17-45] - CREATE - feature/profile/pages/ProfileEditPage.ets - 编辑资料页面（昵称、头像、个性签名）
 - [2026-03-29-17-58-00] - UPDATE - main_pages.json - 移除 ShareSelectPage 路由配置
 - [2026-03-29-17-57-55] - UPDATE - social-share/index.ets - 移除 ShareSelectPage 导出
 - [2026-03-29-17-57-50] - REMOVE - feature/social-share/pages/ShareSelectPage.ets - 移除分享选择页面（无触发入口）

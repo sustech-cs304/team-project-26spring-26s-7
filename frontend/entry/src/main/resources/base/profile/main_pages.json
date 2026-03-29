@@ -8,6 +8,7 @@
     "feature/map-travel/pages/TripDetailPage",
     "feature/map-travel/pages/TripReplayPage",
     "feature/social-share/pages/SharePage",
-    "feature/ai-copy/pages/AiCopyPage"
+    "feature/ai-copy/pages/AiCopyPage",
+    "feature/profile/pages/ProfileEditPage"
   ]
 }
