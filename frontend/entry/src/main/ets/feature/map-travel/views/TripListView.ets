@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../../common'
-import { TripSummary, RouterParam } from '../../common'
+import { AppColors, AppDimens, RouterUrls } from '../../../common'
+import { TripSummary, RouterParam } from '../../../common'
 
 /**
  * 旅行列表 Tab 内容视图

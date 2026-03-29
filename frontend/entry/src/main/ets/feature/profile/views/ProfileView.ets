@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../../common'
+import { AppColors, AppDimens, RouterUrls } from '../../../common'
 
 /**
  * 个人中心 Tab 内容视图

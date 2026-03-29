@@ -1,8 +1,8 @@
 import { router } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens } from '../../common'
-import { RouterParam } from '../../common'
+import { AppColors, AppDimens } from '../../../common'
+import { RouterParam } from '../../../common'
 
 /**
  * P07 旅程回放页 — 全屏沉浸式动画回放

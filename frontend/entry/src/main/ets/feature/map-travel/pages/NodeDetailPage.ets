@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../../common'
-import { RouterParam } from '../../common'
+import { AppColors, AppDimens, RouterUrls } from '../../../common'
+import { RouterParam } from '../../../common'
 
 /**
  * P04 节点详情页
