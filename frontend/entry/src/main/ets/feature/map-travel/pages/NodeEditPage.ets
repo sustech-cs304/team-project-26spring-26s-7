@@ -1,10 +1,10 @@
 import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../common'
-import { RouterParam } from '../common'
+import { AppColors, AppDimens, RouterUrls } from '../../common'
+import { RouterParam } from '../../common'
 
 /**
  * P03 节点创建/编辑页
- * 路由参数: { nodeId?: string, latitude?: number, longitude?: number }
+ * 路由参数：{ nodeId?: string, latitude?: number, longitude?: number }
  */
 @Entry
 @Component

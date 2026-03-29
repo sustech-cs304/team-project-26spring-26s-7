@@ -1,12 +1,12 @@
 import { router } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens, RouterUrls } from '../common'
-import { TimelineNodeInfo, RouterParam } from '../common'
+import { AppColors, AppDimens, RouterUrls } from '../../common'
+import { TimelineNodeInfo, RouterParam } from '../../common'
 
 /**
  * P06 旅行详情页 — 路线地图 + 节点时间轴
- * 路由参数: { tripId: string }
+ * 路由参数：{ tripId: string }
  */
 @Entry
 @Component

@@ -1,8 +1,8 @@
 import { router } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens, RouterUrls } from '../common'
-import { MapNodeInfo, RouterParam } from '../common'
+import { AppColors, AppDimens, RouterUrls } from '../../common'
+import { MapNodeInfo, RouterParam } from '../../common'
 
 /**
  * 地图主页 Tab 内容视图
@@ -152,7 +152,7 @@ export struct MapHomeView {
             .fontWeight(FontWeight.Medium)
             .fontColor(AppColors.TEXT_PRIMARY)
           Row({ space: 8 }) {
-            ForEach(['全部', '近7天', '近30天', '近一年'], (label: string) => {
+            ForEach(['全部', '近 7 天', '近 30 天', '近一年'], (label: string) => {
               Text(label)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(this.selectedFilterTime === label ? AppColors.CARD_BG : AppColors.TEXT_SECONDARY)

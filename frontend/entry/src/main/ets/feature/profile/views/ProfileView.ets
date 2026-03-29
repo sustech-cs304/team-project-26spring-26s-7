@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../common'
+import { AppColors, AppDimens, RouterUrls } from '../../common'
 
 /**
  * 个人中心 Tab 内容视图
@@ -12,7 +12,7 @@ export struct ProfileView {
   @State isSyncing: boolean = false
   @State exifStrip: boolean = true
   @State wifiOnlySync: boolean = true
-  @State shareLinkExpiry: string = '7天'
+  @State shareLinkExpiry: string = '7 天'
 
   private handleSync(): void {
     this.isSyncing = true
@@ -46,7 +46,7 @@ export struct ProfileView {
   private showPrivacySettings(): void {
     AlertDialog.show({
       title: '隐私与安全',
-      message: `EXIF 元数据自动剥离: ${this.exifStrip ? '已开启' : '已关闭'}\n\n所有照片在上传或分享前会自动移除位置、设备等敏感信息。\n\nAI 文案仅使用文本元数据，不会上传照片到云端。`,
+      message: `EXIF 元数据自动剥离：${this.exifStrip ? '已开启' : '已关闭'}\n\n所有照片在上传或分享前会自动移除位置、设备等敏感信息。\n\nAI 文案仅使用文本元数据，不会上传照片到云端。`,
       confirm: {
         value: '关闭',
         action: () => {}
@@ -57,7 +57,7 @@ export struct ProfileView {
   private showStorageSettings(): void {
     AlertDialog.show({
       title: '流量与存储',
-      message: `仅 Wi-Fi 同步: ${this.wifiOnlySync ? '已开启' : '已关闭'}\n\n开启后，蜂窝网络下仅加载缩略图，照片原图和批量同步将延迟到 Wi-Fi 环境下进行。`,
+      message: `仅 Wi-Fi 同步：${this.wifiOnlySync ? '已开启' : '已关闭'}\n\n开启后，蜂窝网络下仅加载缩略图，照片原图和批量同步将延迟到 Wi-Fi 环境下进行。`,
       confirm: {
         value: '关闭',
         action: () => {}
@@ -70,9 +70,9 @@ export struct ProfileView {
       title: '分享链接默认有效期',
       message: '选择通过链接分享旅行时的默认有效期',
       sheets: [
-        { title: '1 天', action: () => { this.shareLinkExpiry = '1天' } },
-        { title: '7 天', action: () => { this.shareLinkExpiry = '7天' } },
-        { title: '30 天', action: () => { this.shareLinkExpiry = '30天' } },
+        { title: '1 天', action: () => { this.shareLinkExpiry = '1 天' } },
+        { title: '7 天', action: () => { this.shareLinkExpiry = '7 天' } },
+        { title: '30 天', action: () => { this.shareLinkExpiry = '30 天' } },
       ]
     })
   }
@@ -80,7 +80,7 @@ export struct ProfileView {
   private showAbout(): void {
     AlertDialog.show({
       title: '关于 TravelPin',
-      message: 'TravelPin v1.0.0\n\n基于 HarmonyOS 的地理位置旅行日记应用\n\n南方科技大学 · 软件工程 · 第7组',
+      message: 'TravelPin v1.0.0\n\n基于 HarmonyOS 的地理位置旅行日记应用\n\n南方科技大学 · 软件工程 · 第 7 组',
       confirm: {
         value: '关闭',
         action: () => {}
@@ -163,10 +163,10 @@ export struct ProfileView {
 
           Row() {
             Column() {
-              Text(`上次同步: ${this.lastSyncTime}`)
+              Text(`上次同步：${this.lastSyncTime}`)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_SECONDARY)
-              Text(`待同步: ${this.pendingCount} 项`)
+              Text(`待同步：${this.pendingCount} 项`)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(this.pendingCount > 0 ? AppColors.PRIMARY : AppColors.TEXT_HINT)
                 .margin({ top: 4 })

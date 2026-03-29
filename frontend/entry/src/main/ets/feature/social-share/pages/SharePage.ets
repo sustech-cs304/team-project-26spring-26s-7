@@ -1,10 +1,10 @@
 import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens } from '../common'
-import { ToneOption, SharePlatform, RouterParam } from '../common'
+import { AppColors, AppDimens } from '../../common'
+import { ToneOption, SharePlatform, RouterParam } from '../../common'
 
 /**
  * P08 分享页 — 生成链接 + AI 文案 + 平台选择
- * 路由参数: { tripId: string }
+ * 路由参数：{ tripId: string }
  */
 @Entry
 @Component
@@ -39,9 +39,9 @@ struct SharePage {
 
   private handleGenerateCopy(): void {
     this.isGenerating = true
-    // TODO: 调用 AI Gateway，仅发送旅程元数据 (POI, 距离, 时长)
+    // TODO: 调用 AI Gateway，仅发送旅程元数据 (POI, 距离，时长)
     setTimeout(() => {
-      this.aiGeneratedText = '三月的深圳，海风带着盐味和花香。128公里的足迹串起五处记忆，从深圳湾的日落到南科大的春色，每一步都值得被记住。'
+      this.aiGeneratedText = '三月的深圳，海风带着盐味和花香。128 公里的足迹串起五处记忆，从深圳湾的日落到南科大的春色，每一步都值得被记住。'
       this.isGenerating = false
     }, 1500)
   }
@@ -94,7 +94,7 @@ struct SharePage {
                 // TODO: 复制到剪贴板
             }
             .margin({ top: 8 })
-            Text('有效期: ' + this.expireDays + ' 天')
+            Text('有效期：' + this.expireDays + ' 天')
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.TEXT_HINT)
               .margin({ top: 4 })

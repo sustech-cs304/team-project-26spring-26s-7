@@ -1,7 +1,7 @@
 import { AppColors, AppDimens } from '../common'
-import { MapHomeView } from '../views/MapHomeView'
-import { TripListView } from '../views/TripListView'
-import { ProfileView } from '../views/ProfileView'
+import { MapHomeView } from '../feature/map-travel/views/MapHomeView'
+import { TripListView } from '../feature/map-travel/views/TripListView'
+import { ProfileView } from '../feature/profile/views/ProfileView'
 
 /**
  * 主框架页 — 底部 TabBar 容器

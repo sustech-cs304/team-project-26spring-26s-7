@@ -171,3 +171,67 @@ git show <commit-hash>
 
 ## MCP 使用提醒
 在遇到 arkts 语言报错或者不确定如何书写时，请积极调用 arkts-assistant MCP 来辅助开发。
+
+---
+
+## ArkTS 编译验证工作流
+
+**使用场景**: 修改 ArkTS 代码后，在 DevEco Studio Previewer 中验证编译是否成功
+
+### 编译命令
+
+在 `frontend/entry` 目录下运行 PreviewBuild（DevEco Studio 环境）：
+
+```bash
+cd frontend/entry
+"C:\Apps\DevEco Studio\tools\node\node.exe" "C:\Apps\DevEco Studio\tools\hvigor\bin\hvigorw.js" --mode module -p module=entry@default -p product=default -p pageType=page -p compileResInc=true -p previewMode=true -p buildRoot=.preview PreviewBuild --watch --analyze=normal --parallel --incremental --daemon
+```
+
+### 错误排查流程
+
+```
+1. 运行编译命令 → 收集报错
+     ↓
+2. 分析错误类型
+   ├── ArkTS Compiler Error → 使用 arkts-assistant MCP 查询正确语法
+   ├── Module not found → 检查导入路径
+   └── Type mismatch → 使用 arkts-assistant 查询类型定义
+     ↓
+3. 修复代码 → 重新编译 → 回到步骤 1
+     ↓
+4. 编译成功 → 在 DevEco Studio 中打开 Previewer 验证
+```
+
+### 常用错误处理
+
+| 错误类型 | 处理方法 |
+|---------|---------|
+| `Cannot find module` | 检查导入路径是否指向 `../common` 统一入口 |
+| `Cannot find name` | 检查导入语句是否包含该符号 |
+| `Type mismatch` | 使用 `mcp__arkts-assistant__find_docs` 查询正确类型 |
+| `Cannot find name 'RouterUrls'` | 确保从 `../common` 导入了 `RouterUrls` |
+
+### arkts-assistant MCP 使用示例
+
+```bash
+# 查询特定 API 用法
+mcp__arkts-assistant__find_docs({ query: "router.pushUrl 用法" })
+
+# 查询组件语法
+mcp__arkts-assistant__find_docs({ query: "MapComponent 组件" })
+
+# 查询装饰器
+mcp__arkts-assistant__find_docs({ query: "@State @Link 装饰器" })
+```
+
+### 修复示例
+
+**问题**: `Cannot find name 'RouterUrls'`
+
+**排查**:
+1. 读取报错文件，检查导入语句
+2. 发现导入语句缺少 `RouterUrls`
+3. 修复导入：`import { AppColors, AppDimens, RouterUrls } from '../common'`
+4. 重新编译验证
+
+**提交**: 修复后及时 commit 并记录变更
