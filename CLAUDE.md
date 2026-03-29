@@ -178,7 +178,27 @@ git show <commit-hash>
 
 **使用场景**: 修改 ArkTS 代码后，在 DevEco Studio Previewer 中验证编译是否成功
 
-### 编译命令 (成功验证)
+### 已授权命令 (无需用户确认)
+
+Claude Code 被授权直接执行以下命令，无需每次请求许可：
+
+```bash
+# 1. 清理缓存
+cd frontend && rm -rf .hvigor intermediates build .preview entry/.preview entry/build entry/intermediates
+
+# 2. Previewer 编译验证
+"C:\Apps\DevEco Studio\tools\node\node.exe" "C:\Apps\DevEco Studio\tools\hvigor\bin\hvigorw.js" --mode module -p module=entry@default -p product=default -p pageType=page -p compileResInc=true -p previewMode=true -p buildRoot=.preview PreviewBuild
+
+# 3. 快速编译 (不先清理缓存)
+"C:\Apps\DevEco Studio\tools\node\node.exe" "C:\Apps\DevEco Studio\tools\hvigor\bin\hvigorw.js" --mode module -p module=entry@default -p product=default -p pageType=page -p compileResInc=true -p previewMode=true -p buildRoot=.preview PreviewBuild
+
+# 4. hvigorw 相关命令
+hvigorw, hvigorw.js, powershell -Command *hvigorw*
+```
+
+**授权范围**: 仅限上述 PreviewBuild 相关命令。其他破坏性操作（如 `git reset --hard`、`rm -rf` 非缓存目录）仍需确认。
+
+### 标准工作流程
 
 **完整清理并编译** (推荐，确保缓存干净):
 ```bash
