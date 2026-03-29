@@ -1,6 +1,6 @@
 # Project State
 
-**Last Updated**: 2026-03-29 (增量开发模式启动)
+**Last Updated**: 2026-03-29 (三层架构重构完成)
 **Project**: TravelPin - HarmonyOS Travel Journal App
 **Repository**: D:\Mydata\1University\3Junior\Software_Engineering\frontendv1\team-project-26spring-26s-7
 **Current Branch**: incremental-dev-20260329
@@ -24,32 +24,40 @@
 
 ---
 
-## 2. Directory Structure (Current Workspace)
+## 2. 当前架构状态 (2026-03-29 重构完成)
 
 ```
-team-project-26spring-26s-7/
-├── frontend/                       # 鸿蒙应用主目录
-│   ├── AppScope/                   # 应用全局配置
-│   ├── entry/                      # 应用入口模块
-│   │   └── src/main/ets/
-│   │       ├── entryability/       # 应用入口 Ability
-│   │       ├── pages/              # 页面文件
-│   │       ├── common/             # 公共模块
-│   │       ├── feature/            # 功能模块
-│   │       └── product/            # 产品层
-│   ├── oh_modules/                 # 依赖模块
-│   └── build-profile.json5         # 构建配置
-│
-├── memory/                         # AI memory & project tracking
-│   ├── 01_project_state.md         # 当前架构状态
-│   ├── 02_change_log.md            # 变更历史
-│   └── 03_task_backlog.md          # 任务清单
-│
-├── backend/                        # 后端代码 (独立开发)
-├── structure/                      # 架构文档
-├── reference/                      # 参考文档
-└── CLAUDE.md                       # 项目规范
+entry/src/main/ets/
+├── common/                 # 公共层
+│   ├── index.ets           # 统一导出入口
+│   ├── utils/Constants.ets # 工具类 (AppColors, AppDimens, RouterUrls)
+│   └── service/types.ets   # 数据模型 (MemoryNode, Trip, SyncStatus 等)
+├── feature/
+│   ├── map-travel/         # 地图旅行功能
+│   │   ├── pages/          # 页面 (NodeEdit, NodeDetail, TripDetail, TripReplay)
+│   │   ├── views/          # 视图组件 (MapHomeView, TripListView)
+│   │   └── index.ets
+│   ├── profile/            # 个人中心功能
+│   │   ├── views/ProfileView.ets
+│   │   └── index.ets
+│   └── social-share/       # 社交分享功能
+│       ├── pages/SharePage.ets
+│       └── index.ets
+└── pages/                  # Product 层页面
+    ├── Index.ets           # 启动页
+    ├── LoginPage.ets       # 登录页
+    └── MainPage.ets        # 主页 (导入 feature 层组件)
 ```
+
+**路由配置**: `entry/src/main/resources/base/profile/main_pages.json`
+- 已更新为 feature 层路径
+
+**导入路径规范**:
+- `pages/*.ets` → `import ... from '../common'`
+- `feature/*/views/*.ets` → `import ... from '../../../common'`
+- `feature/*/pages/*.ets` → `import ... from '../../../common'`
+
+**编译状态**: ✅ BUILD SUCCESSFUL (2026-03-29 验证)
 
 ---
 
@@ -67,15 +75,22 @@ team-project-26spring-26s-7/
 
 **当前工作区已有的模块**:
 - `frontend/` - 包含地图显示和三页基础 UI
+- ✅ 三层架构已完成 (common, feature, pages)
 
 ---
 
 ## 4. 下一步工作
 
-1. **A. 对比两个项目结构** - 了解差异
-2. **B. 分析任务清单优先级** - 确定整合顺序
-3. **C. 制定整合计划** - 小步迭代
+1. **对比 base/项目** - 识别缺失的功能模块
+2. **迁移 common 层** - API 客户端、数据模型、认证模块
+3. **迁移 feature 层** - MapTravelComponent、AiCopy、RouteEditor
+4. **完善 product 层** - 6 个核心页面的完整实现
 
 ---
 
-**Git Commit**: TBD (分支创建后首次提交)
+**Git Commits**:
+- 7d1132a: refactor: Phase 4 - 配置模块导入和编译验证
+- 9e09d1e: fix: 更新 main_pages.json 路由配置为 feature 层路径
+- 18b527f: refactor: Phase 2 - 创建 feature 层目录结构
+- 1d1377b: fix: 修复遗漏的 common 导入路径
+- d4ef8a8: refactor: 重构为三层架构 - Phase 1 (common 层) 完成

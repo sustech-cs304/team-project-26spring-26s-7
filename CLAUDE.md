@@ -43,8 +43,8 @@ team-project-26spring-26s-7/
 **每次新对话开始时，必须先读取以下文件了解项目进度：**
 
 1. `./memory/01_project_state.md` - 当前架构状态（全量读取）
-2. `./memory/03_task_backlog.md` - 任务清单（全量读取）
-3. `./memory/02_change_log.md` - 变更历史（**仅读取最新 10 行**）
+2. `./memory/02_change_log.md` - 变更历史（**仅读取最新 10 行**）
+
 
 **当前分支**: frontend
 
@@ -178,14 +178,49 @@ git show <commit-hash>
 
 **使用场景**: 修改 ArkTS 代码后，在 DevEco Studio Previewer 中验证编译是否成功
 
-### 编译命令
+### 编译命令 (成功验证)
 
-在 `frontend/entry` 目录下运行 PreviewBuild（DevEco Studio 环境）：
-
+**完整清理并编译** (推荐，确保缓存干净):
 ```bash
-cd frontend/entry
-"C:\Apps\DevEco Studio\tools\node\node.exe" "C:\Apps\DevEco Studio\tools\hvigor\bin\hvigorw.js" --mode module -p module=entry@default -p product=default -p pageType=page -p compileResInc=true -p previewMode=true -p buildRoot=.preview PreviewBuild --watch --analyze=normal --parallel --incremental --daemon
+cd frontend
+rm -rf .hvigor intermediates build .preview
+"C:\Apps\DevEco Studio\tools\node\node.exe" "C:\Apps\DevEco Studio\tools\hvigor\bin\hvigorw.js" --mode module -p module=entry@default -p product=default -p pageType=page -p compileResInc=true -p previewMode=true -p buildRoot=.preview PreviewBuild
 ```
+
+**快速编译** (缓存未损坏时):
+```bash
+cd frontend
+"C:\Apps\DevEco Studio\tools\node\node.exe" "C:\Apps\DevEco Studio\tools\hvigor\bin\hvigorw.js" --mode module -p module=entry@default -p product=default -p pageType=page -p compileResInc=true -p previewMode=true -p buildRoot=.preview PreviewBuild
+```
+
+**清理命令** (遇到缓存问题时使用):
+```bash
+cd frontend
+rm -rf .hvigor intermediates build .preview
+```
+
+### 三层架构导入路径规范
+
+**当前架构** (2026-03-29 重构完成):
+```
+entry/src/main/ets/
+├── common/                 # 公共层 (utils, service/types)
+├── feature/
+│   ├── map-travel/         # 地图旅行功能 (pages, views)
+│   ├── profile/            # 个人中心 (views)
+│   └── social-share/       # 社交分享 (pages)
+└── pages/                  # Product 层页面 (Index, Login, Main)
+```
+
+**导入路径规则**:
+| 位置 | 导入 common | 示例 |
+|------|-----------|------|
+| `pages/*.ets` | `import ... from '../common'` | MainPage.ets |
+| `feature/*/views/*.ets` | `import ... from '../../../common'` | MapHomeView.ets |
+| `feature/*/pages/*.ets` | `import ... from '../../../common'` | NodeEditPage.ets |
+
+**路由配置**: `entry/src/main/resources/base/profile/main_pages.json`
+- feature 层页面路径：`feature/map-travel/pages/NodeEditPage`
 
 ### 错误排查流程
 
@@ -194,10 +229,11 @@ cd frontend/entry
      ↓
 2. 分析错误类型
    ├── ArkTS Compiler Error → 使用 arkts-assistant MCP 查询正确语法
-   ├── Module not found → 检查导入路径
+   ├── Module not found → 检查导入路径 (使用 '../../../common')
+   ├── Page does not exist → 检查 main_pages.json 路由配置
    └── Type mismatch → 使用 arkts-assistant 查询类型定义
      ↓
-3. 修复代码 → 重新编译 → 回到步骤 1
+3. 清理缓存 → 重新编译
      ↓
 4. 编译成功 → 在 DevEco Studio 中打开 Previewer 验证
 ```
@@ -206,10 +242,11 @@ cd frontend/entry
 
 | 错误类型 | 处理方法 |
 |---------|---------|
-| `Cannot find module` | 检查导入路径是否指向 `../common` 统一入口 |
+| `Cannot find module` | 使用 `'../../../common'` 相对路径导入 |
 | `Cannot find name` | 检查导入语句是否包含该符号 |
+| `Page does not exist` | 更新 `main_pages.json` 为 feature 层路径 |
 | `Type mismatch` | 使用 `mcp__arkts-assistant__find_docs` 查询正确类型 |
-| `Cannot find name 'RouterUrls'` | 确保从 `../common` 导入了 `RouterUrls` |
+| `Cannot find name 'RouterUrls'` | 确保从 `../../../common` 导入了 `RouterUrls` |
 
 ### arkts-assistant MCP 使用示例
 
@@ -224,14 +261,40 @@ mcp__arkts-assistant__find_docs({ query: "MapComponent 组件" })
 mcp__arkts-assistant__find_docs({ query: "@State @Link 装饰器" })
 ```
 
-### 修复示例
+---
 
-**问题**: `Cannot find name 'RouterUrls'`
+## 终极任务 (Ultimate Goal)
 
-**排查**:
-1. 读取报错文件，检查导入语句
-2. 发现导入语句缺少 `RouterUrls`
-3. 修复导入：`import { AppColors, AppDimens, RouterUrls } from '../common'`
-4. 重新编译验证
+**目标**: 实现 `D:\Mydata\1University\3Junior\Software_Engineering\project\base` 项目中的完整架构和功能
 
-**提交**: 修复后及时 commit 并记录变更
+**参考架构**: `base/` 项目目录结构
+
+```
+base/entry/src/main/ets/
+├── common/                 # 公共能力层
+│   ├── utils/              # 工具类
+│   ├── api/                # API 客户端
+│   ├── data/               # 数据模型
+│   ├── auth/               # 认证模块
+│   └── security/           # 安全模块
+├── feature/                # 基础特性层
+│   ├── map-travel/         # 地图旅行 (MapTravelComponent)
+│   ├── route-editor/       # 路线编辑
+│   ├── ai-copy/            # AI 文案生成
+│   └── social-share/       # 社交分享
+└── product/                # 产品定制层
+    └── pages/              # 6 个核心 Pages
+```
+
+**当前进度** (2026-03-29):
+- ✅ Phase 1: common 层创建 (utils/Constants, service/types)
+- ✅ Phase 2: feature 层目录创建 (map-travel, profile, social-share)
+- ✅ Phase 3: 导入路径更新
+- ✅ Phase 4: 编译验证通过
+
+**下一步**:
+1. 对比 `base/` 和 `frontend/` 项目结构，识别缺失模块
+2. 逐步迁移 `base/` 中的功能模块到 `frontend/`
+3. 每完成一个模块，确保编译通过
+
+**开发策略**: 小步快跑，增量迭代，每一步都可验证
