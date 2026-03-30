@@ -1,6 +1,7 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens, RouterUrls } from '../../../common'
 import { RouterParam } from '../../../common'
+import { PhotoSelector } from '../components/PhotoSelector'
 
 /**
  * P03 节点创建/编辑页
@@ -32,10 +33,6 @@ struct NodeEditPage {
   private handleSave(): void {
     // TODO: 校验必填字段，写入本地 RDB，排入同步队列
     router.back()
-  }
-
-  private handlePickPhoto(): void {
-    // TODO: 调用系统 Photo Picker，选择后本地剥离 EXIF
   }
 
   private handleNavigateToAI(): void {
@@ -93,36 +90,13 @@ struct NodeEditPage {
           .borderRadius(AppDimens.RADIUS_SM)
 
           // 照片选择区
-          Column() {
-            Text('照片')
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.TEXT_PRIMARY)
-            Row() {
-              // 已选照片占位 (TODO: 动态渲染 this.photos)
-              Column() {
-                Text('+')
-                  .fontSize(28)
-                  .fontColor(AppColors.TEXT_HINT)
-                Text('添加照片')
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_HINT)
-              }
-              .width(80)
-              .height(80)
-              .backgroundColor(AppColors.BACKGROUND)
-              .borderRadius(AppDimens.RADIUS_SM)
-              .justifyContent(FlexAlign.Center)
-              .onClick(() => this.handlePickPhoto())
+          PhotoSelector({
+            photos: this.photos,
+            onPhotosChange: (photos: string[]) => {
+              this.photos = photos
             }
-            .margin({ top: 8 })
-          }
-          .width('100%')
-          .padding(AppDimens.PADDING_MD)
+          })
           .margin({ top: 12 })
-          .backgroundColor(AppColors.CARD_BG)
-          .borderRadius(AppDimens.RADIUS_SM)
-          .alignItems(HorizontalAlign.Start)
 
           // 标题
           Column() {

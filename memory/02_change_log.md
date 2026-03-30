@@ -77,3 +77,12 @@
 - [2026-03-29-17-30-45] - CREATE - feature/social-share/components/QRCodeShare.ets - 二维码分享组件（含 generateShareLink 占位方法）
 - [2026-03-29-17-30-40] - CREATE - feature/social-share/pages/ShareSelectPage.ets - 分享选择页面（列出所有路线供选择）
 - [2026-03-29-17-16-00] - BUILD - 编译验证成功 - BUILD SUCCESSFUL in 16s 129ms
+- [2026-03-30] - CREATE - common/utils/PhotoPickerUtil.ets - 照片选择工具类（封装 photoAccessHelper.PhotoViewPicker）
+- [2026-03-30] - CREATE - feature/map-travel/components/PhotoSelector.ets - 照片选择器组件（网格展示、删除按钮、最多 9 张）
+- [2026-03-30] - UPDATE - common/index.ets - 添加 PhotoPickerUtil 导出
+- [2026-03-30] - UPDATE - feature/map-travel/index.ets - 添加 PhotoSelector 组件导出
+- [2026-03-30] - UPDATE - NodeEditPage.ets - 集成 PhotoSelector 组件，移除 handlePickPhoto() 占位方法
+- [2026-03-30] - CREATE - frontend/local.properties - 构建配置（SDK 路径，本地文件不提交）
+- [2026-03-30] - FIX - PhotoSelector.ets - 修复 ArkTS 语法错误（RelativeStack→Stack, FlexSpaceOptions 类型）
+- [2026-03-30] - FIX - PhotoPickerUtil.ets - 修复 throw 语句类型错误（ArkTS 要求 Error 类型）
+- [2026-03-30] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 7s 903ms

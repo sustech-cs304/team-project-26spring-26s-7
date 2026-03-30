@@ -1,6 +1,6 @@
 # Project State
 
-**Last Updated**: 2026-03-29-18-18-27 (ProfileEditPage 完成)
+**Last Updated**: 2026-03-30 (PhotoPicker 完成)
 **Project**: TravelPin - HarmonyOS Travel Journal App
 **Repository**: D:\Mydata\1University\3Junior\Software_Engineering\frontendv1\team-project-26spring-26s-7
 **Current Branch**: incremental-dev-20260329
@@ -61,7 +61,7 @@ entry/src/main/ets/
 
 ---
 
-## 3. 功能模块状态 (2026-03-29 更新)
+## 3. 功能模块状态 (2026-03-30 更新)
 
 | 功能模块 | 页面/组件 | 状态 | 说明 |
 |---------|----------|------|------|
@@ -70,6 +70,7 @@ entry/src/main/ets/
 | **AI 文案** | AiCopyPage, AiCopyGenerator | ✅ 完整 | 5 种风格、3 种长度 |
 | **社交分享** | SharePage, QRCodeShare | ✅ 完整 | 分享链接、平台选择、二维码占位 |
 | **个人中心** | ProfileView, ProfileEditPage | ✅ 完整 | 用户信息、设置、编辑资料 |
+| **照片选择** | PhotoSelector, PhotoPickerUtil | ✅ 完整 | 系统相册选择、网格展示、删除功能 |
 | **认证** | LoginPage | ⚠️ 占位 | 华为账号 SDK 待集成 |
 
 **已删除**:
