@@ -6,9 +6,9 @@ import { AppDimens, AppColors } from '../../../common'
  */
 @Component
 export struct ReplayProgressBar {
-  @State value: number = 0          // 当前值 (0-100)
-  @State nodeCount: number = 3      // 节点总数
-  @State nodeLabels: string[] = []  // 节点标签（如日期）
+  @Prop value: number = 0          // 当前值 (0-100)
+  @Prop nodeCount: number = 3      // 节点总数
+  @Prop nodeLabels: string[] = []  // 节点标签（如日期）
 
   // 进度变化回调
   onChange?: (index: number) => void

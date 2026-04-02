@@ -446,10 +446,11 @@ struct TripReplayPage {
 
       // 退出按钮 (左上角) - 使用 Stack 绝对定位
       Stack() {
-        Text('✕')
+        Text('←')
           .fontSize(AppDimens.FONT_XL)
           .fontColor('#FFFFFF')
-          .backgroundColor('#00000066')
+          .fontWeight(FontWeight.Bold)
+          .backgroundColor('rgba(0, 0, 0, 0.7)')
           .borderRadius(20)
           .width(40)
           .height(40)
