@@ -61,7 +61,6 @@ export struct ReplayProgressBar {
           .trackColor('#FFFFFF33')
           .selectedColor(AppColors.PRIMARY)
           .blockColor(AppColors.PRIMARY)
-          .blockSize(16)
           .onChange((value: number) => {
             const index = Math.round((value / 100) * (this.nodeCount - 1))
             if (this.onChange) {

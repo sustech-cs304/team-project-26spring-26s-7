@@ -1,8 +1,8 @@
 import { router } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens } from '../../../common'
-import { RouterParam, ReplayNode, ReplayRoute } from '../../../common'
+import { AppColors, AppDimens, Position } from '../../../common'
+import { ReplayNode, ReplayRoute } from '../../../common'
 import { ReplayPhotoCard } from '../components/ReplayPhotoCard'
 import { ReplayProgressBar } from '../components/ReplayProgressBar'
 import { PhotoCardOverlay } from '../components/PhotoCardOverlay'
@@ -45,44 +45,7 @@ struct TripReplayPage {
   private readonly MOVE_DURATION: number = 1500  // 1.5 秒移动
 
   // 硬编码的模拟数据（后续由 RouteGenerator 生成）
-  private mockRoute: ReplayRoute = {
-    id: 'trip_001',
-    name: '深圳三日游',
-    totalDistance: 128,
-    duration: 72,
-    nodes: [
-      {
-        id: 'node_1',
-        position: { latitude: 22.5268, longitude: 113.9455 },
-        photoUri: 'resources/base/media/pexels-daria-agafonova-2147746189-30248845.jpg',
-        title: '深圳湾公园',
-        note: '今天来到深圳湾公园，海边的日落真美。微风拂面，海浪轻轻拍打着礁石，远处的深圳湾大桥在夕阳下闪闪发光。和好朋友一起散步、拍照，度过了一个美好的下午。',
-        noteShort: '深圳湾日落，海风很温柔…',
-        timestamp: 1710504000000,
-        order: 0
-      },
-      {
-        id: 'node_2',
-        position: { latitude: 22.5348, longitude: 113.9735 },
-        photoUri: 'resources/base/media/pexels-wondererphotograph-998783.jpg',
-        title: '世界之窗',
-        note: '世界之窗一日游！一天之内环游世界，看到了埃菲尔铁塔、金字塔、泰姬陵……每个微缩景观都做得非常精致。虽然走得有点累，但是很开心！',
-        noteShort: '微缩世界，一日环游…',
-        timestamp: 1710590400000,
-        order: 1
-      },
-      {
-        id: 'node_3',
-        position: { latitude: 22.5965, longitude: 113.9785 },
-        photoUri: 'resources/base/media/pexels-karography-438592595-28455220.jpg',
-        title: '南方科技大学',
-        note: '回到校园，春天的南科大格外美丽。荔枝花开满了枝头，图书馆前的草坪上有很多同学在读书、聊天。新学期开始了，加油！',
-        noteShort: '校园春色，荔枝花开…',
-        timestamp: 1710676800000,
-        order: 2
-      }
-    ]
-  }
+  private mockRoute: ReplayRoute = new ReplayRoute()
 
   // 地图配置
   private mapOptions: mapCommon.MapOptions = {
@@ -101,48 +64,45 @@ struct TripReplayPage {
     }
   }
 
-  /**
-   * 绘制轨迹和节点标记
-   */
-  private async drawRouteAndMarkers(): Promise<void> {
-    if (!this.mapController || !this.replayRoute) {
-      return
-    }
-
-    const positions = this.replayRoute.nodes.map(node => node.position)
-
-    // 绘制轨迹折线
-    await this.mapController.addPolyline({
-      points: positions,
-      clickable: false,
-      visible: true,
-      width: 6,
-      zIndex: 5,
-      geodesic: false,
-      gradient: false,
-      jointType: mapCommon.JointType.ROUND,
-      startCap: mapCommon.CapStyle.ROUND,
-      endCap: mapCommon.CapStyle.ROUND
-    })
-
-    // 添加节点标记
-    for (const point of positions) {
-      await this.mapController.addMarker({
-        position: point,
-        visible: true,
-        clickable: false,
-        draggable: false,
-        flat: false,
-        rotation: 0,
-        zIndex: 10,
-        alpha: 1,
-        anchorU: 0.5,
-        anchorV: 1
-      })
-    }
-  }
-
   aboutToAppear(): void {
+    // 初始化模拟数据
+    this.mockRoute.id = 'trip_001'
+    this.mockRoute.name = '深圳三日游'
+    this.mockRoute.totalDistance = 128
+    this.mockRoute.duration = 72
+    this.mockRoute.nodes = [
+      new ReplayNode(
+        'node_1',
+        22.5268, 113.9455,
+        '$rawfile.photo_2',
+        '深圳湾公园',
+        '今天来到深圳湾公园，海边的日落真美。微风拂面，海浪轻轻拍打着礁石，远处的深圳湾大桥在夕阳下闪闪发光。和好朋友一起散步、拍照，度过了一个美好的下午。',
+        '深圳湾日落，海风很温柔…',
+        1710504000000,
+        0
+      ),
+      new ReplayNode(
+        'node_2',
+        22.5348, 113.9735,
+        '$rawfile.photo_5',
+        '世界之窗',
+        '世界之窗一日游！一天之内环游世界，看到了埃菲尔铁塔、金字塔、泰姬陵……每个微缩景观都做得非常精致。虽然走得有点累，但是很开心！',
+        '微缩世界，一日环游…',
+        1710590400000,
+        1
+      ),
+      new ReplayNode(
+        'node_3',
+        22.5965, 113.9785,
+        '$rawfile.photo_4',
+        '南方科技大学',
+        '回到校园，春天的南科大格外美丽。荔枝花开满了枝头，图书馆前的草坪上有很多同学在读书、聊天。新学期开始了，加油！',
+        '校园春色，荔枝花开…',
+        1710676800000,
+        2
+      )
+    ]
+
     // 加载模拟数据（后续替换为从 RDB 加载）
     this.replayRoute = this.mockRoute
     this.routeName = this.mockRoute.name
@@ -245,6 +205,53 @@ struct TripReplayPage {
   }
 
   /**
+   * 绘制轨迹和节点标记
+   */
+  private async drawRouteAndMarkers(): Promise<void> {
+    if (!this.mapController || !this.replayRoute) {
+      return
+    }
+
+    const positions: mapCommon.LatLng[] = []
+    for (const node of this.replayRoute.nodes) {
+      positions.push({
+        latitude: node.position.latitude,
+        longitude: node.position.longitude
+      })
+    }
+
+    // 绘制轨迹折线
+    await this.mapController.addPolyline({
+      points: positions,
+      clickable: false,
+      visible: true,
+      width: 6,
+      zIndex: 5,
+      geodesic: false,
+      gradient: false,
+      jointType: mapCommon.JointType.ROUND,
+      startCap: mapCommon.CapStyle.ROUND,
+      endCap: mapCommon.CapStyle.ROUND
+    })
+
+    // 添加节点标记
+    for (const point of positions) {
+      await this.mapController.addMarker({
+        position: point,
+        visible: true,
+        clickable: false,
+        draggable: false,
+        flat: false,
+        rotation: 0,
+        zIndex: 10,
+        alpha: 1,
+        anchorU: 0.5,
+        anchorV: 1
+      })
+    }
+  }
+
+  /**
    * 移动到指定节点
    */
   private moveToNode(index: number): void {
@@ -259,38 +266,41 @@ struct TripReplayPage {
     this.currentNodeIndex = index
     this.progress = (index / (this.replayRoute.nodes.length - 1)) * 100
 
-    const targetNode = this.replayRoute.nodes[index]
-
     // 隐藏卡片（移动过程中不显示）
     this.isCardVisible = false
 
     // 计算相机方位角
+    const prevIndex = Math.max(0, index - 1)
+    const fromNode = this.replayRoute.nodes[prevIndex]
+    const targetNode = this.replayRoute.nodes[index]
     const bearing = this.calculateBearing(
-      this.replayRoute.nodes[Math.max(0, index - 1)].position,
-      targetNode.position
+      fromNode.position.latitude,
+      fromNode.position.longitude,
+      targetNode.position.latitude,
+      targetNode.position.longitude
     )
 
     // 相机动画移动到目标节点
     const cameraUpdate = map.newCameraPosition({
-      target: targetNode.position,
+      target: {
+        latitude: targetNode.position.latitude,
+        longitude: targetNode.position.longitude
+      },
       zoom: 15,
       bearing: bearing,
       tilt: 45
     })
 
-    this.mapController.animateCamera(cameraUpdate, this.getMoveDuration(), () => {
-      // 动画完成
-      this.isCardVisible = true
-    })
+    this.mapController.animateCamera(cameraUpdate, this.getMoveDuration())
   }
 
   /**
    * 计算两点之间的方位角
    */
-  private calculateBearing(from: mapCommon.LatLng, to: mapCommon.LatLng): number {
-    const dLon = (to.longitude - from.longitude) * Math.PI / 180
-    const lat1 = from.latitude * Math.PI / 180
-    const lat2 = to.latitude * Math.PI / 180
+  private calculateBearing(fromLat: number, fromLng: number, toLat: number, toLng: number): number {
+    const dLon = (toLng - fromLng) * Math.PI / 180
+    const lat1 = fromLat * Math.PI / 180
+    const lat2 = toLat * Math.PI / 180
 
     const y = Math.sin(dLon) * Math.cos(lat2)
     const x = Math.cos(lat1) * Math.sin(lat2) -
@@ -349,18 +359,6 @@ struct TripReplayPage {
   private hideOverlayCard(): void {
     this.showOverlay = false
     this.overlayNode = null
-  }
-
-  /**
-   * 格式化时间戳
-   */
-  private formatTimestamp(timestamp: number): string {
-    const date = new Date(timestamp)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hour = String(date.getHours()).padStart(2, '0')
-    return `${year}.${month}.${day} ${hour}:00`
   }
 
   build() {

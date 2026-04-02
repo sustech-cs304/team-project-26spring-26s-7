@@ -37,7 +37,7 @@ export struct ReplayPhotoCard {
         Image(this.node.photoUri)
           .width(280)
           .height(180)
-          .objectFit(ImageObjectFit.Cover)
+          .objectFit(ImageFit.Cover)
           .borderRadius({ topLeft: 12, topRight: 12, bottomLeft: 0, bottomRight: 0 })
 
         // 文字信息区域

@@ -32,8 +32,6 @@ export type {
   SyncStatus,
   CopywritingRequest,
   ShareInfo,
-  ReplayNode,
-  ReplayRoute,
   RouteGenerator
 } from './service/types';
 
@@ -44,7 +42,10 @@ export {
   TimelineNodeInfo,
   ToneOption,
   SharePlatform,
-  RouterParam
+  RouterParam,
+  ReplayNode,
+  ReplayRoute,
+  Position
 } from './service/types';
 
 // Service Layer 服务导出

@@ -44,11 +44,15 @@ export struct PhotoCardOverlay {
     if (this.isVisible && this.currentNode) {
       Stack() {
         // 半透明遮罩背景
-        Blank()
-          .backgroundColor('rgba(0, 0, 0, 0.5)')
-          .width('100%')
-          .height('100%')
-          .onClick(() => this.hide())
+        Column() {
+          Blank()
+            .backgroundColor('rgba(0, 0, 0, 0.5)')
+            .width('100%')
+            .height('100%')
+        }
+        .width('100%')
+        .height('100%')
+        .onClick(() => this.hide())
 
         // 底部半屏卡片
         Column() {
@@ -67,7 +71,7 @@ export struct PhotoCardOverlay {
           Image(this.currentNode.photoUri)
             .width('100%')
             .height(250)
-            .objectFit(ImageObjectFit.Cover)
+            .objectFit(ImageFit.Cover)
             .borderRadius({ topLeft: 16, topRight: 16 })
 
           // 标题
