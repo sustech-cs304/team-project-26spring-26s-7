@@ -444,8 +444,8 @@ struct TripReplayPage {
       .backgroundColor('#000000CC')
       .position({ x: 0, y: '82%' })
 
-      // 退出按钮 (左上角) - 使用 Row 容器定位
-      Row() {
+      // 退出按钮 (左上角) - 使用 Stack 绝对定位
+      Stack() {
         Text('✕')
           .fontSize(AppDimens.FONT_XL)
           .fontColor('#FFFFFF')
@@ -456,11 +456,9 @@ struct TripReplayPage {
           .textAlign(TextAlign.Center)
           .onClick(() => router.back())
       }
-      .width('100%')
-      .height('100%')
-      .justifyContent(FlexAlign.Start)
-      .alignItems(VerticalAlign.Top)
-      .padding({ left: 16, top: 48 })
+      .width(40)
+      .height(40)
+      .position({ x: 16, y: 48 })
       .zIndex(100)
 
       // 照片卡片展开覆盖层
