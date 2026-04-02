@@ -444,18 +444,7 @@ struct TripReplayPage {
       .backgroundColor('#000000CC')
       .position({ x: 0, y: '82%' })
 
-      // 照片卡片展开覆盖层
-      if (this.showOverlay && this.overlayNode) {
-        PhotoCardOverlay({
-          isVisible: this.showOverlay,
-          currentNode: this.overlayNode,
-          onClose: () => {
-            this.hideOverlayCard()
-          }
-        })
-      }
-
-      // 退出按钮 (左上角，最上层) - 放在最后确保在最上层
+      // 退出按钮 (左上角) - 使用 Row 容器定位
       Row() {
         Text('✕')
           .fontSize(AppDimens.FONT_XL)
@@ -472,7 +461,18 @@ struct TripReplayPage {
       .justifyContent(FlexAlign.Start)
       .alignItems(VerticalAlign.Top)
       .padding({ left: 16, top: 48 })
-      .zIndex(1000)
+      .zIndex(100)
+
+      // 照片卡片展开覆盖层
+      if (this.showOverlay && this.overlayNode) {
+        PhotoCardOverlay({
+          isVisible: this.showOverlay,
+          currentNode: this.overlayNode,
+          onClose: () => {
+            this.hideOverlayCard()
+          }
+        })
+      }
     }
     .width('100%')
     .height('100%')
