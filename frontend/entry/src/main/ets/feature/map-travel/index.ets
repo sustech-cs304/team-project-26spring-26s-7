@@ -21,6 +21,9 @@ export { TripListView } from './views/TripListView';
 
 // Components 导出
 export { PhotoSelector } from './components/PhotoSelector';
+export { ReplayPhotoCard } from './components/ReplayPhotoCard';
+export { ReplayProgressBar } from './components/ReplayProgressBar';
+export { PhotoCardOverlay } from './components/PhotoCardOverlay';
 
 // Pages 导出（如需在 feature 间引用）
 export { NodeEditPage } from './pages/NodeEditPage';

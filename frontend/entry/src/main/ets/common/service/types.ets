@@ -152,3 +152,45 @@ export interface ShareInfo {
   copyText: string
   expireDays: number
 }
+
+/**
+ * 回放节点 - 动态旅程回放功能的单个记忆点
+ */
+export interface ReplayNode {
+  id: string
+  position: {
+    latitude: number
+    longitude: number
+  }
+  photoUri: string        // 照片资源路径 (如 '$rawfile.pexels_xxx.jpg')
+  title: string           // 地点名称
+  note: string            // 完整文字笔记
+  noteShort: string       // 缩略文字 (最多 20 字)
+  timestamp: number       // 小时级时间戳 (毫秒)
+  order: number           // 在路线中的顺序
+}
+
+/**
+ * 回放路线 - 动态旅程回放功能的完整路线数据
+ * 未来由 RouteGenerator 从 MemoryNode[] 转换生成
+ */
+export interface ReplayRoute {
+  id: string
+  name: string
+  nodes: ReplayNode[]     // 有序节点列表
+  totalDistance: number   // 总距离 (km)
+  duration: number        // 总时长 (小时)
+}
+
+/**
+ * 路线生成器接口
+ * 未来由队友实现，将 MemoryNode[] 转换为 ReplayRoute
+ */
+export interface RouteGenerator {
+  /**
+   * 从记忆节点生成回放路线
+   * @param nodes 记忆节点数组
+   * @returns 回放路线
+   */
+  generateFromNodes(nodes: MemoryNode[]): ReplayRoute
+}

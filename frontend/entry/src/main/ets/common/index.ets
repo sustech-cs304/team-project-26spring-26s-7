@@ -31,7 +31,10 @@ export type {
   Trip,
   SyncStatus,
   CopywritingRequest,
-  ShareInfo
+  ShareInfo,
+  ReplayNode,
+  ReplayRoute,
+  RouteGenerator
 } from './service/types';
 
 // Service Layer 类导出
