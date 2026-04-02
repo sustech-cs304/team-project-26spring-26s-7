@@ -159,7 +159,7 @@ export interface ShareInfo {
 export class ReplayNode {
   id: string = ''
   position: Position = new Position()
-  photoUri: string = ''    // 照片资源路径 (如 '$rawfile.xxx')
+  photoUri: ResourceStr = ''    // 照片资源路径 (如 $r('app.media.xxx'))
   title: string = ''       // 地点名称
   note: string = ''        // 完整文字笔记
   noteShort: string = ''   // 缩略文字 (最多 20 字)
@@ -170,7 +170,7 @@ export class ReplayNode {
     id: string,
     latitude: number,
     longitude: number,
-    photoUri: string,
+    photoUri: ResourceStr,
     title: string,
     note: string,
     noteShort: string,

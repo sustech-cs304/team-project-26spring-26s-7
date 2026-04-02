@@ -74,7 +74,7 @@ struct TripReplayPage {
       new ReplayNode(
         'node_1',
         22.5268, 113.9455,
-        '$media.photo_2',
+        $r('app.media.photo_2'),
         '深圳湾公园',
         '今天来到深圳湾公园，海边的日落真美。微风拂面，海浪轻轻拍打着礁石，远处的深圳湾大桥在夕阳下闪闪发光。和好朋友一起散步、拍照，度过了一个美好的下午。',
         '深圳湾日落，海风很温柔…',
@@ -84,7 +84,7 @@ struct TripReplayPage {
       new ReplayNode(
         'node_2',
         22.5348, 113.9735,
-        '$media.photo_5',
+        $r('app.media.photo_5'),
         '世界之窗',
         '世界之窗一日游！一天之内环游世界，看到了埃菲尔铁塔、金字塔、泰姬陵……每个微缩景观都做得非常精致。虽然走得有点累，但是很开心！',
         '微缩世界，一日环游…',
@@ -94,7 +94,7 @@ struct TripReplayPage {
       new ReplayNode(
         'node_3',
         22.5965, 113.9785,
-        '$media.photo_4',
+        $r('app.media.photo_4'),
         '南方科技大学',
         '回到校园，春天的南科大格外美丽。荔枝花开满了枝头，图书馆前的草坪上有很多同学在读书、聊天。新学期开始了，加油！',
         '校园春色，荔枝花开…',
@@ -368,18 +368,6 @@ struct TripReplayPage {
         .width('100%')
         .height('100%')
 
-      // 退出按钮 (左上角)
-      Text('✕')
-        .fontSize(AppDimens.FONT_XL)
-        .fontColor('#FFFFFF')
-        .backgroundColor('#00000066')
-        .borderRadius(20)
-        .width(40)
-        .height(40)
-        .textAlign(TextAlign.Center)
-        .position({ x: 16, y: 48 })
-        .onClick(() => router.back())
-
       // 照片卡片（使用新组件）
       if (this.isCardVisible && this.replayRoute && this.currentNodeIndex < this.replayRoute.nodes.length) {
         ReplayPhotoCard({
@@ -455,6 +443,19 @@ struct TripReplayPage {
       .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG, top: 12, bottom: 36 })
       .backgroundColor('#000000CC')
       .position({ x: 0, y: '82%' })
+
+      // 退出按钮 (左上角，最上层)
+      Text('✕')
+        .fontSize(AppDimens.FONT_XL)
+        .fontColor('#FFFFFF')
+        .backgroundColor('#00000066')
+        .borderRadius(20)
+        .width(40)
+        .height(40)
+        .textAlign(TextAlign.Center)
+        .position({ x: 16, y: 48 })
+        .onClick(() => router.back())
+        .zIndex(1000)
 
       // 照片卡片展开覆盖层
       if (this.showOverlay && this.overlayNode) {
