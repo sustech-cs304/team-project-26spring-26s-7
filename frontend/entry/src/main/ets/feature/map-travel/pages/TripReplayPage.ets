@@ -444,19 +444,6 @@ struct TripReplayPage {
       .backgroundColor('#000000CC')
       .position({ x: 0, y: '82%' })
 
-      // 退出按钮 (左上角，最上层)
-      Text('✕')
-        .fontSize(AppDimens.FONT_XL)
-        .fontColor('#FFFFFF')
-        .backgroundColor('#00000066')
-        .borderRadius(20)
-        .width(40)
-        .height(40)
-        .textAlign(TextAlign.Center)
-        .position({ x: 16, y: 48 })
-        .onClick(() => router.back())
-        .zIndex(1000)
-
       // 照片卡片展开覆盖层
       if (this.showOverlay && this.overlayNode) {
         PhotoCardOverlay({
@@ -467,6 +454,25 @@ struct TripReplayPage {
           }
         })
       }
+
+      // 退出按钮 (左上角，最上层) - 放在最后确保在最上层
+      Row() {
+        Text('✕')
+          .fontSize(AppDimens.FONT_XL)
+          .fontColor('#FFFFFF')
+          .backgroundColor('#00000066')
+          .borderRadius(20)
+          .width(40)
+          .height(40)
+          .textAlign(TextAlign.Center)
+          .onClick(() => router.back())
+      }
+      .width('100%')
+      .height('100%')
+      .justifyContent(FlexAlign.Start)
+      .alignItems(VerticalAlign.Top)
+      .padding({ left: 16, top: 48 })
+      .zIndex(1000)
     }
     .width('100%')
     .height('100%')
