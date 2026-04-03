@@ -1,6 +1,6 @@
 # Change Log
 
-**Last Updated**: 2026-04-02
+**Last Updated**: 2026-04-03
 
 ---
 
@@ -8,6 +8,30 @@
 ```
 [YYYY-MM-DD-HH-MM-SS] - [Action] - [Location] - [Description] - [Git Commit]
 ```
+
+---
+
+## 2026-04-03 (动态旅程回放功能 bug 修复)
+
+- [2026-04-03-03-13-38] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 18s 929ms
+- [2026-04-03] - FIX - types.ets - 为 ReplayNode 类添加 @Observed 装饰器，支持状态管理框架观察
+- [2026-04-03] - FIX - ReplayPhotoCard.ets - 将 node 从 @State 改为 @Prop，支持接收父组件传入的新对象引用
+- [2026-04-03] - FIX - TripReplayPage.ets - 添加 forceRefreshCard() 方法，通过先隐藏再显示强制刷新卡片状态
+- [2026-04-03] - FIX - TripReplayPage.ets - moveToNode() 动画完成后自动显示卡片（setTimeout 延迟）
+- [2026-04-03] - FIX - TripReplayPage.ets - jumpToNode() 人为拖动进度条时立即显示卡片
+- [2026-04-03] - FIX - types.ets - 修复 photoUri 类型为 ResourceStr（内建类型，无需导入）
+- [2026-04-03] - 问题修复 - 地点变换时图文不切换：三个节点都显示第一个节点的图文数据
+- [2026-04-03] - 问题修复 - 拖动进度条时图文不显示：jumpToNode 后 isCardVisible 未设置为 true
+
+### 根因分析
+
+**问题 1：地点变换时图文不切换**
+- 根因：ReplayPhotoCard 使用 @State node 装饰节点数据，无法响应对象引用切换
+- 解决：@State → @Prop，并为 ReplayNode 添加 @Observed 装饰器
+
+**问题 2：拖动进度条时图文不显示**
+- 根因：jumpToNode 调用 moveToNode 后，isCardVisible=false，但未在拖动后恢复
+- 解决：jumpToNode 末尾显式设置 isCardVisible=true
 
 ---
 

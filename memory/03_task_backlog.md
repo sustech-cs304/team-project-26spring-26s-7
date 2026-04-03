@@ -1,6 +1,6 @@
 # Task Backlog
 
-**Last Updated**: 2026-04-02 (动态旅程回放功能完成)
+**Last Updated**: 2026-04-03 (动态旅程回放功能 bug 修复)
 **Total Tasks**: 28 (来自 base 项目)
 **Completed**: 12 (含三层架构重构 + 动态旅程回放)
 **In Progress**: 0
@@ -13,6 +13,30 @@
 - 🔄 In Progress
 - ⏳ Pending
 - 🔴 Blocked
+
+---
+
+## 2026-04-03 Update: 动态旅程回放功能 bug 修复
+
+### ✅ 已完成工作 (2026-04-03)
+
+**修复问题 1：地点变换时图文不切换**
+- 根因：ReplayPhotoCard 使用 `@State node` 装饰节点数据，无法响应对象引用切换
+- 解决方案：
+  1. 为 `ReplayNode` 类添加 `@Observed` 装饰器
+  2. 将 `ReplayPhotoCard.node` 从 `@State` 改为 `@Prop`
+  3. 添加 `forceRefreshCard()` 方法强制刷新状态
+
+**修复问题 2：拖动进度条时图文不显示**
+- 根因：`jumpToNode` 调用 `moveToNode` 后，`isCardVisible=false`，但未在拖动后恢复
+- 解决方案：`jumpToNode` 末尾显式设置 `isCardVisible=true`
+
+**修改文件**:
+- `common/service/types.ets`: ReplayNode 添加 @Observed，photoUri 类型改为 ResourceStr
+- `feature/map-travel/components/ReplayPhotoCard.ets`: @State → @Prop
+- `feature/map-travel/pages/TripReplayPage.ets`: 添加 forceRefreshCard()，修复 jumpToNode()
+
+**编译状态**: ✅ BUILD SUCCESSFUL in 18s 929ms
 
 ---
 

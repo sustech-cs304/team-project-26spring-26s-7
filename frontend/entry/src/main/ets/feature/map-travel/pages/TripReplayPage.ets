@@ -269,6 +269,9 @@ struct TripReplayPage {
     // 隐藏卡片（移动过程中不显示）
     this.isCardVisible = false
 
+    // 强制刷新照片卡片数据
+    this.forceRefreshCard()
+
     // 计算相机方位角
     const prevIndex = Math.max(0, index - 1)
     const fromNode = this.replayRoute.nodes[prevIndex]
@@ -292,6 +295,22 @@ struct TripReplayPage {
     })
 
     this.mapController.animateCamera(cameraUpdate, this.getMoveDuration())
+
+    // 移动完成后显示卡片
+    setTimeout(() => {
+      this.isCardVisible = true
+    }, this.getMoveDuration())
+  }
+
+  /**
+   * 强制刷新照片卡片数据（通过临时清空再赋值来触发状态更新）
+   */
+  private forceRefreshCard(): void {
+    // 通过先隐藏再显示来强制刷新组件状态
+    this.isCardVisible = false
+    setTimeout(() => {
+      this.isCardVisible = true
+    }, 50)
   }
 
   /**
@@ -317,6 +336,8 @@ struct TripReplayPage {
     // 跳转时暂停播放
     this.stopPlay()
     this.moveToNode(index)
+    // 人为拖动进度条时，立即显示卡片（不需要等待移动动画）
+    this.isCardVisible = true
   }
 
   /**

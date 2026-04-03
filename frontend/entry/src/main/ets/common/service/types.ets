@@ -156,6 +156,7 @@ export interface ShareInfo {
 /**
  * 回放节点 - 动态旅程回放功能的单个记忆点
  */
+@Observed
 export class ReplayNode {
   id: string = ''
   position: Position = new Position()

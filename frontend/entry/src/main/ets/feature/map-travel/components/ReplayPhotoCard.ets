@@ -8,7 +8,7 @@ import { ReplayNode } from '../../../common'
  */
 @Component
 export struct ReplayPhotoCard {
-  @State node: ReplayNode | null = null
+  @Prop node: ReplayNode | null = null
   @State isExpanded: boolean = false
 
   // 点击展开回调
