@@ -8,7 +8,7 @@ import { SharePlatform, RouterParam } from '../../../common'
  */
 @Entry
 @Component
-struct SharePage {
+export struct SharePage {
   @State shareUrl: string = 'https://tp.app/s/xK9mNz'
   @State expireDays: number = 7
   @State copyText: string = ''

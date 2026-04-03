@@ -1,5 +1,5 @@
-import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../../../common'
+import { router, promptAction } from '@kit.ArkUI'
+import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
 
 /**
@@ -8,23 +8,78 @@ import { RouterParam } from '../../../common'
  */
 @Entry
 @Component
-struct NodeDetailPage {
-  @State title: string = '深圳湾的日落'
-  @State poiName: string = '深圳湾公园'
-  @State date: string = '2026.03.15'
-  @State mood: string = '🤩'
-  @State tags: string[] = ['旅行', '风景']
-  @State content: string = '傍晚六点的深圳湾，海风带着咸味扑面而来。夕阳把整片天空染成橘红色，远处的桥在晚霞中若隐若现...'
+export struct NodeDetailPage {
+  @State title: string = ''
+  @State poiName: string = ''
+  @State date: string = ''
+  @State mood: string = ''
+  @State tags: string[] = []
+  @State content: string = ''
   @State photos: string[] = []
-  @State tripName: string = '深圳三日游'
-  @State tripId: string = '1'
+  @State tripName: string = ''
+  @State tripId: string = ''
   @State nodeId: string = ''
+  @State isLoading: boolean = false
+
+  private dataService = getDataService()
 
   aboutToAppear(): void {
     const params = router.getParams() as RouterParam
     if (params?.nodeId) {
       this.nodeId = params.nodeId
-      // TODO: 从本地 RDB 加载节点数据
+      this.loadNodeDetail()
+    }
+  }
+
+  private formatDate(timestamp: number): string {
+    const date = new Date(timestamp)
+    const year = date.getFullYear().toString()
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    return `${year}.${month}.${day}`
+  }
+
+  private async loadNodeDetail(): Promise<void> {
+    if (!this.nodeId) {
+      return
+    }
+
+    this.isLoading = true
+    try {
+      const node = await this.dataService.getNodeById(this.nodeId)
+      if (!node) {
+        promptAction.showToast({ message: '未找到对应记忆节点' })
+        return
+      }
+
+      this.title = node.title
+      this.poiName = node.poiName
+      this.date = this.formatDate(node.createdAt)
+      this.mood = node.mood
+      this.tags = node.tags
+      this.content = node.content
+      this.photos = node.photos
+      this.tripId = node.travelId
+
+      const trip = await this.dataService.getTravelById(node.travelId)
+      this.tripName = trip ? trip.name : ''
+    } catch (err) {
+      promptAction.showToast({ message: '加载节点详情失败' })
+    } finally {
+      this.isLoading = false
+    }
+  }
+
+  private async deleteCurrentNode(): Promise<void> {
+    if (!this.nodeId) {
+      return
+    }
+    try {
+      await this.dataService.deleteNode(this.nodeId)
+      promptAction.showToast({ message: '记忆节点已删除' })
+      router.back()
+    } catch (err) {
+      promptAction.showToast({ message: '删除节点失败' })
     }
   }
 
@@ -40,8 +95,7 @@ struct NodeDetailPage {
         value: '删除',
         fontColor: AppColors.DANGER,
         action: () => {
-          // TODO: 从 RDB 删除节点，级联清理照片文件，排入同步队列
-          router.back()
+          this.deleteCurrentNode()
         }
       }
     })
@@ -80,13 +134,24 @@ struct NodeDetailPage {
       // 内容区
       Scroll() {
         Column() {
+          if (this.isLoading) {
+            Column() {
+              LoadingProgress()
+                .width(36)
+                .height(36)
+            }
+            .width('100%')
+            .height(200)
+            .justifyContent(FlexAlign.Center)
+          }
+
           // 照片轮播区 (占位)
           Stack() {
             Column() {
               Text('📷')
                 .fontSize(48)
                 .fontColor(AppColors.TEXT_HINT)
-              Text('暂无照片')
+              Text(this.photos.length > 0 ? `共 ${this.photos.length} 张照片` : '暂无照片')
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_HINT)
             }

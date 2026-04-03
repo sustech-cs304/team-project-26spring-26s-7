@@ -147,11 +147,6 @@ export class DataServiceStub implements IDataService {
     // 不执行任何操作
   }
 
-  async getAllNodes(): Promise<MemoryNode[]> {
-    logger.debug(TAG, 'getAllNodes() called - returning empty array (STUB)');
-    return [];
-  }
-
   async reorderNodes(travelId: string, nodeIds: string[]): Promise<void> {
     logger.warn(TAG, `reorderNodes() called but not implemented (STUB)`);
     // 不执行任何操作

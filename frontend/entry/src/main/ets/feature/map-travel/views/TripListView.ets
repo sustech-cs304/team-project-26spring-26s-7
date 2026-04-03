@@ -1,24 +1,82 @@
-import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../../../common'
+import { router, promptAction } from '@kit.ArkUI'
+import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { TripSummary, RouterParam } from '../../../common'
+import type { Trip } from '../../../common'
 
 /**
  * 旅行列表 Tab 内容视图
  * 展示所有旅行路线卡片
  *
- * 注意：当前使用硬编码模拟数据
- * 数据层集成后，可通过 getDataService() 获取真实数据
  */
 @Component
 export struct TripListView {
-  // 模拟数据（数据层完成前使用）
-  @State trips: TripSummary[] = [
-    new TripSummary('1', '深圳三日游', '2026.03.15 ~ 03.17', '5', '128'),
-    new TripSummary('2', '广州周末', '2026.03.01 ~ 03.02', '3', '45'),
-    new TripSummary('3', '珠海一日行', '2026.02.20', '4', '67'),
-  ]
+  @State trips: TripSummary[] = []
+  @State isLoading: boolean = false
 
-  @State newTripName: string = ''
+  private dataService = getDataService()
+
+  aboutToAppear(): void {
+    this.loadTrips()
+  }
+
+  private formatDate(timestamp: number): string {
+    const date = new Date(timestamp)
+    const year = date.getFullYear().toString()
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    return `${year}.${month}.${day}`
+  }
+
+  private formatDateRange(startDate: number, endDate: number): string {
+    const start = this.formatDate(startDate)
+    const end = this.formatDate(endDate)
+    return start === end ? start : `${start} ~ ${end}`
+  }
+
+  private mapTripToSummary(trip: Trip): TripSummary {
+    return new TripSummary(
+      trip.id,
+      trip.name,
+      this.formatDateRange(trip.startDate, trip.endDate),
+      trip.nodeIds.length.toString(),
+      trip.totalDistance.toString()
+    )
+  }
+
+  private async loadTrips(): Promise<void> {
+    this.isLoading = true
+    try {
+      const trips = await this.dataService.getAllTravels()
+      this.trips = trips.map((trip: Trip) => this.mapTripToSummary(trip))
+    } catch (err) {
+      promptAction.showToast({ message: '加载旅行列表失败' })
+    } finally {
+      this.isLoading = false
+    }
+  }
+
+  private async handleCreateTrip(): Promise<void> {
+    try {
+      const now = Date.now()
+      const createdTrip = await this.dataService.createTravel({
+        name: `新旅行 ${this.formatDate(now)}`,
+        description: '',
+        coverPhoto: '',
+        startDate: now,
+        endDate: now,
+        nodeIds: [],
+        totalDistance: 0
+      })
+      await this.loadTrips()
+      promptAction.showToast({ message: '已创建新旅行' })
+      router.pushUrl({
+        url: RouterUrls.TRIP_DETAIL,
+        params: { tripId: createdTrip.id } as RouterParam
+      })
+    } catch (err) {
+      promptAction.showToast({ message: '创建旅行失败' })
+    }
+  }
 
   build() {
     Column() {
@@ -33,16 +91,25 @@ export struct TripListView {
           .height(32)
           .fontSize(AppDimens.FONT_SM)
           .backgroundColor(AppColors.PRIMARY)
-          .onClick(() => {
-            // TODO: 数据层完成后实现创建旅行逻辑
-            // 当前仅用于 UI 展示
-          })
+          .onClick(() => { this.handleCreateTrip() })
       }
       .width('100%')
       .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: AppDimens.PADDING_MD })
 
-      // 空数据状态（当 trips.length === 0 时显示）
-      if (this.trips.length === 0) {
+      if (this.isLoading) {
+        Column() {
+          LoadingProgress()
+            .width(36)
+            .height(36)
+          Text('正在加载旅行数据...')
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_HINT)
+            .margin({ top: 12 })
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Center)
+      } else if (this.trips.length === 0) {
         Column() {
           Text('🧳')
             .fontSize(48)
@@ -75,7 +142,6 @@ export struct TripListView {
                 .height(140)
                 .backgroundColor(AppColors.BACKGROUND)
                 .borderRadius({ topLeft: AppDimens.RADIUS_MD, topRight: AppDimens.RADIUS_MD })
-                // TODO: 替换为真实封面图
 
                 // 旅行信息
                 Column() {

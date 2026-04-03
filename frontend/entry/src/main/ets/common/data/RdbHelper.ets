@@ -13,67 +13,130 @@
  * limitations under the License.
  */
 
+import { relationalStore as rdb } from '@kit.ArkData';
+import { common } from '@kit.AbilityKit';
 import { logger } from '../utils/Logger';
 
 const TAG = 'RdbHelper';
 
 /**
- * RDB 数据库助手
- *
- * 功能职责：
- * - 管理关系型数据库（RDB）连接
- * - 提供表创建、升级迁移
- * - 封装 CRUD 基础操作
- *
- * 数据库 Schema：
- * - travels 表：id, name, cover_image_uri, start_date, end_date, created_at
- * - memory_nodes 表：id, travel_id, latitude, longitude, photo_uri, description, address, created_at
- *
- * 依赖：
- * - @kit.ArkData (relationalStore 模块)
- *
- * ---
- * 实现负责人：[队友姓名]
- * 参考文档：references/F1_local_storage_assignment.md
- * ---
- *
- * TODO: 需要实现：
- * 1. 导入 @kit.ArkData.relationalStore
- * 2. 实现 initDatabase() 创建/打开数据库
- * 3. 实现 createTables() 初始化表结构
- * 4. 实现增删改查基础方法
- * 5. 数据分级标识（S0-S4）的存储和管理
- * 6. 数据库版本管理（onUpgrade）
- */
-
-/**
  * 数据分级枚举（华为鸿蒙安全合规要求）
- * 参考：references/F1_local_storage_assignment.md 一、1.2
  */
 export enum SensitivityLevel {
-  S0 = 'S0',  // 公开数据
-  S1 = 'S1',  // 一般数据（旅行名称、标签）
-  S2 = 'S2',  // 敏感数据（经纬度、时间戳、地址）
-  S3 = 'S3',  // 个人敏感信息（用户草稿、心情标记）
-  S4 = 'S4'   // 高度敏感（本应用不涉及）
+  S0 = 'S0',
+  S1 = 'S1',
+  S2 = 'S2',
+  S3 = 'S3',
+  S4 = 'S4'
 }
 
-/**
- * 数据库配置常量
- */
 const DB_NAME = 'TravelPin.db';
 const DB_VERSION = 1;
 
+const STORE_CONFIG: rdb.StoreConfig = {
+  name: DB_NAME,
+  securityLevel: rdb.SecurityLevel.S2
+};
+
+const SQL_CREATE_TRAVELS = `
+  CREATE TABLE IF NOT EXISTS travels(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    cover_image_uri TEXT,
+    start_date INTEGER NOT NULL,
+    end_date INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    sensitivity TEXT NOT NULL DEFAULT 'S1'
+  )
+`;
+
+const SQL_CREATE_MEMORY_NODES = `
+  CREATE TABLE IF NOT EXISTS memory_nodes(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    travel_id INTEGER NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    title TEXT,
+    poi_name TEXT,
+    description TEXT,
+    address TEXT,
+    mood TEXT,
+    tags TEXT,
+    photos TEXT,
+    node_order INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    sensitivity TEXT NOT NULL DEFAULT 'S2',
+    FOREIGN KEY (travel_id) REFERENCES travels(id) ON DELETE CASCADE
+  )
+`;
+
+const SQL_ADD_MEMORY_NODE_TITLE = `
+  ALTER TABLE memory_nodes ADD COLUMN title TEXT
+`;
+
+const SQL_ADD_MEMORY_NODE_POI_NAME = `
+  ALTER TABLE memory_nodes ADD COLUMN poi_name TEXT
+`;
+
+const SQL_ADD_MEMORY_NODE_DESCRIPTION = `
+  ALTER TABLE memory_nodes ADD COLUMN description TEXT
+`;
+
+const SQL_ADD_MEMORY_NODE_ADDRESS = `
+  ALTER TABLE memory_nodes ADD COLUMN address TEXT
+`;
+
+const SQL_ADD_MEMORY_NODE_MOOD = `
+  ALTER TABLE memory_nodes ADD COLUMN mood TEXT
+`;
+
+const SQL_ADD_MEMORY_NODE_TAGS = `
+  ALTER TABLE memory_nodes ADD COLUMN tags TEXT
+`;
+
+const SQL_ADD_MEMORY_NODE_PHOTOS = `
+  ALTER TABLE memory_nodes ADD COLUMN photos TEXT
+`;
+
+const SQL_ADD_MEMORY_NODE_ORDER = `
+  ALTER TABLE memory_nodes ADD COLUMN node_order INTEGER DEFAULT 0
+`;
+
+const SQL_ADD_MEMORY_NODE_SENSITIVITY = `
+  ALTER TABLE memory_nodes ADD COLUMN sensitivity TEXT NOT NULL DEFAULT 'S2'
+`;
+
+const SQL_MIGRATE_MEMORY_NODE_ORDER = `
+  UPDATE memory_nodes SET node_order = "order" WHERE node_order = 0
+`;
+
+const SQL_CREATE_SYNC_QUEUE = `
+  CREATE TABLE IF NOT EXISTS sync_queue(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    entity_type TEXT NOT NULL,
+    entity_id INTEGER NOT NULL,
+    operation TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    retry_count INTEGER DEFAULT 0
+  )
+`;
+
 export class RdbHelper {
   private static instance: RdbHelper;
-  private rdb: object | null = null; // TODO: relationalStore.RdbStore 类型
-  private readonly dbName: string = DB_NAME;
+  private rdbStore: rdb.RdbStore | undefined = undefined;
+  private initialized: boolean = false;
+  private appContext: common.Context | undefined = undefined;
+  private initPromise: Promise<void> | null = null;
 
   private constructor() {}
 
-  /**
-   * 获取单例实例
-   */
+  private toError(err: Object): Error {
+    return new Error(JSON.stringify(err));
+  }
+
   static getInstance(): RdbHelper {
     if (!RdbHelper.instance) {
       RdbHelper.instance = new RdbHelper();
@@ -82,73 +145,110 @@ export class RdbHelper {
   }
 
   /**
-   * 初始化数据库
-   *
-   * TODO: 实现步骤：
-   * 1. 配置 StoreConfig
-   * 2. 调用 relationalStore.getRdbStore()
-   * 3. 获取 rdb 实例
-   * 4. 调用 createTables() 创建表
+   * 初始化数据库（需要在 EntryAbility 中调用）
    */
-  async initDatabase(): Promise<void> {
-    logger.info(TAG, 'Initializing database (STUB - to be implemented)');
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回 Promise.resolve()
-    // 队友完成后请替换为真实实现
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve();
+  async initDatabase(context: common.Context): Promise<void> {
+    this.appContext = context;
+    if (this.initialized && this.rdbStore) {
+      logger.info(TAG, 'Database already initialized');
+      return;
+    }
+    if (this.initPromise) {
+      await this.initPromise;
+      return;
+    }
+
+    this.initPromise = (async () => {
+      try {
+        logger.info(TAG, `Initializing database v${DB_VERSION}...`);
+        this.rdbStore = await rdb.getRdbStore(context, STORE_CONFIG);
+        await this.createTables();
+        this.initialized = true;
+        logger.info(TAG, 'Database initialized successfully');
+      } catch (err) {
+        logger.error(TAG, `Database initialization failed: ${JSON.stringify(err)}`);
+        throw this.toError(err);
+      }
+    })();
+
+    try {
+      await this.initPromise;
+    } finally {
+      this.initPromise = null;
+    }
   }
 
-  /**
-   * 创建表结构
-   *
-   * TODO: 实现步骤：
-   * 1. CREATE TABLE IF NOT EXISTS travels (...)
-   * 2. CREATE TABLE IF NOT EXISTS memory_nodes (...)
-   * 3. 添加数据分级标识字段 sensitivity
-   */
-  async createTables(): Promise<void> {
-    logger.info(TAG, 'Creating tables (STUB - to be implemented)');
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve();
+  private async createTables(): Promise<void> {
+    if (!this.rdbStore) {
+      throw new Error('RdbStore not initialized');
+    }
+    await this.rdbStore.executeSql(SQL_CREATE_TRAVELS);
+    await this.rdbStore.executeSql(SQL_CREATE_MEMORY_NODES);
+    await this.rdbStore.executeSql(SQL_CREATE_SYNC_QUEUE);
+    await this.ensureLatestSchema();
+    logger.info(TAG, 'Tables created successfully');
   }
 
-  /**
-   * 执行 SQL 查询
-   * @param sql SQL 语句
-   * @param params 参数数组
-   */
-  async query(sql: string, params?: string[]): Promise<string[]> {
-    logger.debug(TAG, `Executing query: ${sql} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回空数组
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve([]);
+  private async ensureLatestSchema(): Promise<void> {
+    const optionalSchemaUpdates: string[] = [
+      SQL_ADD_MEMORY_NODE_TITLE,
+      SQL_ADD_MEMORY_NODE_POI_NAME,
+      SQL_ADD_MEMORY_NODE_DESCRIPTION,
+      SQL_ADD_MEMORY_NODE_ADDRESS,
+      SQL_ADD_MEMORY_NODE_MOOD,
+      SQL_ADD_MEMORY_NODE_TAGS,
+      SQL_ADD_MEMORY_NODE_PHOTOS,
+      SQL_ADD_MEMORY_NODE_ORDER,
+      SQL_ADD_MEMORY_NODE_SENSITIVITY
+    ];
+
+    for (let i = 0; i < optionalSchemaUpdates.length; i++) {
+      await this.safeExecuteSql(optionalSchemaUpdates[i]);
+    }
+
+    await this.safeExecuteSql(SQL_MIGRATE_MEMORY_NODE_ORDER);
   }
 
-  /**
-   * 执行 SQL 更新
-   * @param sql SQL 语句
-   * @param params 参数数组
-   */
-  async execute(sql: string, params?: string[]): Promise<void> {
-    logger.debug(TAG, `Executing update: ${sql} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve();
+  private async safeExecuteSql(sql: string): Promise<void> {
+    if (!this.rdbStore) {
+      return;
+    }
+    try {
+      await this.rdbStore.executeSql(sql);
+    } catch (err) {
+      logger.info(TAG, `Skipping optional SQL execution: ${JSON.stringify(err)}`);
+    }
   }
 
-  /**
-   * 关闭数据库连接
-   */
+  getRdbStore(): rdb.RdbStore | undefined {
+    return this.rdbStore;
+  }
+
+  async getStore(): Promise<rdb.RdbStore> {
+    if (this.initialized && this.rdbStore) {
+      return this.rdbStore;
+    }
+    if (this.initPromise) {
+      await this.initPromise;
+    } else if (this.appContext) {
+      await this.initDatabase(this.appContext);
+    }
+
+    if (!this.rdbStore) {
+      throw new Error('RdbStore not initialized. Call RdbHelper.initDatabase() first.');
+    }
+    return this.rdbStore;
+  }
+
+  isInitialized(): boolean {
+    return this.initialized;
+  }
+
   async close(): Promise<void> {
-    if (this.rdb) {
+    if (this.rdbStore) {
       logger.info(TAG, 'Closing database');
-      // TODO: await this.rdb.close();
-      this.rdb = null;
+      this.rdbStore = undefined;
+      this.initialized = false;
     }
   }
 }

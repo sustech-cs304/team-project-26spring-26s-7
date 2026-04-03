@@ -1,8 +1,14 @@
-import { router } from '@kit.ArkUI'
+import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens } from '../../../common'
+import { AppColors, AppDimens, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
+import type { MemoryNode } from '../../../common'
+
+const DEFAULT_REPLAY_CENTER: mapCommon.LatLng = {
+  latitude: 22.55,
+  longitude: 113.96
+}
 
 /**
  * P07 旅程回放页 — 全屏沉浸式动画回放
@@ -10,39 +16,98 @@ import { RouterParam } from '../../../common'
  */
 @Entry
 @Component
-struct TripReplayPage {
+export struct TripReplayPage {
   @State isPlaying: boolean = false
   @State currentNodeIndex: number = 0
   @State playbackSpeed: string = '1x'
   @State progress: number = 0
-  @State currentPlace: string = '深圳湾公园'
-  @State currentNote: string = '"海边的日落真美..."'
+  @State currentPlace: string = ''
+  @State currentNote: string = ''
+  @State isLoading: boolean = false
 
   private speeds: string[] = ['0.5x', '1x', '2x']
   private playTimer: number = -1
 
-  // 轨迹节点（模拟数据）
-  private routePoints: mapCommon.LatLng[] = [
-    { latitude: 22.5268, longitude: 113.9455 },
-    { latitude: 22.5348, longitude: 113.9735 },
-    { latitude: 22.5965, longitude: 113.9785 },
-  ]
-  private nodeNames: string[] = ['深圳湾公园', '世界之窗', '南方科技大学']
-  private nodeNotes: string[] = ['"海边的日落真美..."', '"微缩世界，一日环游"', '"校园春色，荔枝花开"']
+  private routePoints: mapCommon.LatLng[] = []
+  private nodeNames: string[] = []
+  private nodeNotes: string[] = []
+  private tripDates: string[] = []
 
   private mapOptions: mapCommon.MapOptions = {
     position: {
-      target: { latitude: 22.5268, longitude: 113.9455 },
+      target: DEFAULT_REPLAY_CENTER,
       zoom: 13
     }
   }
   private mapController?: map.MapComponentController
+  private routeRendered: boolean = false
+  private dataService = getDataService()
 
   private mapCallback: AsyncCallback<map.MapComponentController> = async (err, controller) => {
     if (!err && controller) {
       this.mapController = controller
-      // 绘制完整轨迹折线
-      await controller.addPolyline({
+      await this.renderRoute()
+    }
+  }
+
+  aboutToAppear(): void {
+    const params = router.getParams() as RouterParam
+    if (params?.tripId) {
+      this.loadReplayData(params.tripId)
+    }
+  }
+
+  aboutToDisappear(): void {
+    clearInterval(this.playTimer)
+  }
+
+  private formatShortDate(timestamp: number): string {
+    const date = new Date(timestamp)
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    return `${month}.${day}`
+  }
+
+  private getLastNodeIndex(): number {
+    return this.routePoints.length > 0 ? this.routePoints.length - 1 : 0
+  }
+
+  private async loadReplayData(tripId: string): Promise<void> {
+    this.isLoading = true
+    try {
+      const nodes = await this.dataService.getNodesByTravelId(tripId)
+      if (nodes.length === 0) {
+        promptAction.showToast({ message: '当前旅行还没有可回放的节点' })
+        return
+      }
+
+      this.routePoints = nodes.map((node: MemoryNode): mapCommon.LatLng => ({
+        latitude: node.latitude,
+        longitude: node.longitude
+      }))
+      this.nodeNames = nodes.map((node: MemoryNode) => node.poiName || node.title)
+      this.nodeNotes = nodes.map((node: MemoryNode) => node.content ? `"${node.content}"` : `"${node.title}"`)
+      this.tripDates = nodes.map((node: MemoryNode) => this.formatShortDate(node.createdAt))
+      this.currentNodeIndex = 0
+      this.currentPlace = this.nodeNames[0]
+      this.currentNote = this.nodeNotes[0]
+      this.progress = 0
+      this.routeRendered = false
+      await this.renderRoute()
+    } catch (err) {
+      promptAction.showToast({ message: '加载回放数据失败' })
+    } finally {
+      this.isLoading = false
+    }
+  }
+
+  private async renderRoute(): Promise<void> {
+    if (!this.mapController || this.routeRendered || this.routePoints.length === 0) {
+      return
+    }
+
+    if (this.routePoints.length > 1) {
+      await this.mapController.addPolyline({
         points: this.routePoints,
         clickable: false,
         visible: true,
@@ -54,33 +119,29 @@ struct TripReplayPage {
         startCap: mapCommon.CapStyle.ROUND,
         endCap: mapCommon.CapStyle.ROUND
       })
-      // 添加所有节点标记
-      for (const point of this.routePoints) {
-        await controller.addMarker({
-          position: point,
-          visible: true,
-          clickable: false,
-          draggable: false,
-          flat: false,
-          rotation: 0,
-          zIndex: 10,
-          alpha: 1,
-          anchorU: 0.5,
-          anchorV: 1
-        })
-      }
     }
-  }
 
-  aboutToAppear(): void {
-    const params = router.getParams() as RouterParam
-    if (params?.tripId) {
-      // TODO: 从 RDB 加载真实旅行轨迹数据
+    for (const point of this.routePoints) {
+      await this.mapController.addMarker({
+        position: point,
+        visible: true,
+        clickable: false,
+        draggable: false,
+        flat: false,
+        rotation: 0,
+        zIndex: 10,
+        alpha: 1,
+        anchorU: 0.5,
+        anchorV: 1
+      })
     }
-  }
 
-  aboutToDisappear(): void {
-    clearInterval(this.playTimer)
+    const cameraUpdate = map.newCameraPosition({
+      target: this.routePoints[0],
+      zoom: 13
+    })
+    this.mapController.animateCamera(cameraUpdate, 300)
+    this.routeRendered = true
   }
 
   /** 飞到指定节点 */
@@ -91,9 +152,10 @@ struct TripReplayPage {
     this.currentNodeIndex = index
     this.currentPlace = this.nodeNames[index]
     this.currentNote = this.nodeNotes[index]
-    this.progress = (index / (this.routePoints.length - 1)) * 100
+    const denominator = this.getLastNodeIndex()
+    this.progress = denominator === 0 ? 100 : (index / denominator) * 100
 
-    let cameraUpdate = map.newCameraPosition({
+    const cameraUpdate = map.newCameraPosition({
       target: this.routePoints[index],
       zoom: 15
     })
@@ -101,9 +163,12 @@ struct TripReplayPage {
   }
 
   private togglePlay(): void {
+    if (this.routePoints.length === 0) {
+      return
+    }
+
     this.isPlaying = !this.isPlaying
     if (this.isPlaying) {
-      // 自动按节点步进
       this.playTimer = setInterval(() => {
         const next = this.currentNodeIndex + 1
         if (next >= this.routePoints.length) {
@@ -140,6 +205,17 @@ struct TripReplayPage {
         .width('100%')
         .height('100%')
 
+      if (this.isLoading) {
+        Column() {
+          LoadingProgress()
+            .width(40)
+            .height(40)
+        }
+        .width('100%')
+        .height('100%')
+        .justifyContent(FlexAlign.Center)
+      }
+
       // 退出按钮 (左上角)
       Text('✕')
         .fontSize(AppDimens.FONT_XL)
@@ -154,11 +230,11 @@ struct TripReplayPage {
 
       // 当前节点信息卡片
       Column() {
-        Text('📷 ' + this.currentPlace)
+        Text('📷 ' + (this.currentPlace || '暂无节点'))
           .fontSize(AppDimens.FONT_LG)
           .fontWeight(FontWeight.Medium)
           .fontColor('#FFFFFF')
-        Text(this.currentNote)
+        Text(this.currentNote || '添加节点后即可生成旅程回放')
           .fontSize(AppDimens.FONT_MD)
           .fontColor('#FFFFFFCC')
           .margin({ top: 4 })
@@ -172,7 +248,7 @@ struct TripReplayPage {
       // 底部控制栏
       Column() {
         Row() {
-          Text('03.15')
+          Text(this.tripDates.length > 0 ? this.tripDates[0] : '--.--')
             .fontSize(AppDimens.FONT_SM)
             .fontColor('#FFFFFFCC')
           Slider({ value: this.progress, min: 0, max: 100 })
@@ -181,10 +257,13 @@ struct TripReplayPage {
             .selectedColor(AppColors.PRIMARY)
             .margin({ left: 8, right: 8 })
             .onChange((value: number) => {
-              const index = Math.round((value / 100) * (this.routePoints.length - 1))
+              if (this.routePoints.length === 0) {
+                return
+              }
+              const index = Math.round((value / 100) * this.getLastNodeIndex())
               this.flyToNode(index)
             })
-          Text('03.17')
+          Text(this.tripDates.length > 0 ? this.tripDates[this.getLastNodeIndex()] : '--.--')
             .fontSize(AppDimens.FONT_SM)
             .fontColor('#FFFFFFCC')
         }
@@ -216,7 +295,7 @@ struct TripReplayPage {
             .fontColor('#FFFFFF')
             .padding(AppDimens.PADDING_MD)
             .onClick(() => {
-              if (this.currentNodeIndex < this.routePoints.length - 1) {
+              if (this.currentNodeIndex < this.getLastNodeIndex()) {
                 this.flyToNode(this.currentNodeIndex + 1)
               }
             })

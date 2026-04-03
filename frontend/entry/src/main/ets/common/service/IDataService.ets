@@ -137,11 +137,6 @@ export interface IDataService {
   deleteNode(nodeId: string): Promise<void>;
 
   /**
-   * 获取所有节点（跨所有旅行 + 独立节点）
-   */
-  getAllNodes(): Promise<MemoryNode[]>;
-
-  /**
    * 重新排序节点
    */
   reorderNodes(travelId: string, nodeIds: string[]): Promise<void>;

@@ -18,7 +18,6 @@
 // Utils 导出
 export { AppColors, AppDimens, RouterUrls } from './utils/Constants';
 export { logger } from './utils/Logger';
-export { PhotoPickerUtil } from './utils/PhotoPickerUtil';
 
 // Data Layer 导出
 export { RdbHelper, SensitivityLevel } from './data/index';
@@ -48,6 +47,7 @@ export {
 export { IDataService } from './service/IDataService';
 export { MockDataService } from './service/MockDataService';
 export { DataServiceStub } from './service/DataServiceStub';
+export { RdbDataService } from './service/RdbDataService';
 export { CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput } from './service/IDataService';
 
 // 配置导出

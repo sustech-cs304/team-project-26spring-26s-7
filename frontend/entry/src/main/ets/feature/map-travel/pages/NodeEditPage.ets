@@ -1,8 +1,6 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../../../common'
-import { RouterParam, getDataService } from '../../../common'
-import type { CreateNodeInput } from '../../../common'
-import { PhotoSelector } from '../components/PhotoSelector'
+import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
+import { RouterParam } from '../../../common'
 
 /**
  * P03 节点创建/编辑页
@@ -10,73 +8,144 @@ import { PhotoSelector } from '../components/PhotoSelector'
  */
 @Entry
 @Component
-struct NodeEditPage {
+export struct NodeEditPage {
   @State title: string = ''
   @State content: string = ''
-  @State poiName: string = '点击选择位置'
+  @State poiName: string = '获取位置中...'
   @State mood: string = ''
   @State tags: string[] = []
   @State photos: string[] = []
   @State isEditMode: boolean = false
-  @State latitude: number = 0
-  @State longitude: number = 0
+  @State isSaving: boolean = false
+  @State tripId: string = ''
+  @State nodeId: string = ''
+
+  private latitude: number = 22.55
+  private longitude: number = 113.96
+  private dataService = getDataService()
 
   aboutToAppear(): void {
     const params = router.getParams() as RouterParam
     if (params?.nodeId && params.nodeId.length > 0) {
       this.isEditMode = true
-      // TODO: 从本地 RDB 加载节点数据回填
+      this.nodeId = params.nodeId
+      this.loadNodeForEdit(params.nodeId)
     }
-    if (params?.latitude && params?.longitude) {
+
+    if (params?.tripId) {
+      this.tripId = params.tripId
+    }
+
+    if (typeof params?.latitude === 'number' && typeof params?.longitude === 'number') {
       this.latitude = params.latitude
       this.longitude = params.longitude
-      this.poiName = params.latitude.toFixed(4) + ', ' + params.longitude.toFixed(4)
+      this.poiName = `${params.latitude}, ${params.longitude}`
     }
   }
 
-  onPageShow(): void {
-    const picked = AppStorage.get('locationPicked') as boolean
-    if (picked) {
-      this.latitude = AppStorage.get('pickedLatitude') as number || 0
-      this.longitude = AppStorage.get('pickedLongitude') as number || 0
-      this.poiName = AppStorage.get('pickedPoiName') as string || ''
-      AppStorage.setOrCreate('locationPicked', false)
+  private formatDate(timestamp: number): string {
+    const date = new Date(timestamp)
+    const year = date.getFullYear().toString()
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    return `${year}.${month}.${day}`
+  }
+
+  private async loadNodeForEdit(nodeId: string): Promise<void> {
+    try {
+      const node = await this.dataService.getNodeById(nodeId)
+      if (!node) {
+        promptAction.showToast({ message: '未找到要编辑的节点' })
+        return
+      }
+
+      this.tripId = node.travelId
+      this.title = node.title
+      this.content = node.content
+      this.poiName = node.poiName
+      this.mood = node.mood
+      this.tags = [...node.tags]
+      this.photos = [...node.photos]
+      this.latitude = node.latitude
+      this.longitude = node.longitude
+    } catch (err) {
+      promptAction.showToast({ message: '加载节点数据失败' })
     }
+  }
+
+  private async resolveTargetTripId(): Promise<string> {
+    if (this.tripId.length > 0) {
+      return this.tripId
+    }
+
+    const existingTrips = await this.dataService.getAllTravels()
+    if (existingTrips.length > 0) {
+      this.tripId = existingTrips[0].id
+      return this.tripId
+    }
+
+    const now = Date.now()
+    const createdTrip = await this.dataService.createTravel({
+      name: `新旅行 ${this.formatDate(now)}`,
+      description: '',
+      coverPhoto: '',
+      startDate: now,
+      endDate: now,
+      nodeIds: [],
+      totalDistance: 0
+    })
+    this.tripId = createdTrip.id
+    return this.tripId
   }
 
   private async handleSave(): Promise<void> {
-    if (!this.title || this.title.length === 0) {
-      promptAction.showToast({ message: '请输入标题' })
-      return
-    }
-    if (this.latitude === 0 && this.longitude === 0) {
-      promptAction.showToast({ message: '请选择位置' })
+    const trimmedTitle = this.title.trim()
+    if (trimmedTitle.length === 0) {
+      promptAction.showToast({ message: '请先填写标题' })
       return
     }
 
-    const input: CreateNodeInput = {
-      travelId: '',
-      title: this.title,
-      content: this.content,
-      latitude: this.latitude,
-      longitude: this.longitude,
-      poiName: this.poiName,
-      photos: this.photos,
-      mood: this.mood,
-      tags: this.tags
-    }
-
+    this.isSaving = true
     try {
-      const dataService = getDataService()
-      await dataService.createNode(input)
-      // 通知 MapHomeView 刷新标记
-      const ver = (AppStorage.get('nodeListVersion') as number) || 0
-      AppStorage.setOrCreate('nodeListVersion', ver + 1)
-      promptAction.showToast({ message: '保存成功' })
+      const targetTripId = await this.resolveTargetTripId()
+      const resolvedPoiName = this.poiName === '获取位置中...' ? trimmedTitle : this.poiName
+
+      if (this.isEditMode && this.nodeId.length > 0) {
+        await this.dataService.updateNode(this.nodeId, {
+          title: trimmedTitle,
+          content: this.content,
+          latitude: this.latitude,
+          longitude: this.longitude,
+          poiName: resolvedPoiName,
+          photos: this.photos,
+          mood: this.mood,
+          tags: this.tags
+        })
+        promptAction.showToast({ message: '记忆已更新' })
+      } else {
+        await this.dataService.createNode({
+          travelId: targetTripId,
+          title: trimmedTitle,
+          content: this.content,
+          latitude: this.latitude,
+          longitude: this.longitude,
+          poiName: resolvedPoiName,
+          photos: this.photos,
+          mood: this.mood,
+          tags: this.tags
+        })
+        promptAction.showToast({ message: '记忆已保存' })
+      }
       router.back()
-    } catch (e) {
-      promptAction.showToast({ message: '保存失败' })
+    } catch (err) {
+      promptAction.showToast({ message: '保存失败，请稍后重试' })
+    } finally {
+      this.isSaving = false
     }
+  }
+
+  private handlePickPhoto(): void {
+    promptAction.showToast({ message: '照片选择功能待接入' })
   }
 
   private handleNavigateToAI(): void {
@@ -102,7 +171,7 @@ struct NodeEditPage {
           .fontSize(AppDimens.FONT_LG)
           .fontWeight(FontWeight.Bold)
           .layoutWeight(1)
-        Text('保存')
+        Text(this.isSaving ? '保存中...' : '保存')
           .fontSize(AppDimens.FONT_LG)
           .fontColor(AppColors.PRIMARY)
           .padding(AppDimens.PADDING_MD)
@@ -127,26 +196,43 @@ struct NodeEditPage {
             Text('重新选点 >')
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.PRIMARY)
-              .onClick(() => {
-                router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
-              })
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
           .backgroundColor(AppColors.CARD_BG)
           .borderRadius(AppDimens.RADIUS_SM)
-          .onClick(() => {
-            router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
-          })
 
           // 照片选择区
-          PhotoSelector({
-            photos: this.photos,
-            onPhotosChange: (photos: string[]) => {
-              this.photos = photos
+          Column() {
+            Text('照片')
+              .fontSize(AppDimens.FONT_MD)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(AppColors.TEXT_PRIMARY)
+            Row() {
+              // 已选照片占位 (TODO: 动态渲染 this.photos)
+              Column() {
+                Text('+')
+                  .fontSize(28)
+                  .fontColor(AppColors.TEXT_HINT)
+                Text('添加照片')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_HINT)
+              }
+              .width(80)
+              .height(80)
+              .backgroundColor(AppColors.BACKGROUND)
+              .borderRadius(AppDimens.RADIUS_SM)
+              .justifyContent(FlexAlign.Center)
+              .onClick(() => this.handlePickPhoto())
             }
-          })
+            .margin({ top: 8 })
+          }
+          .width('100%')
+          .padding(AppDimens.PADDING_MD)
           .margin({ top: 12 })
+          .backgroundColor(AppColors.CARD_BG)
+          .borderRadius(AppDimens.RADIUS_SM)
+          .alignItems(HorizontalAlign.Start)
 
           // 标题
           Column() {

@@ -1,8 +1,14 @@
-import { router } from '@kit.ArkUI'
+import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens, RouterUrls } from '../../../common'
+import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { TimelineNodeInfo, RouterParam } from '../../../common'
+import type { MemoryNode } from '../../../common'
+
+const DEFAULT_TRIP_CENTER: mapCommon.LatLng = {
+  latitude: 22.55,
+  longitude: 113.96
+}
 
 /**
  * P06 旅行详情页 — 路线地图 + 节点时间轴
@@ -10,34 +16,27 @@ import { TimelineNodeInfo, RouterParam } from '../../../common'
  */
 @Entry
 @Component
-struct TripDetailPage {
-  @State tripName: string = '深圳三日游'
-  @State dateRange: string = '2026.03.15 ~ 03.17'
-  @State nodeCount: number = 5
-  @State totalDistance: number = 128
+export struct TripDetailPage {
+  @State tripName: string = ''
+  @State dateRange: string = ''
+  @State nodeCount: number = 0
+  @State totalDistance: number = 0
   @State tripId: string = ''
   @State showMenu: boolean = false
+  @State isLoading: boolean = false
 
-  @State timelineNodes: TimelineNodeInfo[] = [
-    new TimelineNodeInfo('n1', '03.15', '深圳湾公园', '海边日落，风很温柔', '3'),
-    new TimelineNodeInfo('n2', '03.16', '世界之窗', '微缩世界，一日环游', '5'),
-    new TimelineNodeInfo('n3', '03.17', '南方科技大学', '校园春色，荔枝花开', '2'),
-  ]
+  @State timelineNodes: TimelineNodeInfo[] = []
 
-  // 旅行轨迹坐标点（模拟数据）
-  private routePoints: mapCommon.LatLng[] = [
-    { latitude: 22.5268, longitude: 113.9455 },
-    { latitude: 22.5348, longitude: 113.9735 },
-    { latitude: 22.5965, longitude: 113.9785 },
-  ]
-
+  private routePoints: mapCommon.LatLng[] = []
   private mapOptions: mapCommon.MapOptions = {
     position: {
-      target: { latitude: 22.55, longitude: 113.96 },
+      target: DEFAULT_TRIP_CENTER,
       zoom: 11.5
     }
   }
   private mapController?: map.MapComponentController
+  private routeRendered: boolean = false
+  private dataService = getDataService()
 
   private mapCallback: AsyncCallback<map.MapComponentController> = async (err, controller) => {
     if (!err && controller) {
@@ -46,25 +45,97 @@ struct TripDetailPage {
     }
   }
 
-  /** 在小地图上绘制轨迹折线 + 节点标记 */
-  private async drawRoute(): Promise<void> {
-    if (!this.mapController) {
+  aboutToAppear(): void {
+    const params = router.getParams() as RouterParam
+    if (params?.tripId) {
+      this.tripId = params.tripId
+      this.loadTripDetail()
+    }
+  }
+
+  private formatDate(timestamp: number): string {
+    const date = new Date(timestamp)
+    const year = date.getFullYear().toString()
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    return `${year}.${month}.${day}`
+  }
+
+  private formatShortDate(timestamp: number): string {
+    const date = new Date(timestamp)
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    return `${month}.${day}`
+  }
+
+  private formatDateRange(startDate: number, endDate: number): string {
+    const start = this.formatDate(startDate)
+    const end = this.formatDate(endDate)
+    return start === end ? start : `${start} ~ ${end}`
+  }
+
+  private mapNodeToTimelineNode(node: MemoryNode): TimelineNodeInfo {
+    return new TimelineNodeInfo(
+      node.id,
+      this.formatShortDate(node.createdAt),
+      node.poiName,
+      node.content || node.title,
+      node.photos.length.toString()
+    )
+  }
+
+  private async loadTripDetail(): Promise<void> {
+    if (!this.tripId) {
       return
     }
-    // 绘制轨迹折线
-    await this.mapController.addPolyline({
-      points: this.routePoints,
-      clickable: false,
-      visible: true,
-      width: 8,
-      zIndex: 5,
-      geodesic: false,
-      gradient: false,
-      jointType: mapCommon.JointType.ROUND,
-      startCap: mapCommon.CapStyle.ROUND,
-      endCap: mapCommon.CapStyle.ROUND
-    })
-    // 添加节点标记
+
+    this.isLoading = true
+    try {
+      const trip = await this.dataService.getTravelById(this.tripId)
+      if (!trip) {
+        promptAction.showToast({ message: '未找到对应旅行' })
+        return
+      }
+
+      const nodes = await this.dataService.getNodesByTravelId(this.tripId)
+      this.tripName = trip.name
+      this.dateRange = this.formatDateRange(trip.startDate, trip.endDate)
+      this.nodeCount = nodes.length
+      this.totalDistance = trip.totalDistance
+      this.timelineNodes = nodes.map((node: MemoryNode) => this.mapNodeToTimelineNode(node))
+      this.routePoints = nodes.map((node: MemoryNode): mapCommon.LatLng => ({
+        latitude: node.latitude,
+        longitude: node.longitude
+      }))
+      await this.drawRoute()
+    } catch (err) {
+      promptAction.showToast({ message: '加载旅行详情失败' })
+    } finally {
+      this.isLoading = false
+    }
+  }
+
+  /** 在小地图上绘制轨迹折线 + 节点标记 */
+  private async drawRoute(): Promise<void> {
+    if (!this.mapController || this.routeRendered || this.routePoints.length === 0) {
+      return
+    }
+
+    if (this.routePoints.length > 1) {
+      await this.mapController.addPolyline({
+        points: this.routePoints,
+        clickable: false,
+        visible: true,
+        width: 8,
+        zIndex: 5,
+        geodesic: false,
+        gradient: false,
+        jointType: mapCommon.JointType.ROUND,
+        startCap: mapCommon.CapStyle.ROUND,
+        endCap: mapCommon.CapStyle.ROUND
+      })
+    }
+
     for (const point of this.routePoints) {
       await this.mapController.addMarker({
         position: point,
@@ -79,13 +150,25 @@ struct TripDetailPage {
         anchorV: 1
       })
     }
+
+    const cameraUpdate = map.newCameraPosition({
+      target: this.routePoints[0],
+      zoom: 11.5
+    })
+    this.mapController.animateCamera(cameraUpdate, 300)
+    this.routeRendered = true
   }
 
-  aboutToAppear(): void {
-    const params = router.getParams() as RouterParam
-    if (params?.tripId) {
-      this.tripId = params.tripId
-      // TODO: 从本地 RDB 加载旅行数据和关联节点
+  private async deleteCurrentTrip(): Promise<void> {
+    if (!this.tripId) {
+      return
+    }
+    try {
+      await this.dataService.deleteTravel(this.tripId)
+      promptAction.showToast({ message: '旅行已删除' })
+      router.back()
+    } catch (err) {
+      promptAction.showToast({ message: '删除旅行失败' })
     }
   }
 
@@ -101,8 +184,7 @@ struct TripDetailPage {
         value: '删除',
         fontColor: AppColors.DANGER,
         action: () => {
-          // TODO: 从 RDB 删除旅行，排入同步队列
-          router.back()
+          this.deleteCurrentTrip()
         }
       }
     })
@@ -118,7 +200,7 @@ struct TripDetailPage {
             .fontColor(AppColors.TEXT_PRIMARY)
             .onClick(() => router.back())
             .padding(AppDimens.PADDING_MD)
-          Text(this.tripName)
+          Text(this.tripName || '旅行详情')
             .fontSize(AppDimens.FONT_LG)
             .fontWeight(FontWeight.Bold)
             .layoutWeight(1)
@@ -134,6 +216,17 @@ struct TripDetailPage {
 
         Scroll() {
           Column() {
+            if (this.isLoading) {
+              Column() {
+                LoadingProgress()
+                  .width(36)
+                  .height(36)
+              }
+              .width('100%')
+              .height(200)
+              .justifyContent(FlexAlign.Center)
+            }
+
             // 路线地图（真实 MapComponent）
             MapComponent({ mapOptions: this.mapOptions, mapCallback: this.mapCallback })
               .width('100%')
@@ -283,7 +376,7 @@ struct TripDetailPage {
             .padding({ left: 16, right: 16, top: 12, bottom: 12 })
             .onClick(() => {
               this.showMenu = false
-              // TODO: 弹出编辑旅行名称/日期的对话框
+              promptAction.showToast({ message: '编辑旅行功能待补充' })
             })
           Divider().color(AppColors.DIVIDER)
           Text('删除旅行')

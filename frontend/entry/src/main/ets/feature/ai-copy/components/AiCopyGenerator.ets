@@ -33,7 +33,11 @@ export struct AiCopyGenerator {
     this.isGenerating = true
 
     // 模拟 API 调用延迟
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    await new Promise<void>((resolve: () => void) => {
+      setTimeout(() => {
+        resolve()
+      }, 1500)
+    })
 
     // 占位返回
     this.generatedText = `[AI 文案]\n风格：${this.style}\n长度：${this.length}字\n旅行：${this.travelData?.name || '未知'}`
