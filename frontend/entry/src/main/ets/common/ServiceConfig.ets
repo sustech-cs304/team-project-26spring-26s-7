@@ -36,12 +36,7 @@ import type { IDataService } from './service/IDataService';
 const USE_MOCK_DATA = true;
 
 /**
- * MockDataService 单例，确保内存数据跨页面共享
- */
-let mockInstance: MockDataService | null = null;
-
-/**
- * 获取数据服务实例（单例）
+ * 获取数据服务实例
  *
  * 切换说明：
  * - 当前：USE_MOCK_DATA = true → MockDataService（显示模拟数据）
@@ -50,10 +45,7 @@ let mockInstance: MockDataService | null = null;
  */
 export function getDataService(): IDataService {
   if (USE_MOCK_DATA) {
-    if (!mockInstance) {
-      mockInstance = new MockDataService();
-    }
-    return mockInstance;
+    return new MockDataService();
   } else {
     return new DataServiceStub();
   }

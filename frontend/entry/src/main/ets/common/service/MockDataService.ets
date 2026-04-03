@@ -30,7 +30,6 @@ const TAG = 'MockDataService';
  */
 export class MockDataService implements IDataService {
   private travels: Trip[] = [];
-  private nodes: MemoryNode[] = []; // 独立节点（不属于任何旅行）
 
   constructor() {
     this.initMockData();
@@ -166,12 +165,6 @@ export class MockDataService implements IDataService {
   }
 
   async getNodeById(nodeId: string): Promise<MemoryNode | null> {
-    // 先搜索独立节点
-    const standaloneNode = this.nodes.find(n => n.id === nodeId);
-    if (standaloneNode) {
-      return standaloneNode;
-    }
-    // 再搜索 travel 关联节点
     for (const travel of this.travels) {
       if (travel.nodeIds.includes(nodeId)) {
         return {
@@ -194,6 +187,11 @@ export class MockDataService implements IDataService {
   }
 
   async createNode(node: CreateNodeInput): Promise<MemoryNode> {
+    const travel = this.travels.find(t => t.id === node.travelId);
+    if (!travel) {
+      throw new Error(`Travel not found: ${node.travelId}`);
+    }
+
     const now = Date.now();
     const newNode: MemoryNode = {
       id: this.generateUUID(),
@@ -210,30 +208,11 @@ export class MockDataService implements IDataService {
       updatedAt: now
     };
 
-    if (node.travelId && node.travelId.length > 0) {
-      const travel = this.travels.find(t => t.id === node.travelId);
-      if (!travel) {
-        throw new Error(`Travel not found: ${node.travelId}`);
-      }
-      travel.nodeIds.push(newNode.id);
-      travel.updatedAt = now;
-    } else {
-      this.nodes.push(newNode);
-    }
+    travel.nodeIds.push(newNode.id);
+    travel.updatedAt = now;
 
     logger.info(TAG, `Node created: ${newNode.id}`);
     return newNode;
-  }
-
-  async getAllNodes(): Promise<MemoryNode[]> {
-    logger.debug(TAG, 'Getting all nodes');
-    const allNodes: MemoryNode[] = [...this.nodes];
-    // 加入各 travel 的模拟节点
-    for (const travel of this.travels) {
-      const travelNodes = await this.getNodesByTravelId(travel.id);
-      allNodes.push(...travelNodes);
-    }
-    return allNodes;
   }
 
   async updateNode(nodeId: string, data: UpdateNodeInput): Promise<MemoryNode> {

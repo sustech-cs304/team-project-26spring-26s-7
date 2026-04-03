@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storeFile": "D:/鸿蒙APP证书/1.p12",
-          "storePassword": "0000001D3C9C1695A5B009FFDE3623A475681868E72FA7E582370ABD4E449AC0741D20D6B5F12CA60D4BCD5315",
+          "storeFile": "D:/Mydata/1University/3Junior/Software_Engineering/frontendv1/team-project-26spring-26s-7/certificates/1.p12",
+          "storePassword": "0000001DE3D8C7CEF620E21B40DF4A552838D1FFB961D4A421C271ADE5D754B14920B42A6DFC9CBE0995A07EC0",
           "keyAlias": "test",
-          "keyPassword": "0000001D199D485D66F4F5EEEDBE60AC6D4C1C5467495672C35E6DD495B6C4A5E2D830C0DC76387767DBACC339",
+          "keyPassword": "0000001DDFECCFE287627FF63DEB0BDC909D332786C9F4D332E73EBBC9CDFB1BF4B3A95908151EE5F9B5FE9782",
           "signAlg": "SHA256withECDSA",
-          "profile": "D:/鸿蒙APP证书/testDebug.p7b",
-          "certpath": "D:/鸿蒙APP证书/test.cer"
+          "profile": "D:/Mydata/1University/3Junior/Software_Engineering/frontendv1/team-project-26spring-26s-7/certificates/testDebug.p7b",
+          "certpath": "D:/Mydata/1University/3Junior/Software_Engineering/frontendv1/team-project-26spring-26s-7/certificates/test.cer"
         }
       }
     ],
