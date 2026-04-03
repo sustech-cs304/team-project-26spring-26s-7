@@ -13,37 +13,13 @@
  * limitations under the License.
  */
 
+import { relationalStore as rdb } from '@kit.ArkData';
 import { logger } from '../utils/Logger';
 import { RdbHelper } from './RdbHelper';
-import { Trip, MemoryNode } from '../service/types';
+import type { Trip } from '../service/types';
 
 const TAG = 'TravelRepository';
-
-/**
- * 旅行数据仓库
- *
- * 功能职责：
- * - 管理 Travel 实体的 CRUD 操作
- * - 封装数据库查询逻辑
- * - 提供业务层面的数据操作接口
- *
- * ---
- * 实现负责人：[队友姓名]
- * 参考文档：references/F1_local_storage_assignment.md
- * ---
- *
- * Travel 实体结构：
- * {
- *   id: string,
- *   name: string,
- *   coverImageUri: string,
- *   startDate: number,
- *   endDate: number,
- *   createdAt: number,
- *   updatedAt: number,
- *   sensitivity: string  // 数据分级标识
- * }
- */
+const TABLE_NAME = 'travels';
 
 /**
  * 创建旅行的输入数据（不包含 id、createdAt、updatedAt）
@@ -68,80 +44,169 @@ export interface UpdateTravelInput {
 }
 
 export class TravelRepository {
-  private rdb: RdbHelper;
+  private rdbHelper: RdbHelper;
 
   constructor() {
-    this.rdb = RdbHelper.getInstance();
+    this.rdbHelper = RdbHelper.getInstance();
   }
 
-  /**
-   * 获取所有旅行
-   * @returns Promise<Travel[]> 旅行列表
-   */
+  private async getRdbStore(): Promise<rdb.RdbStore> {
+    return await this.rdbHelper.getStore();
+  }
+
+  private closeResultSet(resultSet?: rdb.ResultSet): void {
+    if (!resultSet) {
+      return;
+    }
+    try {
+      resultSet.close();
+    } catch (err) {
+      logger.warn(TAG, `Failed to close ResultSet: ${JSON.stringify(err)}`);
+    }
+  }
+
+  private toError(err: Object): Error {
+    return new Error(JSON.stringify(err));
+  }
+
+  private mapResultSetToTrip(resultSet: rdb.ResultSet): Trip {
+    const idIdx = resultSet.getColumnIndex('id');
+    const nameIdx = resultSet.getColumnIndex('name');
+    const coverIdx = resultSet.getColumnIndex('cover_image_uri');
+    const startIdx = resultSet.getColumnIndex('start_date');
+    const endIdx = resultSet.getColumnIndex('end_date');
+    const createdIdx = resultSet.getColumnIndex('created_at');
+    const updatedIdx = resultSet.getColumnIndex('updated_at');
+
+    const trip: Trip = {
+      id: resultSet.getDouble(idIdx).toString(),
+      name: resultSet.getString(nameIdx),
+      description: '',
+      coverPhoto: resultSet.getString(coverIdx),
+      startDate: resultSet.getDouble(startIdx),
+      endDate: resultSet.getDouble(endIdx),
+      nodeIds: [],
+      totalDistance: 0,
+      createdAt: resultSet.getDouble(createdIdx),
+      updatedAt: resultSet.getDouble(updatedIdx)
+    };
+    return trip;
+  }
+
   async getAllTravels(): Promise<Trip[]> {
-    logger.info(TAG, 'Getting all travels (STUB - to be implemented)');
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回空数组
-    // 队友完成后请替换为真实 SQL 查询
-    // SELECT * FROM travels ORDER BY created_at DESC
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve([]);
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getRdbStore();
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.orderByDesc('created_at');
+      resultSet = await store.query(predicates);
+      const trips: Trip[] = [];
+      if (resultSet.goToFirstRow()) {
+        do {
+          trips.push(this.mapResultSetToTrip(resultSet));
+        } while (resultSet.goToNextRow());
+      }
+      logger.info(TAG, `Loaded ${trips.length} travels`);
+      return trips;
+    } catch (err) {
+      logger.error(TAG, `getAllTravels failed: ${JSON.stringify(err)}`);
+      return [];
+    } finally {
+      this.closeResultSet(resultSet);
+    }
   }
 
-  /**
-   * 根据 ID 获取旅行
-   * @param id 旅行 ID
-   * @returns Promise<Trip | undefined> 旅行对象
-   */
   async getTravelById(id: string): Promise<Trip | undefined> {
-    logger.debug(TAG, `Getting travel by id: ${id} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回 undefined
-    // 队友完成后请替换为：SELECT * FROM travels WHERE id = ?
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve(undefined);
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getRdbStore();
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('id', parseInt(id));
+      resultSet = await store.query(predicates);
+      let trip: Trip | undefined = undefined;
+      if (resultSet.goToFirstRow()) {
+        trip = this.mapResultSetToTrip(resultSet);
+      }
+      return trip;
+    } catch (err) {
+      logger.error(TAG, `getTravelById failed: ${JSON.stringify(err)}`);
+      return undefined;
+    } finally {
+      this.closeResultSet(resultSet);
+    }
   }
 
-  /**
-   * 创建新旅行
-   * @param travel 旅行输入数据
-   * @returns Promise<string> 创建的旅行 ID
-   */
   async createTravel(travel: CreateTravelInput): Promise<string> {
-    logger.info(TAG, `Creating travel: ${travel.name} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回模拟 ID
-    // 队友完成后请替换为：INSERT INTO travels (...) VALUES (...) RETURNING id
-    // ═══════════════════════════════════════════════════════════════
-    const id = Date.now().toString();
-    return Promise.resolve(id);
+    try {
+      const store = await this.getRdbStore();
+      const now = Date.now();
+      const valueBucket: rdb.ValuesBucket = {
+        'name': travel.name,
+        'cover_image_uri': travel.coverImageUri ?? '',
+        'start_date': travel.startDate,
+        'end_date': travel.endDate,
+        'created_at': now,
+        'updated_at': now,
+        'sensitivity': travel.sensitivity ?? 'S1'
+      };
+      const rowId = await store.insert(TABLE_NAME, valueBucket);
+      logger.info(TAG, `Created travel: ${travel.name}, id=${rowId}`);
+      return rowId.toString();
+    } catch (err) {
+      logger.error(TAG, `createTravel failed: ${JSON.stringify(err)}`);
+      throw this.toError(err);
+    }
   }
 
-  /**
-   * 更新旅行
-   * @param travel 旅行对象
-   */
   async updateTravel(id: string, travel: UpdateTravelInput): Promise<boolean> {
-    logger.info(TAG, `Updating travel: ${id} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回 false
-    // 队友完成后请替换为：UPDATE travels SET ... WHERE id = ?
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve(false);
+    try {
+      const store = await this.getRdbStore();
+      const valueBucket: rdb.ValuesBucket = {
+        'updated_at': Date.now()
+      };
+      if (travel.name !== undefined) {
+        valueBucket['name'] = travel.name;
+      }
+      if (travel.coverImageUri !== undefined) {
+        valueBucket['cover_image_uri'] = travel.coverImageUri;
+      }
+      if (travel.startDate !== undefined) {
+        valueBucket['start_date'] = travel.startDate;
+      }
+      if (travel.endDate !== undefined) {
+        valueBucket['end_date'] = travel.endDate;
+      }
+      if (travel.sensitivity !== undefined) {
+        valueBucket['sensitivity'] = travel.sensitivity;
+      }
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('id', parseInt(id));
+      const affectedRows = await store.update(valueBucket, predicates);
+      logger.info(TAG, `Updated travel ${id}, affected=${affectedRows}`);
+      return affectedRows > 0;
+    } catch (err) {
+      logger.error(TAG, `updateTravel failed: ${JSON.stringify(err)}`);
+      return false;
+    }
   }
 
-  /**
-   * 删除旅行（级联删除节点）
-   * @param id 旅行 ID
-   */
   async deleteTravel(id: string): Promise<boolean> {
-    logger.info(TAG, `Deleting travel: ${id} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回 false
-    // 队友完成后请替换为：
-    // 1. DELETE FROM memory_nodes WHERE travel_id = ?
-    // 2. DELETE FROM travels WHERE id = ?
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve(false);
+    try {
+      const store = await this.getRdbStore();
+      // 先删除关联的记忆节点
+      const nodePredicates = new rdb.RdbPredicates('memory_nodes');
+      nodePredicates.equalTo('travel_id', parseInt(id));
+      await store.delete(nodePredicates);
+
+      // 再删除旅行
+      const travelPredicates = new rdb.RdbPredicates(TABLE_NAME);
+      travelPredicates.equalTo('id', parseInt(id));
+      const affectedRows = await store.delete(travelPredicates);
+      logger.info(TAG, `Deleted travel ${id}, affected=${affectedRows}`);
+      return affectedRows > 0;
+    } catch (err) {
+      logger.error(TAG, `deleteTravel failed: ${JSON.stringify(err)}`);
+      return false;
+    }
   }
 }

@@ -15,48 +15,47 @@
 
 import { MockDataService } from './service/MockDataService';
 import { DataServiceStub } from './service/DataServiceStub';
+import { RdbDataService } from './service/RdbDataService';
 import type { IDataService } from './service/IDataService';
 
 /**
  * 数据服务配置开关
  *
- * 使用说明：
- * - USE_MOCK_DATA = true: 使用 MockDataService，显示模拟数据（默认）
- * - USE_MOCK_DATA = false: 使用 DataServiceStub，返回空数据（数据库占位）
- *
- * 队友完成数据库代码后：
- * 1. 将真实 DataService 实现后导入
- * 2. 修改为 useDatabase() 函数返回真实服务
+ * 三种模式：
+ * - USE_MOCK_DATA = true: MockDataService，显示模拟数据（Previewer 默认）
+ * - USE_RDB = true: RdbDataService，使用真实 RDB 数据库
+ * - 都为 false: DataServiceStub，返回空数据
  */
 
 /**
  * 是否使用 Mock 数据（显示演示数据）
- * 默认 true，确保 Previewer 能正常显示
+ * 当前关闭，优先走真实 RDB
  */
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 /**
- * 获取数据服务实例
+ * 是否使用 RDB 数据库
+ * 当前开启，前端页面默认接入真实数据库
+ */
+const USE_RDB = true;
+
+let _serviceInstance: IDataService | null = null;
+
+/**
+ * 获取数据服务实例（单例）
  *
- * 切换说明：
- * - 当前：USE_MOCK_DATA = true → MockDataService（显示模拟数据）
- * - 数据库占位：USE_MOCK_DATA = false → DataServiceStub（空数据）
- * - 数据库完成：导入真实 DataService 并切换
+ * 优先级：USE_MOCK_DATA > USE_RDB > DataServiceStub
  */
 export function getDataService(): IDataService {
-  if (USE_MOCK_DATA) {
-    return new MockDataService();
-  } else {
-    return new DataServiceStub();
+  if (_serviceInstance !== null) {
+    return _serviceInstance;
   }
+  if (USE_MOCK_DATA) {
+    _serviceInstance = new MockDataService();
+  } else if (USE_RDB) {
+    _serviceInstance = new RdbDataService();
+  } else {
+    _serviceInstance = new DataServiceStub();
+  }
+  return _serviceInstance;
 }
-
-/**
- * 获取数据服务实例（真实数据库版本）
- * 队友完成数据库代码后，启用此函数
- */
-// export function getDatabaseService(): IDataService {
-//   // TODO: 队友完成后取消注释并实现
-//   // return new DataService();
-//   return new MockDataService(); // 临时返回 Mock
-// }

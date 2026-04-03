@@ -13,48 +13,21 @@
  * limitations under the License.
  */
 
+import { relationalStore as rdb } from '@kit.ArkData';
 import { logger } from '../utils/Logger';
 import { RdbHelper } from './RdbHelper';
-import { MemoryNode } from '../service/types';
+import type { MemoryNode } from '../service/types';
 
 const TAG = 'MemoryNodeRepository';
-
-/**
- * 记忆节点数据仓库
- *
- * 功能职责：
- * - 管理 MemoryNode 实体的 CRUD 操作
- * - 封装数据库查询逻辑
- * - 提供业务层面的数据操作接口
- *
- * ---
- * 实现负责人：[队友姓名]
- * 参考文档：references/F1_local_storage_assignment.md
- * ---
- *
- * MemoryNode 实体结构：
- * {
- *   id: string,
- *   travelId: string,
- *   latitude: number,
- *   longitude: number,
- *   poiName: string,
- *   description: string,
- *   address: string,
- *   photos: string[],
- *   tags: string[],
- *   mood?: string,
- *   createdAt: number,
- *   updatedAt: number,
- *   sensitivity: string  // 数据分级标识
- * }
- */
+const TABLE_NAME = 'memory_nodes';
+const NODE_ORDER_COLUMN = 'node_order';
 
 /**
  * 创建节点的输入数据
  */
 export interface CreateNodeInput {
   travelId: string;
+  title?: string;
   latitude: number;
   longitude: number;
   poiName?: string;
@@ -70,6 +43,7 @@ export interface CreateNodeInput {
  * 更新节点的输入数据
  */
 export interface UpdateNodeInput {
+  title?: string;
   latitude?: number;
   longitude?: number;
   poiName?: string;
@@ -81,94 +55,256 @@ export interface UpdateNodeInput {
 }
 
 export class MemoryNodeRepository {
-  private rdb: RdbHelper;
+  private rdbHelper: RdbHelper;
 
   constructor() {
-    this.rdb = RdbHelper.getInstance();
+    this.rdbHelper = RdbHelper.getInstance();
   }
 
-  /**
-   * 根据旅行 ID 获取所有节点
-   * @param travelId 旅行 ID
-   * @returns Promise<MemoryNode[]> 节点列表
-   */
+  private async getRdbStore(): Promise<rdb.RdbStore> {
+    return await this.rdbHelper.getStore();
+  }
+
+  private closeResultSet(resultSet?: rdb.ResultSet): void {
+    if (!resultSet) {
+      return;
+    }
+    try {
+      resultSet.close();
+    } catch (err) {
+      logger.warn(TAG, `Failed to close ResultSet: ${JSON.stringify(err)}`);
+    }
+  }
+
+  private toError(err: Object): Error {
+    return new Error(JSON.stringify(err));
+  }
+
+  private parseJsonArray(jsonStr: string): string[] {
+    if (!jsonStr || jsonStr.length === 0) {
+      return [];
+    }
+    try {
+      const parsed: Object = JSON.parse(jsonStr) as Object;
+      if (Array.isArray(parsed)) {
+        const values = parsed as Object[];
+        const result: string[] = [];
+        for (let i = 0; i < values.length; i++) {
+          const value = values[i];
+          if (typeof value === 'string') {
+            result.push(value);
+          }
+        }
+        return result;
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  private mapResultSetToNode(resultSet: rdb.ResultSet): MemoryNode {
+    const idIdx = resultSet.getColumnIndex('id');
+    const travelIdIdx = resultSet.getColumnIndex('travel_id');
+    const latIdx = resultSet.getColumnIndex('latitude');
+    const lngIdx = resultSet.getColumnIndex('longitude');
+    const titleIdx = resultSet.getColumnIndex('title');
+    const poiIdx = resultSet.getColumnIndex('poi_name');
+    const descIdx = resultSet.getColumnIndex('description');
+    const moodIdx = resultSet.getColumnIndex('mood');
+    const tagsIdx = resultSet.getColumnIndex('tags');
+    const photosIdx = resultSet.getColumnIndex('photos');
+    const createdIdx = resultSet.getColumnIndex('created_at');
+    const updatedIdx = resultSet.getColumnIndex('updated_at');
+
+    const title = titleIdx >= 0 ? (resultSet.getString(titleIdx) ?? '') : '';
+    const poiName = resultSet.getString(poiIdx) ?? '';
+    const description = resultSet.getString(descIdx) ?? '';
+
+    const node: MemoryNode = {
+      id: resultSet.getDouble(idIdx).toString(),
+      travelId: resultSet.getDouble(travelIdIdx).toString(),
+      title: title.length > 0 ? title : poiName,
+      content: description,
+      latitude: resultSet.getDouble(latIdx),
+      longitude: resultSet.getDouble(lngIdx),
+      poiName: poiName,
+      photos: this.parseJsonArray(resultSet.getString(photosIdx) ?? ''),
+      mood: resultSet.getString(moodIdx) ?? '',
+      tags: this.parseJsonArray(resultSet.getString(tagsIdx) ?? ''),
+      createdAt: resultSet.getDouble(createdIdx),
+      updatedAt: resultSet.getDouble(updatedIdx)
+    };
+    return node;
+  }
+
+  private async getNextNodeOrder(store: rdb.RdbStore, travelId: string): Promise<number> {
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('travel_id', parseInt(travelId));
+      predicates.orderByDesc(NODE_ORDER_COLUMN);
+      resultSet = await store.query(predicates);
+      if (resultSet.goToFirstRow()) {
+        const orderIndex = resultSet.getColumnIndex(NODE_ORDER_COLUMN);
+        return resultSet.getDouble(orderIndex) + 1;
+      }
+      return 0;
+    } catch (err) {
+      logger.warn(TAG, `Failed to calculate node order: ${JSON.stringify(err)}`);
+      return 0;
+    } finally {
+      this.closeResultSet(resultSet);
+    }
+  }
+
   async getNodesByTravelId(travelId: string): Promise<MemoryNode[]> {
-    logger.debug(TAG, `Getting nodes for travel: ${travelId} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回空数组
-    // 队友完成后请替换为：
-    // SELECT * FROM memory_nodes WHERE travel_id = ? ORDER BY "order" ASC
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve([]);
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getRdbStore();
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('travel_id', parseInt(travelId));
+      predicates.orderByAsc(NODE_ORDER_COLUMN);
+      resultSet = await store.query(predicates);
+      const nodes: MemoryNode[] = [];
+      if (resultSet.goToFirstRow()) {
+        do {
+          nodes.push(this.mapResultSetToNode(resultSet));
+        } while (resultSet.goToNextRow());
+      }
+      logger.info(TAG, `Loaded ${nodes.length} nodes for travel ${travelId}`);
+      return nodes;
+    } catch (err) {
+      logger.error(TAG, `getNodesByTravelId failed: ${JSON.stringify(err)}`);
+      return [];
+    } finally {
+      this.closeResultSet(resultSet);
+    }
   }
 
-  /**
-   * 根据 ID 获取节点
-   * @param id 节点 ID
-   * @returns Promise<MemoryNode | undefined> 节点对象
-   */
   async getNodeById(id: string): Promise<MemoryNode | undefined> {
-    logger.debug(TAG, `Getting node by id: ${id} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回 undefined
-    // 队友完成后请替换为：SELECT * FROM memory_nodes WHERE id = ?
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve(undefined);
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getRdbStore();
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('id', parseInt(id));
+      resultSet = await store.query(predicates);
+      let node: MemoryNode | undefined = undefined;
+      if (resultSet.goToFirstRow()) {
+        node = this.mapResultSetToNode(resultSet);
+      }
+      return node;
+    } catch (err) {
+      logger.error(TAG, `getNodeById failed: ${JSON.stringify(err)}`);
+      return undefined;
+    } finally {
+      this.closeResultSet(resultSet);
+    }
   }
 
-  /**
-   * 创建新节点
-   * @param node 节点输入数据
-   * @returns Promise<string> 创建的节点 ID
-   */
   async createNode(node: CreateNodeInput): Promise<string> {
-    logger.info(TAG, `Creating node for travel: ${node.travelId} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回模拟 ID
-    // 队友完成后请替换为：INSERT INTO memory_nodes (...) VALUES (...)
-    // ═══════════════════════════════════════════════════════════════
-    const id = Date.now().toString();
-    return Promise.resolve(id);
+    try {
+      const store = await this.getRdbStore();
+      const now = Date.now();
+      const nodeOrder = await this.getNextNodeOrder(store, node.travelId);
+      const valueBucket: rdb.ValuesBucket = {
+        'travel_id': parseInt(node.travelId),
+        'latitude': node.latitude,
+        'longitude': node.longitude,
+        'title': node.title ?? '',
+        'poi_name': node.poiName ?? '',
+        'description': node.description ?? '',
+        'address': node.address ?? '',
+        'mood': node.mood ?? '',
+        'tags': JSON.stringify(node.tags ?? []),
+        'photos': JSON.stringify(node.photos ?? []),
+        node_order: nodeOrder,
+        'created_at': now,
+        'updated_at': now,
+        'sensitivity': node.sensitivity ?? 'S2'
+      };
+      const rowId = await store.insert(TABLE_NAME, valueBucket);
+      logger.info(TAG, `Created node for travel ${node.travelId}, id=${rowId}`);
+      return rowId.toString();
+    } catch (err) {
+      logger.error(TAG, `createNode failed: ${JSON.stringify(err)}`);
+      throw this.toError(err);
+    }
   }
 
-  /**
-   * 更新节点
-   * @param id 节点 ID
-   * @param node 节点更新数据
-   */
   async updateNode(id: string, node: UpdateNodeInput): Promise<boolean> {
-    logger.info(TAG, `Updating node: ${id} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回 false
-    // 队友完成后请替换为：UPDATE memory_nodes SET ... WHERE id = ?
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve(false);
+    try {
+      const store = await this.getRdbStore();
+      const valueBucket: rdb.ValuesBucket = {
+        'updated_at': Date.now()
+      };
+      if (node.title !== undefined) {
+        valueBucket['title'] = node.title;
+      }
+      if (node.latitude !== undefined) {
+        valueBucket['latitude'] = node.latitude;
+      }
+      if (node.longitude !== undefined) {
+        valueBucket['longitude'] = node.longitude;
+      }
+      if (node.poiName !== undefined) {
+        valueBucket['poi_name'] = node.poiName;
+      }
+      if (node.description !== undefined) {
+        valueBucket['description'] = node.description;
+      }
+      if (node.address !== undefined) {
+        valueBucket['address'] = node.address;
+      }
+      if (node.mood !== undefined) {
+        valueBucket['mood'] = node.mood;
+      }
+      if (node.tags !== undefined) {
+        valueBucket['tags'] = JSON.stringify(node.tags);
+      }
+      if (node.photos !== undefined) {
+        valueBucket['photos'] = JSON.stringify(node.photos);
+      }
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('id', parseInt(id));
+      const affectedRows = await store.update(valueBucket, predicates);
+      logger.info(TAG, `Updated node ${id}, affected=${affectedRows}`);
+      return affectedRows > 0;
+    } catch (err) {
+      logger.error(TAG, `updateNode failed: ${JSON.stringify(err)}`);
+      return false;
+    }
   }
 
-  /**
-   * 删除节点
-   * @param id 节点 ID
-   */
   async deleteNode(id: string): Promise<boolean> {
-    logger.info(TAG, `Deleting node: ${id} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现 - 返回 false
-    // 队友完成后请替换为：DELETE FROM memory_nodes WHERE id = ?
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve(false);
+    try {
+      const store = await this.getRdbStore();
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('id', parseInt(id));
+      const affectedRows = await store.delete(predicates);
+      logger.info(TAG, `Deleted node ${id}, affected=${affectedRows}`);
+      return affectedRows > 0;
+    } catch (err) {
+      logger.error(TAG, `deleteNode failed: ${JSON.stringify(err)}`);
+      return false;
+    }
   }
 
-  /**
-   * 重新排序节点
-   * @param travelId 旅行 ID
-   * @param nodeIds 节点 ID 列表（新顺序）
-   */
   async reorderNodes(travelId: string, nodeIds: string[]): Promise<void> {
-    logger.info(TAG, `Reordering nodes for travel: ${travelId} (STUB)`);
-    // ═══════════════════════════════════════════════════════════════
-    // STUB: 占位实现
-    // 队友完成后请替换为：批量 UPDATE memory_nodes SET "order" = ? WHERE id = ?
-    // ═══════════════════════════════════════════════════════════════
-    return Promise.resolve();
+    try {
+      const store = await this.getRdbStore();
+      for (let i = 0; i < nodeIds.length; i++) {
+        const valueBucket: rdb.ValuesBucket = {
+          node_order: i,
+          'updated_at': Date.now()
+        };
+        const predicates = new rdb.RdbPredicates(TABLE_NAME);
+        predicates.equalTo('id', parseInt(nodeIds[i]));
+        await store.update(valueBucket, predicates);
+      }
+      logger.info(TAG, `Reordered ${nodeIds.length} nodes for travel ${travelId}`);
+    } catch (err) {
+      logger.error(TAG, `reorderNodes failed: ${JSON.stringify(err)}`);
+    }
   }
 }

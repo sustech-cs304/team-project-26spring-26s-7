@@ -16,7 +16,7 @@ interface StyleOption {
  */
 @Entry
 @Component
-struct AiCopyPage {
+export struct AiCopyPage {
   // 页面状态
   @State selectedStyle: string = 'poetic'
   @State selectedLength: number = 100

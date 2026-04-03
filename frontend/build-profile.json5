@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storeFile": "D:/Mydata/1University/3Junior/Software_Engineering/frontendv1/team-project-26spring-26s-7/certificates/1.p12",
+          "storeFile": "D:/Projects/SoftwareEngineering/team-project-26spring-26s-7-incremental-dev-20260329/certificates/1.p12",
           "storePassword": "0000001DE3D8C7CEF620E21B40DF4A552838D1FFB961D4A421C271ADE5D754B14920B42A6DFC9CBE0995A07EC0",
           "keyAlias": "test",
           "keyPassword": "0000001DDFECCFE287627FF63DEB0BDC909D332786C9F4D332E73EBBC9CDFB1BF4B3A95908151EE5F9B5FE9782",
           "signAlg": "SHA256withECDSA",
-          "profile": "D:/Mydata/1University/3Junior/Software_Engineering/frontendv1/team-project-26spring-26s-7/certificates/testDebug.p7b",
-          "certpath": "D:/Mydata/1University/3Junior/Software_Engineering/frontendv1/team-project-26spring-26s-7/certificates/test.cer"
+          "profile": "D:/Projects/SoftwareEngineering/team-project-26spring-26s-7-incremental-dev-20260329/certificates/testDebug.p7b",
+          "certpath": "D:/Projects/SoftwareEngineering/team-project-26spring-26s-7-incremental-dev-20260329/certificates/test.cer"
         }
       }
     ],

@@ -92,11 +92,13 @@ export class SharePlatform {
 }
 
 /** 路由参数 */
-export class RouterParam {
-  nodeId: string = ''
-  tripId: string = ''
-  latitude: number = 0
-  longitude: number = 0
+export interface RouterParam {
+  nodeId?: string
+  tripId?: string
+  latitude?: number
+  longitude?: number
+  defaultPrompt?: string
+  defaultTitle?: string
 }
 
 /** 旅行路线 - 完整数据模型 */

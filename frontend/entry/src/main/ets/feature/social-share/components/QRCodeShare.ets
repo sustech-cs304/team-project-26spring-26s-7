@@ -35,7 +35,11 @@ export struct QRCodeShare {
     this.isGenerating = true
 
     // 模拟生成延迟
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise<void>((resolve: () => void) => {
+      setTimeout(() => {
+        resolve()
+      }, 1000)
+    })
 
     // 占位返回 - 后续调用后端 API 生成真实签名链接
     const shortCode = this.generateShortCode()

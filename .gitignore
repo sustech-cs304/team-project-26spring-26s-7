@@ -57,3 +57,11 @@ local.properties
 **/*.hap
 **/*.hsp
 **/*.app
+
+# codex 
+frontend/.codex_*/
+
+#module cache
+frontend/oh_modules/
+frontend/.hvigor/
+frontend/.idea/
