@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens, RouterUrls } from '../../../common'
+import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { MapNodeInfo, RouterParam } from '../../../common'
 
 /**
@@ -15,12 +15,11 @@ export struct MapHomeView {
   @State selectedFilterTag: string = '全部'
   @State mapReady: boolean = false
 
-  // 模拟记忆节点数据（真实坐标）
-  private mockNodes: MapNodeInfo[] = [
-    new MapNodeInfo('1', '深圳湾日落', '深圳湾公园', 22.5268, 113.9455),
-    new MapNodeInfo('2', '世界之窗一日游', '世界之窗', 22.5348, 113.9735),
-    new MapNodeInfo('3', '校园春色', '南方科技大学', 22.5965, 113.9785),
-  ]
+  // 从 MockDataService 动态加载的节点数据
+  @State nodes: MapNodeInfo[] = []
+
+  // 监听节点列表版本号变化，触发刷新
+  @StorageProp('nodeListVersion') @Watch('onNodeListVersionChange') nodeListVersion: number = 0
 
   // 地图配置：默认中心为深圳
   private mapOptions: mapCommon.MapOptions = {
@@ -43,8 +42,32 @@ export struct MapHomeView {
     if (!err && controller) {
       this.mapController = controller
       this.mapReady = true
-      await this.addMarkers()
+      await this.loadNodes()
       this.setupMarkerClickListener()
+    }
+  }
+
+  /** 从数据服务加载节点并刷新地图标记 */
+  private async loadNodes(): Promise<void> {
+    const dataService = getDataService()
+    const allNodes = await dataService.getAllNodes()
+    this.nodes = allNodes.map(n => new MapNodeInfo(n.id, n.title, n.poiName, n.latitude, n.longitude))
+    await this.clearMarkers()
+    await this.addMarkers()
+  }
+
+  /** 清除地图上的所有标记 */
+  private async clearMarkers(): Promise<void> {
+    for (const marker of this.markers) {
+      marker.remove()
+    }
+    this.markers = []
+  }
+
+  /** 节点列表版本变化时重新加载 */
+  onNodeListVersionChange(): void {
+    if (this.mapReady) {
+      this.loadNodes()
     }
   }
 
@@ -53,7 +76,7 @@ export struct MapHomeView {
     if (!this.mapController) {
       return
     }
-    for (const node of this.mockNodes) {
+    for (const node of this.nodes) {
       let markerOptions: mapCommon.MarkerOptions = {
         position: { latitude: node.latitude, longitude: node.longitude },
         rotation: 0,
@@ -80,7 +103,7 @@ export struct MapHomeView {
     }
     this.mapController.on('markerClick', (marker: map.Marker) => {
       const position = marker.getPosition()
-      for (const node of this.mockNodes) {
+      for (const node of this.nodes) {
         if (Math.abs(node.latitude - position.latitude) < 0.0001 &&
           Math.abs(node.longitude - position.longitude) < 0.0001) {
           this.previewNodeId = node.id

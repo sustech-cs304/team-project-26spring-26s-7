@@ -1,6 +1,7 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens, RouterUrls } from '../../../common'
-import { RouterParam } from '../../../common'
+import { RouterParam, getDataService } from '../../../common'
+import type { CreateNodeInput } from '../../../common'
 import { PhotoSelector } from '../components/PhotoSelector'
 
 /**
@@ -12,11 +13,13 @@ import { PhotoSelector } from '../components/PhotoSelector'
 struct NodeEditPage {
   @State title: string = ''
   @State content: string = ''
-  @State poiName: string = '获取位置中...'
+  @State poiName: string = '点击选择位置'
   @State mood: string = ''
   @State tags: string[] = []
   @State photos: string[] = []
   @State isEditMode: boolean = false
+  @State latitude: number = 0
+  @State longitude: number = 0
 
   aboutToAppear(): void {
     const params = router.getParams() as RouterParam
@@ -25,14 +28,55 @@ struct NodeEditPage {
       // TODO: 从本地 RDB 加载节点数据回填
     }
     if (params?.latitude && params?.longitude) {
-      this.poiName = params.latitude + ', ' + params.longitude
-      // TODO: 逆地理编码获取 POI 名称
+      this.latitude = params.latitude
+      this.longitude = params.longitude
+      this.poiName = params.latitude.toFixed(4) + ', ' + params.longitude.toFixed(4)
     }
   }
 
-  private handleSave(): void {
-    // TODO: 校验必填字段，写入本地 RDB，排入同步队列
-    router.back()
+  onPageShow(): void {
+    const picked = AppStorage.get('locationPicked') as boolean
+    if (picked) {
+      this.latitude = AppStorage.get('pickedLatitude') as number || 0
+      this.longitude = AppStorage.get('pickedLongitude') as number || 0
+      this.poiName = AppStorage.get('pickedPoiName') as string || ''
+      AppStorage.setOrCreate('locationPicked', false)
+    }
+  }
+
+  private async handleSave(): Promise<void> {
+    if (!this.title || this.title.length === 0) {
+      promptAction.showToast({ message: '请输入标题' })
+      return
+    }
+    if (this.latitude === 0 && this.longitude === 0) {
+      promptAction.showToast({ message: '请选择位置' })
+      return
+    }
+
+    const input: CreateNodeInput = {
+      travelId: '',
+      title: this.title,
+      content: this.content,
+      latitude: this.latitude,
+      longitude: this.longitude,
+      poiName: this.poiName,
+      photos: this.photos,
+      mood: this.mood,
+      tags: this.tags
+    }
+
+    try {
+      const dataService = getDataService()
+      await dataService.createNode(input)
+      // 通知 MapHomeView 刷新标记
+      const ver = (AppStorage.get('nodeListVersion') as number) || 0
+      AppStorage.setOrCreate('nodeListVersion', ver + 1)
+      promptAction.showToast({ message: '保存成功' })
+      router.back()
+    } catch (e) {
+      promptAction.showToast({ message: '保存失败' })
+    }
   }
 
   private handleNavigateToAI(): void {
@@ -83,11 +127,17 @@ struct NodeEditPage {
             Text('重新选点 >')
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.PRIMARY)
+              .onClick(() => {
+                router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
+              })
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
           .backgroundColor(AppColors.CARD_BG)
           .borderRadius(AppDimens.RADIUS_SM)
+          .onClick(() => {
+            router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
+          })
 
           // 照片选择区
           PhotoSelector({
