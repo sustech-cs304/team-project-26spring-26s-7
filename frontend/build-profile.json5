@@ -1,0 +1,78 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "storeFile": "D:/Projects/SoftwareEngineering/team-project-26spring-26s-7-incremental-dev-20260329/certificates/1.p12",
+          "storePassword": "0000001DE3D8C7CEF620E21B40DF4A552838D1FFB961D4A421C271ADE5D754B14920B42A6DFC9CBE0995A07EC0",
+          "keyAlias": "test",
+          "keyPassword": "0000001DDFECCFE287627FF63DEB0BDC909D332786C9F4D332E73EBBC9CDFB1BF4B3A95908151EE5F9B5FE9782",
+          "signAlg": "SHA256withECDSA",
+          "profile": "D:/Projects/SoftwareEngineering/team-project-26spring-26s-7-incremental-dev-20260329/certificates/testDebug.p7b",
+          "certpath": "D:/Projects/SoftwareEngineering/team-project-26spring-26s-7-incremental-dev-20260329/certificates/test.cer"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "compatibleSdkVersion": "5.0.5(17)",
+        "targetSdkVersion": "5.0.5(17)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug"
+      },
+      {
+        "name": "release"
+      }
+    ],
+    "capabilities": [
+      {
+        "bundleName": "com.ran.login_test",
+        "config": [
+          {
+            "name": "Push Kit",
+            "capability": "com.huawei.service.push.base_service"
+          },
+          {
+            "name": "Device status detection",
+            "capability": "com.huawei.service.device_security.device_verify"
+          },
+          {
+            "name": "Map Kit",
+            "capability": "com.huawei.service.mapkit"
+          },
+          {
+            "name": "Safety Detect",
+            "capability": "com.huawei.service.device_security.safety_detect"
+          }
+        ]
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}

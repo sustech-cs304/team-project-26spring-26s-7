@@ -1,0 +1,61 @@
+# ========================
+# Claude Code
+# ========================
+.claude_state/
+.claude/
+CLAUDE.local.md
+dual_cc.md
+frontend/cc4frontend.md
+backend/cc4backend.md
+.mcp.json
+
+# ========================
+# Temporary files
+# ========================
+tmp/
+Temp/
+temp/
+
+# ========================
+# OS generated
+# ========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ========================
+# HarmonyOS / DevEco Studio
+# ========================
+# IDE settings (machine-specific)
+.idea/
+!.idea/.gitignore
+
+# Build outputs
+**/build/
+.cxx/
+.clangd/
+.clang-format
+.clang-tidy
+error/
+
+# Hvigor build cache
+.hvigor/
+
+# Dependencies (like node_modules)
+node_modules/
+oh_modules/
+
+# Local machine config — NEVER commit
+local.properties
+
+# Preview & test caches
+.preview/
+**/.test/
+.appanalyzer/
+
+# Signed release packages
+**/*.hap
+**/*.hsp
+**/*.app
+
+frontend/.codex_*/
