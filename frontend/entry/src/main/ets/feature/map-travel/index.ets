@@ -30,3 +30,4 @@ export { NodeEditPage } from './pages/NodeEditPage';
 export { NodeDetailPage } from './pages/NodeDetailPage';
 export { TripDetailPage } from './pages/TripDetailPage';
 export { TripReplayPage } from './pages/TripReplayPage';
+export { LocationPickerPage } from './pages/LocationPickerPage';

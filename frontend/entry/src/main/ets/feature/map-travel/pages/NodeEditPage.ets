@@ -11,7 +11,7 @@ import { RouterParam } from '../../../common'
 export struct NodeEditPage {
   @State title: string = ''
   @State content: string = ''
-  @State poiName: string = '获取位置中...'
+  @State poiName: string = '点击选择位置'
   @State mood: string = ''
   @State tags: string[] = []
   @State photos: string[] = []
@@ -19,9 +19,9 @@ export struct NodeEditPage {
   @State isSaving: boolean = false
   @State tripId: string = ''
   @State nodeId: string = ''
+  @State latitude: number = 0
+  @State longitude: number = 0
 
-  private latitude: number = 22.55
-  private longitude: number = 113.96
   private dataService = getDataService()
 
   aboutToAppear(): void {
@@ -39,7 +39,18 @@ export struct NodeEditPage {
     if (typeof params?.latitude === 'number' && typeof params?.longitude === 'number') {
       this.latitude = params.latitude
       this.longitude = params.longitude
-      this.poiName = `${params.latitude}, ${params.longitude}`
+      this.poiName = `${params.latitude.toFixed(4)}, ${params.longitude.toFixed(4)}`
+    }
+  }
+
+  /** 页面重新显示时，接收从 LocationPickerPage 返回的选点数据 */
+  onPageShow(): void {
+    const picked = AppStorage.get('locationPicked') as boolean
+    if (picked) {
+      this.latitude = AppStorage.get('pickedLatitude') as number || 0
+      this.longitude = AppStorage.get('pickedLongitude') as number || 0
+      this.poiName = AppStorage.get('pickedPoiName') as string || ''
+      AppStorage.setOrCreate('locationPicked', false)
     }
   }
 
@@ -196,11 +207,17 @@ export struct NodeEditPage {
             Text('重新选点 >')
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.PRIMARY)
+              .onClick(() => {
+                router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
+              })
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
           .backgroundColor(AppColors.CARD_BG)
           .borderRadius(AppDimens.RADIUS_SM)
+          .onClick(() => {
+            router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
+          })
 
           // 照片选择区
           Column() {
