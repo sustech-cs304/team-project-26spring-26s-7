@@ -1,6 +1,6 @@
 # Change Log
 
-**Last Updated**: 2026-04-03
+**Last Updated**: 2026-04-04
 
 ---
 
@@ -8,6 +8,50 @@
 ```
 [YYYY-MM-DD-HH-MM-SS] - [Action] - [Location] - [Description] - [Git Commit]
 ```
+
+---
+
+## 2026-04-04 (分支合并与功能修复)
+
+### 合并 feature/trip-replay → incremental-dev-20260329
+
+- [2026-04-04-14-38-21] - MERGE - feature/trip-replay → incremental-dev-20260329 - 合并旅程回放功能，适配数据库接口 (d4602bb)
+- [2026-04-04] - UPDATE - TripReplayPage.ets - 使用 getDataService() 从数据库加载 MemoryNode
+- [2026-04-04] - CREATE - convertToReplayRoute() - 新增转换方法 MemoryNode → ReplayNode
+- [2026-04-04] - PRESERVE - ReplayPhotoCard.ets - 保留照片卡片组件
+- [2026-04-04] - PRESERVE - ReplayProgressBar.ets - 保留进度条组件
+- [2026-04-04] - PRESERVE - PhotoCardOverlay.ets - 保留照片展开覆盖层
+- [2026-04-04] - CREATE - resources/base/media/photo_1~6.jpg - 新增 6 张占位图片资源
+- [2026-04-04] - RESOLVE - feature/map-travel/index.ets - 解决合并冲突，合并两分支导出
+- [2026-04-04] - RESOLVE - TripReplayPage.ets - 完全重写，结合数据库+UI组件
+
+### 签名证书路径修复
+
+- [2026-04-04-15-12-00] - FIX - build-profile.json5 - 证书路径从绝对路径改为相对路径 (8b5a775)
+- [2026-04-04] - UPDATE - storeFile: "../certificates/1.p12" - 团队协作友好配置
+- [2026-04-04] - UPDATE - profile: "../certificates/testDebug.p7b"
+- [2026-04-04] - UPDATE - certpath: "../certificates/test.cer"
+
+### 地图选点功能恢复（合并丢失修复）
+
+- [2026-04-04-15-40-00] - FIX - LocationPickerPage.ets - 恢复丢失的地图选点页面 (3b0251d)
+- [2026-04-04] - CREATE - LocationPickerPage.ets - 从 PR #102 (058d85b) 恢复完整文件
+- [2026-04-04] - UPDATE - Constants.ets - 添加 RouterUrls.LOCATION_PICKER 路由常量
+- [2026-04-04] - UPDATE - NodeEditPage.ets - 添加 onPageShow() 接收选点返回数据
+- [2026-04-04] - UPDATE - NodeEditPage.ets - "重新选点 >"按钮绑定 onClick 事件
+- [2026-04-04] - UPDATE - NodeEditPage.ets - latitude/longitude 改为 @State 状态变量
+- [2026-04-04] - UPDATE - main_pages.json - 添加 LocationPickerPage 路由配置
+- [2026-04-04] - UPDATE - feature/map-travel/index.ets - 导出 LocationPickerPage
+- [2026-04-04-15-40-37] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 12 s 376 ms
+
+### 合并丢失根因分析
+
+**问题：合并后地图选点按钮点击无反馈**
+- 根因：合并 feature/trip-replay 时，PR #102 (地图选点功能) 的关键代码被覆盖丢失
+- 丢失文件：LocationPickerPage.ets 整个文件
+- 丢失常量：RouterUrls.LOCATION_PICKER
+- 丢失方法：NodeEditPage.onPageShow() 和 onClick 事件绑定
+- 解决：从 git 历史 (058d85b) 恢复所有丢失内容
 
 ---
 
