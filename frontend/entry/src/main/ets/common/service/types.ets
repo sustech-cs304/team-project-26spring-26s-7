@@ -154,3 +154,79 @@ export interface ShareInfo {
   copyText: string
   expireDays: number
 }
+
+/**
+ * 回放节点 - 动态旅程回放功能的单个记忆点
+ */
+@Observed
+export class ReplayNode {
+  id: string = ''
+  position: Position = new Position()
+  photoUri: ResourceStr = ''    // 照片资源路径 (如 $r('app.media.xxx'))
+  title: string = ''       // 地点名称
+  note: string = ''        // 完整文字笔记
+  noteShort: string = ''   // 缩略文字 (最多 20 字)
+  timestamp: number = 0    // 小时级时间戳 (毫秒)
+  order: number = 0        // 在路线中的顺序
+
+  constructor(
+    id: string,
+    latitude: number,
+    longitude: number,
+    photoUri: ResourceStr,
+    title: string,
+    note: string,
+    noteShort: string,
+    timestamp: number,
+    order: number
+  ) {
+    this.id = id
+    this.position = new Position(latitude, longitude)
+    this.photoUri = photoUri
+    this.title = title
+    this.note = note
+    this.noteShort = noteShort
+    this.timestamp = timestamp
+    this.order = order
+  }
+}
+
+/**
+ * 地理位置坐标
+ */
+export class Position {
+  latitude: number = 0
+  longitude: number = 0
+
+  constructor(latitude?: number, longitude?: number) {
+    if (latitude !== undefined && longitude !== undefined) {
+      this.latitude = latitude
+      this.longitude = longitude
+    }
+  }
+}
+
+/**
+ * 回放路线 - 动态旅程回放功能的完整路线数据
+ * 未来由 RouteGenerator 从 MemoryNode[] 转换生成
+ */
+export class ReplayRoute {
+  id: string = ''
+  name: string = ''
+  nodes: ReplayNode[] = []
+  totalDistance: number = 0
+  duration: number = 0
+}
+
+/**
+ * 路线生成器接口
+ * 未来由队友实现，将 MemoryNode[] 转换为 ReplayRoute
+ */
+export interface RouteGenerator {
+  /**
+   * 从记忆节点生成回放路线
+   * @param nodes 记忆节点数组
+   * @returns 回放路线
+   */
+  generateFromNodes(nodes: MemoryNode[]): ReplayRoute
+}

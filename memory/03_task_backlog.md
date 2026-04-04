@@ -1,10 +1,10 @@
 # Task Backlog
 
-**Last Updated**: 2026-03-29 (三层架构重构完成)
+**Last Updated**: 2026-04-03 (动态旅程回放功能 bug 修复)
 **Total Tasks**: 28 (来自 base 项目)
-**Completed**: 11 (含三层架构重构)
+**Completed**: 12 (含三层架构重构 + 动态旅程回放)
 **In Progress**: 0
-**Pending**: 17
+**Pending**: 16
 
 ---
 
@@ -13,6 +13,76 @@
 - 🔄 In Progress
 - ⏳ Pending
 - 🔴 Blocked
+
+---
+
+## 2026-04-03 Update: 动态旅程回放功能 bug 修复
+
+### ✅ 已完成工作 (2026-04-03)
+
+**修复问题 1：地点变换时图文不切换**
+- 根因：ReplayPhotoCard 使用 `@State node` 装饰节点数据，无法响应对象引用切换
+- 解决方案：
+  1. 为 `ReplayNode` 类添加 `@Observed` 装饰器
+  2. 将 `ReplayPhotoCard.node` 从 `@State` 改为 `@Prop`
+  3. 添加 `forceRefreshCard()` 方法强制刷新状态
+
+**修复问题 2：拖动进度条时图文不显示**
+- 根因：`jumpToNode` 调用 `moveToNode` 后，`isCardVisible=false`，但未在拖动后恢复
+- 解决方案：`jumpToNode` 末尾显式设置 `isCardVisible=true`
+
+**修改文件**:
+- `common/service/types.ets`: ReplayNode 添加 @Observed，photoUri 类型改为 ResourceStr
+- `feature/map-travel/components/ReplayPhotoCard.ets`: @State → @Prop
+- `feature/map-travel/pages/TripReplayPage.ets`: 添加 forceRefreshCard()，修复 jumpToNode()
+
+**编译状态**: ✅ BUILD SUCCESSFUL in 18s 929ms
+
+---
+
+## 2026-04-02 Update: 动态旅程回放功能完成
+
+### ✅ 已完成工作 (2026-04-02)
+
+**P02 - 动态旅程回放功能**:
+
+| 组件 | 职责 | 关键特性 |
+|------|------|----------|
+| `TripReplayPage.ets` | 主页面 | 动画播放逻辑、相机动画、方位角计算 |
+| `ReplayPhotoCard.ets` | 照片卡片 | 现代简约风格、点击展开回调 |
+| `ReplayProgressBar.ets` | 进度条 | 离散步进、@Prop 接收外部进度 |
+| `PhotoCardOverlay.ets` | 展开覆盖层 | 底部半屏、大图 + 完整文字 |
+
+**动画参数**:
+- 停留时长：5 秒
+- 移动时长：1.5 秒
+- 速度选项：0.5x / 1x / 2x
+- 进度条：离散步进（只能在节点间跳转）
+
+**数据模型**:
+- `ReplayNode`: 回放节点（坐标、照片、标题、笔记、时间戳）
+- `ReplayRoute`: 回放路线（节点数组、总距离、时长）
+- `RouteGenerator`: 路线生成器接口（待队友实现）
+
+**核心算法**:
+- `calculateBearing()`: 计算两点方位角（相机朝向）
+- `playSequence()`: 递归播放序列
+- `moveToNode()`: 移动到指定节点（相机动画）
+
+**修复的问题**:
+1. 照片资源引用：从 `$rawfile` 改为 `$r('app.media.xxx')`
+2. 退出按钮遮挡：容器尺寸从 100% 改为 40x40
+3. 进度条不联动：@State 改为 @Prop
+4. 退出按钮样式：从 '✕' 改为 '←'，加深背景
+
+### Git Commits
+- 79df842: feat: 修复动态旅程回放功能编译错误
+- b425452: fix: 修复 TripReplayPage 照片资源路径
+- a026056: fix: 修复照片显示和退出按钮层级问题
+- 566ba14: fix: 修复退出按钮显示问题（回退）
+- 61c7710: fix: 修复照片资源引用和退出按钮显示
+- 11689b8: fix: 修复退出按钮容器遮挡点击事件
+- 87040b8: feat: 优化退出按钮样式和进度条联动
 
 ---
 

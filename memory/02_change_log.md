@@ -1,6 +1,6 @@
 # Change Log
 
-**Last Updated**: 2026-03-29
+**Last Updated**: 2026-04-03
 
 ---
 
@@ -11,7 +11,65 @@
 
 ---
 
-## 2026-03-29
+## 2026-04-03 (动态旅程回放功能 bug 修复)
+
+- [2026-04-03-03-13-38] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 18s 929ms
+- [2026-04-03] - FIX - types.ets - 为 ReplayNode 类添加 @Observed 装饰器，支持状态管理框架观察
+- [2026-04-03] - FIX - ReplayPhotoCard.ets - 将 node 从 @State 改为 @Prop，支持接收父组件传入的新对象引用
+- [2026-04-03] - FIX - TripReplayPage.ets - 添加 forceRefreshCard() 方法，通过先隐藏再显示强制刷新卡片状态
+- [2026-04-03] - FIX - TripReplayPage.ets - moveToNode() 动画完成后自动显示卡片（setTimeout 延迟）
+- [2026-04-03] - FIX - TripReplayPage.ets - jumpToNode() 人为拖动进度条时立即显示卡片
+- [2026-04-03] - FIX - types.ets - 修复 photoUri 类型为 ResourceStr（内建类型，无需导入）
+- [2026-04-03] - 问题修复 - 地点变换时图文不切换：三个节点都显示第一个节点的图文数据
+- [2026-04-03] - 问题修复 - 拖动进度条时图文不显示：jumpToNode 后 isCardVisible 未设置为 true
+
+### 根因分析
+
+**问题 1：地点变换时图文不切换**
+- 根因：ReplayPhotoCard 使用 @State node 装饰节点数据，无法响应对象引用切换
+- 解决：@State → @Prop，并为 ReplayNode 添加 @Observed 装饰器
+
+**问题 2：拖动进度条时图文不显示**
+- 根因：jumpToNode 调用 moveToNode 后，isCardVisible=false，但未在拖动后恢复
+- 解决：jumpToNode 末尾显式设置 isCardVisible=true
+
+---
+
+## 2026-04-02 (动态旅程回放功能开发)
+
+- [2026-04-02-09-09-18] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 16s 967ms
+- [2026-04-02-09-19-46] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 15s 950ms
+- [2026-04-02-09-27-51] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 14s 193ms
+- [2026-04-02-09-40-03] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 13s 936ms
+- [2026-04-02-09-43-20] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 13s 936ms
+- [2026-04-02-09-44-52] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 14s 973ms
+- [2026-04-02-09-56-32] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 14s 973ms
+- [2026-04-02] - GIT - branch - 创建 feature/trip-replay 分支（基于 incremental-dev-20260329）
+- [2026-04-02] - CREATE - references/task/P02_动态旅程回放功能设计.md - 完整设计文档（用户故事、架构、数据模型、UAT）
+- [2026-04-02] - CREATE - references/photo/ - 复制 6 张照片素材（pexels-*.jpg）
+- [2026-04-02] - RENAME - resources/base/media/ - 照片重命名为 photo_1.jpg ~ photo_6.jpg
+- [2026-04-02] - UPDATE - common/service/types.ets - 添加 ReplayNode、ReplayRoute、Position 类（非 interface）
+- [2026-04-02] - UPDATE - common/service/types.ets - 添加 RouteGenerator 接口
+- [2026-04-02] - UPDATE - common/index.ets - 导出 ReplayNode、ReplayRoute、Position 类
+- [2026-04-02] - CREATE - feature/map-travel/components/ReplayPhotoCard.ets - 照片卡片组件（现代简约风格）
+- [2026-04-02] - CREATE - feature/map-travel/components/ReplayProgressBar.ets - 离散步进进度条
+- [2026-04-02] - CREATE - feature/map-travel/components/PhotoCardOverlay.ets - 底部半屏照片展开覆盖层
+- [2026-04-02] - REWRITE - feature/map-travel/pages/TripReplayPage.ets - 完整重写动画播放逻辑
+- [2026-04-02] - FIX - TripReplayPage.ets - 照片路径从 $rawfile 改为 $r('app.media.xxx')
+- [2026-04-02] - FIX - ReplayProgressBar.ets - @State 改为 @Prop，支持外部传入进度值
+- [2026-04-02] - FIX - TripReplayPage.ets - 退出按钮从 '✕' 改为 '←'，加深背景遮罩
+- [2026-04-02] - FIX - TripReplayPage.ets - 修复退出按钮容器遮挡点击事件（100% 尺寸改为 40x40）
+- [2026-04-02] - GIT - 79df842 - feat: 修复动态旅程回放功能编译错误
+- [2026-04-02] - GIT - b425452 - fix: 修复 TripReplayPage 照片资源路径
+- [2026-04-02] - GIT - a026056 - fix: 修复照片显示和退出按钮层级问题
+- [2026-04-02] - GIT - 566ba14 - fix: 修复退出按钮显示问题（回退）
+- [2026-04-02] - GIT - 61c7710 - fix: 修复照片资源引用和退出按钮显示
+- [2026-04-02] - GIT - 11689b8 - fix: 修复退出按钮容器遮挡点击事件
+- [2026-04-02] - GIT - 87040b8 - feat: 优化退出按钮样式和进度条联动
+
+---
+
+## 2026-03-30
 
 - [2026-03-29] - CREATE - memory/01_project_state.md - 初始化项目状态文件（增量开发模式）
 - [2026-03-29] - CREATE - memory/03_task_backlog.md - 初始化任务清单

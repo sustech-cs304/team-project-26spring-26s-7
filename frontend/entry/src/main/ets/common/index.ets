@@ -30,7 +30,8 @@ export type {
   Trip,
   SyncStatus,
   CopywritingRequest,
-  ShareInfo
+  ShareInfo,
+  RouteGenerator
 } from './service/types';
 
 // Service Layer 类导出
@@ -40,7 +41,10 @@ export {
   TimelineNodeInfo,
   ToneOption,
   SharePlatform,
-  RouterParam
+  RouterParam,
+  ReplayNode,
+  ReplayRoute,
+  Position
 } from './service/types';
 
 // Service Layer 服务导出

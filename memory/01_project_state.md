@@ -1,9 +1,9 @@
 # Project State
 
-**Last Updated**: 2026-03-30 (PhotoPicker 完成)
+**Last Updated**: 2026-04-02 (动态旅程回放功能完成)
 **Project**: TravelPin - HarmonyOS Travel Journal App
 **Repository**: D:\Mydata\1University\3Junior\Software_Engineering\frontendv1\team-project-26spring-26s-7
-**Current Branch**: incremental-dev-20260329
+**Current Branch**: feature/trip-replay
 **Base Branch**: frontend
 
 ---
@@ -24,24 +24,35 @@
 
 ---
 
-## 2. 当前架构状态 (2026-03-29 重构完成)
+## 2. 当前架构状态 (2026-04-02 更新)
+
+**三层架构**: 已完成 (2026-03-29)
 
 ```
 entry/src/main/ets/
 ├── common/                 # 公共层
 │   ├── index.ets           # 统一导出入口
 │   ├── utils/Constants.ets # 工具类 (AppColors, AppDimens, RouterUrls)
-│   └── service/types.ets   # 数据模型 (MemoryNode, Trip, SyncStatus 等)
+│   ├── utils/PhotoPickerUtil.ets  # 照片选择工具
+│   ├── utils/Logger.ets    # 日志工具
+│   └── service/types.ets   # 数据模型 (MemoryNode, Trip, SyncStatus, ReplayNode, ReplayRoute)
 ├── feature/
 │   ├── map-travel/         # 地图旅行功能
 │   │   ├── pages/          # 页面 (NodeEdit, NodeDetail, TripDetail, TripReplay)
 │   │   ├── views/          # 视图组件 (MapHomeView, TripListView)
+│   │   ├── components/     # 组件 (PhotoSelector, ReplayPhotoCard, ReplayProgressBar, PhotoCardOverlay)
 │   │   └── index.ets
 │   ├── profile/            # 个人中心功能
 │   │   ├── views/ProfileView.ets
+│   │   ├── pages/ProfileEditPage.ets
 │   │   └── index.ets
-│   └── social-share/       # 社交分享功能
-│       ├── pages/SharePage.ets
+│   ├── social-share/       # 社交分享功能
+│   │   ├── pages/SharePage.ets
+│   │   ├── components/QRCodeShare.ets
+│   │   └── index.ets
+│   └── ai-copy/            # AI 文案生成功能
+│       ├── pages/AiCopyPage.ets
+│       ├── components/AiCopyGenerator.ets
 │       └── index.ets
 └── pages/                  # Product 层页面
     ├── Index.ets           # 启动页
@@ -50,23 +61,19 @@ entry/src/main/ets/
 ```
 
 **路由配置**: `entry/src/main/resources/base/profile/main_pages.json`
-- 已更新为 feature 层路径
+- 已配置 10 个页面路由
 
-**导入路径规范**:
-- `pages/*.ets` → `import ... from '../common'`
-- `feature/*/views/*.ets` → `import ... from '../../../common'`
-- `feature/*/pages/*.ets` → `import ... from '../../../common'`
-
-**编译状态**: ✅ BUILD SUCCESSFUL (2026-03-29-18-01-03 验证)
+**编译状态**: ✅ BUILD SUCCESSFUL (2026-04-02 验证)
 
 ---
 
-## 3. 功能模块状态 (2026-03-30 更新)
+## 3. 功能模块状态 (2026-04-02 更新)
 
 | 功能模块 | 页面/组件 | 状态 | 说明 |
 |---------|----------|------|------|
 | **地图旅行** | MapHomeView, NodeEditPage, NodeDetailPage | ✅ 完整 | 地图展示、节点编辑/详情 |
-| **旅行路线** | TripListView, TripDetailPage, TripReplayPage | ✅ 完整 | 列表、详情、回放 |
+| **旅行路线** | TripListView, TripDetailPage | ✅ 完整 | 列表、详情 |
+| **动态旅程回放** | TripReplayPage, ReplayPhotoCard, ReplayProgressBar, PhotoCardOverlay | ✅ 完整 | 动画回放、照片卡片、进度条、展开覆盖层 |
 | **AI 文案** | AiCopyPage, AiCopyGenerator | ✅ 完整 | 5 种风格、3 种长度 |
 | **社交分享** | SharePage, QRCodeShare | ✅ 完整 | 分享链接、平台选择、二维码占位 |
 | **个人中心** | ProfileView, ProfileEditPage | ✅ 完整 | 用户信息、设置、编辑资料 |
