@@ -31,6 +31,8 @@ export struct MapHomeView {
   @State selectedFilterTag: string = '全部'
   @State isLoadingNodes: boolean = false
   @State mapNodes: MapNodeInfo[] = []
+  @Watch('onTravelDataVersionChange')
+  @StorageLink('travelDataVersion') travelDataVersion: number = 0
 
   // 地图配置：默认中心为深圳
   private mapOptions: mapCommon.MapOptions = {
@@ -42,6 +44,7 @@ export struct MapHomeView {
 
   private mapController?: map.MapComponentController
   private markerNodeIds: string[] = []
+  private mapMarkers: map.Marker[] = []
   private loadedNodes: LoadedNodeData[] = []
   private dataService = getDataService()
 
@@ -56,10 +59,19 @@ export struct MapHomeView {
       this.mapController = controller
       await this.syncMarkers()
       this.setupMarkerClickListener()
+      this.setupMapLongClickListener()
     }
   }
 
   aboutToAppear(): void {
+    this.loadNodes()
+  }
+
+  onPageShow(): void {
+    this.loadNodes()
+  }
+
+  private onTravelDataVersionChange(): void {
     this.loadNodes()
   }
 
@@ -130,11 +142,16 @@ export struct MapHomeView {
       return
     }
 
-    for (const node of this.mapNodes) {
-      if (this.markerNodeIds.includes(node.id)) {
-        continue
-      }
+    // Re-render markers from source of truth to avoid stale cache causing missing pins.
+    for (const marker of this.mapMarkers) {
+      try {
+        marker.remove()
+      } catch (_) {}
+    }
+    this.mapMarkers = []
+    this.markerNodeIds = []
 
+    for (const node of this.mapNodes) {
       const markerPosition: mapCommon.LatLng = {
         latitude: node.latitude,
         longitude: node.longitude
@@ -154,6 +171,7 @@ export struct MapHomeView {
       const marker = await this.mapController.addMarker(markerOptions)
       marker.setTitle(node.title)
       marker.setSnippet(node.poiName)
+      this.mapMarkers.push(marker)
       this.markerNodeIds.push(node.id)
     }
   }
@@ -177,6 +195,23 @@ export struct MapHomeView {
       }
       return true
     })
+  }
+
+  /** 监听地图长按，快捷创建节点并自动填入坐标 */
+  private setupMapLongClickListener(): void {
+    if (!this.mapController) {
+      return
+    }
+    const navigateToNodeEdit = (position: mapCommon.LatLng): void => {
+      router.pushUrl({
+        url: RouterUrls.NODE_EDIT,
+        params: {
+          latitude: position.latitude,
+          longitude: position.longitude
+        } as RouterParam
+      })
+    }
+    this.mapController.on('mapLongClick', navigateToNodeEdit)
   }
 
   /** 飞回到所有节点的中心视野 */

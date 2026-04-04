@@ -13,6 +13,7 @@ export default class EntryAbility extends UIAbility {
       hilog.error(DOMAIN, 'testTag', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
     }
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+    AppStorage.setOrCreate('travelDataVersion', 0);
 
     // 初始化 RDB 数据库
     RdbHelper.getInstance().initDatabase(this.context).then(() => {

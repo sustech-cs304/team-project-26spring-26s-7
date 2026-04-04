@@ -5,6 +5,10 @@ import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../commo
 import { TimelineNodeInfo, RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
 
+interface RemovableOverlay {
+  remove: () => void
+}
+
 const DEFAULT_TRIP_CENTER: mapCommon.LatLng = {
   latitude: 22.55,
   longitude: 113.96
@@ -35,8 +39,14 @@ export struct TripDetailPage {
     }
   }
   private mapController?: map.MapComponentController
-  private routeRendered: boolean = false
+  private routeMarkers: map.Marker[] = []
+  private routePolyline?: RemovableOverlay
   private dataService = getDataService()
+
+  private bumpTravelDataVersion(): void {
+    const version = (AppStorage.get('travelDataVersion') as number) || 0
+    AppStorage.setOrCreate('travelDataVersion', version + 1)
+  }
 
   private mapCallback: AsyncCallback<map.MapComponentController> = async (err, controller) => {
     if (!err && controller) {
@@ -49,6 +59,12 @@ export struct TripDetailPage {
     const params = router.getParams() as RouterParam
     if (params?.tripId) {
       this.tripId = params.tripId
+      this.loadTripDetail()
+    }
+  }
+
+  onPageShow(): void {
+    if (this.tripId.length > 0) {
       this.loadTripDetail()
     }
   }
@@ -117,12 +133,26 @@ export struct TripDetailPage {
 
   /** 在小地图上绘制轨迹折线 + 节点标记 */
   private async drawRoute(): Promise<void> {
-    if (!this.mapController || this.routeRendered || this.routePoints.length === 0) {
+    if (!this.mapController || this.routePoints.length === 0) {
       return
     }
 
+    for (const marker of this.routeMarkers) {
+      try {
+        marker.remove()
+      } catch (_) {}
+    }
+    this.routeMarkers = []
+
+    if (this.routePolyline) {
+      try {
+        this.routePolyline.remove()
+      } catch (_) {}
+      this.routePolyline = undefined
+    }
+
     if (this.routePoints.length > 1) {
-      await this.mapController.addPolyline({
+      this.routePolyline = await this.mapController.addPolyline({
         points: this.routePoints,
         clickable: false,
         visible: true,
@@ -133,11 +163,11 @@ export struct TripDetailPage {
         jointType: mapCommon.JointType.ROUND,
         startCap: mapCommon.CapStyle.ROUND,
         endCap: mapCommon.CapStyle.ROUND
-      })
+      }) as RemovableOverlay
     }
 
     for (const point of this.routePoints) {
-      await this.mapController.addMarker({
+      const marker = await this.mapController.addMarker({
         position: point,
         visible: true,
         clickable: false,
@@ -149,6 +179,7 @@ export struct TripDetailPage {
         anchorU: 0.5,
         anchorV: 1
       })
+      this.routeMarkers.push(marker)
     }
 
     const cameraUpdate = map.newCameraPosition({
@@ -156,7 +187,6 @@ export struct TripDetailPage {
       zoom: 11.5
     })
     this.mapController.animateCamera(cameraUpdate, 300)
-    this.routeRendered = true
   }
 
   private async deleteCurrentTrip(): Promise<void> {
@@ -165,6 +195,7 @@ export struct TripDetailPage {
     }
     try {
       await this.dataService.deleteTravel(this.tripId)
+      this.bumpTravelDataVersion()
       promptAction.showToast({ message: '旅行已删除' })
       router.back()
     } catch (err) {
