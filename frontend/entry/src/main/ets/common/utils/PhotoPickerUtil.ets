@@ -43,6 +43,8 @@ export class PhotoPickerUtil {
    */
   static async pickAndSavePhotos(context: common.UIAbilityContext, maxCount: number = 9): Promise<string[]> {
     try {
+      logger.info(TAG, `Starting photo selection, maxCount=${maxCount}`);
+
       // Step 1: 拉起图库选择器
       const photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
       photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
@@ -52,26 +54,32 @@ export class PhotoPickerUtil {
       const selectResult = await photoViewPicker.select(photoSelectOptions);
       const uris = selectResult.photoUris;
 
-      logger.info(TAG, `Selected ${uris.length} photos from gallery`);
+      logger.info(TAG, `Selected ${uris.length} photos from gallery, uris=${JSON.stringify(uris)}`);
 
       if (uris.length === 0) {
+        logger.info(TAG, 'No photos selected, returning empty array');
         return [];
       }
 
       // Step 2: 复制每张照片到沙箱
       const sandboxPaths: string[] = [];
-      for (const uri of uris) {
+      for (let i = 0; i < uris.length; i++) {
+        const uri = uris[i];
+        logger.info(TAG, `Copying photo ${i + 1}/${uris.length}: ${uri}`);
         const sandboxPath = await PhotoPickerUtil.copyToSandbox(context, uri);
         if (sandboxPath.length > 0) {
           sandboxPaths.push(sandboxPath);
+          logger.info(TAG, `Successfully copied to: ${sandboxPath}`);
+        } else {
+          logger.error(TAG, `Failed to copy photo ${i + 1}`);
         }
       }
 
-      logger.info(TAG, `Saved ${sandboxPaths.length} photos to sandbox`);
+      logger.info(TAG, `Successfully saved ${sandboxPaths.length}/${uris.length} photos to sandbox`);
       return sandboxPaths;
     } catch (err) {
       const error = err as BusinessError;
-      logger.error(TAG, `pickAndSavePhotos failed: code=${error.code}, msg=${error.message}`);
+      logger.error(TAG, `pickAndSavePhotos failed: code=${error.code}, msg=${error.message}, stack=${error.stack}`);
       return [];
     }
   }
@@ -84,25 +92,35 @@ export class PhotoPickerUtil {
    */
   private static async copyToSandbox(context: common.UIAbilityContext, sourceUri: string): Promise<string> {
     try {
+      logger.info(TAG, `copyToSandbox: sourceUri=${sourceUri}`);
+
       // 确保沙箱照片目录存在
       const sandboxDir = PhotoPickerUtil.getSandboxPhotoDir(context);
+      logger.info(TAG, `Target sandbox directory: ${sandboxDir}`);
+
       PhotoPickerUtil.ensureDirectoryExists(sandboxDir);
 
       // 生成唯一文件名
       const fileName = PhotoPickerUtil.generateFileName();
       const targetPath = `${sandboxDir}/${fileName}`;
+      logger.info(TAG, `Target file path: ${targetPath}`);
 
       // 打开源文件（临时 URI，只读权限）
+      logger.info(TAG, `Opening source file...`);
       const sourceFile = fs.openSync(sourceUri, fs.OpenMode.READ_ONLY);
+      logger.info(TAG, `Source file opened, fd=${sourceFile.fd}`);
 
       // 创建目标文件
+      logger.info(TAG, `Creating target file...`);
       const targetFile = fs.openSync(targetPath, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY);
+      logger.info(TAG, `Target file created, fd=${targetFile.fd}`);
 
       // 复制文件内容
       const bufferSize = 4096;
       const buffer = new ArrayBuffer(bufferSize);
       let totalBytes = 0;
 
+      logger.info(TAG, `Starting file copy...`);
       let readLen = fs.readSync(sourceFile.fd, buffer);
       while (readLen > 0) {
         fs.writeSync(targetFile.fd, buffer.slice(0, readLen));
@@ -114,11 +132,11 @@ export class PhotoPickerUtil {
       fs.closeSync(sourceFile);
       fs.closeSync(targetFile);
 
-      logger.info(TAG, `Copied photo to sandbox: ${targetPath} (${totalBytes} bytes)`);
+      logger.info(TAG, `Successfully copied photo: ${targetPath} (${totalBytes} bytes)`);
       return targetPath;
     } catch (err) {
       const error = err as BusinessError;
-      logger.error(TAG, `copyToSandbox failed: ${error.message}`);
+      logger.error(TAG, `copyToSandbox failed: code=${error.code}, msg=${error.message}`);
       return '';
     }
   }
@@ -135,21 +153,13 @@ export class PhotoPickerUtil {
    */
   private static ensureDirectoryExists(dirPath: string): void {
     try {
-      // 尝试打开目录，如果不存在会抛出错误
-      fs.accessSync(dirPath);
-    } catch {
-      // 目录不存在，创建它
-      // 使用 mkdirSync 创建目录（递归创建父目录）
-      const parentDir = dirPath.substring(0, dirPath.lastIndexOf('/'));
-      try {
-        fs.accessSync(parentDir);
-      } catch {
-        // 父目录也不存在，创建父目录
-        fs.mkdirSync(parentDir, true);
-      }
-      // 创建目标目录
-      fs.mkdirSync(dirPath, false);
-      logger.info(TAG, `Created photo directory: ${dirPath}`);
+      // 尝试创建目录（递归模式，如果已存在不会报错）
+      fs.mkdirSync(dirPath, true);
+      logger.info(TAG, `Directory ready: ${dirPath}`);
+    } catch (err) {
+      const error = err as BusinessError;
+      // 如果目录已存在，会返回特定错误码，这是正常的
+      logger.info(TAG, `Directory check result: code=${error.code}, msg=${error.message}`);
     }
   }
 

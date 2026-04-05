@@ -14,7 +14,10 @@
  */
 
 import { common } from '@kit.AbilityKit';
-import { AppColors, AppDimens, PhotoPickerUtil } from '../../../common';
+import { promptAction } from '@kit.ArkUI';
+import { AppColors, AppDimens, PhotoPickerUtil, logger } from '../../../common';
+
+const TAG = 'PhotoSelector';
 
 /**
  * 照片选择器组件
@@ -45,27 +48,48 @@ export struct PhotoSelector {
    * 处理照片选择
    */
   private async handlePickPhoto(): Promise<void> {
+    logger.info(TAG, `handlePickPhoto started, current photos count: ${this.photos.length}`);
+
     // 检查是否已达到最大数量
     if (this.photos.length >= this.maxPhotos) {
+      logger.info(TAG, `Already at max photos: ${this.maxPhotos}`);
       return;
     }
 
     try {
-      // 获取 UIAbilityContext
-      const context = getContext(this) as common.UIAbilityContext;
+      // 使用 getUIContext().getHostContext() 获取 Context（推荐方式，API 12+）
+      // 注意：必须在异步操作之前获取 context，否则可能返回 undefined
+      const uicontext = this.getUIContext();
+      logger.info(TAG, `UIContext obtained: ${uicontext ? 'success' : 'failed'}`);
+
+      const context = uicontext.getHostContext() as common.UIAbilityContext;
+      logger.info(TAG, `HostContext obtained: ${context ? 'success' : 'failed'}`);
+
+      if (!context) {
+        logger.error(TAG, 'Failed to get UIAbilityContext');
+        return;
+      }
 
       // 计算剩余可选数量
       const remainingCount = this.maxPhotos - this.photos.length;
+      logger.info(TAG, `Remaining slots: ${remainingCount}`);
 
       // 调用照片选择工具
+      logger.info(TAG, 'Calling PhotoPickerUtil.pickAndSavePhotos...');
       const newPaths = await PhotoPickerUtil.pickAndSavePhotos(context, remainingCount);
+      logger.info(TAG, `pickAndSavePhotos returned: ${newPaths.length} photos`);
 
       if (newPaths.length > 0) {
         // 添加新选择的照片
+        const oldCount = this.photos.length;
         this.photos = [...this.photos, ...newPaths];
+        logger.info(TAG, `Photos updated: ${oldCount} -> ${this.photos.length}`);
+        logger.info(TAG, `New photo paths: ${JSON.stringify(this.photos)}`);
+      } else {
+        logger.info(TAG, 'No new photos to add');
       }
     } catch (err) {
-      console.error(`PhotoSelector handlePickPhoto failed: ${JSON.stringify(err)}`);
+      logger.error(TAG, `handlePickPhoto failed: ${JSON.stringify(err)}`);
     }
   }
 
