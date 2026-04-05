@@ -133,7 +133,8 @@ export class PhotoPickerUtil {
       fs.closeSync(targetFile);
 
       logger.info(TAG, `Successfully copied photo: ${targetPath} (${totalBytes} bytes)`);
-      return targetPath;
+      // 返回带 file:// 前缀的路径，供 Image 组件使用
+      return `file://${targetPath}`;
     } catch (err) {
       const error = err as BusinessError;
       logger.error(TAG, `copyToSandbox failed: code=${error.code}, msg=${error.message}`);
@@ -174,12 +175,14 @@ export class PhotoPickerUtil {
 
   /**
    * 删除沙箱中的照片文件
-   * @param sandboxPath 沙箱路径
+   * @param sandboxPath 沙箱路径（可能带 file:// 前缀）
    */
   static async deletePhoto(sandboxPath: string): Promise<boolean> {
     try {
-      fs.unlinkSync(sandboxPath);
-      logger.info(TAG, `Deleted photo: ${sandboxPath}`);
+      // 移除 file:// 前缀（如果有）
+      const realPath = sandboxPath.startsWith('file://') ? sandboxPath.substring(7) : sandboxPath;
+      fs.unlinkSync(realPath);
+      logger.info(TAG, `Deleted photo: ${realPath}`);
       return true;
     } catch (err) {
       const error = err as BusinessError;
@@ -204,7 +207,8 @@ export class PhotoPickerUtil {
    */
   static photoExists(sandboxPath: string): boolean {
     try {
-      fs.accessSync(sandboxPath);
+      const realPath = sandboxPath.startsWith('file://') ? sandboxPath.substring(7) : sandboxPath;
+      fs.accessSync(realPath);
       return true;
     } catch {
       return false;
