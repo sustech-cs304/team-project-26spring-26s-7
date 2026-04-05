@@ -162,18 +162,18 @@ export interface ShareInfo {
 export class ReplayNode {
   id: string = ''
   position: Position = new Position()
-  photoUri: ResourceStr = ''    // 照片资源路径 (如 $r('app.media.xxx'))
-  title: string = ''       // 地点名称
-  note: string = ''        // 完整文字笔记
-  noteShort: string = ''   // 缩略文字 (最多 20 字)
-  timestamp: number = 0    // 小时级时间戳 (毫秒)
-  order: number = 0        // 在路线中的顺序
+  photos: string[] = []       // 照片数组 (支持多张，沙箱路径)
+  title: string = ''          // 地点名称
+  note: string = ''           // 完整文字笔记
+  noteShort: string = ''      // 缩略文字 (最多 20 字)
+  timestamp: number = 0       // 小时级时间戳 (毫秒)
+  order: number = 0           // 在路线中的顺序
 
   constructor(
     id: string,
     latitude: number,
     longitude: number,
-    photoUri: ResourceStr,
+    photos: string[],
     title: string,
     note: string,
     noteShort: string,
@@ -182,7 +182,7 @@ export class ReplayNode {
   ) {
     this.id = id
     this.position = new Position(latitude, longitude)
-    this.photoUri = photoUri
+    this.photos = photos
     this.title = title
     this.note = note
     this.noteShort = noteShort

@@ -1,10 +1,10 @@
-import { AppDimens } from '../../../common'
+import { AppDimens, AppColors } from '../../../common'
 import { ReplayNode } from '../../../common'
 
 /**
  * 回放照片卡片组件
  * 现代简约风格，悬浮于节点上方
- * 包含：照片 + 标题 + 文字缩略（带省略号）
+ * 包含：照片轮播 + 标题 + 文字缩略（带省略号）
  */
 @Component
 export struct ReplayPhotoCard {
@@ -30,15 +30,62 @@ export struct ReplayPhotoCard {
     this.node = null
   }
 
+  /**
+   * 渲染照片区域
+   * - 有照片：Swiper 轮播
+   * - 无照片：占位符
+   */
+  @Builder
+  PhotoArea() {
+    if (this.node && this.node.photos.length > 0) {
+      // 多张照片轮播
+      Swiper() {
+        ForEach(this.node.photos, (photo: string) => {
+          Image(photo)
+            .width(280)
+            .height(180)
+            .objectFit(ImageFit.Cover)
+        })
+      }
+      .width(280)
+      .height(180)
+      .autoPlay(true)
+      .interval(3000)
+      .indicator(
+        this.node.photos.length > 1
+          ? Indicator.dot()
+              .itemWidth(6)
+              .itemHeight(6)
+              .selectedItemWidth(6)
+              .selectedItemHeight(6)
+              .color('#FFFFFF80')
+              .selectedColor('#FFFFFF')
+          : false
+      )
+      .borderRadius({ topLeft: 12, topRight: 12, bottomLeft: 0, bottomRight: 0 })
+    } else {
+      // 无照片占位符
+      Column() {
+        Text('📷')
+          .fontSize(36)
+        Text('暂无照片')
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor('#FFFFFF99')
+          .margin({ top: 8 })
+      }
+      .width(280)
+      .height(180)
+      .justifyContent(FlexAlign.Center)
+      .backgroundColor('#333333')
+      .borderRadius({ topLeft: 12, topRight: 12, bottomLeft: 0, bottomRight: 0 })
+    }
+  }
+
   build() {
     if (this.node) {
       Column() {
         // 照片区域
-        Image(this.node.photoUri)
-          .width(280)
-          .height(180)
-          .objectFit(ImageFit.Cover)
-          .borderRadius({ topLeft: 12, topRight: 12, bottomLeft: 0, bottomRight: 0 })
+        this.PhotoArea()
 
         // 文字信息区域
         Column() {
@@ -57,6 +104,14 @@ export struct ReplayPhotoCard {
             .margin({ top: 4 })
             .maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+          // 照片数量标签
+          if (this.node.photos.length > 0) {
+            Text(`${this.node.photos.length} 张照片`)
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor('#FFFFFF99')
+              .margin({ top: 4 })
+          }
         }
         .width('100%')
         .padding(AppDimens.PADDING_MD)

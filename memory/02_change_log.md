@@ -19,6 +19,14 @@
 - [2026-04-05-15-25-00] - FIX - NodeDetailPage.ets - 修复 SwiperIndicator 类型错误，改为 Indicator.dot()
 - [2026-04-05-15-25-05] - BUILD - assembleHap 编译验证通过
 
+### Phase 7: Replay 照片策略优化
+
+- [2026-04-05-15-35-00] - UPDATE - types.ets - ReplayNode.photoUri 改为 photos: string[]，支持多张照片
+- [2026-04-05-15-35-10] - UPDATE - TripReplayPage.ets - 移除 resolvePhotoUri 方法，直接传递照片数组
+- [2026-04-05-15-35-20] - UPDATE - ReplayPhotoCard.ets - 支持 Swiper 多张照片轮播，无照片显示占位符
+- [2026-04-05-15-35-30] - UPDATE - PhotoCardOverlay.ets - 支持 Swiper 多张照片轮播，显示照片数量
+- [2026-04-05-15-35-40] - BUILD - assembleHap 编译验证通过
+
 ### Phase 1: PhotoPickerUtil 工具类
 
 - [2026-04-05-14-30-10] - CREATE - common/utils/PhotoPickerUtil.ets - 照片选择与沙箱存储工具类
