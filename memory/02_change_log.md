@@ -13,6 +13,12 @@
 
 ## 2026-04-05 (照片选择与沙箱存储功能)
 
+### Phase 6: NodeDetailPage 照片轮播
+
+- [2026-04-05-15-20-00] - FIX - NodeDetailPage.ets - 照片区域从占位符改为 Swiper 组件实际展示照片
+- [2026-04-05-15-25-00] - FIX - NodeDetailPage.ets - 修复 SwiperIndicator 类型错误，改为 Indicator.dot()
+- [2026-04-05-15-25-05] - BUILD - assembleHap 编译验证通过
+
 ### Phase 1: PhotoPickerUtil 工具类
 
 - [2026-04-05-14-30-10] - CREATE - common/utils/PhotoPickerUtil.ets - 照片选择与沙箱存储工具类
