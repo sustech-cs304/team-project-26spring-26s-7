@@ -1,6 +1,6 @@
 # Change Log
 
-**Last Updated**: 2026-04-04
+**Last Updated**: 2026-04-05
 
 ---
 
@@ -8,6 +8,35 @@
 ```
 [YYYY-MM-DD-HH-MM-SS] - [Action] - [Location] - [Description] - [Git Commit]
 ```
+
+---
+
+## 2026-04-05 (照片选择与沙箱存储功能)
+
+### Phase 1: PhotoPickerUtil 工具类
+
+- [2026-04-05-14-30-10] - CREATE - common/utils/PhotoPickerUtil.ets - 照片选择与沙箱存储工具类
+- [2026-04-05-14-30-15] - UPDATE - common/index.ets - 添加 PhotoPickerUtil 导出
+
+### Phase 2: PhotoSelector UI 组件
+
+- [2026-04-05-14-31-00] - CREATE - feature/map-travel/components/PhotoSelector.ets - 照片选择器组件（网格展示、添加/删除按钮、最多 9 张）
+
+### Phase 3: NodeEditPage 集成
+
+- [2026-04-05-14-32-30] - UPDATE - NodeEditPage.ets - 导入 PhotoSelector 组件
+- [2026-04-05-14-32-45] - UPDATE - NodeEditPage.ets - 替换照片选择区域为 PhotoSelector 组件
+- [2026-04-05-14-32-50] - UPDATE - NodeEditPage.ets - 删除 handlePickPhoto() 占位方法
+
+### Phase 4: Replay 照片展示
+
+- [2026-04-05-14-33-00] - VERIFY - TripReplayPage.resolvePhotoUri() - 确认已支持从 photos[] 获取照片
+
+### Phase 5: 照片清理
+
+- [2026-04-05-14-34-00] - UPDATE - RdbDataService.ets - 导入 PhotoPickerUtil
+- [2026-04-05-14-34-10] - UPDATE - RdbDataService.updateNode() - 更新时清理被移除的照片
+- [2026-04-05-14-34-20] - UPDATE - RdbDataService.deleteNode() - 删除节点时清理所有关联照片
 
 ---
 

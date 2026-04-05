@@ -18,6 +18,7 @@
 // Utils 导出
 export { AppColors, AppDimens, RouterUrls } from './utils/Constants';
 export { logger } from './utils/Logger';
+export { PhotoPickerUtil } from './utils/PhotoPickerUtil';
 
 // Data Layer 导出
 export { RdbHelper, SensitivityLevel } from './data/index';

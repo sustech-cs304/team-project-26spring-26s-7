@@ -1,10 +1,10 @@
 # Project State
 
-**Last Updated**: 2026-04-04 (分支合并完成 + 地图选点功能恢复)
+**Last Updated**: 2026-04-05 (照片选择与沙箱存储功能完成)
 **Project**: TravelPin - HarmonyOS Travel Journal App
 **Repository**: D:\Mydata\1University\3Junior\Software_Engineering\frontendv1\team-project-26spring-26s-7
-**Current Branch**: incremental-dev-20260329
-**Base Branch**: frontend
+**Current Branch**: feature/photo
+**Base Branch**: incremental-dev-20260329
 
 ---
 
@@ -66,7 +66,7 @@ entry/src/main/ets/
 **路由配置**: `entry/src/main/resources/base/profile/main_pages.json`
 - 已配置 11 个页面路由（新增 LocationPickerPage）
 
-**编译状态**: ✅ BUILD SUCCESSFUL (2026-04-04 验证)
+**编译状态**: ✅ BUILD SUCCESSFUL (2026-04-05 验证)
 
 ---
 
@@ -83,7 +83,7 @@ entry/src/main/ets/
 | **AI 文案** | AiCopyPage, AiCopyGenerator | ✅ 完整 | 5 种风格、3 种长度 |
 | **社交分享** | SharePage, QRCodeShare | ✅ 完整 | 分享链接、平台选择、二维码占位 |
 | **个人中心** | ProfileView, ProfileEditPage | ✅ 完整 | 用户信息、设置、编辑资料 |
-| **照片选择** | PhotoSelector, PhotoPickerUtil | ✅ 完整 | 系统相册选择、网格展示、删除功能 |
+| **照片选择** | PhotoSelector, PhotoPickerUtil | ✅ 完整 | 系统相册选择、沙箱存储、网格展示、删除、自动清理 |
 | **认证** | LoginPage | ⚠️ 占位 | 华为账号 SDK 待集成 |
 
 **已删除**:

@@ -1,6 +1,7 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
+import { PhotoSelector } from '../components/PhotoSelector'
 
 /**
  * P03 节点创建/编辑页
@@ -155,10 +156,6 @@ export struct NodeEditPage {
     }
   }
 
-  private handlePickPhoto(): void {
-    promptAction.showToast({ message: '照片选择功能待接入' })
-  }
-
   private handleNavigateToAI(): void {
     router.pushUrl({
       url: RouterUrls.AI_COPY,
@@ -220,36 +217,12 @@ export struct NodeEditPage {
           })
 
           // 照片选择区
-          Column() {
-            Text('照片')
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.TEXT_PRIMARY)
-            Row() {
-              // 已选照片占位 (TODO: 动态渲染 this.photos)
-              Column() {
-                Text('+')
-                  .fontSize(28)
-                  .fontColor(AppColors.TEXT_HINT)
-                Text('添加照片')
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_HINT)
-              }
-              .width(80)
-              .height(80)
-              .backgroundColor(AppColors.BACKGROUND)
-              .borderRadius(AppDimens.RADIUS_SM)
-              .justifyContent(FlexAlign.Center)
-              .onClick(() => this.handlePickPhoto())
-            }
-            .margin({ top: 8 })
-          }
-          .width('100%')
-          .padding(AppDimens.PADDING_MD)
-          .margin({ top: 12 })
-          .backgroundColor(AppColors.CARD_BG)
-          .borderRadius(AppDimens.RADIUS_SM)
-          .alignItems(HorizontalAlign.Start)
+          PhotoSelector({ photos: $photos, maxPhotos: 9 })
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .margin({ top: 12 })
+            .backgroundColor(AppColors.CARD_BG)
+            .borderRadius(AppDimens.RADIUS_SM)
 
           // 标题
           Column() {
