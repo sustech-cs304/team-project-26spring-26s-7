@@ -1,11 +1,8 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
+import type { Trip } from '../../../common'
 
-/**
- * P03 节点创建/编辑页
- * 路由参数：{ nodeId?: string, latitude?: number, longitude?: number }
- */
 @Entry
 @Component
 export struct NodeEditPage {
@@ -21,8 +18,16 @@ export struct NodeEditPage {
   @State nodeId: string = ''
   @State latitude: number = 0
   @State longitude: number = 0
+  @State hasPickedLocation: boolean = false
+  @State availableTrips: Trip[] = []
+  @State showTripSelector: boolean = false
 
   private dataService = getDataService()
+
+  private bumpTravelDataVersion(): void {
+    const version = (AppStorage.get('travelDataVersion') as number) || 0
+    AppStorage.setOrCreate('travelDataVersion', version + 1)
+  }
 
   aboutToAppear(): void {
     const params = router.getParams() as RouterParam
@@ -40,17 +45,34 @@ export struct NodeEditPage {
       this.latitude = params.latitude
       this.longitude = params.longitude
       this.poiName = `${params.latitude.toFixed(4)}, ${params.longitude.toFixed(4)}`
+      this.hasPickedLocation = true
     }
+
+    this.loadAvailableTrips()
   }
 
-  /** 页面重新显示时，接收从 LocationPickerPage 返回的选点数据 */
   onPageShow(): void {
     const picked = AppStorage.get('locationPicked') as boolean
     if (picked) {
-      this.latitude = AppStorage.get('pickedLatitude') as number || 0
-      this.longitude = AppStorage.get('pickedLongitude') as number || 0
-      this.poiName = AppStorage.get('pickedPoiName') as string || ''
+      this.latitude = (AppStorage.get('pickedLatitude') as number) || 0
+      this.longitude = (AppStorage.get('pickedLongitude') as number) || 0
+      this.poiName = (AppStorage.get('pickedPoiName') as string) || ''
+      this.hasPickedLocation = true
       AppStorage.setOrCreate('locationPicked', false)
+    }
+  }
+
+  private async loadAvailableTrips(): Promise<void> {
+    try {
+      const trips = await this.dataService.getAllTravels()
+      this.availableTrips = trips
+
+      // For create mode, default to latest trip when user does not choose.
+      if (!this.isEditMode && this.tripId.length === 0 && trips.length > 0) {
+        this.tripId = trips[0].id
+      }
+    } catch (_) {
+      this.availableTrips = []
     }
   }
 
@@ -60,6 +82,20 @@ export struct NodeEditPage {
     const month = (date.getMonth() + 1).toString().padStart(2, '0')
     const day = date.getDate().toString().padStart(2, '0')
     return `${year}.${month}.${day}`
+  }
+
+  private getCurrentTripName(): string {
+    if (this.tripId.length > 0) {
+      const selected = this.availableTrips.find((trip: Trip) => trip.id === this.tripId)
+      if (selected) {
+        return selected.name
+      }
+      return '当前旅行'
+    }
+    if (this.availableTrips.length === 0) {
+      return '无可选旅行（保存时自动创建）'
+    }
+    return '请选择旅行'
   }
 
   private async loadNodeForEdit(nodeId: string): Promise<void> {
@@ -79,7 +115,9 @@ export struct NodeEditPage {
       this.photos = [...node.photos]
       this.latitude = node.latitude
       this.longitude = node.longitude
-    } catch (err) {
+      this.hasPickedLocation = true
+      await this.loadAvailableTrips()
+    } catch (_) {
       promptAction.showToast({ message: '加载节点数据失败' })
     }
   }
@@ -91,6 +129,7 @@ export struct NodeEditPage {
 
     const existingTrips = await this.dataService.getAllTravels()
     if (existingTrips.length > 0) {
+      // Default to latest trip when user did not choose.
       this.tripId = existingTrips[0].id
       return this.tripId
     }
@@ -106,6 +145,7 @@ export struct NodeEditPage {
       totalDistance: 0
     })
     this.tripId = createdTrip.id
+    await this.loadAvailableTrips()
     return this.tripId
   }
 
@@ -116,10 +156,19 @@ export struct NodeEditPage {
       return
     }
 
+    if (!this.hasPickedLocation) {
+      promptAction.showToast({ message: '请先在地图上选择位置' })
+      return
+    }
+
     this.isSaving = true
     try {
       const targetTripId = await this.resolveTargetTripId()
-      const resolvedPoiName = this.poiName === '获取位置中...' ? trimmedTitle : this.poiName
+      const poiValue = this.poiName.trim()
+      const resolvedPoiName =
+        (poiValue.length === 0 || poiValue === '点击选择位置' || poiValue === '获取位置中...')
+          ? trimmedTitle
+          : poiValue
 
       if (this.isEditMode && this.nodeId.length > 0) {
         await this.dataService.updateNode(this.nodeId, {
@@ -147,8 +196,9 @@ export struct NodeEditPage {
         })
         promptAction.showToast({ message: '记忆已保存' })
       }
+      this.bumpTravelDataVersion()
       router.back()
-    } catch (err) {
+    } catch (_) {
       promptAction.showToast({ message: '保存失败，请稍后重试' })
     } finally {
       this.isSaving = false
@@ -169,206 +219,286 @@ export struct NodeEditPage {
     })
   }
 
+  private openTripSelector(): void {
+    if (this.isEditMode) {
+      return
+    }
+    if (this.availableTrips.length === 0) {
+      promptAction.showToast({ message: '暂无旅行，将在保存时自动创建' })
+      return
+    }
+    this.showTripSelector = true
+  }
+
+  private chooseTrip(trip: Trip): void {
+    this.tripId = trip.id
+    this.showTripSelector = false
+  }
+
   build() {
-    Column() {
-      // 顶部导航栏
-      Row() {
-        Text('←')
-          .fontSize(AppDimens.FONT_XL)
-          .fontColor(AppColors.TEXT_PRIMARY)
-          .onClick(() => router.back())
-          .padding(AppDimens.PADDING_MD)
-        Text(this.isEditMode ? '编辑记忆' : '新建记忆')
-          .fontSize(AppDimens.FONT_LG)
-          .fontWeight(FontWeight.Bold)
-          .layoutWeight(1)
-        Text(this.isSaving ? '保存中...' : '保存')
-          .fontSize(AppDimens.FONT_LG)
-          .fontColor(AppColors.PRIMARY)
-          .padding(AppDimens.PADDING_MD)
-          .onClick(() => this.handleSave())
+    Stack() {
+      Column() {
+        Row() {
+          Text('<')
+            .fontSize(AppDimens.FONT_XL)
+            .fontColor(AppColors.TEXT_PRIMARY)
+            .onClick(() => router.back())
+            .padding(AppDimens.PADDING_MD)
+          Text(this.isEditMode ? '编辑记忆' : '新建记忆')
+            .fontSize(AppDimens.FONT_LG)
+            .fontWeight(FontWeight.Bold)
+            .layoutWeight(1)
+          Text(this.isSaving ? '保存中...' : '保存')
+            .fontSize(AppDimens.FONT_LG)
+            .fontColor(AppColors.PRIMARY)
+            .padding(AppDimens.PADDING_MD)
+            .onClick(() => this.handleSave())
+        }
+        .width('100%')
+        .height(56)
+        .backgroundColor(AppColors.CARD_BG)
+
+        Scroll() {
+          Column() {
+            Row() {
+              Text('📍')
+                .fontSize(18)
+              Text(this.poiName)
+                .fontSize(AppDimens.FONT_MD)
+                .fontColor(AppColors.TEXT_SECONDARY)
+                .margin({ left: 8 })
+                .layoutWeight(1)
+              Text('重新选点 >')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.PRIMARY)
+                .onClick(() => {
+                  router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
+                })
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .backgroundColor(AppColors.CARD_BG)
+            .borderRadius(AppDimens.RADIUS_SM)
+            .onClick(() => {
+              router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
+            })
+
+            if (!this.isEditMode) {
+              Row() {
+                Text('🧳')
+                  .fontSize(18)
+                Text(this.getCurrentTripName())
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontColor(AppColors.TEXT_SECONDARY)
+                  .margin({ left: 8 })
+                  .layoutWeight(1)
+                Text('选择旅行 >')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.PRIMARY)
+                  .onClick(() => this.openTripSelector())
+              }
+              .width('100%')
+              .padding(AppDimens.PADDING_MD)
+              .margin({ top: 12 })
+              .backgroundColor(AppColors.CARD_BG)
+              .borderRadius(AppDimens.RADIUS_SM)
+              .onClick(() => this.openTripSelector())
+            }
+
+            Column() {
+              Text('照片')
+                .fontSize(AppDimens.FONT_MD)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(AppColors.TEXT_PRIMARY)
+              Row() {
+                Column() {
+                  Text('+')
+                    .fontSize(28)
+                    .fontColor(AppColors.TEXT_HINT)
+                  Text('添加照片')
+                    .fontSize(AppDimens.FONT_SM)
+                    .fontColor(AppColors.TEXT_HINT)
+                }
+                .width(80)
+                .height(80)
+                .backgroundColor(AppColors.BACKGROUND)
+                .borderRadius(AppDimens.RADIUS_SM)
+                .justifyContent(FlexAlign.Center)
+                .onClick(() => this.handlePickPhoto())
+              }
+              .margin({ top: 8 })
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .margin({ top: 12 })
+            .backgroundColor(AppColors.CARD_BG)
+            .borderRadius(AppDimens.RADIUS_SM)
+            .alignItems(HorizontalAlign.Start)
+
+            Column() {
+              Text('标题')
+                .fontSize(AppDimens.FONT_MD)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(AppColors.TEXT_PRIMARY)
+              TextInput({ placeholder: '给这段记忆起个名字', text: this.title })
+                .onChange((value: string) => { this.title = value })
+                .margin({ top: 8 })
+                .backgroundColor(AppColors.BACKGROUND)
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .margin({ top: 12 })
+            .backgroundColor(AppColors.CARD_BG)
+            .borderRadius(AppDimens.RADIUS_SM)
+            .alignItems(HorizontalAlign.Start)
+
+            Column() {
+              Text('内容')
+                .fontSize(AppDimens.FONT_MD)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(AppColors.TEXT_PRIMARY)
+              TextArea({ placeholder: '写下这一刻的感受...', text: this.content })
+                .onChange((value: string) => { this.content = value })
+                .height(120)
+                .margin({ top: 8 })
+                .backgroundColor(AppColors.BACKGROUND)
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .margin({ top: 12 })
+            .backgroundColor(AppColors.CARD_BG)
+            .borderRadius(AppDimens.RADIUS_SM)
+            .alignItems(HorizontalAlign.Start)
+
+            Row() {
+              Text('AI 助手')
+                .fontSize(AppDimens.FONT_MD)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(AppColors.PRIMARY)
+              Text('  帮你润色内容')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_SECONDARY)
+              Blank()
+              Text('>')
+                .fontSize(AppDimens.FONT_LG)
+                .fontColor(AppColors.PRIMARY)
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .backgroundColor(AppColors.PRIMARY + '10')
+            .borderRadius(AppDimens.RADIUS_SM)
+            .margin({ bottom: 12, top: 8 })
+            .onClick(() => this.handleNavigateToAI())
+
+            Column() {
+              Text('心情')
+                .fontSize(AppDimens.FONT_MD)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(AppColors.TEXT_PRIMARY)
+              Row({ space: 16 }) {
+                ForEach(['😊', '😩', '😍', '😳', '😴', '🤯'], (emoji: string) => {
+                  Text(emoji)
+                    .fontSize(28)
+                    .padding(8)
+                    .borderRadius(AppDimens.RADIUS_SM)
+                    .backgroundColor(this.mood === emoji ? AppColors.PRIMARY + '20' : 'transparent')
+                    .onClick(() => { this.mood = emoji })
+                })
+              }
+              .margin({ top: 8 })
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .margin({ top: 12 })
+            .backgroundColor(AppColors.CARD_BG)
+            .borderRadius(AppDimens.RADIUS_SM)
+            .alignItems(HorizontalAlign.Start)
+
+            Column() {
+              Text('标签')
+                .fontSize(AppDimens.FONT_MD)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(AppColors.TEXT_PRIMARY)
+              Row({ space: 8 }) {
+                ForEach(['旅行', '美食', '风景', '打卡', '日常'], (tag: string) => {
+                  Text(`#${tag}`)
+                    .fontSize(AppDimens.FONT_SM)
+                    .fontColor(this.tags.includes(tag) ? AppColors.CARD_BG : AppColors.PRIMARY)
+                    .backgroundColor(this.tags.includes(tag) ? AppColors.PRIMARY : AppColors.PRIMARY + '15')
+                    .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+                    .borderRadius(20)
+                    .onClick(() => {
+                      if (this.tags.includes(tag)) {
+                        this.tags = this.tags.filter(t => t !== tag)
+                      } else {
+                        this.tags = [...this.tags, tag]
+                      }
+                    })
+                })
+              }
+              .margin({ top: 8 })
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .margin({ top: 12, bottom: 24 })
+            .backgroundColor(AppColors.CARD_BG)
+            .borderRadius(AppDimens.RADIUS_SM)
+            .alignItems(HorizontalAlign.Start)
+          }
+          .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12 })
+        }
+        .layoutWeight(1)
       }
       .width('100%')
-      .height(56)
-      .backgroundColor(AppColors.CARD_BG)
+      .height('100%')
+      .backgroundColor(AppColors.BACKGROUND)
 
-      // 表单内容 (可滚动)
-      Scroll() {
+      if (this.showTripSelector) {
+        Column()
+          .width('100%')
+          .height('100%')
+          .backgroundColor('#66000000')
+          .onClick(() => { this.showTripSelector = false })
+
         Column() {
-          // 位置信息
-          Row() {
-            Text('📍')
-              .fontSize(18)
-            Text(this.poiName)
-              .fontSize(AppDimens.FONT_MD)
-              .fontColor(AppColors.TEXT_SECONDARY)
-              .margin({ left: 8 })
-              .layoutWeight(1)
-            Text('重新选点 >')
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(AppColors.PRIMARY)
-              .onClick(() => {
-                router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
-              })
-          }
-          .width('100%')
-          .padding(AppDimens.PADDING_MD)
-          .backgroundColor(AppColors.CARD_BG)
-          .borderRadius(AppDimens.RADIUS_SM)
-          .onClick(() => {
-            router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
-          })
+          Text('选择旅行')
+            .fontSize(AppDimens.FONT_LG)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(AppColors.TEXT_PRIMARY)
+            .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 16, bottom: 12 })
+            .width('100%')
 
-          // 照片选择区
-          Column() {
-            Text('照片')
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.TEXT_PRIMARY)
-            Row() {
-              // 已选照片占位 (TODO: 动态渲染 this.photos)
-              Column() {
-                Text('+')
-                  .fontSize(28)
-                  .fontColor(AppColors.TEXT_HINT)
-                Text('添加照片')
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_HINT)
-              }
-              .width(80)
-              .height(80)
-              .backgroundColor(AppColors.BACKGROUND)
-              .borderRadius(AppDimens.RADIUS_SM)
-              .justifyContent(FlexAlign.Center)
-              .onClick(() => this.handlePickPhoto())
-            }
-            .margin({ top: 8 })
-          }
-          .width('100%')
-          .padding(AppDimens.PADDING_MD)
-          .margin({ top: 12 })
-          .backgroundColor(AppColors.CARD_BG)
-          .borderRadius(AppDimens.RADIUS_SM)
-          .alignItems(HorizontalAlign.Start)
-
-          // 标题
-          Column() {
-            Text('标题')
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.TEXT_PRIMARY)
-            TextInput({ placeholder: '给这段记忆起个名字', text: this.title })
-              .onChange((value: string) => { this.title = value })
-              .margin({ top: 8 })
-              .backgroundColor(AppColors.BACKGROUND)
-          }
-          .width('100%')
-          .padding(AppDimens.PADDING_MD)
-          .margin({ top: 12 })
-          .backgroundColor(AppColors.CARD_BG)
-          .borderRadius(AppDimens.RADIUS_SM)
-          .alignItems(HorizontalAlign.Start)
-
-          // 内容
-          Column() {
-            Text('内容')
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.TEXT_PRIMARY)
-            TextArea({ placeholder: '写下这一刻的感受...', text: this.content })
-              .onChange((value: string) => { this.content = value })
-              .height(120)
-              .margin({ top: 8 })
-              .backgroundColor(AppColors.BACKGROUND)
-          }
-          .width('100%')
-          .padding(AppDimens.PADDING_MD)
-          .margin({ top: 12 })
-          .backgroundColor(AppColors.CARD_BG)
-          .borderRadius(AppDimens.RADIUS_SM)
-          .alignItems(HorizontalAlign.Start)
-
-          // AI 助手按钮 (放在内容下方，更显眼)
-          Row() {
-            Text('🤖 AI 助手')
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(AppColors.PRIMARY)
-            Text('  帮你润色内容')
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(AppColors.TEXT_SECONDARY)
-            Blank()
-            Text('→')
-              .fontSize(AppDimens.FONT_LG)
-              .fontColor(AppColors.PRIMARY)
-          }
-          .width('100%')
-          .padding(AppDimens.PADDING_MD)
-          .backgroundColor(AppColors.PRIMARY + '10')
-          .borderRadius(AppDimens.RADIUS_SM)
-          .margin({ bottom: 12, top: 8 })
-          .onClick(() => this.handleNavigateToAI())
-
-          // 心情选择
-          Column() {
-            Text('心情')
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.TEXT_PRIMARY)
-            Row({ space: 16 }) {
-              ForEach(['😊', '😢', '🤩', '😌', '🥰', '😤'], (emoji: string) => {
-                Text(emoji)
-                  .fontSize(28)
-                  .padding(8)
-                  .borderRadius(AppDimens.RADIUS_SM)
-                  .backgroundColor(this.mood === emoji ? AppColors.PRIMARY + '20' : 'transparent')
-                  .onClick(() => { this.mood = emoji })
+          Scroll() {
+            Column() {
+              ForEach(this.availableTrips, (trip: Trip) => {
+                Row() {
+                  Text(trip.name)
+                    .fontSize(AppDimens.FONT_MD)
+                    .fontColor(AppColors.TEXT_PRIMARY)
+                    .layoutWeight(1)
+                  if (trip.id === this.tripId) {
+                    Text('已选')
+                      .fontSize(AppDimens.FONT_SM)
+                      .fontColor(AppColors.PRIMARY)
+                  }
+                }
+                .width('100%')
+                .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 14, bottom: 14 })
+                .backgroundColor(AppColors.CARD_BG)
+                .onClick(() => this.chooseTrip(trip))
               })
             }
-            .margin({ top: 8 })
           }
           .width('100%')
-          .padding(AppDimens.PADDING_MD)
-          .margin({ top: 12 })
-          .backgroundColor(AppColors.CARD_BG)
-          .borderRadius(AppDimens.RADIUS_SM)
-          .alignItems(HorizontalAlign.Start)
-
-          // 标签
-          Column() {
-            Text('标签')
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.TEXT_PRIMARY)
-            Row({ space: 8 }) {
-              ForEach(['旅行', '美食', '风景', '打卡', '日常'], (tag: string) => {
-                Text(`#${tag}`)
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(this.tags.includes(tag) ? AppColors.CARD_BG : AppColors.PRIMARY)
-                  .backgroundColor(this.tags.includes(tag) ? AppColors.PRIMARY : AppColors.PRIMARY + '15')
-                  .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-                  .borderRadius(20)
-                  .onClick(() => {
-                    if (this.tags.includes(tag)) {
-                      this.tags = this.tags.filter(t => t !== tag)
-                    } else {
-                      this.tags = [...this.tags, tag]
-                    }
-                  })
-              })
-            }
-            .margin({ top: 8 })
-          }
-          .width('100%')
-          .padding(AppDimens.PADDING_MD)
-          .margin({ top: 12, bottom: 24 })
-          .backgroundColor(AppColors.CARD_BG)
-          .borderRadius(AppDimens.RADIUS_SM)
-          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
         }
-        .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12 })
+        .width('100%')
+        .height('45%')
+        .backgroundColor(AppColors.CARD_BG)
+        .borderRadius({ topLeft: AppDimens.RADIUS_LG, topRight: AppDimens.RADIUS_LG })
+        .position({ x: 0, y: '100%' })
+        .translate({ y: '-100%' })
       }
-      .layoutWeight(1)
     }
     .width('100%')
     .height('100%')

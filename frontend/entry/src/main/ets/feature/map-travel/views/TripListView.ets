@@ -12,10 +12,20 @@ import type { Trip } from '../../../common'
 export struct TripListView {
   @State trips: TripSummary[] = []
   @State isLoading: boolean = false
+  @Watch('onTravelDataVersionChange')
+  @StorageLink('travelDataVersion') travelDataVersion: number = 0
 
   private dataService = getDataService()
 
   aboutToAppear(): void {
+    this.loadTrips()
+  }
+
+  onPageShow(): void {
+    this.loadTrips()
+  }
+
+  private onTravelDataVersionChange(): void {
     this.loadTrips()
   }
 

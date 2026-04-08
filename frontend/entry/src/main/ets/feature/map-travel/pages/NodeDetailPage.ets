@@ -23,6 +23,11 @@ export struct NodeDetailPage {
 
   private dataService = getDataService()
 
+  private bumpTravelDataVersion(): void {
+    const version = (AppStorage.get('travelDataVersion') as number) || 0
+    AppStorage.setOrCreate('travelDataVersion', version + 1)
+  }
+
   aboutToAppear(): void {
     const params = router.getParams() as RouterParam
     if (params?.nodeId) {
@@ -76,6 +81,7 @@ export struct NodeDetailPage {
     }
     try {
       await this.dataService.deleteNode(this.nodeId)
+      this.bumpTravelDataVersion()
       promptAction.showToast({ message: '记忆节点已删除' })
       router.back()
     } catch (err) {

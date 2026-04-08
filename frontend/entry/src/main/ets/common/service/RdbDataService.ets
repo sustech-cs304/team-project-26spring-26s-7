@@ -163,7 +163,10 @@ export class RdbDataService implements IDataService {
     if (data.endDate !== undefined) {
       repoInput.endDate = data.endDate;
     }
-    await this.travelRepo.updateTravel(travelId, repoInput);
+    const updatedOk = await this.travelRepo.updateTravel(travelId, repoInput);
+    if (!updatedOk) {
+      throw new Error(`Failed to update travel: ${travelId}`);
+    }
     const updated = await this.getTravelById(travelId);
     if (!updated) {
       throw new Error('Failed to retrieve updated travel');
@@ -172,7 +175,10 @@ export class RdbDataService implements IDataService {
   }
 
   async deleteTravel(travelId: string): Promise<void> {
-    await this.travelRepo.deleteTravel(travelId);
+    const deleted = await this.travelRepo.deleteTravel(travelId);
+    if (!deleted) {
+      throw new Error(`Failed to delete travel: ${travelId}`);
+    }
   }
 
   // ==================== MemoryNode 相关 ====================
@@ -232,7 +238,10 @@ export class RdbDataService implements IDataService {
     if (data.tags !== undefined) {
       repoInput.tags = data.tags;
     }
-    await this.nodeRepo.updateNode(nodeId, repoInput);
+    const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
+    if (!updatedOk) {
+      throw new Error(`Failed to update node: ${nodeId}`);
+    }
     const updated = await this.nodeRepo.getNodeById(nodeId);
     if (!updated) {
       throw new Error('Failed to retrieve updated node');
@@ -241,7 +250,10 @@ export class RdbDataService implements IDataService {
   }
 
   async deleteNode(nodeId: string): Promise<void> {
-    await this.nodeRepo.deleteNode(nodeId);
+    const deleted = await this.nodeRepo.deleteNode(nodeId);
+    if (!deleted) {
+      throw new Error(`Failed to delete node: ${nodeId}`);
+    }
   }
 
   async reorderNodes(travelId: string, nodeIds: string[]): Promise<void> {

@@ -80,6 +80,14 @@ export class MemoryNodeRepository {
     return new Error(JSON.stringify(err));
   }
 
+  private toDbId(id: string, fieldName: string): number {
+    const parsed = Number(id);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new Error(`Invalid ${fieldName}: ${id}`);
+    }
+    return parsed;
+  }
+
   private parseJsonArray(jsonStr: string): string[] {
     if (!jsonStr || jsonStr.length === 0) {
       return [];
@@ -142,7 +150,7 @@ export class MemoryNodeRepository {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
-      predicates.equalTo('travel_id', parseInt(travelId));
+      predicates.equalTo('travel_id', this.toDbId(travelId, 'travel id'));
       predicates.orderByDesc(NODE_ORDER_COLUMN);
       resultSet = await store.query(predicates);
       if (resultSet.goToFirstRow()) {
@@ -163,7 +171,7 @@ export class MemoryNodeRepository {
     try {
       const store = await this.getRdbStore();
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
-      predicates.equalTo('travel_id', parseInt(travelId));
+      predicates.equalTo('travel_id', this.toDbId(travelId, 'travel id'));
       predicates.orderByAsc(NODE_ORDER_COLUMN);
       resultSet = await store.query(predicates);
       const nodes: MemoryNode[] = [];
@@ -187,7 +195,7 @@ export class MemoryNodeRepository {
     try {
       const store = await this.getRdbStore();
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
-      predicates.equalTo('id', parseInt(id));
+      predicates.equalTo('id', this.toDbId(id, 'node id'));
       resultSet = await store.query(predicates);
       let node: MemoryNode | undefined = undefined;
       if (resultSet.goToFirstRow()) {
@@ -208,7 +216,7 @@ export class MemoryNodeRepository {
       const now = Date.now();
       const nodeOrder = await this.getNextNodeOrder(store, node.travelId);
       const valueBucket: rdb.ValuesBucket = {
-        'travel_id': parseInt(node.travelId),
+        'travel_id': this.toDbId(node.travelId, 'travel id'),
         'latitude': node.latitude,
         'longitude': node.longitude,
         'title': node.title ?? '',
@@ -266,7 +274,7 @@ export class MemoryNodeRepository {
         valueBucket['photos'] = JSON.stringify(node.photos);
       }
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
-      predicates.equalTo('id', parseInt(id));
+      predicates.equalTo('id', this.toDbId(id, 'node id'));
       const affectedRows = await store.update(valueBucket, predicates);
       logger.info(TAG, `Updated node ${id}, affected=${affectedRows}`);
       return affectedRows > 0;
@@ -280,7 +288,7 @@ export class MemoryNodeRepository {
     try {
       const store = await this.getRdbStore();
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
-      predicates.equalTo('id', parseInt(id));
+      predicates.equalTo('id', this.toDbId(id, 'node id'));
       const affectedRows = await store.delete(predicates);
       logger.info(TAG, `Deleted node ${id}, affected=${affectedRows}`);
       return affectedRows > 0;
@@ -299,7 +307,7 @@ export class MemoryNodeRepository {
           'updated_at': Date.now()
         };
         const predicates = new rdb.RdbPredicates(TABLE_NAME);
-        predicates.equalTo('id', parseInt(nodeIds[i]));
+        predicates.equalTo('id', this.toDbId(nodeIds[i], 'node id'));
         await store.update(valueBucket, predicates);
       }
       logger.info(TAG, `Reordered ${nodeIds.length} nodes for travel ${travelId}`);

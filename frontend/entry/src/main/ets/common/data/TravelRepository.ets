@@ -69,6 +69,14 @@ export class TravelRepository {
     return new Error(JSON.stringify(err));
   }
 
+  private toDbId(id: string, fieldName: string): number {
+    const parsed = Number(id);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new Error(`Invalid ${fieldName}: ${id}`);
+    }
+    return parsed;
+  }
+
   private mapResultSetToTrip(resultSet: rdb.ResultSet): Trip {
     const idIdx = resultSet.getColumnIndex('id');
     const nameIdx = resultSet.getColumnIndex('name');
@@ -121,7 +129,7 @@ export class TravelRepository {
     try {
       const store = await this.getRdbStore();
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
-      predicates.equalTo('id', parseInt(id));
+      predicates.equalTo('id', this.toDbId(id, 'travel id'));
       resultSet = await store.query(predicates);
       let trip: Trip | undefined = undefined;
       if (resultSet.goToFirstRow()) {
@@ -180,7 +188,7 @@ export class TravelRepository {
         valueBucket['sensitivity'] = travel.sensitivity;
       }
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
-      predicates.equalTo('id', parseInt(id));
+      predicates.equalTo('id', this.toDbId(id, 'travel id'));
       const affectedRows = await store.update(valueBucket, predicates);
       logger.info(TAG, `Updated travel ${id}, affected=${affectedRows}`);
       return affectedRows > 0;
@@ -193,15 +201,19 @@ export class TravelRepository {
   async deleteTravel(id: string): Promise<boolean> {
     try {
       const store = await this.getRdbStore();
-      // 先删除关联的记忆节点
+      const travelId = this.toDbId(id, 'travel id');
+      // Explicitly delete child nodes first, then delete travel.
+      // This works even if FK cascade is not enabled by runtime.
       const nodePredicates = new rdb.RdbPredicates('memory_nodes');
-      nodePredicates.equalTo('travel_id', parseInt(id));
+      nodePredicates.equalTo('travel_id', travelId);
       await store.delete(nodePredicates);
 
-      // 再删除旅行
       const travelPredicates = new rdb.RdbPredicates(TABLE_NAME);
-      travelPredicates.equalTo('id', parseInt(id));
+      travelPredicates.equalTo('id', travelId);
       const affectedRows = await store.delete(travelPredicates);
+      if (affectedRows <= 0) {
+        throw new Error(`Travel not found: ${id}`);
+      }
       logger.info(TAG, `Deleted travel ${id}, affected=${affectedRows}`);
       return affectedRows > 0;
     } catch (err) {
