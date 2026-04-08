@@ -1,27 +1,33 @@
 # Project State
 
-**Last Updated**: 2026-04-05 (照片选择与沙箱存储功能完成)
+**Last Updated**: 2026-04-08 (feature/photo 合并完成)
 **Project**: TravelPin - HarmonyOS Travel Journal App
 **Repository**: D:\Mydata\1University\3Junior\Software_Engineering\frontendv1\team-project-26spring-26s-7
-**Current Branch**: feature/photo
-**Base Branch**: incremental-dev-20260329
+**Current Branch**: incremental-dev-20260329
+**Main Branch**: main
 
 ---
 
-## 1. 开发策略 (2026-03-29 更新)
+## 1. 分支架构 (2026-04-08 更新)
 
-**目标架构**: `D:\Mydata\1University\3Junior\Software_Engineering\project\base`
+```
+origin/main ──────────────────────────────────────────────►
+    │
+    ├── origin/incremental-dev-20260329 ◄───────────────── 【当前开发主线】
+    │       │                                              领先 main 46 个提交
+    │       ├── origin/feature/photo ─────► 已合并 ✓
+    │       ├── origin/feature/trip-replay ─► 已合并 ✓
+    │       └── origin/feature1 ──────────► 已合并 ✓
+    │
+    ├── origin/frontend ─────────────────► 孤立分支 (可删除)
+    │
+    └── origin/前端设计测试2026/3/20 ────► 已合并 (可删除)
 
-**增量开发方法**:
-1. 以当前能正常编译运行的 `frontend/` demo 为基础
-2. 逐步将 `base/` 项目中的架构和功能模块迁移整合进来
-3. 每一步确保可编译运行，避免一次性大改导致复杂问题
-4. 小步快跑，每一步都可验证
-
-**分支策略**:
-- `frontend` - 当前稳定分支（保持不变）
-- `incremental-dev-20260329` - 增量开发分支（当前工作，已合并 feature/trip-replay）
-- `feature/trip-replay` - 旅程回放功能分支（已合并，可删除）
+分支说明:
+- main: 生产分支，保持稳定
+- incremental-dev-20260329: 长期开发分支，功能完成后合并回 main
+- feature/*: 功能分支，完成后合并到 incremental
+```
 
 ---
 

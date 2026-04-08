@@ -1,6 +1,6 @@
 # Change Log
 
-**Last Updated**: 2026-04-05
+**Last Updated**: 2026-04-08
 
 ---
 
@@ -8,6 +8,41 @@
 ```
 [YYYY-MM-DD-HH-MM-SS] - [Action] - [Location] - [Description] - [Git Commit]
 ```
+
+---
+
+## 2026-04-08 (feature/photo 合并到 incremental-dev-20260329)
+
+### 合并 feature/photo → incremental-dev-20260329
+
+- [2026-04-08-15-55-09] - BACKUP - 本地分支 - 创建备份分支 backup-feature-photo-20260408155509, backup-incremental-dev-20260408155509
+- [2026-04-08-16-00-00] - FETCH - origin/incremental-dev-20260329 - 拉取远端最新提交 (2 个新提交: 7096512, bb8dfd3)
+- [2026-04-08-16-05-00] - MERGE - feature/photo → incremental-dev-20260329 - 合并照片选择功能
+- [2026-04-08-16-10-00] - RESOLVE - RdbDataService.ets - 手动解决冲突：合并错误检查 + 照片清理逻辑
+- [2026-04-08-16-15-00] - RESOLVE - NodeEditPage.ets - 手动解决冲突：合并旅行选择器 + PhotoSelector 组件
+- [2026-04-08-16-20-00] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 2 min 46 s
+- [2026-04-08-16-25-00] - GIT - c515563 - Merge branch 'feature/photo' into incremental-dev-20260329: 照片功能集成
+
+### 合并内容
+
+**新增文件**:
+- PhotoPickerUtil.ets - 沙箱照片选择与存储工具
+- PhotoSelector.ets - 照片选择网格组件
+
+**修改文件**:
+- RdbDataService.ets - 添加照片自动清理逻辑 (updateNode/deleteNode)
+- NodeEditPage.ets - 集成 PhotoSelector 组件，保留旅行选择器功能
+- NodeDetailPage.ets - 照片轮播显示
+- ReplayPhotoCard.ets - 多张照片轮播支持
+- PhotoCardOverlay.ets - 多张照片轮播支持
+
+### 远端分支清理建议
+
+| 分支 | 状态 | 建议 |
+|------|------|------|
+| origin/frontend | 孤立分支，无共同祖先 | 可删除 |
+| origin/前端设计测试2026/3/20 | 已完全合并到 incremental | 可删除 |
+| origin/feature/photo | 已合并到 incremental | 可删除 |
 
 ---
 
