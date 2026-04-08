@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI'
-import { RouterUrls, AppColors, AppDimens } from '../common'
+import { AuthService, RouterUrls, AppColors, AppDimens } from '../common'
 
 /**
  * P01 启动页 — 品牌展示 + 自动跳转
@@ -10,9 +10,8 @@ struct Index {
   private timeoutId: number = -1
 
   aboutToAppear(): void {
-    this.timeoutId = setTimeout(() => {
-      // TODO: 检查登录态，已登录跳 MainPage，未登录跳 LoginPage
-      const isLoggedIn = false
+    this.timeoutId = setTimeout(async () => {
+      const isLoggedIn = await AuthService.isLoggedIn()
       router.replaceUrl({
         url: isLoggedIn ? RouterUrls.MAIN : RouterUrls.LOGIN
       })

@@ -1,5 +1,6 @@
-import { router } from '@kit.ArkUI'
-import { RouterUrls, AppColors, AppDimens } from '../common'
+import { common } from '@kit.AbilityKit'
+import { router, promptAction } from '@kit.ArkUI'
+import { AuthService, RouterUrls, AppColors, AppDimens } from '../common'
 
 /**
  * P-Login 登录页 — 华为账号一键登录
@@ -9,14 +10,23 @@ import { RouterUrls, AppColors, AppDimens } from '../common'
 struct LoginPage {
   @State isLoggingIn: boolean = false
 
-  private handleHuaweiLogin(): void {
+  private async handleHuaweiLogin(): Promise<void> {
+    if (this.isLoggingIn) {
+      return
+    }
+
     this.isLoggingIn = true
-    // TODO: 调用 HarmonyOS Account Kit 进行华为账号登录
-    // 登录成功后跳转主页
-    setTimeout(() => {
-      this.isLoggingIn = false
+    try {
+      const hostContext = this.getUIContext().getHostContext() as common.UIAbilityContext
+      await AuthService.signInWithHuaweiID(hostContext)
+      promptAction.showToast({ message: '登录成功，云存储已连接' })
       router.replaceUrl({ url: RouterUrls.MAIN })
-    }, 1000)
+    } catch (err) {
+      const error = err as Error
+      promptAction.showToast({ message: error.message || '登录失败，请重试' })
+    } finally {
+      this.isLoggingIn = false
+    }
   }
 
   build() {

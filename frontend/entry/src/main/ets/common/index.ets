@@ -20,6 +20,10 @@ export { AppColors, AppDimens, RouterUrls } from './utils/Constants';
 export { logger } from './utils/Logger';
 export { PhotoPickerUtil } from './utils/PhotoPickerUtil';
 
+// Auth 导出
+export { AuthService, CloudStorageService } from './auth';
+export type { AuthUser } from './auth';
+
 // Data Layer 导出
 export { RdbHelper, SensitivityLevel } from './data/index';
 export { TravelRepository } from './data/index';

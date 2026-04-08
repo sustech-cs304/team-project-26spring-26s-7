@@ -1,5 +1,5 @@
-import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../../../common'
+import { router, promptAction } from '@kit.ArkUI'
+import { AppColors, AppDimens, AuthService, RouterUrls } from '../../../common'
 
 /**
  * 个人中心 Tab 内容视图
@@ -7,12 +7,31 @@ import { AppColors, AppDimens, RouterUrls } from '../../../common'
  */
 @Component
 export struct ProfileView {
+  @State displayName: string = 'TravelPin 用户'
+  @State loginStatusText: string = '华为账号已登录'
+  @State cloudStatusText: string = '云存储未连接'
   @State lastSyncTime: string = '2 分钟前'
   @State pendingCount: number = 3
   @State isSyncing: boolean = false
   @State exifStrip: boolean = true
   @State wifiOnlySync: boolean = true
   @State shareLinkExpiry: string = '7 天'
+
+  aboutToAppear(): void {
+    this.loadAuthStatus()
+  }
+
+  private async loadAuthStatus(): Promise<void> {
+    try {
+      const status = await AuthService.getAuthStatus()
+      this.displayName = status.user?.displayName ?? 'TravelPin 用户'
+      this.loginStatusText = status.isLoggedIn ? '华为账号已登录' : '未登录'
+      this.cloudStatusText = status.cloudStatusText
+    } catch (_) {
+      this.loginStatusText = '登录状态获取失败'
+      this.cloudStatusText = '云存储暂不可用'
+    }
+  }
 
   private handleSync(): void {
     this.isSyncing = true
@@ -35,9 +54,14 @@ export struct ProfileView {
       secondaryButton: {
         value: '退出',
         fontColor: AppColors.DANGER,
-        action: () => {
-          // TODO: 清除 Account Kit 登录态
-          router.replaceUrl({ url: RouterUrls.LOGIN })
+        action: async () => {
+          try {
+            await AuthService.signOut()
+            promptAction.showToast({ message: '已退出登录' })
+            router.replaceUrl({ url: RouterUrls.LOGIN })
+          } catch (_) {
+            promptAction.showToast({ message: '退出登录失败，请重试' })
+          }
         }
       }
     })
@@ -128,11 +152,11 @@ export struct ProfileView {
           .justifyContent(FlexAlign.Center)
 
           Column() {
-            Text('TravelPin 用户')
+            Text(this.displayName)
               .fontSize(AppDimens.FONT_LG)
               .fontWeight(FontWeight.Medium)
               .fontColor(AppColors.TEXT_PRIMARY)
-            Text('华为账号已登录')
+            Text(this.loginStatusText)
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.TEXT_HINT)
               .margin({ top: 4 })
@@ -173,9 +197,13 @@ export struct ProfileView {
 
           Row() {
             Column() {
+              Text(`云状态：${this.cloudStatusText}`)
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(this.cloudStatusText === '云存储已连接' ? AppColors.SUCCESS : AppColors.TEXT_SECONDARY)
               Text(`上次同步：${this.lastSyncTime}`)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_SECONDARY)
+                .margin({ top: 4 })
               Text(`待同步：${this.pendingCount} 项`)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(this.pendingCount > 0 ? AppColors.PRIMARY : AppColors.TEXT_HINT)

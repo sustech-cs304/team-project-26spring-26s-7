@@ -23,8 +23,6 @@
 - [2026-04-08-16-20-00] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 2 min 46 s
 - [2026-04-08-16-25-00] - GIT - c515563 - Merge branch 'feature/photo' into incremental-dev-20260329: 照片功能集成
 
-### 合并内容
-
 **新增文件**:
 - PhotoPickerUtil.ets - 沙箱照片选择与存储工具
 - PhotoSelector.ets - 照片选择网格组件

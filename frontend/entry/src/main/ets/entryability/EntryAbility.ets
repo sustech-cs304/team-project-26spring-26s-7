@@ -1,7 +1,9 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { window } from '@kit.ArkUI';
 import { RdbHelper } from '../common/data/RdbHelper';
+import { AuthService } from '../common';
 
 const DOMAIN = 0x0000;
 
@@ -14,6 +16,21 @@ export default class EntryAbility extends UIAbility {
     }
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
     AppStorage.setOrCreate('travelDataVersion', 0);
+    AppStorage.setOrCreate('cloudStatusText', '云存储未连接');
+
+    try {
+      AuthService.init(this.context);
+      hilog.info(DOMAIN, 'testTag', 'Auth initialized successfully');
+      AuthService.restoreSession().then((cloudReady: boolean) => {
+        AppStorage.setOrCreate('cloudStatusText', cloudReady ? '云存储已连接' : '云存储暂不可用');
+      }).catch((err: Error) => {
+        hilog.error(DOMAIN, 'testTag', 'Cloud restore failed: %{public}s', err.message);
+        AppStorage.setOrCreate('cloudStatusText', '云存储暂不可用');
+      });
+    } catch (err) {
+      const error = err as BusinessError;
+      hilog.error(DOMAIN, 'testTag', 'Auth initialization failed: %{public}s', error.message);
+    }
 
     // 初始化 RDB 数据库
     RdbHelper.getInstance().initDatabase(this.context).then(() => {
