@@ -17,4 +17,4 @@
 
 export { HttpClient, HttpResponse } from './HttpClient';
 export { AiGatewayClient } from './AiGatewayClient';
-export { ApiEndpoints, AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION } from './ApiEndpoints';
+export { AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION } from './ApiEndpoints';

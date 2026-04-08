@@ -53,7 +53,7 @@ export class HttpClient {
     params?: Record<string, string | number>,
     timeout: number = HttpTimeout.DEFAULT
   ): Promise<HttpResponse<T>> {
-    return this.request<T>('GET', endpoint, undefined, params, timeout);
+    return this.request<T>(http.RequestMethod.GET, endpoint, undefined, params, timeout);
   }
 
   /**
@@ -67,7 +67,7 @@ export class HttpClient {
     body: Object | undefined,
     timeout: number = HttpTimeout.DEFAULT
   ): Promise<HttpResponse<T>> {
-    return this.request<T>('POST', endpoint, body, undefined, timeout);
+    return this.request<T>(http.RequestMethod.POST, endpoint, body, undefined, timeout);
   }
 
   /**
