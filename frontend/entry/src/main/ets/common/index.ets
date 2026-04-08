@@ -24,6 +24,7 @@ export { PhotoPickerUtil } from './utils/PhotoPickerUtil';
 export { RdbHelper, SensitivityLevel } from './data/index';
 export { TravelRepository } from './data/index';
 export { MemoryNodeRepository } from './data/index';
+export { PhotoMetadataRepository } from './data/index';
 
 // Service Layer 类型导出
 export type {
@@ -57,3 +58,20 @@ export { CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput 
 
 // 配置导出
 export { getDataService } from './ServiceConfig';
+
+// API Layer 导出
+export { HttpClient, HttpResponse } from './api/index';
+export { AiGatewayClient } from './api/index';
+export { ApiEndpoints, AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION } from './api/index';
+
+// AI Layer 导出
+export { LocalImageTagger } from './ai/index';
+export { MetadataAggregator } from './ai/index';
+export {
+  PhotoMetadata,
+  JourneyMetadata,
+  AiCopyRequest,
+  AiCopyResponse,
+  AiCopyResponseData,
+  VisualKitResult
+} from './ai/index';

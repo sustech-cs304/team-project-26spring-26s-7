@@ -31,7 +31,7 @@ export enum SensitivityLevel {
 }
 
 const DB_NAME = 'TravelPin.db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const STORE_CONFIG: rdb.StoreConfig = {
   name: DB_NAME,
@@ -124,6 +124,19 @@ const SQL_CREATE_SYNC_QUEUE = `
   )
 `;
 
+const SQL_CREATE_PHOTO_METADATA = `
+  CREATE TABLE IF NOT EXISTS photo_metadata(
+    photo_path TEXT PRIMARY KEY,
+    scene_tags TEXT,
+    object_tags TEXT,
+    color_tags TEXT,
+    time_tags TEXT,
+    emotion_tags TEXT,
+    extracted_at INTEGER NOT NULL,
+    sensitivity TEXT NOT NULL DEFAULT 'S2'
+  )
+`;
+
 export class RdbHelper {
   private static instance: RdbHelper;
   private rdbStore: rdb.RdbStore | undefined = undefined;
@@ -185,6 +198,7 @@ export class RdbHelper {
     await this.rdbStore.executeSql(SQL_CREATE_TRAVELS);
     await this.rdbStore.executeSql(SQL_CREATE_MEMORY_NODES);
     await this.rdbStore.executeSql(SQL_CREATE_SYNC_QUEUE);
+    await this.rdbStore.executeSql(SQL_CREATE_PHOTO_METADATA);
     await this.ensureLatestSchema();
     logger.info(TAG, 'Tables created successfully');
   }

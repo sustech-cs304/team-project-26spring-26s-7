@@ -1,5 +1,5 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens } from '../../../common'
+import { AppColors, AppDimens, MetadataAggregator, AiGatewayClient, AiCopyRequest, AiCopyResponse } from '../../../common'
 
 /**
  * 文案风格选项接口
@@ -17,12 +17,21 @@ interface StyleOption {
 @Entry
 @Component
 export struct AiCopyPage {
+  // 页面参数 (从路由传入)
+  @State nodeId: string = ''
+  @State tripId: string = ''
+
   // 页面状态
   @State selectedStyle: string = 'poetic'
   @State selectedLength: number = 100
   @State userPrompt: string = ''
   @State isGenerating: boolean = false
   @State generatedCopy: string = ''
+  @State alternatives: string[] = []  // 备选文案
+
+  // 服务实例
+  private metadataAggregator: MetadataAggregator = new MetadataAggregator()
+  private aiClient: AiGatewayClient = new AiGatewayClient()
 
   // 文案风格选项 (5 种)
   private styleOptions: StyleOption[] = [
@@ -37,17 +46,71 @@ export struct AiCopyPage {
   private lengthOptions: number[] = [50, 100, 200]
 
   /**
-   * 生成文案
+   * 页面加载时获取路由参数
    */
-  private handleGenerate(): void {
-    this.isGenerating = true
+  aboutToAppear(): void {
+    const params = router.getParams() as Record<string, string>;
+    if (params) {
+      this.nodeId = params['nodeId'] || '';
+      this.tripId = params['tripId'] || '';
+    }
+  }
 
-    // 模拟生成延迟 (占位实现)
-    setTimeout(() => {
-      this.generatedCopy = `[AI 文案生成 - 占位]\n\n风格：${this.selectedStyle}\n长度：${this.selectedLength}字\n提示词：${this.userPrompt || '无'}\n\n这是 AI 生成的文案内容占位符。后续将接入 AI Gateway API 实现真实生成。`
-      this.isGenerating = false
-      promptAction.showToast({ message: '文案已生成' })
-    }, 1500)
+  /**
+   * 生成文案
+   * 流程：
+   * 1. 调用 MetadataAggregator 聚合节点元数据
+   * 2. 构建 AiCopyRequest
+   * 3. 调用 AiGatewayClient 发送请求
+   * 4. 显示生成结果
+   */
+  private async handleGenerate(): Promise<void> {
+    if (this.isGenerating) {
+      return;
+    }
+
+    this.isGenerating = true;
+    this.generatedCopy = '';
+    this.alternatives = [];
+
+    try {
+      // 1. 聚合元数据
+      // TODO: 根据实际场景选择 nodeId 或 tripId
+      const journeyMetadata = this.nodeId
+        ? await this.metadataAggregator.aggregateFromNode(this.nodeId)
+        : await this.metadataAggregator.aggregateFromTrip(this.tripId);
+
+      // 2. 构建请求
+      const request: AiCopyRequest = {
+        journey_metadata: journeyMetadata,
+        user_draft: this.userPrompt,
+        style: this.selectedStyle,
+        word_limit: this.selectedLength,
+        custom_prompt: this.userPrompt
+      };
+
+      // 3. 调用 AI Gateway
+      const response = await this.aiClient.generateCopy(request);
+
+      // 4. 处理响应
+      if (response.statusCode === 200 && response.data) {
+        const aiResponse: AiCopyResponse = response.data;
+        if (aiResponse.code === 0 && aiResponse.data) {
+          this.generatedCopy = aiResponse.data.generated_text;
+          this.alternatives = aiResponse.data.alternatives || [];
+          promptAction.showToast({ message: '文案已生成' });
+        } else {
+          promptAction.showToast({ message: '生成失败，请重试' });
+        }
+      } else {
+        promptAction.showToast({ message: response.error || '网络错误，请重试' });
+      }
+    } catch (err) {
+      const errorMsg = `生成失败: ${JSON.stringify(err)}`;
+      promptAction.showToast({ message: errorMsg });
+    } finally {
+      this.isGenerating = false;
+    }
   }
 
   /**
@@ -219,6 +282,33 @@ export struct AiCopyPage {
             .padding(AppDimens.PADDING_MD)
             .backgroundColor(AppColors.CARD_BG)
             .borderRadius(AppDimens.RADIUS_SM)
+
+            // 备选文案展示
+            if (this.alternatives.length > 0) {
+              Column() {
+                Text('备选方案')
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(AppColors.TEXT_PRIMARY)
+                  .margin({ bottom: 8 })
+
+                ForEach(this.alternatives, (alt: string, index: number) => {
+                  Text(alt)
+                    .fontSize(AppDimens.FONT_SM)
+                    .fontColor(AppColors.TEXT_SECONDARY)
+                    .width('100%')
+                    .padding(AppDimens.PADDING_MD)
+                    .backgroundColor(AppColors.BACKGROUND)
+                    .borderRadius(AppDimens.RADIUS_SM)
+                    .margin({ bottom: 4 })
+                })
+              }
+              .width('100%')
+              .padding(AppDimens.PADDING_MD)
+              .backgroundColor(AppColors.CARD_BG)
+              .borderRadius(AppDimens.RADIUS_SM)
+              .margin({ top: 12 })
+            }
           }
         }
         .padding(AppDimens.PADDING_MD)

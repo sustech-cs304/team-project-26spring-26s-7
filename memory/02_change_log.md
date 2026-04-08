@@ -11,6 +11,59 @@
 
 ---
 
+## 2026-04-08 (feature/ai AI 功能接口开发)
+
+### 新增 AI 功能模块
+
+**分支**: feature/ai (基于 incremental-dev-20260329)
+
+- [2026-04-08-20-44-00] - CREATE - common/api/ - API 层目录创建
+- [2026-04-08-20-44-10] - CREATE - common/api/ApiEndpoints.ets - API 端点常量定义
+- [2026-04-08-20-44-20] - CREATE - common/api/HttpClient.ets - HTTP 客户端封装 (GET/POST)
+- [2026-04-08-20-44-30] - CREATE - common/api/AiGatewayClient.ets - AI Gateway 客户端 (TODO: 后端接口实现)
+- [2026-04-08-20-44-40] - CREATE - common/api/index.ets - API 层统一导出
+
+### 新增 AI 能力层
+
+- [2026-04-08-20-45-00] - CREATE - common/ai/ - AI 能力层目录创建
+- [2026-04-08-20-45-10] - CREATE - common/ai/PhotoMetadata.ets - 照片元数据类型定义 (PhotoMetadata, JourneyMetadata, AiCopyRequest, AiCopyResponse)
+- [2026-04-08-20-45-20] - CREATE - common/ai/LocalImageTagger.ets - 本地图片标签提取器 (TODO: 视觉 Kit 队友实现)
+- [2026-04-08-20-45-30] - CREATE - common/ai/MetadataAggregator.ets - 元数据聚合器 (支持 MemoryNode/Trip 聚合)
+- [2026-04-08-20-45-40] - CREATE - common/ai/index.ets - AI 层统一导出
+
+### 扩展数据库层
+
+- [2026-04-08-20-46-00] - UPDATE - RdbHelper.ets - 数据库版本升级 v1→v2
+- [2026-04-08-20-46-10] - CREATE - photo_metadata 表 - 照片元数据存储 (photo_path 主键, 各类标签字段)
+- [2026-04-08-20-46-20] - CREATE - common/data/PhotoMetadataRepository.ets - 照片元数据仓库 (CRUD 操作)
+- [2026-04-08-20-46-30] - UPDATE - common/data/index.ets - 添加 PhotoMetadataRepository 导出
+
+### 更新导出索引
+
+- [2026-04-08-20-47-00] - UPDATE - common/index.ets - 添加 API Layer 和 AI Layer 导出
+- [2026-04-08-20-47-10] - UPDATE - common/index.ets - 添加 PhotoMetadataRepository 导出
+
+### 修改 AI 页面调用流程
+
+- [2026-04-08-20-48-00] - UPDATE - AiCopyPage.ets - 导入 MetadataAggregator 和 AiGatewayClient
+- [2026-04-08-20-48-10] - UPDATE - AiCopyPage.ets - 添加 nodeId/tripId 路由参数
+- [2026-04-08-20-48-20] - UPDATE - AiCopyPage.ets - handleGenerate() 改为异步调用真实 API 流程
+- [2026-04-08-20-48-30] - UPDATE - AiCopyPage.ets - 添加备选文案展示 UI
+- [2026-04-08-20-48-40] - UPDATE - AiCopyPage.ets - 添加 aboutToAppear() 解析路由参数
+- [2026-04-08-20-49-00] - BUILD - 编译验证通过 (仅警告，无错误)
+
+### TODO 占位说明
+
+**视觉套件队友需要实现**:
+- `LocalImageTagger.extractMetadata()` - 调用鸿蒙视觉 Kit 提取图片标签
+
+**后端开发同事需要实现**:
+- `/api/v1/ai/generate` - AI 文案生成接口
+- `/api/v1/ai/moderate` - 内容审核接口
+- 认证方式配置 (Bearer Token / Session)
+
+---
+
 ## 2026-04-08 (feature/photo 合并到 incremental-dev-20260329)
 
 ### 合并 feature/photo → incremental-dev-20260329
