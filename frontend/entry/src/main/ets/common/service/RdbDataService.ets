@@ -14,6 +14,7 @@
  */
 
 import { logger } from '../utils/Logger';
+import { PhotoPickerUtil } from '../utils/PhotoPickerUtil';
 import { TravelRepository } from '../data/TravelRepository';
 import { MemoryNodeRepository } from '../data/MemoryNodeRepository';
 import type { IDataService, CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput } from './IDataService';
@@ -213,6 +214,15 @@ export class RdbDataService implements IDataService {
   }
 
   async updateNode(nodeId: string, data: UpdateNodeInput): Promise<MemoryNode> {
+    // 如果更新了照片，先获取旧照片列表以便清理
+    let oldPhotos: string[] = [];
+    if (data.photos !== undefined) {
+      const oldNode = await this.nodeRepo.getNodeById(nodeId);
+      if (oldNode) {
+        oldPhotos = [...oldNode.photos];
+      }
+    }
+
     const repoInput: RepoUpdateNodeInput = {};
     if (data.title !== undefined) {
       repoInput.title = data.title;
@@ -238,10 +248,20 @@ export class RdbDataService implements IDataService {
     if (data.tags !== undefined) {
       repoInput.tags = data.tags;
     }
-    const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
+const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
     if (!updatedOk) {
       throw new Error(`Failed to update node: ${nodeId}`);
     }
+
+    // 清理被移除的照片
+    if (data.photos !== undefined) {
+      const removedPhotos = oldPhotos.filter((photo: string) => !data.photos!.includes(photo));
+      if (removedPhotos.length > 0) {
+        await PhotoPickerUtil.deletePhotos(removedPhotos);
+        logger.info(TAG, `Cleaned ${removedPhotos.length} removed photos for node ${nodeId}`);
+      }
+    }
+
     const updated = await this.nodeRepo.getNodeById(nodeId);
     if (!updated) {
       throw new Error('Failed to retrieve updated node');
@@ -250,6 +270,14 @@ export class RdbDataService implements IDataService {
   }
 
   async deleteNode(nodeId: string): Promise<void> {
+    // 先获取节点的照片列表
+    const node = await this.nodeRepo.getNodeById(nodeId);
+    if (node && node.photos.length > 0) {
+      // 清理沙箱照片
+      await PhotoPickerUtil.deletePhotos(node.photos);
+      logger.info(TAG, `Cleaned ${node.photos.length} photos for deleted node ${nodeId}`);
+    }
+    // 删除数据库记录
     const deleted = await this.nodeRepo.deleteNode(nodeId);
     if (!deleted) {
       throw new Error(`Failed to delete node: ${nodeId}`);

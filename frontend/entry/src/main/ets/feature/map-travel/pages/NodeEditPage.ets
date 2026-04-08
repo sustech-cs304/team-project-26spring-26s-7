@@ -2,6 +2,7 @@ import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
 import type { Trip } from '../../../common'
+import { PhotoSelector } from '../components/PhotoSelector'
 
 @Entry
 @Component
@@ -205,10 +206,6 @@ export struct NodeEditPage {
     }
   }
 
-  private handlePickPhoto(): void {
-    promptAction.showToast({ message: '照片选择功能待接入' })
-  }
-
   private handleNavigateToAI(): void {
     router.pushUrl({
       url: RouterUrls.AI_COPY,
@@ -260,6 +257,7 @@ export struct NodeEditPage {
 
         Scroll() {
           Column() {
+            // 位置信息
             Row() {
               Text('📍')
                 .fontSize(18)
@@ -283,6 +281,7 @@ export struct NodeEditPage {
               router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
             })
 
+            // 旅行选择 (仅创建模式)
             if (!this.isEditMode) {
               Row() {
                 Text('🧳')
@@ -305,36 +304,15 @@ export struct NodeEditPage {
               .onClick(() => this.openTripSelector())
             }
 
-            Column() {
-              Text('照片')
-                .fontSize(AppDimens.FONT_MD)
-                .fontWeight(FontWeight.Medium)
-                .fontColor(AppColors.TEXT_PRIMARY)
-              Row() {
-                Column() {
-                  Text('+')
-                    .fontSize(28)
-                    .fontColor(AppColors.TEXT_HINT)
-                  Text('添加照片')
-                    .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.TEXT_HINT)
-                }
-                .width(80)
-                .height(80)
-                .backgroundColor(AppColors.BACKGROUND)
-                .borderRadius(AppDimens.RADIUS_SM)
-                .justifyContent(FlexAlign.Center)
-                .onClick(() => this.handlePickPhoto())
-              }
-              .margin({ top: 8 })
-            }
-            .width('100%')
-            .padding(AppDimens.PADDING_MD)
-            .margin({ top: 12 })
-            .backgroundColor(AppColors.CARD_BG)
-            .borderRadius(AppDimens.RADIUS_SM)
-            .alignItems(HorizontalAlign.Start)
+            // 照片选择区 (使用 PhotoSelector 组件)
+            PhotoSelector({ photos: $photos, maxPhotos: 9 })
+              .width('100%')
+              .padding(AppDimens.PADDING_MD)
+              .margin({ top: 12 })
+              .backgroundColor(AppColors.CARD_BG)
+              .borderRadius(AppDimens.RADIUS_SM)
 
+            // 标题
             Column() {
               Text('标题')
                 .fontSize(AppDimens.FONT_MD)
@@ -352,6 +330,7 @@ export struct NodeEditPage {
             .borderRadius(AppDimens.RADIUS_SM)
             .alignItems(HorizontalAlign.Start)
 
+            // 内容
             Column() {
               Text('内容')
                 .fontSize(AppDimens.FONT_MD)
@@ -370,6 +349,7 @@ export struct NodeEditPage {
             .borderRadius(AppDimens.RADIUS_SM)
             .alignItems(HorizontalAlign.Start)
 
+            // AI 助手按钮
             Row() {
               Text('AI 助手')
                 .fontSize(AppDimens.FONT_MD)
@@ -390,13 +370,14 @@ export struct NodeEditPage {
             .margin({ bottom: 12, top: 8 })
             .onClick(() => this.handleNavigateToAI())
 
+            // 心情选择
             Column() {
               Text('心情')
                 .fontSize(AppDimens.FONT_MD)
                 .fontWeight(FontWeight.Medium)
                 .fontColor(AppColors.TEXT_PRIMARY)
               Row({ space: 16 }) {
-                ForEach(['😊', '😩', '😍', '😳', '😴', '🤯'], (emoji: string) => {
+                ForEach(['😊', '😢', '🤩', '😌', '🥰', '😤'], (emoji: string) => {
                   Text(emoji)
                     .fontSize(28)
                     .padding(8)
@@ -414,6 +395,7 @@ export struct NodeEditPage {
             .borderRadius(AppDimens.RADIUS_SM)
             .alignItems(HorizontalAlign.Start)
 
+            // 标签
             Column() {
               Text('标签')
                 .fontSize(AppDimens.FONT_MD)
@@ -453,6 +435,7 @@ export struct NodeEditPage {
       .height('100%')
       .backgroundColor(AppColors.BACKGROUND)
 
+      // 旅行选择弹窗
       if (this.showTripSelector) {
         Column()
           .width('100%')

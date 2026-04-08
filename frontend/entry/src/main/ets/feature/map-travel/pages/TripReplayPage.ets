@@ -151,7 +151,7 @@ export struct TripReplayPage {
         node.id,
         node.latitude,
         node.longitude,
-        this.resolvePhotoUri(node.photos),
+        node.photos,  // 直接传递照片数组
         node.poiName || node.title,
         node.content || '',
         this.truncateText(node.content || node.title, 20),
@@ -161,18 +161,6 @@ export struct TripReplayPage {
     })
 
     return route
-  }
-
-  /**
-   * 解析照片 URI
-   * 优先使用第一张照片，否则使用占位图
-   */
-  private resolvePhotoUri(photos: string[]): ResourceStr {
-    if (photos && photos.length > 0 && photos[0]) {
-      return photos[0]  // 返回文件路径
-    }
-    // 占位图：使用内置资源
-    return $r('app.media.photo_1')
   }
 
   /**

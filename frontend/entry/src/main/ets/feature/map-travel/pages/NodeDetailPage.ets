@@ -151,22 +151,45 @@ export struct NodeDetailPage {
             .justifyContent(FlexAlign.Center)
           }
 
-          // 照片轮播区 (占位)
-          Stack() {
-            Column() {
-              Text('📷')
-                .fontSize(48)
-                .fontColor(AppColors.TEXT_HINT)
-              Text(this.photos.length > 0 ? `共 ${this.photos.length} 张照片` : '暂无照片')
-                .fontSize(AppDimens.FONT_SM)
-                .fontColor(AppColors.TEXT_HINT)
+          // 照片轮播区
+          if (this.photos.length > 0) {
+            Swiper() {
+              ForEach(this.photos, (photo: string) => {
+                Image(photo)
+                  .width('100%')
+                  .height(240)
+                  .objectFit(ImageFit.Cover)
+              })
             }
-            .justifyContent(FlexAlign.Center)
+            .width('100%')
+            .height(240)
+            .autoPlay(true)
+            .interval(3000)
+            .indicator(
+              Indicator.dot()
+                .itemWidth(8)
+                .itemHeight(8)
+                .selectedItemWidth(8)
+                .selectedItemHeight(8)
+                .color(AppColors.TEXT_HINT)
+                .selectedColor(AppColors.PRIMARY)
+            )
+          } else {
+            Stack() {
+              Column() {
+                Text('📷')
+                  .fontSize(48)
+                  .fontColor(AppColors.TEXT_HINT)
+                Text('暂无照片')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_HINT)
+              }
+              .justifyContent(FlexAlign.Center)
+            }
+            .width('100%')
+            .height(240)
+            .backgroundColor(AppColors.DIVIDER)
           }
-          .width('100%')
-          .height(240)
-          .backgroundColor(AppColors.DIVIDER)
-          // TODO: 替换为 Swiper 组件展示照片轮播
 
           // 基本信息
           Column() {

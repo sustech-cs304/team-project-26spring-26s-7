@@ -3,7 +3,7 @@ import { ReplayNode } from '../../../common'
 
 /**
  * 照片卡片展开覆盖层
- * 底部半屏模态框，展示大图和完整文字笔记
+ * 底部半屏模态框，展示大图轮播和完整文字笔记
  */
 @Component
 export struct PhotoCardOverlay {
@@ -40,6 +40,54 @@ export struct PhotoCardOverlay {
     }
   }
 
+  /**
+   * 渲染照片轮播区域
+   */
+  @Builder
+  PhotoSwiper() {
+    if (this.currentNode && this.currentNode.photos.length > 0) {
+      Swiper() {
+        ForEach(this.currentNode.photos, (photo: string) => {
+          Image(photo)
+            .width('100%')
+            .height(250)
+            .objectFit(ImageFit.Cover)
+        })
+      }
+      .width('100%')
+      .height(250)
+      .autoPlay(true)
+      .interval(3000)
+      .indicator(
+        this.currentNode.photos.length > 1
+          ? Indicator.dot()
+              .itemWidth(8)
+              .itemHeight(8)
+              .selectedItemWidth(8)
+              .selectedItemHeight(8)
+              .color('#FFFFFF80')
+              .selectedColor('#FFFFFF')
+          : false
+      )
+      .borderRadius({ topLeft: 16, topRight: 16 })
+    } else {
+      // 无照片占位符
+      Column() {
+        Text('📷')
+          .fontSize(48)
+        Text('暂无照片')
+          .fontSize(AppDimens.FONT_MD)
+          .fontColor('#FFFFFF99')
+          .margin({ top: 8 })
+      }
+      .width('100%')
+      .height(250)
+      .justifyContent(FlexAlign.Center)
+      .backgroundColor('#333333')
+      .borderRadius({ topLeft: 16, topRight: 16 })
+    }
+  }
+
   build() {
     if (this.isVisible && this.currentNode) {
       Stack() {
@@ -67,20 +115,28 @@ export struct PhotoCardOverlay {
           .width('100%')
           .padding({ top: 12, bottom: 8 })
 
-          // 大图展示
-          Image(this.currentNode.photoUri)
-            .width('100%')
-            .height(250)
-            .objectFit(ImageFit.Cover)
-            .borderRadius({ topLeft: 16, topRight: 16 })
+          // 照片轮播
+          this.PhotoSwiper()
 
-          // 标题
-          Text(this.currentNode.title)
-            .fontSize(AppDimens.FONT_LG)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(AppColors.TEXT_PRIMARY)
-            .margin({ top: 16, bottom: 8 })
-            .width('100%')
+          // 标题和照片数量
+          Row() {
+            Text(this.currentNode.title)
+              .fontSize(AppDimens.FONT_LG)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(AppColors.TEXT_PRIMARY)
+              .layoutWeight(1)
+
+            if (this.currentNode.photos.length > 0) {
+              Text(`${this.currentNode.photos.length} 张`)
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_HINT)
+                .backgroundColor(AppColors.DIVIDER)
+                .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                .borderRadius(12)
+            }
+          }
+          .width('100%')
+          .margin({ top: 16, bottom: 8 })
 
           // 完整文字笔记（可滚动）
           Scroll() {

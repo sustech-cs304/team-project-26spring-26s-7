@@ -1,6 +1,6 @@
 # Change Log
 
-**Last Updated**: 2026-04-04
+**Last Updated**: 2026-04-05
 
 ---
 
@@ -8,6 +8,49 @@
 ```
 [YYYY-MM-DD-HH-MM-SS] - [Action] - [Location] - [Description] - [Git Commit]
 ```
+
+---
+
+## 2026-04-05 (照片选择与沙箱存储功能)
+
+### Phase 6: NodeDetailPage 照片轮播
+
+- [2026-04-05-15-20-00] - FIX - NodeDetailPage.ets - 照片区域从占位符改为 Swiper 组件实际展示照片
+- [2026-04-05-15-25-00] - FIX - NodeDetailPage.ets - 修复 SwiperIndicator 类型错误，改为 Indicator.dot()
+- [2026-04-05-15-25-05] - BUILD - assembleHap 编译验证通过
+
+### Phase 7: Replay 照片策略优化
+
+- [2026-04-05-15-35-00] - UPDATE - types.ets - ReplayNode.photoUri 改为 photos: string[]，支持多张照片
+- [2026-04-05-15-35-10] - UPDATE - TripReplayPage.ets - 移除 resolvePhotoUri 方法，直接传递照片数组
+- [2026-04-05-15-35-20] - UPDATE - ReplayPhotoCard.ets - 支持 Swiper 多张照片轮播，无照片显示占位符
+- [2026-04-05-15-35-30] - UPDATE - PhotoCardOverlay.ets - 支持 Swiper 多张照片轮播，显示照片数量
+- [2026-04-05-15-35-40] - BUILD - assembleHap 编译验证通过
+
+### Phase 1: PhotoPickerUtil 工具类
+
+- [2026-04-05-14-30-10] - CREATE - common/utils/PhotoPickerUtil.ets - 照片选择与沙箱存储工具类
+- [2026-04-05-14-30-15] - UPDATE - common/index.ets - 添加 PhotoPickerUtil 导出
+
+### Phase 2: PhotoSelector UI 组件
+
+- [2026-04-05-14-31-00] - CREATE - feature/map-travel/components/PhotoSelector.ets - 照片选择器组件（网格展示、添加/删除按钮、最多 9 张）
+
+### Phase 3: NodeEditPage 集成
+
+- [2026-04-05-14-32-30] - UPDATE - NodeEditPage.ets - 导入 PhotoSelector 组件
+- [2026-04-05-14-32-45] - UPDATE - NodeEditPage.ets - 替换照片选择区域为 PhotoSelector 组件
+- [2026-04-05-14-32-50] - UPDATE - NodeEditPage.ets - 删除 handlePickPhoto() 占位方法
+
+### Phase 4: Replay 照片展示
+
+- [2026-04-05-14-33-00] - VERIFY - TripReplayPage.resolvePhotoUri() - 确认已支持从 photos[] 获取照片
+
+### Phase 5: 照片清理
+
+- [2026-04-05-14-34-00] - UPDATE - RdbDataService.ets - 导入 PhotoPickerUtil
+- [2026-04-05-14-34-10] - UPDATE - RdbDataService.updateNode() - 更新时清理被移除的照片
+- [2026-04-05-14-34-20] - UPDATE - RdbDataService.deleteNode() - 删除节点时清理所有关联照片
 
 ---
 
