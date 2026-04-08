@@ -61,7 +61,10 @@ local.properties
 # codex 
 frontend/.codex_*/
 
-#module cache
+# module cache
 frontend/oh_modules/
 frontend/.hvigor/
 frontend/.idea/
+
+# text file
+*.txt
