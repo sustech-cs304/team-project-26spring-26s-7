@@ -274,3 +274,11 @@
 - [2026-04-09-12-34-30] - UPDATE - references/software_architecture.md - 架构文档同步实际状态（修正 Product/Feature/Common 层差异，更新三层架构）
 - [2026-04-09-12-34-35] - UPDATE - references/architecture_current.png - 重新生成架构图 PNG（4307x1143, 187KB）
 - [2026-04-09-12-45-00] - UPDATE - README.md - 添加 references/ 目录详细导览（软件架构、用户故事、功能设计、示例代码、工具文档、安全规范）
+
+---
+
+## 2026-04-09 (测试体系建立)
+
+- [2026-04-09-14-30-00] - CREATE - memory/04_test_checklist.md - 测试清单文件初始化
+- [2026-04-09-14-50-00] - UPDATE - memory/04_test_checklist.md - 重构测试清单，增加 P0/P1/P2 优先级体系，聚焦 Feature 集成测试（29 个测试用例：P0=13, P1=10, P2=6）
+- [2026-04-09-14-50-30] - UPDATE - CLAUDE.md - 添加测试监督机制章节（测试通过标记规则、AI 监督责任、通过率追踪）
