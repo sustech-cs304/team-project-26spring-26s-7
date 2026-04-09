@@ -266,3 +266,11 @@
 - [2026-03-30] - FIX - PhotoSelector.ets - 修复 ArkTS 语法错误（RelativeStack→Stack, FlexSpaceOptions 类型）
 - [2026-03-30] - FIX - PhotoPickerUtil.ets - 修复 throw 语句类型错误（ArkTS 要求 Error 类型）
 - [2026-03-30] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 7s 903ms
+
+---
+
+## 2026-04-09 (架构文档同步)
+
+- [2026-04-09-12-34-30] - UPDATE - references/software_architecture.md - 架构文档同步实际状态（修正 Product/Feature/Common 层差异，更新三层架构）
+- [2026-04-09-12-34-35] - UPDATE - references/architecture_current.png - 重新生成架构图 PNG（4307x1143, 187KB）
+- [2026-04-09-12-45-00] - UPDATE - README.md - 添加 references/ 目录详细导览（软件架构、用户故事、功能设计、示例代码、工具文档、安全规范）

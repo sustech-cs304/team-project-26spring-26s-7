@@ -8,6 +8,7 @@ dual_cc.md
 frontend/cc4frontend.md
 backend/cc4backend.md
 .mcp.json
+.playwright-mcp
 
 # ========================
 # Temporary files
