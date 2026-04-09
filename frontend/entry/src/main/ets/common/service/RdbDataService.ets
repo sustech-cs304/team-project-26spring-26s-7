@@ -15,6 +15,7 @@
 
 import { logger } from '../utils/Logger';
 import { PhotoPickerUtil } from '../utils/PhotoPickerUtil';
+import { CloudStorageService } from '../auth';
 import { TravelRepository } from '../data/TravelRepository';
 import { MemoryNodeRepository } from '../data/MemoryNodeRepository';
 import type { IDataService, CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput } from './IDataService';
@@ -35,6 +36,54 @@ export class RdbDataService implements IDataService {
   constructor() {
     this.travelRepo = new TravelRepository();
     this.nodeRepo = new MemoryNodeRepository();
+  }
+
+  private syncNodePhotosToCloud(travelId: string, nodeId: string, photos: string[]): void {
+    if (photos.length === 0) {
+      return;
+    }
+
+    void this.uploadNodePhotosToCloud(travelId, nodeId, photos);
+  }
+
+  private async uploadNodePhotosToCloud(travelId: string, nodeId: string, photos: string[]): Promise<void> {
+    for (const photo of photos) {
+      try {
+        await CloudStorageService.uploadNodePhoto(travelId, nodeId, photo);
+        logger.info(TAG, `Uploaded node photo to cloud: ${nodeId} -> ${photo}`);
+      } catch (err) {
+        const error = err as Error;
+        logger.error(TAG, `Failed to upload node photo ${photo}: ${error.message}`);
+      }
+    }
+  }
+
+  private syncDeletedNodePhotosToCloud(travelId: string, nodeId: string, photos: string[]): void {
+    if (photos.length === 0) {
+      return;
+    }
+
+    void this.deleteNodePhotosFromCloud(travelId, nodeId, photos);
+  }
+
+  private async deleteNodePhotosFromCloud(travelId: string, nodeId: string, photos: string[]): Promise<void> {
+    for (const photo of photos) {
+      try {
+        await CloudStorageService.deleteNodePhoto(travelId, nodeId, photo);
+        logger.info(TAG, `Deleted node photo from cloud: ${nodeId} -> ${photo}`);
+      } catch (err) {
+        const error = err as Error;
+        logger.error(TAG, `Failed to delete node photo ${photo}: ${error.message}`);
+      }
+    }
+  }
+
+  private getAddedPhotos(oldPhotos: string[], newPhotos: string[]): string[] {
+    return newPhotos.filter((photo: string) => !oldPhotos.includes(photo));
+  }
+
+  private getRemovedPhotos(oldPhotos: string[], newPhotos: string[]): string[] {
+    return oldPhotos.filter((photo: string) => !newPhotos.includes(photo));
   }
 
   private calculateDistanceBetweenPoints(
@@ -210,16 +259,18 @@ export class RdbDataService implements IDataService {
     if (!created) {
       throw new Error('Failed to retrieve created node');
     }
+    this.syncNodePhotosToCloud(created.travelId, created.id, created.photos);
     return created;
   }
 
   async updateNode(nodeId: string, data: UpdateNodeInput): Promise<MemoryNode> {
-    // 如果更新了照片，先获取旧照片列表以便清理
     let oldPhotos: string[] = [];
+    let travelId: string = '';
     if (data.photos !== undefined) {
       const oldNode = await this.nodeRepo.getNodeById(nodeId);
       if (oldNode) {
         oldPhotos = [...oldNode.photos];
+        travelId = oldNode.travelId;
       }
     }
 
@@ -248,17 +299,19 @@ export class RdbDataService implements IDataService {
     if (data.tags !== undefined) {
       repoInput.tags = data.tags;
     }
-const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
+    const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
     if (!updatedOk) {
       throw new Error(`Failed to update node: ${nodeId}`);
     }
 
-    // 清理被移除的照片
     if (data.photos !== undefined) {
-      const removedPhotos = oldPhotos.filter((photo: string) => !data.photos!.includes(photo));
+      const removedPhotos = this.getRemovedPhotos(oldPhotos, data.photos);
       if (removedPhotos.length > 0) {
         await PhotoPickerUtil.deletePhotos(removedPhotos);
         logger.info(TAG, `Cleaned ${removedPhotos.length} removed photos for node ${nodeId}`);
+        if (travelId.length > 0) {
+          this.syncDeletedNodePhotosToCloud(travelId, nodeId, removedPhotos);
+        }
       }
     }
 
@@ -266,21 +319,27 @@ const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
     if (!updated) {
       throw new Error('Failed to retrieve updated node');
     }
+
+    if (data.photos !== undefined) {
+      const addedPhotos = this.getAddedPhotos(oldPhotos, updated.photos);
+      this.syncNodePhotosToCloud(updated.travelId, updated.id, addedPhotos);
+    }
+
     return updated;
   }
 
   async deleteNode(nodeId: string): Promise<void> {
-    // 先获取节点的照片列表
     const node = await this.nodeRepo.getNodeById(nodeId);
     if (node && node.photos.length > 0) {
-      // 清理沙箱照片
       await PhotoPickerUtil.deletePhotos(node.photos);
       logger.info(TAG, `Cleaned ${node.photos.length} photos for deleted node ${nodeId}`);
     }
-    // 删除数据库记录
     const deleted = await this.nodeRepo.deleteNode(nodeId);
     if (!deleted) {
       throw new Error(`Failed to delete node: ${nodeId}`);
+    }
+    if (node && node.photos.length > 0) {
+      this.syncDeletedNodePhotosToCloud(node.travelId, node.id, node.photos);
     }
   }
 

@@ -11,6 +11,18 @@
 
 ---
 
+### 2026-04-09 (华为云存储鉴权链路修正)
+
+- [2026-04-09-01-52-32] - UPDATE - frontend/entry/src/main/ets/common/auth/CloudStorageService.ets - 对齐 sample：云存储初始化前先 signOut，再用 hwid 重新 signIn 并记录会话重建日志，修复上传 403 的候选根因 - uncommitted
+- [2026-04-09-01-52-32] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 15 s 673 ms - uncommitted
+- [2026-04-09-13-34-15] - UPDATE - frontend/entry/src/main/ets/common/auth/CloudStorageService.ets - 上传前将 filesDir 照片复制到 cacheDir，并按云存储 SDK 要求传递 cache 相对路径，修复真机上传 403 - uncommitted
+- [2026-04-09-13-34-15] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 13 s 760 ms - uncommitted
+- [2026-04-09-13-40-31] - UPDATE - frontend/entry/src/main/ets/common/auth/CloudStorageService.ets - 增加 AuthProvider token 诊断日志，确认上传前凭据可获取，辅助排查真机 403 - uncommitted
+- [2026-04-09-13-40-31] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 8 s 572 ms - uncommitted
+- [2026-04-09-13-41-00] - VERIFY - 华为云存储真机上传 - 真机验证通过，文件成功写入 users/1916859267856523328/travels/1/nodes/1/ - uncommitted
+
+---
+
 ## 2026-04-08 (feature/photo 合并到 incremental-dev-20260329)
 
 ### 合并 feature/photo → incremental-dev-20260329

@@ -26,7 +26,7 @@ let initialized: boolean = false;
 let currentUser: AuthUser | null = null;
 
 export class AuthService {
-  static init(context: Context): void {
+  static init(context: common.UIAbilityContext): void {
     if (initialized) {
       return;
     }
@@ -34,6 +34,7 @@ export class AuthService {
     const file = context.resourceManager.getRawFileContentSync('agconnect-services.json');
     const json: string = buffer.from(file.buffer).toString();
     auth.init(context, json);
+    CloudStorageService.setContext(context);
     initialized = true;
     hilog.info(DOMAIN, TAG, 'Auth initialized');
   }
@@ -85,6 +86,7 @@ export class AuthService {
   }
 
   static async signInWithHuaweiID(hostContext: common.UIAbilityContext): Promise<AuthUser> {
+    CloudStorageService.setContext(hostContext)
     const loginRequest = new authentication.HuaweiIDProvider().createLoginWithHuaweiIDRequest();
     loginRequest.forceLogin = true;
     loginRequest.state = util.generateRandomUUID();
