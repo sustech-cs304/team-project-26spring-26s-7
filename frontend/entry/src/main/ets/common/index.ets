@@ -22,6 +22,8 @@ export { PhotoPickerUtil } from './utils/PhotoPickerUtil';
 
 // Auth 导出
 export { AuthService, CloudStorageService } from './auth';
+export { CloudSyncService } from './sync/CloudSyncService';
+export { SyncManager } from './sync/SyncManager';
 export type { AuthUser } from './auth';
 
 // Data Layer 导出

@@ -16,6 +16,7 @@
 import { relationalStore as rdb } from '@kit.ArkData';
 import { logger } from '../utils/Logger';
 import { RdbHelper } from './RdbHelper';
+import { AuthService } from '../auth';
 import type { Trip } from '../service/types';
 
 const TAG = 'TravelRepository';
@@ -77,6 +78,11 @@ export class TravelRepository {
     return parsed;
   }
 
+  private async getOwnerUid(): Promise<string> {
+    const user = await AuthService.getCurrentUser();
+    return user?.uid ?? '';
+  }
+
   private mapResultSetToTrip(resultSet: rdb.ResultSet): Trip {
     const idIdx = resultSet.getColumnIndex('id');
     const nameIdx = resultSet.getColumnIndex('name');
@@ -85,6 +91,12 @@ export class TravelRepository {
     const endIdx = resultSet.getColumnIndex('end_date');
     const createdIdx = resultSet.getColumnIndex('created_at');
     const updatedIdx = resultSet.getColumnIndex('updated_at');
+    const ownerUidIdx = resultSet.getColumnIndex('owner_uid');
+    const cloudIdIdx = resultSet.getColumnIndex('cloud_id');
+    const syncStatusIdx = resultSet.getColumnIndex('sync_status');
+    const deletedAtIdx = resultSet.getColumnIndex('deleted_at');
+    const lastSyncedAtIdx = resultSet.getColumnIndex('last_synced_at');
+    const versionIdx = resultSet.getColumnIndex('version');
 
     const trip: Trip = {
       id: resultSet.getDouble(idIdx).toString(),
@@ -96,7 +108,13 @@ export class TravelRepository {
       nodeIds: [],
       totalDistance: 0,
       createdAt: resultSet.getDouble(createdIdx),
-      updatedAt: resultSet.getDouble(updatedIdx)
+      updatedAt: resultSet.getDouble(updatedIdx),
+      ownerUid: ownerUidIdx >= 0 ? (resultSet.getString(ownerUidIdx) ?? '') : '',
+      cloudId: cloudIdIdx >= 0 ? (resultSet.getString(cloudIdIdx) ?? '') : '',
+      syncStatus: syncStatusIdx >= 0 ? (resultSet.getString(syncStatusIdx) ?? 'local_only') : 'local_only',
+      deletedAt: deletedAtIdx >= 0 ? resultSet.getDouble(deletedAtIdx) : 0,
+      lastSyncedAt: lastSyncedAtIdx >= 0 ? resultSet.getDouble(lastSyncedAtIdx) : 0,
+      version: versionIdx >= 0 ? resultSet.getDouble(versionIdx) : 1
     };
     return trip;
   }
@@ -105,7 +123,10 @@ export class TravelRepository {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const store = await this.getRdbStore();
+      const ownerUid = await this.getOwnerUid();
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('owner_uid', ownerUid);
+      predicates.equalTo('deleted_at', 0);
       predicates.orderByDesc('created_at');
       resultSet = await store.query(predicates);
       const trips: Trip[] = [];
@@ -130,6 +151,7 @@ export class TravelRepository {
       const store = await this.getRdbStore();
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'travel id'));
+      predicates.equalTo('deleted_at', 0);
       resultSet = await store.query(predicates);
       let trip: Trip | undefined = undefined;
       if (resultSet.goToFirstRow()) {
@@ -148,6 +170,7 @@ export class TravelRepository {
     try {
       const store = await this.getRdbStore();
       const now = Date.now();
+      const ownerUid = await this.getOwnerUid();
       const valueBucket: rdb.ValuesBucket = {
         'name': travel.name,
         'cover_image_uri': travel.coverImageUri ?? '',
@@ -155,7 +178,13 @@ export class TravelRepository {
         'end_date': travel.endDate,
         'created_at': now,
         'updated_at': now,
-        'sensitivity': travel.sensitivity ?? 'S1'
+        'sensitivity': travel.sensitivity ?? 'S1',
+        'owner_uid': ownerUid,
+        'cloud_id': '',
+        'sync_status': 'pending_create',
+        'deleted_at': 0,
+        'last_synced_at': 0,
+        'version': 1
       };
       const rowId = await store.insert(TABLE_NAME, valueBucket);
       logger.info(TAG, `Created travel: ${travel.name}, id=${rowId}`);
@@ -169,8 +198,14 @@ export class TravelRepository {
   async updateTravel(id: string, travel: UpdateTravelInput): Promise<boolean> {
     try {
       const store = await this.getRdbStore();
+      const currentTrip = await this.getTravelById(id);
+      if (!currentTrip) {
+        return false;
+      }
       const valueBucket: rdb.ValuesBucket = {
-        'updated_at': Date.now()
+        'updated_at': Date.now(),
+        'sync_status': currentTrip.cloudId && currentTrip.cloudId.length > 0 ? 'pending_update' : 'pending_create',
+        'version': (currentTrip.version ?? 1) + 1
       };
       if (travel.name !== undefined) {
         valueBucket['name'] = travel.name;
@@ -196,6 +231,103 @@ export class TravelRepository {
       logger.error(TAG, `updateTravel failed: ${JSON.stringify(err)}`);
       return false;
     }
+  }
+
+  async softDeleteTravel(id: string): Promise<boolean> {
+    try {
+      const store = await this.getRdbStore();
+      const currentTrip = await this.getTravelById(id);
+      if (!currentTrip) {
+        return false;
+      }
+      const now = Date.now();
+      const travelId = this.toDbId(id, 'travel id');
+
+      const nodeValues: rdb.ValuesBucket = {
+        deleted_at: now,
+        updated_at: now,
+        sync_status: 'pending_delete',
+        version: now
+      };
+      const nodePredicates = new rdb.RdbPredicates('memory_nodes');
+      nodePredicates.equalTo('travel_id', travelId);
+      nodePredicates.equalTo('deleted_at', 0);
+      await store.update(nodeValues, nodePredicates);
+
+      const travelValues: rdb.ValuesBucket = {
+        deleted_at: now,
+        updated_at: now,
+        sync_status: 'pending_delete',
+        version: (currentTrip.version ?? 1) + 1
+      };
+      const travelPredicates = new rdb.RdbPredicates(TABLE_NAME);
+      travelPredicates.equalTo('id', travelId);
+      travelPredicates.equalTo('deleted_at', 0);
+      const affectedRows = await store.update(travelValues, travelPredicates);
+      logger.info(TAG, `Soft deleted travel ${id}, affected=${affectedRows}`);
+      return affectedRows > 0;
+    } catch (err) {
+      logger.error(TAG, `softDeleteTravel failed: ${JSON.stringify(err)}`);
+      return false;
+    }
+  }
+
+  async updateSyncMetadata(id: string, cloudId: string, syncStatus: string, lastSyncedAt: number): Promise<void> {
+    const store = await this.getRdbStore();
+    const valueBucket: rdb.ValuesBucket = {
+      cloud_id: cloudId,
+      sync_status: syncStatus,
+      last_synced_at: lastSyncedAt
+    };
+    const predicates = new rdb.RdbPredicates(TABLE_NAME);
+    predicates.equalTo('id', this.toDbId(id, 'travel id'));
+    await store.update(valueBucket, predicates);
+  }
+
+  async upsertFromCloud(travel: Trip): Promise<void> {
+    const store = await this.getRdbStore();
+    const predicates = new rdb.RdbPredicates(TABLE_NAME);
+    predicates.equalTo('cloud_id', travel.cloudId ?? '');
+    const resultSet = await store.query(predicates);
+    const valueBucket: rdb.ValuesBucket = {
+      name: travel.name,
+      cover_image_uri: travel.coverPhoto ?? '',
+      start_date: travel.startDate,
+      end_date: travel.endDate,
+      created_at: travel.createdAt,
+      updated_at: travel.updatedAt,
+      owner_uid: travel.ownerUid ?? '',
+      cloud_id: travel.cloudId ?? '',
+      sync_status: 'synced',
+      deleted_at: travel.deletedAt ?? 0,
+      last_synced_at: Date.now(),
+      version: travel.version ?? 1,
+      sensitivity: 'S1'
+    };
+
+    try {
+      if (resultSet.goToFirstRow()) {
+        const updatePredicates = new rdb.RdbPredicates(TABLE_NAME);
+        updatePredicates.equalTo('cloud_id', travel.cloudId ?? '');
+        await store.update(valueBucket, updatePredicates);
+      } else {
+        await store.insert(TABLE_NAME, valueBucket);
+      }
+    } finally {
+      resultSet.close();
+    }
+  }
+
+  async markDeletedByCloud(cloudId: string): Promise<void> {
+    const store = await this.getRdbStore();
+    const valueBucket: rdb.ValuesBucket = {
+      deleted_at: Date.now(),
+      sync_status: 'synced',
+      last_synced_at: Date.now()
+    };
+    const predicates = new rdb.RdbPredicates(TABLE_NAME);
+    predicates.equalTo('cloud_id', cloudId);
+    await store.update(valueBucket, predicates);
   }
 
   async deleteTravel(id: string): Promise<boolean> {

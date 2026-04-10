@@ -1,5 +1,5 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, AuthService, RouterUrls } from '../../../common'
+import { AppColors, AppDimens, AuthService, RouterUrls, RdbDataService, SyncManager } from '../../../common'
 
 /**
  * 个人中心 Tab 内容视图
@@ -10,8 +10,8 @@ export struct ProfileView {
   @State displayName: string = 'TravelPin 用户'
   @State loginStatusText: string = '华为账号已登录'
   @State cloudStatusText: string = '云存储未连接'
-  @State lastSyncTime: string = '2 分钟前'
-  @State pendingCount: number = 3
+  @State lastSyncTime: string = '未同步'
+  @State pendingCount: number = 0
   @State isSyncing: boolean = false
   @State exifStrip: boolean = true
   @State wifiOnlySync: boolean = true
@@ -27,20 +27,24 @@ export struct ProfileView {
       this.displayName = status.user?.displayName ?? 'TravelPin 用户'
       this.loginStatusText = status.isLoggedIn ? '华为账号已登录' : '未登录'
       this.cloudStatusText = status.cloudStatusText
+
+      const syncStatus = await new RdbDataService().getSyncStatus()
+      this.pendingCount = syncStatus.pendingCount
+      this.lastSyncTime = syncStatus.lastSyncTime > 0 ? '刚刚' : '未同步'
+      this.isSyncing = syncStatus.isSyncing
     } catch (_) {
       this.loginStatusText = '登录状态获取失败'
       this.cloudStatusText = '云存储暂不可用'
     }
   }
 
-  private handleSync(): void {
+  private async handleSync(): Promise<void> {
     this.isSyncing = true
-    // TODO: 触发 SyncManager 立即同步
-    setTimeout(() => {
-      this.isSyncing = false
-      this.lastSyncTime = '刚刚'
-      this.pendingCount = 0
-    }, 2000)
+    await SyncManager.triggerNow()
+    const syncStatus = await new RdbDataService().getSyncStatus()
+    this.pendingCount = syncStatus.pendingCount
+    this.lastSyncTime = syncStatus.pendingCount === 0 ? '刚刚' : '未完成'
+    this.isSyncing = syncStatus.isSyncing
   }
 
   private handleLogout(): void {

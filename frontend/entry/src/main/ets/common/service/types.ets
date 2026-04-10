@@ -113,6 +113,12 @@ export interface Trip {
   totalDistance: number
   createdAt: number
   updatedAt: number
+  ownerUid?: string
+  cloudId?: string
+  syncStatus?: string
+  deletedAt?: number
+  lastSyncedAt?: number
+  version?: number
 }
 
 /** 记忆节点 - 完整数据模型 */
@@ -129,6 +135,13 @@ export interface MemoryNode {
   tags: string[]
   createdAt: number
   updatedAt: number
+  ownerUid?: string
+  cloudId?: string
+  syncStatus?: string
+  deletedAt?: number
+  lastSyncedAt?: number
+  version?: number
+  photoManifest?: string
 }
 
 /** 同步状态 */
@@ -136,6 +149,16 @@ export interface SyncStatus {
   lastSyncTime: number
   pendingCount: number
   isSyncing: boolean
+}
+
+export interface SyncQueueItem {
+  id: string
+  entityType: string
+  entityId: string
+  operation: string
+  payload: string
+  createdAt: number
+  retryCount: number
 }
 
 /** AI 文案请求 */

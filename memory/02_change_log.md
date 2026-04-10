@@ -20,6 +20,21 @@
 - [2026-04-09-13-40-31] - UPDATE - frontend/entry/src/main/ets/common/auth/CloudStorageService.ets - 增加 AuthProvider token 诊断日志，确认上传前凭据可获取，辅助排查真机 403 - uncommitted
 - [2026-04-09-13-40-31] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 8 s 572 ms - uncommitted
 - [2026-04-09-13-41-00] - VERIFY - 华为云存储真机上传 - 真机验证通过，文件成功写入 users/1916859267856523328/travels/1/nodes/1/ - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/data/RdbHelper.ets - 为 travels/memory_nodes 扩展 owner_uid/cloud_id/sync_status/deleted_at/version 等同步字段，并补充 sync_queue 读写接口 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/data/TravelRepository.ets - 增加 owner_uid 过滤、同步字段映射与旅行软删除语义 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets - 增加节点同步字段映射、photo_manifest 与节点软删除语义 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/service/RdbDataService.ets - 本地 CRUD 后写入 sync_queue，并让 Profile 同步状态读取真实待同步数量 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets - 用真实 sync_queue 数量替换占位同步状态展示 - uncommitted
+- [2026-04-09-14-38-02] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 8 s 278 ms - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/resources/rawfile/schema.json - 引入 TravelPinZone 云数据库 schema 文件，准备客户端接入 - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/CloudTravel.ets - 新增 Travel 云数据库对象类型类 - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/CloudMemoryNode.ets - 新增 MemoryNode 云数据库对象类型类 - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/CloudSyncService.ets - 新增 TravelPinZone 云数据库访问封装，支持 Travel/MemoryNode 上行 upsert/delete - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/SyncManager.ets - 新增 sync_queue 消费器，支持手动/启动时触发上行同步 - uncommitted
+- [2026-04-09-14-39-02] - UPDATE - frontend/entry/src/main/ets/common/index.ets - 导出 CloudSyncService 与 SyncManager - uncommitted
+- [2026-04-09-14-39-02] - UPDATE - frontend/entry/src/main/ets/entryability/EntryAbility.ets - 云存储恢复成功后自动触发 SyncManager 上行同步 - uncommitted
+- [2026-04-09-14-39-02] - UPDATE - frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets - “立即同步”按钮接入 SyncManager.triggerNow() - uncommitted
+- [2026-04-09-14-39-02] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 9 s 234 ms - uncommitted
 
 ---
 
