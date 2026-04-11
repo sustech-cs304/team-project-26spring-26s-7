@@ -190,6 +190,13 @@ const SQL_CREATE_SYNC_QUEUE = `
   )
 `;
 
+const SQL_CREATE_APP_SYNC_STATE = `
+  CREATE TABLE IF NOT EXISTS app_sync_state(
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )
+`;
+
 export class RdbHelper {
   private static instance: RdbHelper;
   private rdbStore: rdb.RdbStore | undefined = undefined;
@@ -251,6 +258,7 @@ export class RdbHelper {
     await this.rdbStore.executeSql(SQL_CREATE_TRAVELS);
     await this.rdbStore.executeSql(SQL_CREATE_MEMORY_NODES);
     await this.rdbStore.executeSql(SQL_CREATE_SYNC_QUEUE);
+    await this.rdbStore.executeSql(SQL_CREATE_APP_SYNC_STATE);
     await this.ensureLatestSchema();
     logger.info(TAG, 'Tables created successfully');
   }
@@ -354,11 +362,49 @@ export class RdbHelper {
   }
 
   async getLatestSyncTimestamp(): Promise<number> {
-    const items = await this.getPendingSyncQueueItems();
-    if (items.length === 0) {
-      return Date.now();
+    const lastPush = await this.getSyncState('last_push_at');
+    const lastPull = await this.getSyncState('last_pull_at');
+    return Math.max(lastPush, lastPull);
+  }
+
+  async getSyncState(key: string): Promise<number> {
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getStore();
+      const predicates = new rdb.RdbPredicates('app_sync_state');
+      predicates.equalTo('key', key);
+      resultSet = await store.query(predicates);
+      if (!resultSet.goToFirstRow()) {
+        return 0;
+      }
+      const value = resultSet.getString(resultSet.getColumnIndex('value'));
+      return Number(value ?? '0');
+    } catch (err) {
+      logger.error(TAG, `getSyncState failed: ${JSON.stringify(err)}`);
+      return 0;
+    } finally {
+      if (resultSet) {
+        try {
+          resultSet.close();
+        } catch (_) {}
+      }
     }
-    return items[items.length - 1].createdAt;
+  }
+
+  async setSyncState(key: string, value: number): Promise<void> {
+    const store = await this.getStore();
+    const predicates = new rdb.RdbPredicates('app_sync_state');
+    predicates.equalTo('key', key);
+    const resultSet = await store.query(predicates);
+    try {
+      if (resultSet.goToFirstRow()) {
+        await store.update({ value: value.toString() }, predicates);
+      } else {
+        await store.insert('app_sync_state', { key: key, value: value.toString() });
+      }
+    } finally {
+      resultSet.close();
+    }
   }
 
   async enqueueSyncItem(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {

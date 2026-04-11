@@ -45,12 +45,17 @@ export class RdbDataService implements IDataService {
   private async enqueueSync(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
     await this.rdbHelper.removeSyncItems(entityType, entityId);
     await this.rdbHelper.enqueueSyncItem(entityType, entityId, operation, payload);
+    void SyncManager.pushLocalNow();
   }
 
   async getSyncStatus(): Promise<SyncStatus> {
     const pendingItems = await this.rdbHelper.getPendingSyncQueueItems();
+    const lastPushTime = await this.rdbHelper.getSyncState('last_push_at');
+    const lastPullTime = await this.rdbHelper.getSyncState('last_pull_at');
     const status: SyncStatus = {
-      lastSyncTime: 0,
+      lastSyncTime: Math.max(lastPushTime, lastPullTime),
+      lastPushTime: lastPushTime,
+      lastPullTime: lastPullTime,
       pendingCount: pendingItems.length,
       isSyncing: SyncManager.isSyncing()
     }
@@ -430,10 +435,17 @@ export class RdbDataService implements IDataService {
     if (node && node.photos.length > 0) {
       this.syncDeletedNodePhotosToCloud(node.travelId, node.id, node.photos);
     }
+    const photoCloudPaths: string[] = [];
+    if (node) {
+      for (let i = 0; i < node.photos.length; i++) {
+        photoCloudPaths.push(CloudStorageService.buildNodePhotoPath(node.travelId, node.id, node.photos[i]));
+      }
+    }
     const payload = JSON.stringify({
       localId: nodeId,
       travelId: node?.travelId ?? '',
-      deletedAt: Date.now()
+      deletedAt: Date.now(),
+      photoCloudPaths: photoCloudPaths
     })
     await this.enqueueSync('memory_node', nodeId, 'delete', payload);
   }

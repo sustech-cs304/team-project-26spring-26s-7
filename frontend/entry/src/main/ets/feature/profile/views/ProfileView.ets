@@ -11,6 +11,8 @@ export struct ProfileView {
   @State loginStatusText: string = '华为账号已登录'
   @State cloudStatusText: string = '云存储未连接'
   @State lastSyncTime: string = '未同步'
+  @State lastPushTime: string = '未上传'
+  @State lastPullTime: string = '未下载'
   @State pendingCount: number = 0
   @State isSyncing: boolean = false
   @State exifStrip: boolean = true
@@ -19,6 +21,26 @@ export struct ProfileView {
 
   aboutToAppear(): void {
     this.loadAuthStatus()
+  }
+
+  private formatSyncTime(timestamp: number): string {
+    if (timestamp <= 0) {
+      return '未同步'
+    }
+    const diff = Date.now() - timestamp
+    if (diff < 60 * 1000) {
+      return '刚刚'
+    }
+    const minutes = Math.floor(diff / (60 * 1000))
+    if (minutes < 60) {
+      return `${minutes} 分钟前`
+    }
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) {
+      return `${hours} 小时前`
+    }
+    const days = Math.floor(hours / 24)
+    return `${days} 天前`
   }
 
   private async loadAuthStatus(): Promise<void> {
@@ -30,7 +52,9 @@ export struct ProfileView {
 
       const syncStatus = await new RdbDataService().getSyncStatus()
       this.pendingCount = syncStatus.pendingCount
-      this.lastSyncTime = syncStatus.lastSyncTime > 0 ? '刚刚' : '未同步'
+      this.lastSyncTime = this.formatSyncTime(syncStatus.lastSyncTime)
+      this.lastPushTime = this.formatSyncTime(syncStatus.lastPushTime ?? 0)
+      this.lastPullTime = this.formatSyncTime(syncStatus.lastPullTime ?? 0)
       this.isSyncing = syncStatus.isSyncing
     } catch (_) {
       this.loginStatusText = '登录状态获取失败'
@@ -38,13 +62,24 @@ export struct ProfileView {
     }
   }
 
-  private async handleSync(): Promise<void> {
+  private async runPushSync(): Promise<void> {
     this.isSyncing = true
-    await SyncManager.triggerNow()
-    const syncStatus = await new RdbDataService().getSyncStatus()
-    this.pendingCount = syncStatus.pendingCount
-    this.lastSyncTime = syncStatus.pendingCount === 0 ? '刚刚' : '未完成'
-    this.isSyncing = syncStatus.isSyncing
+    try {
+      await SyncManager.pushAllLocalToCloud()
+      await this.loadAuthStatus()
+    } finally {
+      this.isSyncing = false
+    }
+  }
+
+  private async runPullSync(): Promise<void> {
+    this.isSyncing = true
+    try {
+      await SyncManager.pullAllCloudToLocal()
+      await this.loadAuthStatus()
+    } finally {
+      this.isSyncing = false
+    }
   }
 
   private handleLogout(): void {
@@ -208,6 +243,14 @@ export struct ProfileView {
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_SECONDARY)
                 .margin({ top: 4 })
+              Text(`最近上传：${this.lastPushTime}`)
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_SECONDARY)
+                .margin({ top: 4 })
+              Text(`最近下载：${this.lastPullTime}`)
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_SECONDARY)
+                .margin({ top: 4 })
               Text(`待同步：${this.pendingCount} 项`)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(this.pendingCount > 0 ? AppColors.PRIMARY : AppColors.TEXT_HINT)
@@ -216,12 +259,23 @@ export struct ProfileView {
             .alignItems(HorizontalAlign.Start)
             .layoutWeight(1)
 
-            Button(this.isSyncing ? '同步中...' : '立即同步')
+          Row() {
+            Button(this.isSyncing ? '上传中...' : '上传本地')
               .height(32)
               .fontSize(AppDimens.FONT_SM)
               .backgroundColor(AppColors.PRIMARY)
               .enabled(!this.isSyncing)
-              .onClick(() => this.handleSync())
+              .onClick(() => { void this.runPushSync() })
+
+            Button(this.isSyncing ? '下载中...' : '下载云端')
+              .height(32)
+              .fontSize(AppDimens.FONT_SM)
+              .backgroundColor(AppColors.SUCCESS)
+              .enabled(!this.isSyncing)
+              .margin({ left: 8 })
+              .onClick(() => { void this.runPullSync() })
+          }
+          .margin({ top: 12 })
           }
           .width('100%')
           .margin({ top: 12 })

@@ -130,6 +130,7 @@ export class MemoryNodeRepository {
     const photosIdx = resultSet.getColumnIndex('photos');
     const createdIdx = resultSet.getColumnIndex('created_at');
     const updatedIdx = resultSet.getColumnIndex('updated_at');
+    const nodeOrderIdx = resultSet.getColumnIndex(NODE_ORDER_COLUMN);
     const ownerUidIdx = resultSet.getColumnIndex('owner_uid');
     const cloudIdIdx = resultSet.getColumnIndex('cloud_id');
     const syncStatusIdx = resultSet.getColumnIndex('sync_status');
@@ -155,6 +156,7 @@ export class MemoryNodeRepository {
       tags: this.parseJsonArray(resultSet.getString(tagsIdx) ?? ''),
       createdAt: resultSet.getDouble(createdIdx),
       updatedAt: resultSet.getDouble(updatedIdx),
+      nodeOrder: nodeOrderIdx >= 0 ? resultSet.getDouble(nodeOrderIdx) : 0,
       ownerUid: ownerUidIdx >= 0 ? (resultSet.getString(ownerUidIdx) ?? '') : '',
       cloudId: cloudIdIdx >= 0 ? (resultSet.getString(cloudIdIdx) ?? '') : '',
       syncStatus: syncStatusIdx >= 0 ? (resultSet.getString(syncStatusIdx) ?? 'local_only') : 'local_only',
@@ -181,6 +183,31 @@ export class MemoryNodeRepository {
     } catch (err) {
       logger.warn(TAG, `Failed to calculate node order: ${JSON.stringify(err)}`);
       return 0;
+    } finally {
+      this.closeResultSet(resultSet);
+    }
+  }
+
+  async getAllNodesIncludingDeleted(): Promise<MemoryNode[]> {
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getRdbStore();
+      const ownerUid = await this.getOwnerUid();
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('owner_uid', ownerUid);
+      predicates.orderByAsc(NODE_ORDER_COLUMN);
+      resultSet = await store.query(predicates);
+      const nodes: MemoryNode[] = [];
+      if (resultSet.goToFirstRow()) {
+        do {
+          nodes.push(this.mapResultSetToNode(resultSet));
+        } while (resultSet.goToNextRow());
+      }
+      logger.info(TAG, `Loaded ${nodes.length} nodes including deleted`);
+      return nodes;
+    } catch (err) {
+      logger.error(TAG, `getAllNodesIncludingDeleted failed: ${JSON.stringify(err)}`);
+      return [];
     } finally {
       this.closeResultSet(resultSet);
     }
@@ -249,7 +276,7 @@ export class MemoryNodeRepository {
         'mood': node.mood ?? '',
         'tags': JSON.stringify(node.tags ?? []),
         'photos': JSON.stringify(node.photos ?? []),
-        'photo_manifest': '',
+        'photo_manifest': JSON.stringify(node.photos ?? []),
         node_order: nodeOrder,
         'created_at': now,
         'updated_at': now,
@@ -308,6 +335,7 @@ export class MemoryNodeRepository {
       }
       if (node.photos !== undefined) {
         valueBucket['photos'] = JSON.stringify(node.photos);
+        valueBucket['photo_manifest'] = JSON.stringify(node.photos);
       }
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'node id'));
@@ -345,6 +373,25 @@ export class MemoryNodeRepository {
     }
   }
 
+  async findLocalIdByCloudId(cloudId: string): Promise<string | null> {
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getRdbStore();
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('cloud_id', cloudId);
+      resultSet = await store.query(predicates);
+      if (!resultSet.goToFirstRow()) {
+        return null;
+      }
+      return resultSet.getDouble(resultSet.getColumnIndex('id')).toString();
+    } catch (err) {
+      logger.error(TAG, `findLocalIdByCloudId failed: ${JSON.stringify(err)}`);
+      return null;
+    } finally {
+      this.closeResultSet(resultSet);
+    }
+  }
+
   async updateSyncMetadata(id: string, cloudId: string, syncStatus: string, lastSyncedAt: number): Promise<void> {
     const store = await this.getRdbStore();
     const valueBucket: rdb.ValuesBucket = {
@@ -372,8 +419,8 @@ export class MemoryNodeRepository {
       mood: node.mood,
       tags: JSON.stringify(node.tags),
       photos: JSON.stringify(node.photos),
-      photo_manifest: node.photoManifest ?? '',
-      node_order: 0,
+      photo_manifest: node.photoManifest ?? JSON.stringify(node.photos),
+      node_order: node.nodeOrder ?? 0,
       created_at: node.createdAt,
       updated_at: node.updatedAt,
       owner_uid: node.ownerUid ?? '',

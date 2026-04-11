@@ -110,13 +110,113 @@ export class CloudStorageService {
   }
 
   static getUserScopedPath(path: string): string {
-    const normalizedPath = path.startsWith('/') ? path.substring(1) : path
+    const normalizedPath = CloudStorageService.normalizeCloudPath(path)
     return `users/${currentUid}/${normalizedPath}`
   }
 
   static buildNodePhotoPath(travelId: string, nodeId: string, localPath: string): string {
     const fileName = CloudStorageService.getFileName(localPath)
     return `travels/${travelId}/nodes/${nodeId}/${fileName}`
+  }
+
+  static buildTravelPhotoRoot(travelId: string): string {
+    return `travels/${travelId}/`
+  }
+
+  static buildNodePhotoDir(travelId: string, nodeId: string): string {
+    return `travels/${travelId}/nodes/${nodeId}/`
+  }
+
+  static async deleteDirectoryRecursively(cloudPath: string): Promise<void> {
+    const ready = await CloudStorageService.ensureReady()
+    if (!ready) {
+      throw new Error(CloudStorageService.getLastError() || '云存储未初始化')
+    }
+
+    try {
+      const directories = await CloudStorageService.listDirectories(cloudPath)
+      for (let i = 0; i < directories.length; i++) {
+        await CloudStorageService.deleteDirectoryRecursively(`${cloudPath}${directories[i]}`)
+      }
+
+      const files = await CloudStorageService.listFiles(cloudPath)
+      for (let i = 0; i < files.length; i++) {
+        await CloudStorageService.deleteFile(`${cloudPath}${files[i]}`)
+      }
+      hilog.info(DOMAIN, TAG, `Delete directory completed: ${CloudStorageService.getUserScopedPath(cloudPath)}`)
+    } catch (err) {
+      const error = err as BusinessError
+      hilog.warn(DOMAIN, TAG, `Skip deleting directory ${cloudPath}: ${error.message}`)
+    }
+  }
+
+  static async listDirectories(cloudPath: string): Promise<string[]> {
+    const ready = await CloudStorageService.ensureReady()
+    if (!ready) {
+      throw new Error(CloudStorageService.getLastError() || '云存储未初始化')
+    }
+
+    const fullCloudPath = CloudStorageService.getUserScopedPath(cloudPath)
+    const result = await CloudStorageService.getBucket().list(fullCloudPath)
+    const directories: string[] = []
+    for (let i = 0; i < result.directories.length; i++) {
+      directories.push(CloudStorageService.toRelativeListEntry(fullCloudPath, result.directories[i]))
+    }
+    return directories
+  }
+
+  static async listFiles(cloudPath: string): Promise<string[]> {
+    const ready = await CloudStorageService.ensureReady()
+    if (!ready) {
+      throw new Error(CloudStorageService.getLastError() || '云存储未初始化')
+    }
+
+    const fullCloudPath = CloudStorageService.getUserScopedPath(cloudPath)
+    const result = await CloudStorageService.getBucket().list(fullCloudPath)
+    const files: string[] = []
+    for (let i = 0; i < result.files.length; i++) {
+      files.push(CloudStorageService.toRelativeListEntry(fullCloudPath, result.files[i]))
+    }
+    return files
+  }
+
+  static async downloadFile(cloudPath: string, localRelativePath: string): Promise<void> {
+    const ready = await CloudStorageService.ensureReady()
+    if (!ready) {
+      throw new Error(CloudStorageService.getLastError() || '云存储未初始化')
+    }
+    if (appContext === null) {
+      throw new Error('应用上下文未初始化')
+    }
+
+    const fullCloudPath = CloudStorageService.getUserScopedPath(cloudPath)
+    await CloudStorageService.ensureLocalParentDir(appContext, localRelativePath)
+
+    await new Promise<void>((resolve, reject) => {
+      CloudStorageService.getBucket().downloadFile(appContext, {
+        cloudPath: fullCloudPath,
+        localPath: localRelativePath,
+        overwrite: true,
+        mode: request.agent.Mode.BACKGROUND
+      }).then((task: request.agent.Task) => {
+        task.on('completed', () => {
+          hilog.info(DOMAIN, TAG, `Download completed: ${fullCloudPath}`)
+          resolve()
+        })
+        task.on('failed', (progress: Object) => {
+          reject(new Error(`下载失败: ${JSON.stringify(progress)}`))
+        })
+        task.start((err: BusinessError) => {
+          if (err) {
+            reject(new Error(`启动下载失败: ${err.message}`))
+            return
+          }
+          hilog.info(DOMAIN, TAG, `Download task started: ${fullCloudPath}`)
+        })
+      }).catch((err: BusinessError) => {
+        reject(new Error(`下载异常: ${err.message}`))
+      })
+    })
   }
 
   static async uploadNodePhoto(travelId: string, nodeId: string, localPath: string): Promise<void> {
@@ -189,8 +289,50 @@ export class CloudStorageService {
     }
   }
 
+  static normalizeCachePath(localRelativePath: string): string {
+    if (appContext === null) {
+      return localRelativePath
+    }
+    return `${appContext.cacheDir}/${localRelativePath}`
+  }
+
+  private static toRelativeListEntry(baseCloudPath: string, entry: string): string {
+    let normalizedEntry = CloudStorageService.normalizeCloudPath(entry)
+    const normalizedBase = CloudStorageService.normalizeCloudPath(baseCloudPath)
+    if (normalizedEntry.startsWith(normalizedBase)) {
+      normalizedEntry = normalizedEntry.substring(normalizedBase.length)
+    }
+    return normalizedEntry.startsWith('/') ? normalizedEntry.substring(1) : normalizedEntry
+  }
+
+  private static normalizeCloudPath(path: string): string {
+    let normalizedPath = path.startsWith('/') ? path.substring(1) : path
+    const userPrefix = `users/${currentUid}/`
+    if (normalizedPath.startsWith(userPrefix)) {
+      normalizedPath = normalizedPath.substring(userPrefix.length)
+    }
+    return normalizedPath
+  }
+
   private static normalizeLocalPath(localPath: string): string {
     return localPath.startsWith('file://') ? localPath.substring(7) : localPath
+  }
+
+  private static ensureLocalParentDir(context: common.UIAbilityContext, localRelativePath: string): void {
+    const lastSlashIndex = localRelativePath.lastIndexOf('/')
+    if (lastSlashIndex < 0) {
+      return
+    }
+
+    const parentRelativePath = localRelativePath.substring(0, lastSlashIndex)
+    if (parentRelativePath.length === 0) {
+      return
+    }
+
+    const parentFullPath = `${context.cacheDir}/${parentRelativePath}`
+    try {
+      fs.mkdirSync(parentFullPath, true)
+    } catch (_) {}
   }
 
   private static prepareUploadSource(context: common.UIAbilityContext, localPath: string): string {

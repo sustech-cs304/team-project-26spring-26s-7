@@ -135,6 +135,7 @@ export interface MemoryNode {
   tags: string[]
   createdAt: number
   updatedAt: number
+  nodeOrder?: number
   ownerUid?: string
   cloudId?: string
   syncStatus?: string
@@ -147,6 +148,8 @@ export interface MemoryNode {
 /** 同步状态 */
 export interface SyncStatus {
   lastSyncTime: number
+  lastPushTime?: number
+  lastPullTime?: number
   pendingCount: number
   isSyncing: boolean
 }

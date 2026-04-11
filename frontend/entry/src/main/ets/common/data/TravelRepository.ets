@@ -145,6 +145,31 @@ export class TravelRepository {
     }
   }
 
+  async getAllTravelsIncludingDeleted(): Promise<Trip[]> {
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getRdbStore();
+      const ownerUid = await this.getOwnerUid();
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('owner_uid', ownerUid);
+      predicates.orderByDesc('updated_at');
+      resultSet = await store.query(predicates);
+      const trips: Trip[] = [];
+      if (resultSet.goToFirstRow()) {
+        do {
+          trips.push(this.mapResultSetToTrip(resultSet));
+        } while (resultSet.goToNextRow());
+      }
+      logger.info(TAG, `Loaded ${trips.length} travels including deleted`);
+      return trips;
+    } catch (err) {
+      logger.error(TAG, `getAllTravelsIncludingDeleted failed: ${JSON.stringify(err)}`);
+      return [];
+    } finally {
+      this.closeResultSet(resultSet);
+    }
+  }
+
   async getTravelById(id: string): Promise<Trip | undefined> {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
@@ -269,6 +294,25 @@ export class TravelRepository {
     } catch (err) {
       logger.error(TAG, `softDeleteTravel failed: ${JSON.stringify(err)}`);
       return false;
+    }
+  }
+
+  async findLocalIdByCloudId(cloudId: string): Promise<string | null> {
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getRdbStore();
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
+      predicates.equalTo('cloud_id', cloudId);
+      resultSet = await store.query(predicates);
+      if (!resultSet.goToFirstRow()) {
+        return null;
+      }
+      return resultSet.getDouble(resultSet.getColumnIndex('id')).toString();
+    } catch (err) {
+      logger.error(TAG, `findLocalIdByCloudId failed: ${JSON.stringify(err)}`);
+      return null;
+    } finally {
+      this.closeResultSet(resultSet);
     }
   }
 
