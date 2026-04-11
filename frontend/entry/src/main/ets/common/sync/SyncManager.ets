@@ -1,3 +1,4 @@
+import { hilog } from '@kit.PerformanceAnalysisKit'
 import { logger } from '../utils/Logger'
 import { RdbHelper } from '../data/RdbHelper'
 import { TravelRepository } from '../data/TravelRepository'
@@ -8,6 +9,7 @@ import type { SyncQueueItem, Trip, MemoryNode } from '../service/types'
 import { PhotoPickerUtil } from '../utils/PhotoPickerUtil'
 
 const TAG = 'SyncManager'
+const DOMAIN = 0x0000
 
 export class SyncManager {
   private static syncing: boolean = false
@@ -252,6 +254,7 @@ export class SyncManager {
     const localNodes = await nodeRepo.getAllNodesIncludingDeleted()
     const cloudTravels = await CloudSyncService.fetchTravels(user.uid)
     const cloudNodes = await CloudSyncService.fetchMemoryNodes(user.uid)
+    hilog.info(DOMAIN, TAG, `replaceLocalWithCloud fetched travels=${cloudTravels.length}, nodes=${cloudNodes.length}`)
 
     const activeCloudTravelIds = new Set<string>()
     const activeCloudNodeIds = new Set<string>()
@@ -288,6 +291,11 @@ export class SyncManager {
         continue
       }
       const localTravelId = await travelRepo.findLocalIdByCloudId(travelCloudId)
+      hilog.info(
+        DOMAIN,
+        TAG,
+        `download node cloudId=${node.cloudId ?? ''}, travelCloudId=${travelCloudId}, localTravelId=${localTravelId ?? ''}, photoManifest=${node.photoManifest ?? ''}`
+      )
       if (!localTravelId || !node.cloudId) {
         continue
       }
@@ -311,6 +319,35 @@ export class SyncManager {
         await nodeRepo.deleteNode(localNode.id)
         await nodeRepo.updateSyncMetadata(localNode.id, cloudId, 'synced', Date.now())
       }
+    }
+
+    await SyncManager.bumpTravelDataVersion()
+  }
+
+  private static async bumpTravelDataVersion(): Promise<void> {
+    const version = (AppStorage.get('travelDataVersion') as number) || 0
+    AppStorage.setOrCreate('travelDataVersion', version + 1)
+  }
+
+  private static parsePhotoManifest(photoManifest: string): string[] {
+    if (!photoManifest || photoManifest.length === 0) {
+      return []
+    }
+    try {
+      const parsed = JSON.parse(photoManifest) as Object
+      if (!Array.isArray(parsed)) {
+        return []
+      }
+      const result: string[] = []
+      for (let i = 0; i < parsed.length; i++) {
+        const item = parsed[i] as string
+        if (typeof item === 'string' && item.length > 0) {
+          result.push(item)
+        }
+      }
+      return result
+    } catch (_) {
+      return []
     }
   }
 
@@ -343,17 +380,19 @@ export class SyncManager {
       return
     }
     const cloudDir = CloudStorageService.buildNodePhotoDir(node.travelId, node.id)
-    const files = await CloudStorageService.listFiles(cloudDir)
+    const manifestPaths = SyncManager.parsePhotoManifest(node.photoManifest ?? '')
+    const files: string[] = manifestPaths.length > 0 ? manifestPaths : await CloudStorageService.listFiles(cloudDir)
+    hilog.info(DOMAIN, TAG, `syncNodePhotosForDownload cloudDir=${cloudDir}, files=${files.length}`)
     const downloadedPhotos: string[] = []
     for (let i = 0; i < files.length; i++) {
-      const fileName: string = files[i]
-      const cloudPath = `${cloudDir}${fileName}`
-      const localRelativePath = `downloaded/${node.travelId}/${node.id}/${fileName}`
-      await CloudStorageService.downloadFile(cloudPath, localRelativePath)
-      downloadedPhotos.push(`file://${CloudStorageService.normalizeCachePath(localRelativePath)}`)
+      const manifestEntry: string = files[i]
+      const cloudPath = manifestEntry.includes('/') ? manifestEntry : `${cloudDir}${manifestEntry}`
+      const localPhotoPath = await CloudStorageService.downloadNodePhotoToSandbox(cloudPath)
+      downloadedPhotos.push(localPhotoPath)
     }
     node.photos = downloadedPhotos
     node.photoManifest = JSON.stringify(downloadedPhotos)
+    hilog.info(DOMAIN, TAG, `syncNodePhotosForDownload wrote photos=${JSON.stringify(downloadedPhotos)}`)
     await new MemoryNodeRepository().upsertFromCloud(node)
   }
 }

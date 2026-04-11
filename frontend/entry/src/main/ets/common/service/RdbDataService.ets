@@ -62,6 +62,14 @@ export class RdbDataService implements IDataService {
     return status;
   }
 
+  private buildPhotoManifest(travelId: string, nodeId: string, photos: string[]): string {
+    const cloudPaths: string[] = [];
+    for (let i = 0; i < photos.length; i++) {
+      cloudPaths.push(CloudStorageService.buildNodePhotoPath(travelId, nodeId, photos[i]));
+    }
+    return JSON.stringify(cloudPaths);
+  }
+
   private syncNodePhotosToCloud(travelId: string, nodeId: string, photos: string[]): void {
     if (photos.length === 0) {
       return;
@@ -168,7 +176,13 @@ export class RdbDataService implements IDataService {
           nodeIds: nodeIds,
           totalDistance: this.calculateTotalDistance(nodes),
           createdAt: trips[i].createdAt,
-          updatedAt: trips[i].updatedAt
+          updatedAt: trips[i].updatedAt,
+          ownerUid: trips[i].ownerUid,
+          cloudId: trips[i].cloudId,
+          syncStatus: trips[i].syncStatus,
+          deletedAt: trips[i].deletedAt,
+          lastSyncedAt: trips[i].lastSyncedAt,
+          version: trips[i].version
         };
       }
       return trips;
@@ -199,7 +213,13 @@ export class RdbDataService implements IDataService {
         nodeIds: nodeIds,
         totalDistance: this.calculateTotalDistance(nodes),
         createdAt: trip.createdAt,
-        updatedAt: trip.updatedAt
+        updatedAt: trip.updatedAt,
+        ownerUid: trip.ownerUid,
+        cloudId: trip.cloudId,
+        syncStatus: trip.syncStatus,
+        deletedAt: trip.deletedAt,
+        lastSyncedAt: trip.lastSyncedAt,
+        version: trip.version
       };
       return result;
     } catch (err) {
@@ -330,7 +350,7 @@ export class RdbDataService implements IDataService {
       updatedAt: created.updatedAt,
       deletedAt: created.deletedAt ?? 0,
       version: created.version ?? 1,
-      photoManifest: created.photoManifest ?? ''
+      photoManifest: this.buildPhotoManifest(created.travelId, created.id, created.photos)
     })
     await this.enqueueSync('memory_node', created.id, 'upsert', payload);
     this.syncNodePhotosToCloud(created.travelId, created.id, created.photos);
@@ -415,7 +435,7 @@ export class RdbDataService implements IDataService {
       updatedAt: updated.updatedAt,
       deletedAt: updated.deletedAt ?? 0,
       version: updated.version ?? 1,
-      photoManifest: updated.photoManifest ?? ''
+      photoManifest: this.buildPhotoManifest(updated.travelId, updated.id, updated.photos)
     })
     await this.enqueueSync('memory_node', updated.id, 'upsert', payload);
 

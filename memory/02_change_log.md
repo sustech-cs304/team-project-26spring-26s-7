@@ -11,7 +11,9 @@
 
 ---
 
-### 2026-04-09 (华为云存储鉴权链路修正)
+### 2026-04-12 (登录与云同步架构文档更新)
+
+- [2026-04-12-02-01-53] - UPDATE - frontend/docs/sync-architecture.md - 重写登录与云同步架构文档，补充自动增量同步、手动全量纠偏、云数据库/云存储职责、photoManifest 规则与测试清单 - uncommitted
 
 - [2026-04-09-01-52-32] - UPDATE - frontend/entry/src/main/ets/common/auth/CloudStorageService.ets - 对齐 sample：云存储初始化前先 signOut，再用 hwid 重新 signIn 并记录会话重建日志，修复上传 403 的候选根因 - uncommitted
 - [2026-04-09-01-52-32] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 15 s 673 ms - uncommitted

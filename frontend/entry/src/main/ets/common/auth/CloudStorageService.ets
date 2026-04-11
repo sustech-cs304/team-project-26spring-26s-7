@@ -4,6 +4,7 @@ import { cloudCommon, cloudStorage } from '@kit.CloudFoundationKit'
 import { request, BusinessError } from '@kit.BasicServicesKit'
 import { hilog } from '@kit.PerformanceAnalysisKit'
 import auth from '@hw-agconnect/auth'
+import { PhotoPickerUtil } from '../utils/PhotoPickerUtil'
 
 const DOMAIN = 0x0000
 const TAG = 'CloudStorageService'
@@ -217,6 +218,31 @@ export class CloudStorageService {
         reject(new Error(`下载异常: ${err.message}`))
       })
     })
+  }
+
+  static async downloadNodePhotoToSandbox(cloudPath: string): Promise<string> {
+    if (appContext === null) {
+      throw new Error('应用上下文未初始化')
+    }
+    const normalizedCloudPath = CloudStorageService.normalizeCloudPath(cloudPath)
+    const fileName = normalizedCloudPath.substring(normalizedCloudPath.lastIndexOf('/') + 1)
+    const cacheRelativePath = `downloaded/${fileName}`
+    await CloudStorageService.downloadFile(normalizedCloudPath, cacheRelativePath)
+
+    const cacheFullPath = CloudStorageService.normalizeCachePath(cacheRelativePath)
+    const sandboxDir = PhotoPickerUtil.getSandboxPhotoDir(appContext)
+    const targetPath = `${sandboxDir}/${fileName}`
+    try {
+      fs.mkdirSync(sandboxDir, true)
+    } catch (_) {}
+
+    const sourceFile = fs.openSync(cacheFullPath, fs.OpenMode.READ_ONLY)
+    const targetFile = fs.openSync(targetPath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC)
+    fs.copyFileSync(sourceFile.fd, targetFile.fd)
+    fs.closeSync(sourceFile)
+    fs.closeSync(targetFile)
+    hilog.info(DOMAIN, TAG, `Copied downloaded photo to sandbox: ${targetPath}`)
+    return `file://${targetPath}`
   }
 
   static async uploadNodePhoto(travelId: string, nodeId: string, localPath: string): Promise<void> {

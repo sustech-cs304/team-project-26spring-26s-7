@@ -1,6 +1,10 @@
 import { router, promptAction } from '@kit.ArkUI'
+import { hilog } from '@kit.PerformanceAnalysisKit'
 import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
+
+const DOMAIN = 0x0000
+const TAG = 'NodeDetailPage'
 
 /**
  * P04 节点详情页
@@ -64,6 +68,7 @@ export struct NodeDetailPage {
       this.tags = node.tags
       this.content = node.content
       this.photos = node.photos
+      hilog.info(DOMAIN, TAG, `loadNodeDetail photos=${JSON.stringify(node.photos)}`)
       this.tripId = node.travelId
 
       const trip = await this.dataService.getTravelById(node.travelId)
