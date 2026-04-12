@@ -427,6 +427,12 @@ export class RdbHelper {
     await store.delete(predicates);
   }
 
+  async clearSyncQueue(): Promise<void> {
+    const store = await this.getStore();
+    const predicates = new rdb.RdbPredicates('sync_queue');
+    await store.delete(predicates);
+  }
+
   isInitialized(): boolean {
     return this.initialized;
   }

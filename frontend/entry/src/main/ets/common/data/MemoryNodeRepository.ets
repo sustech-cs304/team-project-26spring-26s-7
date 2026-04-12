@@ -434,10 +434,18 @@ export class MemoryNodeRepository {
 
     try {
       if (resultSet.goToFirstRow()) {
+        logger.info(
+          TAG,
+          `[debug] upsertFromCloud update cloudId=${node.cloudId ?? ''}, travelId=${node.travelId}, deletedAt=${node.deletedAt ?? 0}, photoCount=${node.photos.length}, photoManifest=${node.photoManifest ?? ''}`
+        );
         const updatePredicates = new rdb.RdbPredicates(TABLE_NAME);
         updatePredicates.equalTo('cloud_id', node.cloudId ?? '');
         await store.update(valueBucket, updatePredicates);
       } else {
+        logger.info(
+          TAG,
+          `[debug] upsertFromCloud insert cloudId=${node.cloudId ?? ''}, travelId=${node.travelId}, deletedAt=${node.deletedAt ?? 0}, photoCount=${node.photos.length}, photoManifest=${node.photoManifest ?? ''}`
+        );
         await store.insert(TABLE_NAME, valueBucket);
       }
     } finally {

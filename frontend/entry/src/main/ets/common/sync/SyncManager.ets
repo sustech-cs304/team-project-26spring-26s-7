@@ -38,6 +38,7 @@ export class SyncManager {
 
     SyncManager.syncing = true
     try {
+      await RdbHelper.getInstance().clearSyncQueue()
       await SyncManager.replaceLocalWithCloud()
       await RdbHelper.getInstance().setSyncState('last_pull_at', Date.now())
     } finally {
@@ -66,6 +67,7 @@ export class SyncManager {
 
     SyncManager.syncing = true
     try {
+      await RdbHelper.getInstance().clearSyncQueue()
       await SyncManager.replaceLocalWithCloud()
       await RdbHelper.getInstance().setSyncState('last_pull_at', Date.now())
     } finally {
@@ -288,20 +290,31 @@ export class SyncManager {
       const node = cloudNodes[i]
       const travelCloudId = node.travelId
       if (!travelCloudId) {
+        hilog.info(DOMAIN, TAG, `[debug] skip cloud node without travelCloudId, cloudId=${node.cloudId ?? ''}`)
         continue
       }
       const localTravelId = await travelRepo.findLocalIdByCloudId(travelCloudId)
       hilog.info(
         DOMAIN,
         TAG,
-        `download node cloudId=${node.cloudId ?? ''}, travelCloudId=${travelCloudId}, localTravelId=${localTravelId ?? ''}, photoManifest=${node.photoManifest ?? ''}`
+        `[debug] download node start cloudId=${node.cloudId ?? ''}, travelCloudId=${travelCloudId}, localTravelId=${localTravelId ?? ''}, deletedAt=${node.deletedAt ?? 0}, photoManifest=${node.photoManifest ?? ''}`
       )
       if (!localTravelId || !node.cloudId) {
+        hilog.info(
+          DOMAIN,
+          TAG,
+          `[debug] skip cloud node due to missing mapping, cloudId=${node.cloudId ?? ''}, localTravelId=${localTravelId ?? ''}`
+        )
         continue
       }
       node.travelId = localTravelId
       if ((node.deletedAt ?? 0) > 0) {
         const localNodeId = node.cloudId ? await nodeRepo.findLocalIdByCloudId(node.cloudId) : null
+        hilog.info(
+          DOMAIN,
+          TAG,
+          `[debug] cloud node marked deleted cloudId=${node.cloudId}, localNodeId=${localNodeId ?? ''}`
+        )
         if (localNodeId) {
           await nodeRepo.deleteNode(localNodeId)
         }
@@ -309,6 +322,10 @@ export class SyncManager {
       }
       activeCloudNodeIds.add(node.cloudId)
       await nodeRepo.upsertFromCloud(node)
+      const localNodeId = await nodeRepo.findLocalIdByCloudId(node.cloudId)
+      if (localNodeId) {
+        node.id = localNodeId
+      }
       await SyncManager.syncNodePhotosForDownload(node)
     }
 
@@ -377,22 +394,45 @@ export class SyncManager {
 
   private static async syncNodePhotosForDownload(node: MemoryNode): Promise<void> {
     if ((node.deletedAt ?? 0) > 0) {
+      hilog.info(DOMAIN, TAG, `[debug] skip photo download for deleted node cloudId=${node.cloudId ?? ''}`)
       return
     }
-    const cloudDir = CloudStorageService.buildNodePhotoDir(node.travelId, node.id)
     const manifestPaths = SyncManager.parsePhotoManifest(node.photoManifest ?? '')
+    const cloudDir = CloudStorageService.buildNodePhotoDir(node.travelId, node.id)
+    if (manifestPaths.length <= 0) {
+      hilog.info(
+        DOMAIN,
+        TAG,
+        `[debug] empty manifest fallback listFiles, cloudId=${node.cloudId ?? ''}, nodeId=${node.id}, cloudDir=${cloudDir}, rawManifest=${node.photoManifest ?? ''}`
+      )
+    }
     const files: string[] = manifestPaths.length > 0 ? manifestPaths : await CloudStorageService.listFiles(cloudDir)
-    hilog.info(DOMAIN, TAG, `syncNodePhotosForDownload cloudDir=${cloudDir}, files=${files.length}`)
+    hilog.info(
+      DOMAIN,
+      TAG,
+      `[debug] syncNodePhotosForDownload cloudId=${node.cloudId ?? ''}, nodeId=${node.id}, cloudDir=${cloudDir}, manifestCount=${manifestPaths.length}, fileCount=${files.length}, files=${JSON.stringify(files)}`
+    )
     const downloadedPhotos: string[] = []
     for (let i = 0; i < files.length; i++) {
       const manifestEntry: string = files[i]
       const cloudPath = manifestEntry.includes('/') ? manifestEntry : `${cloudDir}${manifestEntry}`
+      hilog.info(
+        DOMAIN,
+        TAG,
+        `[debug] download node photo cloudId=${node.cloudId ?? ''}, manifestEntry=${manifestEntry}, resolvedCloudPath=${cloudPath}`
+      )
       const localPhotoPath = await CloudStorageService.downloadNodePhotoToSandbox(cloudPath)
       downloadedPhotos.push(localPhotoPath)
     }
     node.photos = downloadedPhotos
-    node.photoManifest = JSON.stringify(downloadedPhotos)
-    hilog.info(DOMAIN, TAG, `syncNodePhotosForDownload wrote photos=${JSON.stringify(downloadedPhotos)}`)
+    if (manifestPaths.length > 0) {
+      node.photoManifest = JSON.stringify(manifestPaths)
+    }
+    hilog.info(
+      DOMAIN,
+      TAG,
+      `[debug] syncNodePhotosForDownload wrote photos cloudId=${node.cloudId ?? ''}, photos=${JSON.stringify(downloadedPhotos)}, photoManifest=${node.photoManifest ?? ''}`
+    )
     await new MemoryNodeRepository().upsertFromCloud(node)
   }
 }
