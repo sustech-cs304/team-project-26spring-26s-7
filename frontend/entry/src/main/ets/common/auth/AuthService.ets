@@ -12,6 +12,7 @@ const TAG = 'AuthService';
 export interface AuthUser {
   uid: string;
   displayName: string;
+  avatarUrl?: string;
   unionId?: string;
 }
 
@@ -51,7 +52,8 @@ export class AuthService {
       }
       currentUser = {
         uid: user.getUid(),
-        displayName: user.getDisplayName() ?? 'TravelPin 用户'
+        displayName: user.getDisplayName() ?? 'TravelPin 用户',
+        avatarUrl: user.getPhotoUrl() ?? ''
       };
       return currentUser;
     } catch (err) {
@@ -114,9 +116,32 @@ export class AuthService {
     });
 
     const agcUser = signInResult.getUser();
+    let displayName = agcUser.getDisplayName() ?? 'TravelPin 用户';
+    let avatarUrl = agcUser.getPhotoUrl() ?? '';
+
+    try {
+      const profileRequest = new authentication.HuaweiIDProvider().createAuthorizationWithHuaweiIDRequest();
+      profileRequest.scopes = ['profile'];
+      profileRequest.forceAuthorization = true;
+      profileRequest.state = util.generateRandomUUID();
+      const profileResponse = await controller.executeRequest(profileRequest) as authentication.AuthorizationWithHuaweiIDResponse;
+      if (profileResponse.state && profileResponse.state !== profileRequest.state) {
+        throw new Error('资料授权校验失败');
+      }
+      const profileCredential = profileResponse.data;
+      if (profileCredential) {
+        displayName = profileCredential.nickName ?? displayName;
+        avatarUrl = profileCredential.avatarUri ?? avatarUrl;
+      }
+    } catch (err) {
+      const error = err as BusinessError;
+      hilog.warn(DOMAIN, TAG, `Profile authorization skipped: ${error.message}`);
+    }
+
     currentUser = {
       uid: agcUser.getUid(),
-      displayName: agcUser.getDisplayName() ?? 'TravelPin 用户',
+      displayName: displayName,
+      avatarUrl: avatarUrl,
       unionId: credential.unionID
     };
 

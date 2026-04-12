@@ -8,6 +8,8 @@ import { AppColors, AppDimens, AuthService, RouterUrls, RdbDataService, SyncMana
 @Component
 export struct ProfileView {
   @State displayName: string = 'TravelPin 用户'
+  @State avatarUrl: string = ''
+  @State avatarLoadFailed: boolean = false
   @State loginStatusText: string = '华为账号已登录'
   @State cloudStatusText: string = '云存储未连接'
   @State lastSyncTime: string = '未同步'
@@ -48,6 +50,8 @@ export struct ProfileView {
     try {
       const status = await AuthService.getAuthStatus()
       this.displayName = status.user?.displayName ?? 'TravelPin 用户'
+      this.avatarUrl = status.user?.avatarUrl ?? ''
+      this.avatarLoadFailed = false
       this.loginStatusText = status.isLoggedIn ? '华为账号已登录' : '未登录'
       this.cloudStatusText = status.cloudStatusText
 
@@ -184,8 +188,18 @@ export struct ProfileView {
         // 用户信息卡片
         Row() {
           Column() {
-            Text('👤')
-              .fontSize(32)
+            if (this.avatarUrl.length > 0 && !this.avatarLoadFailed) {
+              Image(this.avatarUrl)
+                .width(56)
+                .height(56)
+                .borderRadius(28)
+                .onError(() => {
+                  this.avatarLoadFailed = true
+                })
+            } else {
+              Text('👤')
+                .fontSize(32)
+            }
           }
           .width(56)
           .height(56)
