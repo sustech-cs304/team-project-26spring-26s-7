@@ -1,4 +1,4 @@
-# TravelPin 登录与云同步架构说明
+# TravelPin 登录、账号资料授权与云同步架构说明
 
 > 内部设计文档 | 2026-04-12
 >
@@ -19,6 +19,7 @@
 
 - **本地 RDB 作为离线真相源**
 - **华为账号登录 + AGC 鉴权**
+- **登录后追加 profile 资料授权（昵称 / 头像）**
 - **云存储保存图片文件**
 - **云数据库保存 travel / node 元数据**
 - **sync_queue 作为自动增量同步队列**
@@ -89,18 +90,60 @@
 3. `AuthService` 统一暴露当前用户：
    - `uid`
    - `displayName`
+   - `avatarUrl`
    - `unionId`（如果可取到）
 4. `CloudStorageService` / `CloudSyncService` 使用 AGC `authProvider` 初始化云能力。
+5. 当前登录实现分两段：
+   - 先通过 `createLoginWithHuaweiIDRequest()` 建立登录态与 AGC 会话
+   - 再通过 `createAuthorizationWithHuaweiIDRequest()` + `scopes=['profile']` 请求昵称/头像资料授权
 
 ### 3.3 当前登录展示
 
 当前“我的”页展示的是：
 
-- 当前 AGC 用户的 `displayName`
+- 当前用户资料：
+  - `displayName`
+  - `avatarUrl`（如果授权成功且可加载）
 - 云存储连接状态
 - 同步状态（最近上传 / 最近下载 / 待同步数量）
 
-### 3.4 多账号隔离
+头像显示策略：
+
+- 优先显示华为账号资料授权返回的 `avatarUrl`
+- 若未授权、无头像或远程加载失败，则回退为本地占位头像 `👤`
+
+### 3.5 头像昵称授权说明
+
+当前实现已经验证：
+
+- 仅使用 `createLoginWithHuaweiIDRequest()` 时，登录响应通常只包含：
+  - `authorizationCode`
+  - `idToken`
+  - `openID`
+  - `unionID`
+- 这条链路**不能稳定拿到**华为账号昵称与头像
+- `@hw-agconnect/auth` 当前用户对象中的：
+  - `getDisplayName()`
+  - `getPhotoUrl()`
+  在本项目当前登录模式下也可能为空或回落默认值
+
+因此当前采用的正确做法是：
+
+1. 先执行登录请求，建立 AGC 会话
+2. 再执行 `createAuthorizationWithHuaweiIDRequest()`
+3. 设置：
+   - `scopes = ['profile']`
+   - `forceAuthorization = true`
+4. 从资料授权响应中提取：
+   - `nickName`
+   - `avatarUri`
+5. 回写到 `AuthService.currentUser`，供 Profile 页面显示
+
+注意：
+
+- 资料授权是否每次都弹出，最终由系统授权状态决定，客户端即使设置 `forceAuthorization = true`，也不一定每次都重新弹窗
+- 对个人开发者而言，**获取昵称与头像资料授权是可行的**，不属于企业专属能力
+
 
 本地与云端隔离都依赖当前登录用户 `uid`：
 
@@ -357,6 +400,26 @@ RdbDataService 先写本地 RDB
 - 编辑 `node`：自动上传元数据 + 补传新增图片 + 删除移除图片
 - 删除 `node`：自动删除云数据库记录，并删除对应云存储图片
 
+#### 当前自动同步实现细节
+
+1. `RdbDataService.enqueueSync()` 在本地写入成功后会立即：
+   - 先按 `entity_type + entity_id` 清掉旧队列项
+   - 再插入新的 `sync_queue` 任务
+   - 最后触发 `SyncManager.pushLocalNow()`
+2. 这意味着自动增量同步当前是“**同一实体仅保留最后一条待上传任务**”的模型
+3. `pushLocalNow()` 负责顺序消费 `sync_queue`，并根据任务类型调用：
+   - `CloudSyncService.upsertTravel()` / `hardDeleteTravelByCloudId()`
+   - `CloudSyncService.upsertMemoryNode()` / `hardDeleteMemoryNodeByCloudId()`
+4. `memory_node delete` 分支除了删除云数据库记录，还会：
+   - 删除 `photoCloudPaths` 中的明确对象
+   - 再按 `travels/{travelId}/nodes/{nodeId}/` 目录递归清理残留图片
+
+#### 当前已知约束
+
+- `sync_queue` 的去重粒度是 `entity_type + entity_id`，不是操作级别
+- 因此同一实体离线期间若发生多次不同操作，最终只保留最后一条任务
+- 该行为目前是既定实现，不是文档层面的目标能力，需要在后续冲突策略设计中继续评估
+
 ---
 
 ## 8. 手动全量同步逻辑
@@ -392,10 +455,17 @@ RdbDataService 先写本地 RDB
 
 行为：
 
+- 执行前先清空本地 `sync_queue`
 - 云端 `travel/node` 回写本地 RDB
 - 本地多余记录删除
 - node 图片优先按 `photoManifest` 下载到本地 sandbox
 - 下载完成后，`photos` 写本地路径，供 UI 直接显示
+
+为什么要先清空 `sync_queue`：
+
+- 用户断网时本地删除/编辑操作会先进入队列
+- 如果随后选择“下载云端”，产品语义已经变成“云端覆盖本地”
+- 这时保留旧队列会导致下载成功后，旧 delete / upsert 又被自动同步回云端，造成刚恢复的数据再次丢失
 
 ---
 
@@ -421,6 +491,7 @@ RdbDataService 先写本地 RDB
 
 - `CloudSyncService.fetchMemoryNodes()`
 - `SyncManager.replaceLocalWithCloud()`
+- 先通过 `cloudId` 查回本地 `node.id`
 - `SyncManager.syncNodePhotosForDownload()`
 - `CloudStorageService.downloadNodePhotoToSandbox()`
 - `MemoryNodeRepository.upsertFromCloud()`
@@ -428,10 +499,17 @@ RdbDataService 先写本地 RDB
 当前正确行为：
 
 1. 读取 `photoManifest`
-2. 按 manifest 中的云端对象路径下载图片
-3. 先落 cache，再复制到 `filesDir/photos`
-4. 最终把 `file://{filesDir}/photos/...` 写回 `photos`
-5. `NodeDetailPage` / `NodeEditPage` / `PhotoSelector` 继续直接读 `photos`
+2. 如果 `photoManifest` 有值，优先按 manifest 中的**完整云端对象路径**下载图片
+3. 仅当 manifest 不可用时，才回退到 `travels/{travelId}/nodes/{nodeId}/` 目录枚举
+4. 下载时先落 cache，再复制到 `filesDir/photos`
+5. 最终把 `file://{filesDir}/photos/...` 写回 `photos`
+6. `photoManifest` 保持为云端路径数组，不再改写成本地 `file://...` 路径
+7. `NodeDetailPage` / `NodeEditPage` / `PhotoSelector` 继续直接读 `photos`
+
+这条链路当前特别依赖两个约定：
+
+- `node.id` 必须在下载图片前先从 `cloudId` 映射回真实本地 id，避免拼出错误的 `nodes/0/` 目录
+- `photoManifest` 必须始终代表云端路径，而不能混入本地路径
 
 ---
 
@@ -460,7 +538,9 @@ RdbDataService 先写本地 RDB
 
 ### 已通过的关键场景
 
-- 华为账号登录成功，Profile 可显示昵称
+- 华为账号登录成功
+- Profile 可显示昵称（资料授权成功时）
+- Profile 可显示头像（资料授权成功且图片可加载时）
 - 云存储上传成功
 - 新建 `travel/node` 自动同步到云端
 - 删除 `node/travel` 自动清理云数据库
@@ -482,6 +562,11 @@ RdbDataService 先写本地 RDB
 5. **download 云端后 node 图片消失**
    - 已修 `photoManifest` 错误写成本地路径的问题
    - 已改成按 manifest 完整 cloud path 下载
+   - 已修下载时 `node.id=0` 导致 fallback 指向错误目录的问题
+6. **下载云端后旧 delete 队列再次上行，导致节点重新被云端删除**
+   - 已在“下载云端”前清空 `sync_queue`
+7. **断网 / 恢复联网时用户无感知，容易误触发旧队列自动同步**
+   - 已补充网络状态监听、断网/联网弹窗与个人页同步提醒条
 
 ### 仍建议继续验证的场景
 
