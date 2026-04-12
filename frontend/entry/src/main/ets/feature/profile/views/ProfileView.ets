@@ -18,6 +18,7 @@ export struct ProfileView {
   @State exifStrip: boolean = true
   @State wifiOnlySync: boolean = true
   @State shareLinkExpiry: string = '7 天'
+  @StorageLink('networkJustReconnected') networkJustReconnected: boolean = false
 
   aboutToAppear(): void {
     this.loadAuthStatus()
@@ -66,6 +67,7 @@ export struct ProfileView {
     this.isSyncing = true
     try {
       await SyncManager.pushAllLocalToCloud()
+      AppStorage.setOrCreate('networkJustReconnected', false)
       await this.loadAuthStatus()
     } finally {
       this.isSyncing = false
@@ -76,6 +78,7 @@ export struct ProfileView {
     this.isSyncing = true
     try {
       await SyncManager.pullAllCloudToLocal()
+      AppStorage.setOrCreate('networkJustReconnected', false)
       await this.loadAuthStatus()
     } finally {
       this.isSyncing = false
@@ -233,6 +236,27 @@ export struct ProfileView {
             }
           }
           .width('100%')
+
+          if (this.networkJustReconnected) {
+            Row() {
+              Text('网络已恢复，如有必要，请先点击同步再进行其他操作，否则可能导致数据丢失')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_PRIMARY)
+                .layoutWeight(1)
+              Text('知道了')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.PRIMARY)
+                .margin({ left: 8 })
+                .onClick(() => {
+                  AppStorage.setOrCreate('networkJustReconnected', false)
+                })
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_SM)
+            .margin({ top: 12 })
+            .backgroundColor('#FFF7E6')
+            .borderRadius(AppDimens.RADIUS_SM)
+          }
 
           Row() {
             Column() {
