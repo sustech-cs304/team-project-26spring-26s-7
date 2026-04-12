@@ -41,6 +41,11 @@ export struct TripReplayPage {
   @State showOverlay: boolean = false
   @State overlayNode: ReplayNode | null = null
 
+  // 移动图标状态
+  @State movingIconVisible: boolean = false
+  @State movingIconScreenX: number = 0
+  @State movingIconScreenY: number = 0
+
   // 速度选项
   private speeds: string[] = ['0.5x', '1x', '2x']
 
@@ -154,7 +159,7 @@ export struct TripReplayPage {
         node.photos,  // 直接传递照片数组
         node.poiName || node.title,
         node.content || '',
-        this.truncateText(node.content || node.title, 20),
+        this.truncateTextSmart(node.content || node.title, 30),
         node.createdAt,
         index
       )
@@ -164,11 +169,30 @@ export struct TripReplayPage {
   }
 
   /**
-   * 截断文本
+   * 智能截断文本
+   * 优先在逗号/句号处截断，保持语句完整性
    */
-  private truncateText(text: string, maxLen: number): string {
+  private truncateTextSmart(text: string, maxLen: number): string {
     if (!text) return ''
     if (text.length <= maxLen) return text
+
+    // 在 maxLen 范围内查找最后一个逗号或句号
+    const searchRange = text.slice(0, maxLen)
+    const breakChars = ['，', '。']
+
+    let lastBreakIndex = -1
+    for (const char of breakChars) {
+      const idx = searchRange.lastIndexOf(char)
+      if (idx > 0) {
+        lastBreakIndex = Math.max(lastBreakIndex, idx)
+      }
+    }
+
+    if (lastBreakIndex > 0) {
+      return text.slice(0, lastBreakIndex + 1)
+    }
+
+    // 无断点时，仍按固定长度截断
     return text.slice(0, maxLen) + '…'
   }
 
@@ -287,15 +311,15 @@ export struct TripReplayPage {
       return
     }
 
-    // 绘制轨迹折线
+    // 绘制轨迹折线（柔和蓝色渐变样式）
     if (positions.length > 1) {
       await this.mapController.addPolyline({
         points: positions,
         clickable: false,
         visible: true,
-        width: 6,
+        width: 4,
         zIndex: 5,
-        geodesic: false,
+        geodesic: true,  // 大地线，更真实
         gradient: false,
         jointType: mapCommon.JointType.ROUND,
         startCap: mapCommon.CapStyle.ROUND,
@@ -319,12 +343,37 @@ export struct TripReplayPage {
       })
     }
 
-    // 移动相机到第一个节点
-    const cameraUpdate = map.newCameraPosition({
-      target: positions[0],
-      zoom: 13
-    })
-    this.mapController.animateCamera(cameraUpdate, 300)
+    // 移动相机到第一个节点（完整 3D 视角动画）
+    // 相机 target.latitude 向北偏移，让红色标记显示在屏幕下方（照片卡片正下方）
+    // zoom=15 时，1/4 屏幕 ≈ 0.0025 纬度
+    const latitudeOffset = 0.0025
+    if (positions.length > 1) {
+      // 计算从第一个节点到第二个节点的方位角
+      const bearing = this.calculateBearing(
+        positions[0].latitude, positions[0].longitude,
+        positions[1].latitude, positions[1].longitude
+      )
+      const cameraUpdate = map.newCameraPosition({
+        target: {
+          latitude: positions[0].latitude + latitudeOffset,  // 向北偏移
+          longitude: positions[0].longitude                   // 不变，保持 x 中轴线
+        },
+        zoom: 15,
+        bearing: bearing,
+        tilt: 45
+      })
+      this.mapController.animateCamera(cameraUpdate, 1000)
+    } else {
+      // 单节点时使用默认视角
+      const cameraUpdate = map.newCameraPosition({
+        target: {
+          latitude: positions[0].latitude + latitudeOffset,
+          longitude: positions[0].longitude
+        },
+        zoom: 15
+      })
+      this.mapController.animateCamera(cameraUpdate, 500)
+    }
     this.routeRendered = true
   }
 
@@ -361,6 +410,11 @@ export struct TripReplayPage {
       targetNode.position.longitude
     )
 
+    // 启动移动图标动画（仅在非首节点时）
+    if (prevIndex !== index && this.mapController) {
+      this.startMovingIconAnimation(fromNode.position, targetNode.position)
+    }
+
     // 相机动画移动到目标节点
     const cameraUpdate = map.newCameraPosition({
       target: {
@@ -374,10 +428,62 @@ export struct TripReplayPage {
 
     this.mapController.animateCamera(cameraUpdate, this.getMoveDuration())
 
-    // 移动完成后显示卡片
+    // 移动完成后显示卡片并隐藏移动图标
     setTimeout(() => {
       this.isCardVisible = true
+      this.movingIconVisible = false
     }, this.getMoveDuration())
+  }
+
+  /**
+   * 启动移动图标动画
+   * 使用定时器每隔 50ms 更新图标位置，实现平滑移动效果
+   */
+  private startMovingIconAnimation(fromPos: Position, toPos: Position): void {
+    this.movingIconVisible = true
+
+    // 初始化图标在起点位置
+    const projection = this.mapController?.getProjection()
+    if (projection) {
+      const startPos = projection.toScreenLocation({
+        latitude: fromPos.latitude,
+        longitude: fromPos.longitude
+      })
+      this.movingIconScreenX = startPos.positionX
+      this.movingIconScreenY = startPos.positionY
+    }
+
+    const duration = this.getMoveDuration()
+    const intervalMs = 50
+    const steps = Math.floor(duration / intervalMs)
+    let currentStep = 0
+
+    const timer = setInterval(() => {
+      if (!this.movingIconVisible || currentStep >= steps || !this.mapController) {
+        clearInterval(timer)
+        return
+      }
+
+      // 计算当前进度 (0 -> 1)
+      const progress = currentStep / steps
+
+      // 线性插值计算当前位置
+      const currentLat = fromPos.latitude + (toPos.latitude - fromPos.latitude) * progress
+      const currentLng = fromPos.longitude + (toPos.longitude - fromPos.longitude) * progress
+
+      // 获取屏幕坐标
+      const proj = this.mapController.getProjection()
+      if (proj) {
+        const screenPos = proj.toScreenLocation({
+          latitude: currentLat,
+          longitude: currentLng
+        })
+        this.movingIconScreenX = screenPos.positionX
+        this.movingIconScreenY = screenPos.positionY
+      }
+
+      currentStep++
+    }, intervalMs)
   }
 
   /**
@@ -504,16 +610,34 @@ export struct TripReplayPage {
         .justifyContent(FlexAlign.Center)
       }
 
+      // 移动图标（节点间移动时显示）
+      if (this.movingIconVisible) {
+        Column() {
+          Text('🚶')
+            .fontSize(32)
+            .fontColor('#FFFFFF')
+        }
+        .width(44)
+        .height(44)
+        .justifyContent(FlexAlign.Center)
+        .backgroundColor(AppColors.PRIMARY)
+        .borderRadius(22)
+        .shadow({ radius: 6, color: '#1890FF80', offsetY: 2 })
+        .position({ x: this.movingIconScreenX - 22, y: this.movingIconScreenY - 44 })
+        .zIndex(50)
+      }
+
       // 照片卡片（使用新组件）
       if (this.isCardVisible && this.replayRoute && this.currentNodeIndex < this.replayRoute.nodes.length) {
         ReplayPhotoCard({
           node: this.replayRoute.nodes[this.currentNodeIndex],
+          isPlaying: this.isPlaying,
           isExpanded: false,
           onExpand: (node: ReplayNode) => {
             this.showOverlayCard(node)
           }
         })
-        .position({ x: '50%', y: '35%' })
+        .position({ x: '50%', y: '35%' })  // x: 50% 中轴线，y: 35% 中上位置
         .translate({ x: -140, y: -90 })  // 居中偏移
       }
 
