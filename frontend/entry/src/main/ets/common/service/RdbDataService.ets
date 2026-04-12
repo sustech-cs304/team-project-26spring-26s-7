@@ -15,10 +15,13 @@
 
 import { logger } from '../utils/Logger';
 import { PhotoPickerUtil } from '../utils/PhotoPickerUtil';
+import { CloudStorageService, AuthService } from '../auth';
+import { SyncManager } from '../sync/SyncManager';
+import { RdbHelper } from '../data/RdbHelper';
 import { TravelRepository } from '../data/TravelRepository';
 import { MemoryNodeRepository } from '../data/MemoryNodeRepository';
 import type { IDataService, CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput } from './IDataService';
-import type { Trip, MemoryNode } from './types';
+import type { Trip, MemoryNode, SyncStatus } from './types';
 import type { CreateTravelInput as RepoCreateTravelInput, UpdateTravelInput as RepoUpdateTravelInput } from '../data/TravelRepository';
 import type { CreateNodeInput as RepoCreateNodeInput, UpdateNodeInput as RepoUpdateNodeInput } from '../data/MemoryNodeRepository';
 
@@ -31,10 +34,88 @@ const TAG = 'RdbDataService';
 export class RdbDataService implements IDataService {
   private travelRepo: TravelRepository;
   private nodeRepo: MemoryNodeRepository;
+  private rdbHelper: RdbHelper;
 
   constructor() {
     this.travelRepo = new TravelRepository();
     this.nodeRepo = new MemoryNodeRepository();
+    this.rdbHelper = RdbHelper.getInstance();
+  }
+
+  private async enqueueSync(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
+    await this.rdbHelper.removeSyncItems(entityType, entityId);
+    await this.rdbHelper.enqueueSyncItem(entityType, entityId, operation, payload);
+    void SyncManager.pushLocalNow();
+  }
+
+  async getSyncStatus(): Promise<SyncStatus> {
+    const pendingItems = await this.rdbHelper.getPendingSyncQueueItems();
+    const lastPushTime = await this.rdbHelper.getSyncState('last_push_at');
+    const lastPullTime = await this.rdbHelper.getSyncState('last_pull_at');
+    const status: SyncStatus = {
+      lastSyncTime: Math.max(lastPushTime, lastPullTime),
+      lastPushTime: lastPushTime,
+      lastPullTime: lastPullTime,
+      pendingCount: pendingItems.length,
+      isSyncing: SyncManager.isSyncing()
+    }
+    return status;
+  }
+
+  private buildPhotoManifest(travelId: string, nodeId: string, photos: string[]): string {
+    const cloudPaths: string[] = [];
+    for (let i = 0; i < photos.length; i++) {
+      cloudPaths.push(CloudStorageService.buildNodePhotoPath(travelId, nodeId, photos[i]));
+    }
+    return JSON.stringify(cloudPaths);
+  }
+
+  private syncNodePhotosToCloud(travelId: string, nodeId: string, photos: string[]): void {
+    if (photos.length === 0) {
+      return;
+    }
+
+    void this.uploadNodePhotosToCloud(travelId, nodeId, photos);
+  }
+
+  private async uploadNodePhotosToCloud(travelId: string, nodeId: string, photos: string[]): Promise<void> {
+    for (const photo of photos) {
+      try {
+        await CloudStorageService.uploadNodePhoto(travelId, nodeId, photo);
+        logger.info(TAG, `Uploaded node photo to cloud: ${nodeId} -> ${photo}`);
+      } catch (err) {
+        const error = err as Error;
+        logger.error(TAG, `Failed to upload node photo ${photo}: ${error.message}`);
+      }
+    }
+  }
+
+  private syncDeletedNodePhotosToCloud(travelId: string, nodeId: string, photos: string[]): void {
+    if (photos.length === 0) {
+      return;
+    }
+
+    void this.deleteNodePhotosFromCloud(travelId, nodeId, photos);
+  }
+
+  private async deleteNodePhotosFromCloud(travelId: string, nodeId: string, photos: string[]): Promise<void> {
+    for (const photo of photos) {
+      try {
+        await CloudStorageService.deleteNodePhoto(travelId, nodeId, photo);
+        logger.info(TAG, `Deleted node photo from cloud: ${nodeId} -> ${photo}`);
+      } catch (err) {
+        const error = err as Error;
+        logger.error(TAG, `Failed to delete node photo ${photo}: ${error.message}`);
+      }
+    }
+  }
+
+  private getAddedPhotos(oldPhotos: string[], newPhotos: string[]): string[] {
+    return newPhotos.filter((photo: string) => !oldPhotos.includes(photo));
+  }
+
+  private getRemovedPhotos(oldPhotos: string[], newPhotos: string[]): string[] {
+    return oldPhotos.filter((photo: string) => !newPhotos.includes(photo));
   }
 
   private calculateDistanceBetweenPoints(
@@ -95,7 +176,13 @@ export class RdbDataService implements IDataService {
           nodeIds: nodeIds,
           totalDistance: this.calculateTotalDistance(nodes),
           createdAt: trips[i].createdAt,
-          updatedAt: trips[i].updatedAt
+          updatedAt: trips[i].updatedAt,
+          ownerUid: trips[i].ownerUid,
+          cloudId: trips[i].cloudId,
+          syncStatus: trips[i].syncStatus,
+          deletedAt: trips[i].deletedAt,
+          lastSyncedAt: trips[i].lastSyncedAt,
+          version: trips[i].version
         };
       }
       return trips;
@@ -126,7 +213,13 @@ export class RdbDataService implements IDataService {
         nodeIds: nodeIds,
         totalDistance: this.calculateTotalDistance(nodes),
         createdAt: trip.createdAt,
-        updatedAt: trip.updatedAt
+        updatedAt: trip.updatedAt,
+        ownerUid: trip.ownerUid,
+        cloudId: trip.cloudId,
+        syncStatus: trip.syncStatus,
+        deletedAt: trip.deletedAt,
+        lastSyncedAt: trip.lastSyncedAt,
+        version: trip.version
       };
       return result;
     } catch (err) {
@@ -147,6 +240,19 @@ export class RdbDataService implements IDataService {
     if (!created) {
       throw new Error('Failed to retrieve created travel');
     }
+    const payload = JSON.stringify({
+      ownerUid: created.ownerUid ?? '',
+      localId: created.id,
+      cloudId: created.cloudId ?? '',
+      name: created.name,
+      coverPhoto: created.coverPhoto ?? '',
+      startDate: created.startDate,
+      endDate: created.endDate,
+      updatedAt: created.updatedAt,
+      deletedAt: created.deletedAt ?? 0,
+      version: created.version ?? 1
+    })
+    await this.enqueueSync('travel', created.id, 'upsert', payload);
     return created;
   }
 
@@ -172,14 +278,32 @@ export class RdbDataService implements IDataService {
     if (!updated) {
       throw new Error('Failed to retrieve updated travel');
     }
+    const payload = JSON.stringify({
+      ownerUid: updated.ownerUid ?? '',
+      localId: updated.id,
+      cloudId: updated.cloudId ?? '',
+      name: updated.name,
+      coverPhoto: updated.coverPhoto ?? '',
+      startDate: updated.startDate,
+      endDate: updated.endDate,
+      updatedAt: updated.updatedAt,
+      deletedAt: updated.deletedAt ?? 0,
+      version: updated.version ?? 1
+    })
+    await this.enqueueSync('travel', updated.id, 'upsert', payload);
     return updated;
   }
 
   async deleteTravel(travelId: string): Promise<void> {
-    const deleted = await this.travelRepo.deleteTravel(travelId);
+    const deleted = await this.travelRepo.softDeleteTravel(travelId);
     if (!deleted) {
       throw new Error(`Failed to delete travel: ${travelId}`);
     }
+    const payload = JSON.stringify({
+      localId: travelId,
+      deletedAt: Date.now()
+    })
+    await this.enqueueSync('travel', travelId, 'delete', payload);
   }
 
   // ==================== MemoryNode 相关 ====================
@@ -210,16 +334,37 @@ export class RdbDataService implements IDataService {
     if (!created) {
       throw new Error('Failed to retrieve created node');
     }
+    const payload = JSON.stringify({
+      ownerUid: created.ownerUid ?? '',
+      localId: created.id,
+      cloudId: created.cloudId ?? '',
+      travelId: created.travelId,
+      title: created.title,
+      content: created.content,
+      latitude: created.latitude,
+      longitude: created.longitude,
+      poiName: created.poiName,
+      photos: created.photos,
+      mood: created.mood,
+      tags: created.tags,
+      updatedAt: created.updatedAt,
+      deletedAt: created.deletedAt ?? 0,
+      version: created.version ?? 1,
+      photoManifest: this.buildPhotoManifest(created.travelId, created.id, created.photos)
+    })
+    await this.enqueueSync('memory_node', created.id, 'upsert', payload);
+    this.syncNodePhotosToCloud(created.travelId, created.id, created.photos);
     return created;
   }
 
   async updateNode(nodeId: string, data: UpdateNodeInput): Promise<MemoryNode> {
-    // 如果更新了照片，先获取旧照片列表以便清理
     let oldPhotos: string[] = [];
+    let travelId: string = '';
     if (data.photos !== undefined) {
       const oldNode = await this.nodeRepo.getNodeById(nodeId);
       if (oldNode) {
         oldPhotos = [...oldNode.photos];
+        travelId = oldNode.travelId;
       }
     }
 
@@ -248,17 +393,19 @@ export class RdbDataService implements IDataService {
     if (data.tags !== undefined) {
       repoInput.tags = data.tags;
     }
-const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
+    const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
     if (!updatedOk) {
       throw new Error(`Failed to update node: ${nodeId}`);
     }
 
-    // 清理被移除的照片
     if (data.photos !== undefined) {
-      const removedPhotos = oldPhotos.filter((photo: string) => !data.photos!.includes(photo));
+      const removedPhotos = this.getRemovedPhotos(oldPhotos, data.photos);
       if (removedPhotos.length > 0) {
         await PhotoPickerUtil.deletePhotos(removedPhotos);
         logger.info(TAG, `Cleaned ${removedPhotos.length} removed photos for node ${nodeId}`);
+        if (travelId.length > 0) {
+          this.syncDeletedNodePhotosToCloud(travelId, nodeId, removedPhotos);
+        }
       }
     }
 
@@ -266,25 +413,69 @@ const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
     if (!updated) {
       throw new Error('Failed to retrieve updated node');
     }
+
+    if (data.photos !== undefined) {
+      const addedPhotos = this.getAddedPhotos(oldPhotos, updated.photos);
+      this.syncNodePhotosToCloud(updated.travelId, updated.id, addedPhotos);
+    }
+
+    const payload = JSON.stringify({
+      ownerUid: updated.ownerUid ?? '',
+      localId: updated.id,
+      cloudId: updated.cloudId ?? '',
+      travelId: updated.travelId,
+      title: updated.title,
+      content: updated.content,
+      latitude: updated.latitude,
+      longitude: updated.longitude,
+      poiName: updated.poiName,
+      photos: updated.photos,
+      mood: updated.mood,
+      tags: updated.tags,
+      updatedAt: updated.updatedAt,
+      deletedAt: updated.deletedAt ?? 0,
+      version: updated.version ?? 1,
+      photoManifest: this.buildPhotoManifest(updated.travelId, updated.id, updated.photos)
+    })
+    await this.enqueueSync('memory_node', updated.id, 'upsert', payload);
+
     return updated;
   }
 
   async deleteNode(nodeId: string): Promise<void> {
-    // 先获取节点的照片列表
     const node = await this.nodeRepo.getNodeById(nodeId);
     if (node && node.photos.length > 0) {
-      // 清理沙箱照片
       await PhotoPickerUtil.deletePhotos(node.photos);
       logger.info(TAG, `Cleaned ${node.photos.length} photos for deleted node ${nodeId}`);
     }
-    // 删除数据库记录
-    const deleted = await this.nodeRepo.deleteNode(nodeId);
+    const deleted = await this.nodeRepo.softDeleteNode(nodeId);
     if (!deleted) {
       throw new Error(`Failed to delete node: ${nodeId}`);
     }
+    if (node && node.photos.length > 0) {
+      this.syncDeletedNodePhotosToCloud(node.travelId, node.id, node.photos);
+    }
+    const photoCloudPaths: string[] = [];
+    if (node) {
+      for (let i = 0; i < node.photos.length; i++) {
+        photoCloudPaths.push(CloudStorageService.buildNodePhotoPath(node.travelId, node.id, node.photos[i]));
+      }
+    }
+    const payload = JSON.stringify({
+      localId: nodeId,
+      travelId: node?.travelId ?? '',
+      deletedAt: Date.now(),
+      photoCloudPaths: photoCloudPaths
+    })
+    await this.enqueueSync('memory_node', nodeId, 'delete', payload);
   }
 
   async reorderNodes(travelId: string, nodeIds: string[]): Promise<void> {
     await this.nodeRepo.reorderNodes(travelId, nodeIds);
+    const payload = JSON.stringify({
+      localId: travelId,
+      nodeIds: nodeIds
+    })
+    await this.enqueueSync('travel', travelId, 'reorder_nodes', payload);
   }
 }

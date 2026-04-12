@@ -5,6 +5,10 @@
   "main": "",
   "author": "",
   "license": "",
-  "dependencies": {}
+  "dependencies": {
+    "@hw-agconnect/auth-component": "^1.0.0",
+    "@hw-agconnect/cloud": "^1.0.0",
+    "@hw-agconnect/hmcore": "^1.0.0"
+  }
 }
 
