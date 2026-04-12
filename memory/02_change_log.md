@@ -1,6 +1,6 @@
 # Change Log
 
-**Last Updated**: 2026-04-03
+**Last Updated**: 2026-04-10
 
 ---
 
@@ -8,6 +8,23 @@
 ```
 [YYYY-MM-DD-HH-MM-SS] - [Action] - [Location] - [Description] - [Git Commit]
 ```
+
+---
+
+## 2026-04-10 (Map Kit 地点搜索替换)
+
+- [2026-04-10-12-04-00] - UPDATE - feature/map-travel/pages/LocationPickerPage.ets - 用 @kit.MapKit.site.searchByText 替换硬编码地点搜索，保留坐标输入选点
+- [2026-04-10-12-04-00] - UPDATE - feature/map-travel/pages/LocationPickerPage.ets - 新增 site.reverseGeocode 地图点选地址解析，失败时回退经纬度标签
+- [2026-04-10-12-04-00] - UPDATE - feature/map-travel/pages/LocationPickerPage.ets - 增加搜索中/空结果提示与搜索失败 toast，并用轻量接口规避 site 返回类型编译不确定性
+- [2026-04-10-12-30-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 将首页静态搜索栏改为可输入搜索框，支持本地记忆节点标题/地点/标签搜索
+- [2026-04-10-12-30-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 接入 @kit.MapKit.site.searchByText 合并 POI 结果，去重后展示首页搜索列表
+- [2026-04-10-12-30-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 选中首页搜索结果后联动地图相机，节点结果同步打开底部预览卡片
+- [2026-04-10-12-36-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 在首页搜索栏右侧补回“新增”按钮，保留从地图主页直达 NodeEditPage 的入口
+- [2026-04-10-12-45-00] - UPDATE - common/service/types.ets - 为 RouterParam 增加 poiName，支持从首页搜索结果直接带地址进入 NodeEditPage
+- [2026-04-10-12-45-00] - UPDATE - feature/map-travel/pages/NodeEditPage.ets - 新建节点时优先读取路由传入的 poiName，避免仅显示经纬度
+- [2026-04-10-12-45-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 选中首页搜索结果后保留选中态，隐藏误报空结果提示，并提供“作为地址新建”入口
+- [2026-04-10-12-52-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 精简搜索栏右侧按钮，仅保留“用该地址新建记忆”，移除冗余新增入口
+- [2026-04-10-13-00-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 选中首页搜索结果后立即在地图上打点，高亮当前待新建地址位置
 
 ---
 

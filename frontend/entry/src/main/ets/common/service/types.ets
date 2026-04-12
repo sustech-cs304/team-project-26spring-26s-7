@@ -97,6 +97,7 @@ export interface RouterParam {
   tripId?: string
   latitude?: number
   longitude?: number
+  poiName?: string
   defaultPrompt?: string
   defaultTitle?: string
 }

@@ -1,10 +1,10 @@
 # Task Backlog
 
-**Last Updated**: 2026-04-03 (动态旅程回放功能 bug 修复)
+**Last Updated**: 2026-04-10 (Map Kit 地点搜索替换)
 **Total Tasks**: 28 (来自 base 项目)
-**Completed**: 12 (含三层架构重构 + 动态旅程回放)
+**Completed**: 13 (含三层架构重构 + 动态旅程回放 + 地点搜索替换 + 首页地图搜索)
 **In Progress**: 0
-**Pending**: 16
+**Pending**: 15
 
 ---
 
@@ -13,6 +13,37 @@
 - 🔄 In Progress
 - ⏳ Pending
 - 🔴 Blocked
+
+---
+
+## 2026-04-10 Update: Map Kit 地点搜索替换
+
+### 🔄 已完成工作 (2026-04-10)
+
+**P0 - LocationPicker 真实地点搜索接入**:
+
+- 将 `feature/map-travel/pages/LocationPickerPage.ets` 的硬编码地点匹配替换为 `@kit.MapKit.site.searchByText(...)`
+- 保留经纬度直输能力，继续支持 `22.55,113.96` 这类输入直接选点
+- 地图点击后增加 `site.reverseGeocode(...)`，优先展示真实 POI/地址，失败时回退为经纬度
+- 保持 `AppStorage` 回填契约不变，`NodeEditPage.ets` 无需改动
+- 增加搜索中、空结果与失败提示，避免用户误以为页面无响应
+- 使用页面内轻量结果接口，降低 `site` 返回类型字段名差异导致的 ArkTS 编译风险
+
+**P0 - 首页地图搜索接入**:
+
+- 将 `feature/map-travel/views/MapHomeView.ets` 顶部静态搜索栏替换为真实 `TextInput`
+- 先搜索本地记忆节点（标题 / 地点 / 标签），再合并 `@kit.MapKit.site.searchByText(...)` 的 POI 结果
+- 搜索结果去重后以下拉列表展示，避免首页已有节点和 POI 重复堆叠
+- 选中节点结果时联动地图相机并打开底部预览卡片；选中 POI 结果时仅移动地图
+- 保留原有筛选面板、长按建点、Marker 预览等首页交互
+
+**修改文件**:
+- `feature/map-travel/pages/LocationPickerPage.ets`
+- `feature/map-travel/views/MapHomeView.ets`
+- `memory/02_change_log.md`
+- `memory/03_task_backlog.md`
+
+**编译状态**: ⚠️ 待用户手动验证（本次仅完成代码修复，未在会话内执行编译）
 
 ---
 

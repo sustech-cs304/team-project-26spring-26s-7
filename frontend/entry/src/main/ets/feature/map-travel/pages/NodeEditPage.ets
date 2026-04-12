@@ -44,7 +44,9 @@ export struct NodeEditPage {
     if (typeof params?.latitude === 'number' && typeof params?.longitude === 'number') {
       this.latitude = params.latitude
       this.longitude = params.longitude
-      this.poiName = `${params.latitude.toFixed(4)}, ${params.longitude.toFixed(4)}`
+      this.poiName = params.poiName && params.poiName.trim().length > 0
+        ? params.poiName
+        : `${params.latitude.toFixed(4)}, ${params.longitude.toFixed(4)}`
       this.hasPickedLocation = true
     }
 
