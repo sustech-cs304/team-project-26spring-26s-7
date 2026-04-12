@@ -1,6 +1,6 @@
 # Task Backlog
 
-**Last Updated**: 2026-04-10 (Map Kit 地点搜索替换)
+**Last Updated**: 2026-04-12 (旅行相册瀑布流页面开发)
 **Total Tasks**: 28 (来自 base 项目)
 **Completed**: 13 (含三层架构重构 + 动态旅程回放 + 地点搜索替换 + 首页地图搜索)
 **In Progress**: 0
@@ -13,6 +13,33 @@
 - 🔄 In Progress
 - ⏳ Pending
 - 🔴 Blocked
+
+---
+
+## 2026-04-12 Update: 旅行相册瀑布流页面开发
+
+### 🔄 已完成工作 (2026-04-12)
+
+**P0 - 新增并列相册页（双列瀑布流）**:
+
+- 新增 `feature/map-travel/views/TripAlbumView.ets`，以双列瀑布流形式纵向展示旅行封面
+- 封面逻辑采用“旅行第一个 node 的第一张图片”，无节点/无图片时自动回退占位卡片
+- 点击任意旅行卡片复用既有路由协议进入 `TripDetailPage`
+- 复用 `travelDataVersion` 监听机制，保证旅行数据变化后相册自动刷新
+
+**P0 - MainPage 并列入口扩展**:
+
+- 在 `pages/MainPage.ets` 底部 Tabs 中新增第 4 个并列页「相册」
+- 保持既有三个 Tab（地图/旅行/我的）逻辑不变，仅新增并列入口
+
+**修改文件**:
+- `feature/map-travel/views/TripAlbumView.ets`
+- `pages/MainPage.ets`
+- `feature/map-travel/index.ets`
+- `memory/02_change_log.md`
+- `memory/03_task_backlog.md`
+
+**编译状态**: ⚠️ 受当前会话环境限制未完成（DevEco 工具链路径缺失，需本机 DevEco 环境手动验证）
 
 ---
 

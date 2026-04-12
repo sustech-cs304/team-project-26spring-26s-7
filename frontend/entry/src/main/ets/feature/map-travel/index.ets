@@ -18,6 +18,7 @@
 // Views 导出
 export { MapHomeView } from './views/MapHomeView';
 export { TripListView } from './views/TripListView';
+export { TripAlbumView } from './views/TripAlbumView';
 
 // Components 导出
 export { PhotoSelector } from './components/PhotoSelector';

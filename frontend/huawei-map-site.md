@@ -1,0 +1,20 @@
+- generic [ref=e5]:
+  - banner [ref=e10]:
+    - link [ref=e11] [cursor=pointer]:
+      - /url: /consumer/cn/
+      - img [ref=e13]
+    - generic:
+      - generic
+      - generic
+    - img [ref=e171]
+    - generic [ref=e178]:
+      - textbox "输入关键字搜索" [ref=e179]
+      - img [ref=e181] [cursor=pointer]
+  - generic [ref=e185]:
+    - generic [ref=e190]:
+      - paragraph [ref=e307]: HarmonyOS
+      - generic [ref=e194]
+    - generic [ref=e197]:
+      - generic [ref=e198]
+      - generic [ref=e214]
+      - generic [ref=e261]

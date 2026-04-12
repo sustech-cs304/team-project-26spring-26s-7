@@ -1,6 +1,6 @@
 # Change Log
 
-**Last Updated**: 2026-04-10
+**Last Updated**: 2026-04-12
 
 ---
 
@@ -8,6 +8,15 @@
 ```
 [YYYY-MM-DD-HH-MM-SS] - [Action] - [Location] - [Description] - [Git Commit]
 ```
+
+---
+
+## 2026-04-12 (旅行相册瀑布流页面)
+
+- [2026-04-12-21-25-53] - CREATE - feature/map-travel/views/TripAlbumView.ets - 新增旅行相册 Tab 视图，双列瀑布流展示旅行封面（首节点首图），点击跳转 TripDetailPage
+- [2026-04-12-21-25-53] - UPDATE - pages/MainPage.ets - 底部 Tabs 新增第 4 个并列 Tab「相册」，接入 TripAlbumView
+- [2026-04-12-21-25-53] - UPDATE - feature/map-travel/index.ets - 导出 TripAlbumView 供页面层引用
+- [2026-04-12-21-25-53] - BUILD - 编译验证未执行 - 当前环境缺少 DevEco 依赖路径（C:\Apps 与 D:\software 均不存在对应 node.exe）
 
 ---
 
