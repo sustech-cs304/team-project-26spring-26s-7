@@ -599,7 +599,7 @@ export struct TripReplayPage {
 
   /**
    * 跳转到指定节点（通过进度条）
-   * 手动跳转：直接显示目标节点，无淡入淡出动画
+   * 手动跳转：先隐藏旧图文，移动后显示新图文，无淡入淡出动画
    */
   private jumpToNode(index: number): void {
     // 跳转时暂停播放
@@ -609,16 +609,16 @@ export struct TripReplayPage {
       return
     }
 
+    // 步骤1: 立即隐藏当前图文卡片（避免显示旧内容）
+    this.isCardVisible = false
+
+    // 步骤2: 更新节点索引和进度
     this.currentNodeIndex = index
     const lastIndex = this.replayRoute.nodes.length - 1
     this.progress = lastIndex === 0 ? 100 : (index / lastIndex) * 100
-
-    // 直接显示目标节点（无动画）
-    this.isCardVisible = true
-    this.cardOpacity = 1
     this.currentPhase = PHASE_IDLE
 
-    // 移动相机到目标节点
+    // 步骤3: 移动相机到目标节点
     const targetNode = this.replayRoute.nodes[index]
     if (this.mapController) {
       const cameraUpdate = map.newCameraPosition({
@@ -632,8 +632,11 @@ export struct TripReplayPage {
       this.mapController.animateCamera(cameraUpdate, 500)
     }
 
-    // 强制刷新卡片
-    this.forceRefreshCard()
+    // 步骤4: 相机移动完成后，显示新节点的图文（直接显示，无动画）
+    setTimeout(() => {
+      this.cardOpacity = 1  // 直接设置不透明
+      this.isCardVisible = true
+    }, 500)  // 等待相机移动完成
   }
 
   /**
