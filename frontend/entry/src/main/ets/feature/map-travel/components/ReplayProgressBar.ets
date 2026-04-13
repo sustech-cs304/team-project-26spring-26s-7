@@ -34,13 +34,13 @@ export struct ReplayProgressBar {
 
   build() {
     Column() {
-      // 节点标签行
+      // 节点标签行 - 显示节点序号 (1, 2, 3...)
       if (this.nodeLabels.length > 0) {
         Row() {
           ForEach(this.nodeLabels, (label: string, index: number) => {
             Text(label)
               .fontSize(AppDimens.FONT_SM)
-              .fontColor(index <= this.currentIndex ? '#FFFFFF' : '#FFFFFF99')  // 已访问白色，未访问浅灰
+              .fontColor('#333333')  // 黑色字体，清晰可读
               .layoutWeight(1)
               .textAlign(index === 0 ? TextAlign.Start : (index === this.nodeLabels.length - 1 ? TextAlign.End : TextAlign.Center))
           })

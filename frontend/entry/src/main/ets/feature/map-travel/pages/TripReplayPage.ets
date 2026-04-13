@@ -773,8 +773,8 @@ export struct TripReplayPage {
         ReplayProgressBar({
           value: this.progress,
           nodeCount: this.replayRoute ? this.replayRoute.nodes.length : 0,
-          nodeLabels: this.replayRoute ? this.replayRoute.nodes.map(n => {
-            return this.formatShortDate(n.timestamp)
+          nodeLabels: this.replayRoute ? this.replayRoute.nodes.map((_, index) => {
+            return `${index + 1}`  // 显示节点序号：1, 2, 3...
           }) : [],
           onChange: (index: number) => {
             this.jumpToNode(index)
