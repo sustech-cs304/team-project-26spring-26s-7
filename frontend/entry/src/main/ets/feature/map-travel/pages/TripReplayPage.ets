@@ -155,10 +155,12 @@ export struct TripReplayPage {
     // 状态变化回调
     avPlayer.on('stateChange', (state: media.AVPlayerState) => {
       console.info('TripReplayPage: AVPlayer 状态变化', state)
+      console.info('TripReplayPage: 当前 fdSrc:', JSON.stringify(avPlayer.fdSrc))
 
       switch (state) {
         case 'initialized':
           // 设置播放源后触发，调用 prepare
+          console.info('TripReplayPage: 状态 initialized，开始 prepare')
           avPlayer.prepare()
             .then(() => {
               console.info('TripReplayPage: AVPlayer prepare 完成')
@@ -169,9 +171,14 @@ export struct TripReplayPage {
           break
         case 'prepared':
           // prepare 完成后可以播放
-          console.info('TripReplayPage: AVPlayer prepared，可以播放')
-          // prepare 完成后开始播放
+          console.info('TripReplayPage: 状态 prepared，开始 play')
           avPlayer.play()
+            .then(() => {
+              console.info('TripReplayPage: AVPlayer play 调用成功')
+            })
+            .catch(() => {
+              console.error('TripReplayPage: AVPlayer play 调用失败')
+            })
           break
         case 'playing':
           this.isAudioPlaying = true
@@ -188,6 +195,7 @@ export struct TripReplayPage {
           avPlayer.play()
           break
         case 'stopped':
+          console.info('TripReplayPage: 音乐停止')
           avPlayer.reset()
           break
         case 'released':
