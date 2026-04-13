@@ -176,11 +176,13 @@ export struct TripReplayPage {
         node.latitude,
         node.longitude,
         node.photos,  // 直接传递照片数组
-        node.poiName || node.title,
+        node.title,   // 使用节点标题
         node.content || '',
         this.truncateTextSmart(node.content || node.title, 30),
         node.createdAt,
-        index
+        index,
+        node.mood || '',      // 心情
+        node.tags || []       // 标签数组
       )
     })
 

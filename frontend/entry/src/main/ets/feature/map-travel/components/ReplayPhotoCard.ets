@@ -104,13 +104,21 @@ export struct ReplayPhotoCard {
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-          // 文字缩略
-          Text(this.node.noteShort)
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor('#FFFFFFCC')
-            .margin({ top: 4 })
-            .maxLines(2)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          // 标签展示
+          if (this.node.tags.length > 0) {
+            Row() {
+              ForEach(this.node.tags.slice(0, 3), (tag: string) => {  // 最多显示3个标签
+                Text(tag)
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.PRIMARY)
+                  .backgroundColor('#1890FF33')
+                  .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                  .borderRadius(4)
+                  .margin({ right: 4 })
+              })
+            }
+            .margin({ top: 6 })
+          }
 
           // 照片数量标签
           if (this.node.photos.length > 0) {
