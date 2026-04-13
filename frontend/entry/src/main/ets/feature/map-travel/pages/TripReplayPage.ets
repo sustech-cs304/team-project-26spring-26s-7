@@ -13,6 +13,13 @@ const DEFAULT_REPLAY_CENTER: mapCommon.LatLng = {
   longitude: 113.96
 }
 
+// 播放阶段常量
+const PHASE_IDLE = 0
+const PHASE_FADE_IN = 1
+const PHASE_STAYING = 2
+const PHASE_FADE_OUT = 3
+const PHASE_MOVING = 4
+
 /**
  * P07 旅程回放页 — 全屏沉浸式动画回放
  * 路由参数：{ tripId: string }
@@ -32,6 +39,7 @@ export struct TripReplayPage {
   @State progress: number = 0
   @State isCardVisible: boolean = true
   @State isLoading: boolean = false
+  @State cardOpacity: number = 1  // 图文卡片透明度 (0-1)
 
   // 路线数据
   @State routeName: string = '旅程回放'
@@ -52,9 +60,15 @@ export struct TripReplayPage {
   // 定时器
   private playTimer: number = -1
 
-  // 常量定义
-  private readonly STAY_DURATION: number = 5000   // 5 秒停留
-  private readonly MOVE_DURATION: number = 1500  // 1.5 秒移动
+  // 常量定义 - 新播放流程
+  // 展示阶段：2s淡入 + 3s停留 + 1s淡出 = 6s
+  // 移动阶段：1.5s
+  private readonly FADE_IN_DURATION: number = 2000      // 2s 淡入
+  private readonly STAY_DURATION: number = 3000         // 3s 停留
+  private readonly FADE_OUT_DURATION: number = 1000     // 1s 淡出
+  private readonly MOVE_DURATION: number = 1500         // 1.5s 移动
+
+  @State private currentPhase: number = PHASE_IDLE
 
   // 地图配置
   private mapOptions: mapCommon.MapOptions = {
@@ -149,7 +163,12 @@ export struct TripReplayPage {
     route.id = tripId
     route.name = '旅程回放'
     route.totalDistance = 0  // TODO: 计算总距离
-    route.duration = nodes.length * 5  // 每节点 5 秒
+    // 计算总时长：每个节点展示(淡入+停留+淡出) + 节点间移动
+    // 最后一个节点不需要移动
+    const nodeCount = nodes.length
+    const displayTimePerNode = this.FADE_IN_DURATION + this.STAY_DURATION + this.FADE_OUT_DURATION
+    const totalMoveTime = (nodeCount - 1) * this.MOVE_DURATION
+    route.duration = (nodeCount * displayTimePerNode + totalMoveTime) / 1000  // 转换为秒
 
     route.nodes = nodes.map((node: MemoryNode, index: number): ReplayNode => {
       return new ReplayNode(
@@ -198,13 +217,17 @@ export struct TripReplayPage {
 
   /**
    * 停止播放，清理定时器
+   * 暂停时立即停止动画，恢复到完全显示状态
    */
   private stopPlay(): void {
     this.isPlaying = false
+    this.currentPhase = PHASE_IDLE
     if (this.playTimer !== -1) {
       clearTimeout(this.playTimer)
       this.playTimer = -1
     }
+    // 暂停时恢复到完全显示
+    this.cardOpacity = 1
   }
 
   /**
@@ -230,7 +253,7 @@ export struct TripReplayPage {
   }
 
   /**
-   * 播放序列（递归调用）
+   * 播放序列（阶段化：淡入→停留→淡出→移动→下一节点）
    */
   private playSequence(): void {
     if (!this.isPlaying || !this.replayRoute) {
@@ -240,29 +263,93 @@ export struct TripReplayPage {
     const nodeCount = this.replayRoute.nodes.length
     if (this.currentNodeIndex >= nodeCount) {
       this.isPlaying = false
+      this.currentPhase = PHASE_IDLE
       return
     }
 
-    // 显示当前节点卡片
+    // 阶段 1: 淡入 (0 -> 1)
+    this.currentPhase = PHASE_FADE_IN
+    this.cardOpacity = 0
     this.isCardVisible = true
 
-    // 设置定时器：5 秒后移动到下一节点
-    this.playTimer = setTimeout(() => {
-      if (!this.isPlaying) return
+    animateTo({
+      duration: this.getFadeInDuration(),
+      curve: Curve.EaseInOut,
+      onFinish: () => {
+        if (!this.isPlaying) return
 
-      const nextIndex = this.currentNodeIndex + 1
-      if (nextIndex >= nodeCount) {
-        // 播放完成
-        this.isPlaying = false
-        return
+        // 阶段 2: 停留展示
+        this.currentPhase = PHASE_STAYING
+        this.cardOpacity = 1
+
+        this.playTimer = setTimeout(() => {
+          if (!this.isPlaying) return
+
+          // 阶段 3: 淡出 (1 -> 0)
+          this.currentPhase = PHASE_FADE_OUT
+
+          animateTo({
+            duration: this.getFadeOutDuration(),
+            curve: Curve.EaseInOut,
+            onFinish: () => {
+              if (!this.isPlaying) return
+
+              this.cardOpacity = 0
+              this.isCardVisible = false
+
+              const nextIndex = this.currentNodeIndex + 1
+              if (nextIndex >= nodeCount) {
+                // 播放完成
+                this.isPlaying = false
+                this.currentPhase = PHASE_IDLE
+                return
+              }
+
+              // 阶段 4: 移动到下一节点
+              this.currentPhase = PHASE_MOVING
+              this.moveToNode(nextIndex)
+
+              // 移动完成后继续下一节点的播放序列
+              this.playTimer = setTimeout(() => {
+                if (this.isPlaying) {
+                  this.playSequence()
+                }
+              }, this.getMoveDuration())
+            }
+          }, () => {
+            this.cardOpacity = 0
+          })
+        }, this.getStayDuration())
       }
+    }, () => {
+      this.cardOpacity = 1
+    })
+  }
 
-      // 移动到下一节点
-      this.moveToNode(nextIndex)
+  /**
+   * 获取淡入时长（根据速度）
+   */
+  private getFadeInDuration(): number {
+    if (this.playbackSpeed === '0.5x') {
+      return this.FADE_IN_DURATION * 2
+    }
+    if (this.playbackSpeed === '2x') {
+      return this.FADE_IN_DURATION / 2
+    }
+    return this.FADE_IN_DURATION
+  }
 
-      // 递归调用，继续播放序列
-      this.playSequence()
-    }, this.getStayDuration())
+  /**
+   * 获取淡出时长（根据速度）
+   */
+  private getFadeOutDuration(): number {
+    if (this.playbackSpeed === '0.5x') {
+      return this.FADE_OUT_DURATION * 2
+    }
+    if (this.playbackSpeed === '2x') {
+      return this.FADE_OUT_DURATION / 2
+    }
+    return this.FADE_OUT_DURATION
   }
 
   /**
@@ -378,7 +465,8 @@ export struct TripReplayPage {
   }
 
   /**
-   * 移动到指定节点
+   * 移动到指定节点（播放流程中使用）
+   * 不控制卡片显示，仅执行地图移动
    */
   private moveToNode(index: number): void {
     if (!this.replayRoute || !this.mapController) {
@@ -392,9 +480,6 @@ export struct TripReplayPage {
     this.currentNodeIndex = index
     const lastIndex = this.replayRoute.nodes.length - 1
     this.progress = lastIndex === 0 ? 100 : (index / lastIndex) * 100
-
-    // 隐藏卡片（移动过程中不显示）
-    this.isCardVisible = false
 
     // 强制刷新照片卡片数据
     this.forceRefreshCard()
@@ -428,9 +513,8 @@ export struct TripReplayPage {
 
     this.mapController.animateCamera(cameraUpdate, this.getMoveDuration())
 
-    // 移动完成后显示卡片并隐藏移动图标
+    // 移动完成后隐藏移动图标
     setTimeout(() => {
-      this.isCardVisible = true
       this.movingIconVisible = false
     }, this.getMoveDuration())
   }
@@ -515,17 +599,46 @@ export struct TripReplayPage {
 
   /**
    * 跳转到指定节点（通过进度条）
+   * 手动跳转：直接显示目标节点，无淡入淡出动画
    */
   private jumpToNode(index: number): void {
     // 跳转时暂停播放
     this.stopPlay()
-    this.moveToNode(index)
-    // 人为拖动进度条时，立即显示卡片（不需要等待移动动画）
+
+    if (!this.replayRoute || index < 0 || index >= this.replayRoute.nodes.length) {
+      return
+    }
+
+    this.currentNodeIndex = index
+    const lastIndex = this.replayRoute.nodes.length - 1
+    this.progress = lastIndex === 0 ? 100 : (index / lastIndex) * 100
+
+    // 直接显示目标节点（无动画）
     this.isCardVisible = true
+    this.cardOpacity = 1
+    this.currentPhase = PHASE_IDLE
+
+    // 移动相机到目标节点
+    const targetNode = this.replayRoute.nodes[index]
+    if (this.mapController) {
+      const cameraUpdate = map.newCameraPosition({
+        target: {
+          latitude: targetNode.position.latitude,
+          longitude: targetNode.position.longitude
+        },
+        zoom: 15,
+        tilt: 45
+      })
+      this.mapController.animateCamera(cameraUpdate, 500)
+    }
+
+    // 强制刷新卡片
+    this.forceRefreshCard()
   }
 
   /**
    * 上一节点
+   * 手动切换：直接显示，无淡入淡出动画
    */
   private goToPrevNode(): void {
     if (this.currentNodeIndex > 0) {
@@ -535,6 +648,7 @@ export struct TripReplayPage {
 
   /**
    * 下一节点
+   * 手动切换：直接显示，无淡入淡出动画
    */
   private goToNextNode(): void {
     if (this.replayRoute && this.currentNodeIndex < this.replayRoute.nodes.length - 1) {
@@ -639,6 +753,7 @@ export struct TripReplayPage {
         })
         .position({ x: '50%', y: '35%' })  // x: 50% 中轴线，y: 35% 中上位置
         .translate({ x: -140, y: -90 })  // 居中偏移
+        .opacity(this.cardOpacity)  // 使用透明度动画
       }
 
       // 底部控制栏
