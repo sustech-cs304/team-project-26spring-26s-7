@@ -782,47 +782,86 @@ export struct TripReplayPage {
         })
         .width('100%')
 
-        // 控制按钮 - 播放键居中，倍速在播放键右侧
-        Row() {
-          // 左侧：上一节点
-          Text('◄◄')
-            .fontSize(AppDimens.FONT_LG)
-            .fontColor('#333333')  // 黑色
-            .padding(AppDimens.PADDING_MD)
-            .onClick(() => this.goToPrevNode())
+        // 控制按钮 - 播放键绝对居中，严格对称布局
+        // 布局：◄◄ ←d→ ⏸/▶ ←d/3→ [1x] ←2d/3→ ►►
+        Column() {
+          // 底层：上一节点和下一节点对称分布
+          Row() {
+            // 左侧：上一节点
+            Text('◄◄')
+              .fontSize(AppDimens.FONT_LG)
+              .fontColor('#333333')  // 黑色
+              .padding(AppDimens.PADDING_MD)
+              .onClick(() => this.goToPrevNode())
 
-          Blank()
-            .layoutWeight(1)
+            Blank()
+              .layoutWeight(1)
 
-          // 中间左侧：播放/暂停按钮
-          Text(this.isPlaying ? '⏸' : '▶')
-            .fontSize(28)
-            .fontColor('#333333')  // 黑色
-            .padding(AppDimens.PADDING_SM)
-            .onClick(() => this.togglePlay())
+            // 中间：隐形占位（与播放键等宽，保持对称）
+            Text('⏸')
+              .fontSize(28)
+              .fontColor('#00000000')  // 透明
+              .padding(AppDimens.PADDING_SM)
 
-          // 中间：倍速按钮（紧邻播放键右侧）
-          Text(this.playbackSpeed)
-            .fontSize(AppDimens.FONT_MD)
-            .fontColor('#333333')  // 黑色字体
-            .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-            .margin({ left: 12 })  // 与播放键间距
-            .onClick(() => this.cycleSpeed())
+            Blank()
+              .layoutWeight(1)
 
-          Blank()
-            .layoutWeight(1)
+            // 右侧：下一节点
+            Text('►►')
+              .fontSize(AppDimens.FONT_LG)
+              .fontColor('#333333')  // 黑色
+              .padding(AppDimens.PADDING_MD)
+              .onClick(() => this.goToNextNode())
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
 
-          // 右侧：下一节点
-          Text('►►')
-            .fontSize(AppDimens.FONT_LG)
-            .fontColor('#333333')  // 黑色
-            .padding(AppDimens.PADDING_MD)
-            .onClick(() => this.goToNextNode())
+          // 中层：播放键绝对居中（负 margin 上移覆盖底层）
+          Row() {
+            Blank()
+              .layoutWeight(1)
+
+            Text(this.isPlaying ? '⏸' : '▶')
+              .fontSize(28)
+              .fontColor('#333333')  // 黑色
+              .padding(AppDimens.PADDING_SM)
+              .onClick(() => this.togglePlay())
+
+            Blank()
+              .layoutWeight(1)
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .margin({ top: -60 })
+
+          // 顶层：倍速按钮（在播放键右侧，距离为播放键到下一节点距离的 1/3）
+          Row() {
+            Blank()
+              .layoutWeight(1)
+
+            // 播放键占位（与中层播放键对齐）
+            Text('⏸')
+              .fontSize(28)
+              .fontColor('#00000000')  // 透明
+              .padding(AppDimens.PADDING_SM)
+
+            // d/3 间距
+            Blank()
+              .width(4)  // 4px 间距
+
+            Text(this.playbackSpeed)
+              .fontSize(AppDimens.FONT_MD)
+              .fontColor('#333333')  // 黑色字体
+              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+              .onClick(() => this.cycleSpeed())
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .margin({ top: -60 })
         }
         .width('100%')
+        .height(60)  // 固定高度，让 Column 内层正常渲染
         .margin({ top: 8 })
-        .alignItems(VerticalAlign.Center)
-        .justifyContent(FlexAlign.Center)
       }
       .width('100%')
       .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG, top: 12, bottom: 36 })
