@@ -80,7 +80,7 @@ export struct TripReplayPage {
       left: 0,
       right: 0,
       top: 0,
-      bottom: 180  // 底部留出空间给控制栏，避免重叠
+      bottom: 240  // 底部留出空间给控制栏，避免重叠（增加以避开右侧节点标签）
     }
   }
   private mapController?: map.MapComponentController

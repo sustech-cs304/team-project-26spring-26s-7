@@ -40,7 +40,7 @@ export struct ReplayProgressBar {
           ForEach(this.nodeLabels, (label: string, index: number) => {
             Text(label)
               .fontSize(AppDimens.FONT_SM)
-              .fontColor(index <= this.currentIndex ? '#FFFFFF' : '#FFFFFF66')
+              .fontColor(index <= this.currentIndex ? '#FFFFFF' : '#FFFFFF99')  // 已访问白色，未访问浅灰
               .layoutWeight(1)
               .textAlign(index === 0 ? TextAlign.Start : (index === this.nodeLabels.length - 1 ? TextAlign.End : TextAlign.Center))
           })
@@ -59,8 +59,8 @@ export struct ReplayProgressBar {
         })
           .layoutWeight(1)
           .trackColor('#FFFFFF33')
-          .selectedColor(AppColors.PRIMARY)
-          .blockColor(AppColors.PRIMARY)
+          .selectedColor('#1890FF')  // 主蓝色，更清晰
+          .blockColor('#FFFFFF')     // 白色滑块
           .onChange((value: number) => {
             const index = Math.round((value / 100) * (this.nodeCount - 1))
             if (this.onChange) {
