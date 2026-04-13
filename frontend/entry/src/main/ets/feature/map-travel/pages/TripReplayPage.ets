@@ -782,7 +782,7 @@ export struct TripReplayPage {
         })
         .width('100%')
 
-        // 控制按钮 - 播放键居中
+        // 控制按钮 - 播放键居中，倍速在播放键右侧
         Row() {
           // 左侧：上一节点
           Text('◄◄')
@@ -794,7 +794,7 @@ export struct TripReplayPage {
           Blank()
             .layoutWeight(1)
 
-          // 中间：播放/暂停按钮（居中）
+          // 中间左侧：播放/暂停按钮
           Text(this.isPlaying ? '⏸' : '▶')
             .fontSize(28)
             .fontColor('#FFFFFF')
@@ -804,6 +804,17 @@ export struct TripReplayPage {
             .height(56)
             .textAlign(TextAlign.Center)
             .onClick(() => this.togglePlay())
+
+          // 中间：倍速按钮（紧邻播放键右侧）
+          Text(this.playbackSpeed)
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor('#333333')  // 黑色字体
+            .backgroundColor('#FFFFFF')  // 白色背景
+            .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+            .borderRadius(16)
+            .shadow({ radius: 4, color: '#00000020', offsetY: 2 })
+            .margin({ left: 12 })  // 与播放键间距
+            .onClick(() => this.cycleSpeed())
 
           Blank()
             .layoutWeight(1)
@@ -819,23 +830,6 @@ export struct TripReplayPage {
         .margin({ top: 8 })
         .alignItems(VerticalAlign.Center)
         .justifyContent(FlexAlign.Center)
-
-        // 速度切换按钮 - 黑字白底，位于进度条上方右侧
-        Row() {
-          Blank()
-            .layoutWeight(1)
-
-          Text(this.playbackSpeed)
-            .fontSize(AppDimens.FONT_MD)
-            .fontColor('#333333')  // 黑色字体
-            .backgroundColor('#FFFFFF')  // 白色背景
-            .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-            .borderRadius(16)
-            .shadow({ radius: 4, color: '#00000020', offsetY: 2 })
-            .onClick(() => this.cycleSpeed())
-        }
-        .width('100%')
-        .margin({ top: 8, bottom: -4 })
       }
       .width('100%')
       .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG, top: 12, bottom: 36 })
