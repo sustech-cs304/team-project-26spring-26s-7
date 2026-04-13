@@ -75,6 +75,12 @@ export struct TripReplayPage {
     position: {
       target: DEFAULT_REPLAY_CENTER,
       zoom: 13
+    },
+    padding: {  // 设置地图内边距，将缩放按钮往上移
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 180  // 底部留出空间给控制栏，避免重叠
     }
   }
   private mapController?: map.MapComponentController
@@ -776,16 +782,19 @@ export struct TripReplayPage {
         })
         .width('100%')
 
-        // 控制按钮
+        // 控制按钮 - 播放键居中
         Row() {
-          // 上一节点
+          // 左侧：上一节点
           Text('◄◄')
             .fontSize(AppDimens.FONT_LG)
             .fontColor('#FFFFFF')
             .padding(AppDimens.PADDING_MD)
             .onClick(() => this.goToPrevNode())
 
-          // 播放/暂停按钮
+          Blank()
+            .layoutWeight(1)
+
+          // 中间：播放/暂停按钮（居中）
           Text(this.isPlaying ? '⏸' : '▶')
             .fontSize(28)
             .fontColor('#FFFFFF')
@@ -796,27 +805,37 @@ export struct TripReplayPage {
             .textAlign(TextAlign.Center)
             .onClick(() => this.togglePlay())
 
-          // 下一节点
+          Blank()
+            .layoutWeight(1)
+
+          // 右侧：下一节点
           Text('►►')
             .fontSize(AppDimens.FONT_LG)
             .fontColor('#FFFFFF')
             .padding(AppDimens.PADDING_MD)
             .onClick(() => this.goToNextNode())
-
-          Blank()
-
-          // 速度切换
-          Text(this.playbackSpeed)
-            .fontSize(AppDimens.FONT_MD)
-            .fontColor('#FFFFFF')
-            .backgroundColor('#FFFFFF33')
-            .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-            .borderRadius(16)
-            .onClick(() => this.cycleSpeed())
         }
         .width('100%')
         .margin({ top: 8 })
         .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.Center)
+
+        // 速度切换按钮 - 黑字白底，位于进度条上方右侧
+        Row() {
+          Blank()
+            .layoutWeight(1)
+
+          Text(this.playbackSpeed)
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor('#333333')  // 黑色字体
+            .backgroundColor('#FFFFFF')  // 白色背景
+            .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+            .borderRadius(16)
+            .shadow({ radius: 4, color: '#00000020', offsetY: 2 })
+            .onClick(() => this.cycleSpeed())
+        }
+        .width('100%')
+        .margin({ top: 8, bottom: -4 })
       }
       .width('100%')
       .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG, top: 12, bottom: 36 })
