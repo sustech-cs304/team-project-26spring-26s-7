@@ -787,7 +787,7 @@ export struct TripReplayPage {
           // 左侧：上一节点
           Text('◄◄')
             .fontSize(AppDimens.FONT_LG)
-            .fontColor('#FFFFFF')
+            .fontColor('#333333')  // 黑色
             .padding(AppDimens.PADDING_MD)
             .onClick(() => this.goToPrevNode())
 
@@ -797,22 +797,15 @@ export struct TripReplayPage {
           // 中间左侧：播放/暂停按钮
           Text(this.isPlaying ? '⏸' : '▶')
             .fontSize(28)
-            .fontColor('#FFFFFF')
-            .backgroundColor(AppColors.PRIMARY)
-            .borderRadius(28)
-            .width(56)
-            .height(56)
-            .textAlign(TextAlign.Center)
+            .fontColor('#333333')  // 黑色
+            .padding(AppDimens.PADDING_SM)
             .onClick(() => this.togglePlay())
 
           // 中间：倍速按钮（紧邻播放键右侧）
           Text(this.playbackSpeed)
             .fontSize(AppDimens.FONT_MD)
             .fontColor('#333333')  // 黑色字体
-            .backgroundColor('#FFFFFF')  // 白色背景
             .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-            .borderRadius(16)
-            .shadow({ radius: 4, color: '#00000020', offsetY: 2 })
             .margin({ left: 12 })  // 与播放键间距
             .onClick(() => this.cycleSpeed())
 
@@ -822,7 +815,7 @@ export struct TripReplayPage {
           // 右侧：下一节点
           Text('►►')
             .fontSize(AppDimens.FONT_LG)
-            .fontColor('#FFFFFF')
+            .fontColor('#333333')  // 黑色
             .padding(AppDimens.PADDING_MD)
             .onClick(() => this.goToNextNode())
         }
@@ -833,7 +826,7 @@ export struct TripReplayPage {
       }
       .width('100%')
       .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG, top: 12, bottom: 36 })
-      .backgroundColor('#000000CC')
+      .backgroundColor('#FFFFFF')  // 白色背景
       .position({ x: 0, y: '82%' })
 
       // 退出按钮 (左上角) - 使用 Stack 绝对定位
