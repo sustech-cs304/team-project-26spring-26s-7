@@ -1,6 +1,8 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
+import { common } from '@kit.AbilityKit'
+import { media } from '@kit.MediaKit'
 import { AppColors, AppDimens, getDataService } from '../../../common'
 import { RouterParam, ReplayNode, ReplayRoute, Position } from '../../../common'
 import type { MemoryNode } from '../../../common'
@@ -80,7 +82,7 @@ export struct TripReplayPage {
       left: 0,
       right: 0,
       top: 0,
-      bottom: 240  // 底部留出空间给控制栏，避免重叠（增加以避开右侧节点标签）
+      bottom: 320  // 底部留出空间给控制栏，避免重叠（增加以避开右侧节点标签和白色播放区域）
     }
   }
   private mapController?: map.MapComponentController
@@ -95,7 +97,139 @@ export struct TripReplayPage {
     }
   }
 
+  // 音频播放器
+  private avPlayer: media.AVPlayer | undefined = undefined
+  private isAudioPlaying: boolean = false
+
+  /**
+   * 初始化并播放背景音乐
+   */
+  private async initAndPlayMusic(): Promise<void> {
+    try {
+      // 使用 getUIContext().getHostContext() 获取 Context
+      const uiContext = this.getUIContext()
+      const context = uiContext.getHostContext() as common.UIAbilityContext
+
+      if (!context) {
+        console.error('TripReplayPage: 无法获取 UIAbilityContext')
+        return
+      }
+
+      // 创建 AVPlayer 实例
+      const avPlayer: media.AVPlayer = await media.createAVPlayer()
+      if (!avPlayer) {
+        console.error('TripReplayPage: 创建 AVPlayer 失败')
+        return
+      }
+
+      // 注册回调
+      this.regAVPlayerCallback(avPlayer)
+      this.avPlayer = avPlayer
+
+      // 获取 rawfile 的文件描述符
+      const fileDescriptor = await context.resourceManager.getRawFd('South-East-Traveling.mp3')
+
+      // 设置播放源（触发 initialized 状态）
+      avPlayer.fdSrc = {
+        fd: fileDescriptor.fd,
+        offset: fileDescriptor.offset,
+        length: fileDescriptor.length
+      }
+
+      console.info('TripReplayPage: 背景音乐初始化完成')
+    } catch (err) {
+      console.error('TripReplayPage: 播放音乐失败', JSON.stringify(err))
+    }
+  }
+
+  /**
+   * 注册 AVPlayer 回调
+   */
+  private regAVPlayerCallback(avPlayer: media.AVPlayer): void {
+    // 错误回调
+    avPlayer.on('error', (err) => {
+      console.error('TripReplayPage: AVPlayer 错误', JSON.stringify(err))
+      avPlayer.reset()
+    })
+
+    // 状态变化回调
+    avPlayer.on('stateChange', (state: media.AVPlayerState) => {
+      console.info('TripReplayPage: AVPlayer 状态变化', state)
+
+      switch (state) {
+        case 'initialized':
+          // 设置播放源后触发，调用 prepare
+          avPlayer.prepare()
+            .then(() => {
+              console.info('TripReplayPage: AVPlayer prepare 完成')
+            })
+            .catch(() => {
+              console.error('TripReplayPage: AVPlayer prepare 失败')
+            })
+          break
+        case 'prepared':
+          // prepare 完成后可以播放
+          console.info('TripReplayPage: AVPlayer prepared，可以播放')
+          // prepare 完成后开始播放
+          avPlayer.play()
+          break
+        case 'playing':
+          this.isAudioPlaying = true
+          console.info('TripReplayPage: 音乐播放中')
+          break
+        case 'paused':
+          this.isAudioPlaying = false
+          console.info('TripReplayPage: 音乐暂停')
+          break
+        case 'completed':
+          // 播放完成，重新播放（循环）
+          console.info('TripReplayPage: 音乐播放完成，重新开始')
+          avPlayer.seek(0)
+          avPlayer.play()
+          break
+        case 'stopped':
+          avPlayer.reset()
+          break
+        case 'released':
+          this.avPlayer = undefined
+          this.isAudioPlaying = false
+          console.info('TripReplayPage: 音乐播放器已释放')
+          break
+      }
+    })
+  }
+
+  /**
+   * 根据倍速调整音乐播放速度
+   * 注：当前 SDK 版本中 AVPlayer 可能不支持 speed 属性
+   */
+  private async updateMusicSpeed(_speed: string): Promise<void> {
+    // TODO: 待实现 - 需要找到正确的 API 来设置播放速度
+    // 当前 SDK 版本中 AVPlayer 的 speed 属性可能不可用
+    console.info(`TripReplayPage: 倍速调整为 ${_speed} (音乐倍速功能待实现)`)
+  }
+
+  /**
+   * 停止背景音乐
+   */
+  private async stopMusic(): Promise<void> {
+    if (this.avPlayer) {
+      try {
+        await this.avPlayer.stop()
+        this.avPlayer.release()
+        this.avPlayer = undefined
+        this.isAudioPlaying = false
+        console.info('TripReplayPage: 背景音乐已停止')
+      } catch (err) {
+        console.error('TripReplayPage: 停止音乐失败', JSON.stringify(err))
+      }
+    }
+  }
+
   aboutToAppear(): void {
+    // 进入页面即播放背景音乐
+    this.initAndPlayMusic()
+
     const params = router.getParams() as RouterParam
     if (params?.tripId) {
       this.loadReplayData(params.tripId)
@@ -107,6 +241,7 @@ export struct TripReplayPage {
 
   aboutToDisappear(): void {
     this.stopPlay()
+    this.stopMusic()
   }
 
   /**
@@ -670,9 +805,11 @@ export struct TripReplayPage {
   /**
    * 切换播放速度
    */
-  private cycleSpeed(): void {
+  private async cycleSpeed(): Promise<void> {
     const currentIndex = this.speeds.indexOf(this.playbackSpeed)
     this.playbackSpeed = this.speeds[(currentIndex + 1) % this.speeds.length]
+    // 同步调整音乐播放速度
+    await this.updateMusicSpeed(this.playbackSpeed)
   }
 
   /**
@@ -783,90 +920,53 @@ export struct TripReplayPage {
         .width('100%')
 
         // 控制按钮 - 播放键绝对居中，严格对称布局
-        // 布局：◄◄ ←d→ ⏸/▶ ←d/3→ [1x] ←2d/3→ ►►
-        Column() {
-          // 底层：上一节点和下一节点对称分布
-          Row() {
-            // 左侧：上一节点
-            Text('◄◄')
-              .fontSize(AppDimens.FONT_LG)
-              .fontColor('#333333')  // 黑色
-              .padding(AppDimens.PADDING_MD)
-              .onClick(() => this.goToPrevNode())
+        // 布局：使用 Row 一次性布局所有元素，避免负 margin 层级问题
+        Row() {
+          // 左侧：上一节点
+          Text('◄◄')
+            .fontSize(AppDimens.FONT_LG)
+            .fontColor('#333333')  // 黑色
+            .padding(AppDimens.PADDING_MD)
+            .onClick(() => this.goToPrevNode())
 
-            Blank()
-              .layoutWeight(1)
+          // 中间占位
+          Blank()
+            .layoutWeight(1)
 
-            // 中间：隐形占位（与播放键等宽，保持对称）
-            Text('⏸')
-              .fontSize(28)
-              .fontColor('#00000000')  // 透明
-              .padding(AppDimens.PADDING_SM)
+          // 播放键
+          Text(this.isPlaying ? '⏸' : '▶')
+            .fontSize(28)
+            .fontColor('#333333')  // 黑色
+            .padding({ left: AppDimens.PADDING_SM, right: AppDimens.PADDING_SM })
+            .onClick(() => this.togglePlay())
 
-            Blank()
-              .layoutWeight(1)
+          // 倍速按钮
+          Text(this.playbackSpeed)
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor('#333333')  // 黑色字体
+            .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+            .onClick(() => this.cycleSpeed())
 
-            // 右侧：下一节点
-            Text('►►')
-              .fontSize(AppDimens.FONT_LG)
-              .fontColor('#333333')  // 黑色
-              .padding(AppDimens.PADDING_MD)
-              .onClick(() => this.goToNextNode())
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Center)
+          // 右侧占位
+          Blank()
+            .layoutWeight(1)
 
-          // 中层：播放键绝对居中（负 margin 上移覆盖底层）
-          Row() {
-            Blank()
-              .layoutWeight(1)
-
-            Text(this.isPlaying ? '⏸' : '▶')
-              .fontSize(28)
-              .fontColor('#333333')  // 黑色
-              .padding(AppDimens.PADDING_SM)
-              .onClick(() => this.togglePlay())
-
-            Blank()
-              .layoutWeight(1)
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Center)
-          .margin({ top: -60 })
-
-          // 顶层：倍速按钮（在播放键右侧，距离为播放键到下一节点距离的 1/3）
-          Row() {
-            Blank()
-              .layoutWeight(1)
-
-            // 播放键占位（与中层播放键对齐）
-            Text('⏸')
-              .fontSize(28)
-              .fontColor('#00000000')  // 透明
-              .padding(AppDimens.PADDING_SM)
-
-            // d/3 间距
-            Blank()
-              .width(4)  // 4px 间距
-
-            Text(this.playbackSpeed)
-              .fontSize(AppDimens.FONT_MD)
-              .fontColor('#333333')  // 黑色字体
-              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-              .onClick(() => this.cycleSpeed())
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Center)
-          .margin({ top: -60 })
+          // 右侧：下一节点
+          Text('►►')
+            .fontSize(AppDimens.FONT_LG)
+            .fontColor('#333333')  // 黑色
+            .padding(AppDimens.PADDING_MD)
+            .onClick(() => this.goToNextNode())
         }
         .width('100%')
-        .height(60)  // 固定高度，让 Column 内层正常渲染
-        .margin({ top: 8 })
+        .height(60)  // 固定高度
+        .alignItems(VerticalAlign.Center)
       }
       .width('100%')
       .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG, top: 12, bottom: 36 })
       .backgroundColor('#FFFFFF')  // 白色背景
       .position({ x: 0, y: '82%' })
+      .zIndex(90)  // 设置较高的 zIndex 确保按钮可点击
 
       // 退出按钮 (左上角) - 使用 Stack 绝对定位
       Stack() {
