@@ -60,6 +60,9 @@ local.properties
 
 # codex 
 frontend/.codex_*/
+.codex_npm_cache_*
+frontend/.codex_npm_cache_*/
+
 
 #module cache
 frontend/oh_modules/
