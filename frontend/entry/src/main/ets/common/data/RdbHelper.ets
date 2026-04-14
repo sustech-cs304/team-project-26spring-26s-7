@@ -43,6 +43,7 @@ const SQL_CREATE_TRAVELS = `
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     cover_image_uri TEXT,
+    is_public INTEGER NOT NULL DEFAULT 0,
     start_date INTEGER NOT NULL,
     end_date INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
@@ -106,6 +107,10 @@ const SQL_ADD_MEMORY_NODE_ORDER = `
 
 const SQL_ADD_MEMORY_NODE_SENSITIVITY = `
   ALTER TABLE memory_nodes ADD COLUMN sensitivity TEXT NOT NULL DEFAULT 'S2'
+`;
+
+const SQL_ADD_TRAVEL_IS_PUBLIC = `
+  ALTER TABLE travels ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0
 `;
 
 const SQL_MIGRATE_MEMORY_NODE_ORDER = `
@@ -191,6 +196,7 @@ export class RdbHelper {
 
   private async ensureLatestSchema(): Promise<void> {
     const optionalSchemaUpdates: string[] = [
+      SQL_ADD_TRAVEL_IS_PUBLIC,
       SQL_ADD_MEMORY_NODE_TITLE,
       SQL_ADD_MEMORY_NODE_POI_NAME,
       SQL_ADD_MEMORY_NODE_DESCRIPTION,

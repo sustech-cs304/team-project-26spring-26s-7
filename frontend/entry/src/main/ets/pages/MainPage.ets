@@ -1,20 +1,20 @@
 import { AppColors, AppDimens } from '../common'
 import { MapHomeView } from '../feature/map-travel/views/MapHomeView'
 import { TripListView } from '../feature/map-travel/views/TripListView'
-import { TripAlbumView } from '../feature/map-travel/views/TripAlbumView'
+import { NodeListView } from '../feature/map-travel/views/NodeListView'
 import { ProfileView } from '../feature/profile/views/ProfileView'
 
 /**
  * 主框架页 — 底部 TabBar 容器
- * 包含四个 Tab: 地图 / 旅行 / 相册 / 我的
+ * 包含四个 Tab: 地图 / 旅行 / 节点 / 我的
  */
 @Entry
 @Component
 struct MainPage {
   @State currentTabIndex: number = 0
 
-  private tabIcons: string[] = ['🗺', '📋', '🖼', '👤']
-  private tabTitles: string[] = ['地图', '旅行', '相册', '我的']
+  private tabIcons: string[] = ['🗺', '🧳', '📝', '👤']
+  private tabTitles: string[] = ['地图', '旅行', '节点', '我的']
 
   @Builder
   tabBuilder(title: string, targetIndex: number) {
@@ -44,9 +44,9 @@ struct MainPage {
       .tabBar(this.tabBuilder('旅行', 1))
 
       TabContent() {
-        TripAlbumView()
+        NodeListView()
       }
-      .tabBar(this.tabBuilder('相册', 2))
+      .tabBar(this.tabBuilder('节点', 2))
 
       TabContent() {
         ProfileView()

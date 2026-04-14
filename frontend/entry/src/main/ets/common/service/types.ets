@@ -108,6 +108,7 @@ export interface Trip {
   name: string
   description?: string
   coverPhoto?: string
+  isPublic: boolean
   startDate: number
   endDate: number
   nodeIds: string[]

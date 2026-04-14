@@ -54,6 +54,7 @@ export struct MapHomeView {
   @State searchResults: HomeSearchResult[] = []
   @State isSearching: boolean = false
   @State hasSelectedSearchResult: boolean = false
+  @State selectedSearchType: string = ''
   @State selectedSearchTitle: string = ''
   @State selectedSearchSubtitle: string = ''
   @State selectedSearchLatitude: number = 0
@@ -213,10 +214,15 @@ export struct MapHomeView {
 
   private clearSelectedSearchState(): void {
     this.hasSelectedSearchResult = false
+    this.selectedSearchType = ''
     this.selectedSearchTitle = ''
     this.selectedSearchSubtitle = ''
     this.selectedSearchLatitude = 0
     this.selectedSearchLongitude = 0
+    this.previewVisible = false
+    this.previewNodeId = ''
+    this.previewTitle = ''
+    this.previewPoi = ''
     if (this.selectedSearchMarker) {
       try {
         this.selectedSearchMarker.remove()
@@ -237,13 +243,14 @@ export struct MapHomeView {
     }
     const marker = await this.mapController.addMarker({
       position: { latitude, longitude },
+      icon: $r('app.media.search_destination_marker'),
       rotation: 0,
       visible: true,
-      zIndex: 1,
+      zIndex: 3,
       alpha: 1,
       anchorU: 0.5,
       anchorV: 1,
-      clickable: false,
+      clickable: true,
       draggable: false,
       flat: false
     })
@@ -320,14 +327,20 @@ export struct MapHomeView {
     if (!this.hasSelectedSearchResult) {
       return
     }
+    const latitude = this.selectedSearchLatitude
+    const longitude = this.selectedSearchLongitude
+    const poiName = this.selectedSearchSubtitle.length > 0
+      ? this.selectedSearchSubtitle
+      : this.selectedSearchTitle
+    this.clearSelectedSearchState()
+    this.searchKeyword = ''
+    this.searchResults = []
     router.pushUrl({
       url: RouterUrls.NODE_EDIT,
       params: {
-        latitude: this.selectedSearchLatitude,
-        longitude: this.selectedSearchLongitude,
-        poiName: this.selectedSearchSubtitle.length > 0
-          ? this.selectedSearchSubtitle
-          : this.selectedSearchTitle
+        latitude,
+        longitude,
+        poiName
       } as RouterParam
     })
   }
@@ -339,6 +352,7 @@ export struct MapHomeView {
     this.isSearching = false
     this.previewVisible = false
     this.hasSelectedSearchResult = true
+    this.selectedSearchType = item.type
     this.selectedSearchTitle = item.title
     this.selectedSearchSubtitle = item.subtitle
     this.selectedSearchLatitude = item.latitude
@@ -348,8 +362,15 @@ export struct MapHomeView {
       return
     }
 
-    await this.updateSelectedSearchMarker(item.latitude, item.longitude, item.title,
-      item.subtitle.length > 0 ? item.subtitle : item.title)
+    if (item.type === 'site') {
+      await this.updateSelectedSearchMarker(item.latitude, item.longitude, item.title,
+        item.subtitle.length > 0 ? item.subtitle : item.title)
+    } else if (this.selectedSearchMarker) {
+      try {
+        this.selectedSearchMarker.remove()
+      } catch (_) {}
+      this.selectedSearchMarker = undefined
+    }
 
     const cameraUpdate = map.newCameraPosition({
       target: { latitude: item.latitude, longitude: item.longitude },
@@ -438,7 +459,7 @@ export struct MapHomeView {
       this.markerNodeIds.push(node.id)
     }
 
-    if (this.hasSelectedSearchResult) {
+    if (this.hasSelectedSearchResult && this.selectedSearchType === 'site') {
       await this.updateSelectedSearchMarker(
         this.selectedSearchLatitude,
         this.selectedSearchLongitude,
@@ -455,6 +476,11 @@ export struct MapHomeView {
     }
     this.mapController.on('markerClick', (marker: map.Marker) => {
       const position = marker.getPosition()
+      if (this.hasSelectedSearchResult && this.selectedSearchType === 'site' &&
+        Math.abs(this.selectedSearchLatitude - position.latitude) < 0.0001 &&
+        Math.abs(this.selectedSearchLongitude - position.longitude) < 0.0001) {
+        return true
+      }
       for (const node of this.mapNodes) {
         if (Math.abs(node.latitude - position.latitude) < 0.0001 &&
           Math.abs(node.longitude - position.longitude) < 0.0001) {

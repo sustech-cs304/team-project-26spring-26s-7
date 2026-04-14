@@ -63,6 +63,7 @@ export class DataServiceStub implements IDataService {
       name: travel.name || '未命名旅行',
       description: '',
       coverPhoto: '',
+      isPublic: travel.isPublic ?? false,
       startDate: Date.now(),
       endDate: Date.now(),
       nodeIds: [],
@@ -80,6 +81,7 @@ export class DataServiceStub implements IDataService {
       name: '',
       description: '',
       coverPhoto: '',
+      isPublic: data.isPublic ?? false,
       startDate: 0,
       endDate: 0,
       nodeIds: [],
@@ -128,7 +130,7 @@ export class DataServiceStub implements IDataService {
     logger.warn(TAG, `updateNode(${nodeId}) called but not implemented (STUB)`);
     return {
       id: nodeId,
-      travelId: '',
+      travelId: data.travelId ?? '',
       title: '',
       content: '',
       latitude: 0,
