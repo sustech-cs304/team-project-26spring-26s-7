@@ -1,11 +1,12 @@
 import { AppColors, AppDimens } from '../common'
 import { MapHomeView } from '../feature/map-travel/views/MapHomeView'
 import { TripListView } from '../feature/map-travel/views/TripListView'
+import { NodeListView } from '../feature/map-travel/views/NodeListView'
 import { ProfileView } from '../feature/profile/views/ProfileView'
 
 /**
  * 主框架页 — 底部 TabBar 容器
- * 包含三个 Tab: 地图 / 旅行 / 我的
+ * 包含四个 Tab: 地图 / 旅行 / 节点 / 我的
  */
 @Entry
 @Component
@@ -16,8 +17,22 @@ struct MainPage {
   @StorageLink('networkDialogMessage') networkDialogMessage: string = ''
   @StorageLink('networkDialogTitle') networkDialogTitle: string = ''
 
-  private tabIcons: string[] = ['🗺', '📋', '👤']
-  private tabTitles: string[] = ['地图', '旅行', '我的']
+  private tabIcons: string[] = ['🗺', '🧳', '📝', '👤']
+  private tabTitles: string[] = ['地图', '旅行', '节点', '我的']
+
+  private onNetworkDialogTokenChange(): void {
+    if (this.networkDialogToken <= 0 || this.networkDialogMessage.length <= 0) {
+      return
+    }
+    this.getUIContext().showAlertDialog({
+      title: this.networkDialogTitle,
+      message: this.networkDialogMessage,
+      primaryButton: {
+        value: '我知道了',
+        action: () => {}
+      }
+    })
+  }
 
   private onNetworkDialogTokenChange(): void {
     if (this.networkDialogToken <= 0 || this.networkDialogMessage.length <= 0) {
@@ -61,9 +76,14 @@ struct MainPage {
       .tabBar(this.tabBuilder('旅行', 1))
 
       TabContent() {
+        NodeListView()
+      }
+      .tabBar(this.tabBuilder('节点', 2))
+
+      TabContent() {
         ProfileView()
       }
-      .tabBar(this.tabBuilder('我的', 2))
+      .tabBar(this.tabBuilder('我的', 3))
     }
     .scrollable(false)
     .barHeight(56)

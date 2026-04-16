@@ -24,6 +24,7 @@ export struct NodeDetailPage {
   @State tripId: string = ''
   @State nodeId: string = ''
   @State isLoading: boolean = false
+  @State selectedPhotoIndex: number = 0
 
   private dataService = getDataService()
 
@@ -48,6 +49,11 @@ export struct NodeDetailPage {
     return `${year}.${month}.${day}`
   }
 
+  private getDisplayContent(): string {
+    const trimmed = this.content.trim()
+    return trimmed.length > 0 ? trimmed : '这条节点还没有补充正文内容。'
+  }
+
   private async loadNodeDetail(): Promise<void> {
     if (!this.nodeId) {
       return
@@ -68,12 +74,13 @@ export struct NodeDetailPage {
       this.tags = node.tags
       this.content = node.content
       this.photos = node.photos
+      this.selectedPhotoIndex = 0
       hilog.info(DOMAIN, TAG, `loadNodeDetail photos=${JSON.stringify(node.photos)}`)
       this.tripId = node.travelId
 
       const trip = await this.dataService.getTravelById(node.travelId)
       this.tripName = trip ? trip.name : ''
-    } catch (err) {
+    } catch (_) {
       promptAction.showToast({ message: '加载节点详情失败' })
     } finally {
       this.isLoading = false
@@ -89,7 +96,7 @@ export struct NodeDetailPage {
       this.bumpTravelDataVersion()
       promptAction.showToast({ message: '记忆节点已删除' })
       router.back()
-    } catch (err) {
+    } catch (_) {
       promptAction.showToast({ message: '删除节点失败' })
     }
   }
@@ -112,9 +119,144 @@ export struct NodeDetailPage {
     })
   }
 
+  @Builder
+  private buildPhotoHero() {
+    Column() {
+      Stack() {
+        if (this.photos.length > 0) {
+          Image(this.photos[this.selectedPhotoIndex])
+            .width('100%')
+            .height('100%')
+            .objectFit(ImageFit.Cover)
+        } else {
+          Column() {
+            Text('📷')
+              .fontSize(46)
+            Text('这条节点还没有照片')
+              .fontSize(AppDimens.FONT_MD)
+              .fontColor('#E9F3FF')
+              .margin({ top: 8 })
+          }
+          .width('100%')
+          .height('100%')
+          .justifyContent(FlexAlign.Center)
+          .backgroundColor('#3C5C83')
+        }
+
+        Column() {
+          Row() {
+            Blank()
+            Text(this.photos.length > 0 ? `${this.selectedPhotoIndex + 1} / ${this.photos.length}` : '暂无照片')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.CARD_BG)
+              .backgroundColor('#66000000')
+              .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+              .borderRadius(14)
+          }
+          .width('100%')
+
+          Blank()
+
+          Text(this.poiName.length > 0 ? this.poiName : '未命名地点')
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor(AppColors.CARD_BG)
+            .backgroundColor('#66000000')
+            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+            .borderRadius(16)
+        }
+        .width('100%')
+        .height('100%')
+        .padding(AppDimens.PADDING_MD)
+        .justifyContent(FlexAlign.SpaceBetween)
+        .alignItems(HorizontalAlign.Start)
+      }
+      .width('100%')
+      .height(280)
+      .clip(true)
+
+      if (this.photos.length > 1) {
+        Row({ space: 10 }) {
+          ForEach(this.photos, (photo: string, index: number) => {
+            Stack() {
+              Image(photo)
+                .width('100%')
+                .height('100%')
+                .objectFit(ImageFit.Cover)
+            }
+            .width(68)
+            .height(68)
+            .borderRadius(AppDimens.RADIUS_MD)
+            .clip(true)
+            .border({
+              width: this.selectedPhotoIndex === index ? 2 : 0,
+              color: this.selectedPhotoIndex === index ? AppColors.PRIMARY : 'transparent'
+            })
+            .onClick(() => { this.selectedPhotoIndex = index })
+          })
+        }
+        .width('100%')
+        .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12, bottom: 4 })
+      }
+    }
+    .width('100%')
+    .backgroundColor(AppColors.CARD_BG)
+  }
+
+  @Builder
+  private buildInfoCard() {
+    Column() {
+      Text(this.title.length > 0 ? this.title : '未命名记忆')
+        .fontSize(28)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(AppColors.TEXT_PRIMARY)
+        .width('100%')
+
+      Row({ space: 8 }) {
+        Text(`📍 ${this.poiName}`)
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_SECONDARY)
+          .backgroundColor(AppColors.BACKGROUND)
+          .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+          .borderRadius(14)
+        Text(this.date)
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_SECONDARY)
+          .backgroundColor(AppColors.BACKGROUND)
+          .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+          .borderRadius(14)
+        if (this.mood.length > 0) {
+          Text(this.mood)
+            .fontSize(AppDimens.FONT_SM)
+            .backgroundColor('#FFF4E5')
+            .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+            .borderRadius(14)
+        }
+      }
+      .margin({ top: 12 })
+
+      if (this.tags.length > 0) {
+        Row({ space: 8 }) {
+          ForEach(this.tags, (tag: string) => {
+            Text(`#${tag}`)
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.PRIMARY)
+              .backgroundColor(AppColors.PRIMARY + '12')
+              .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+              .borderRadius(14)
+          })
+        }
+        .margin({ top: 12 })
+      }
+    }
+    .width('100%')
+    .padding(AppDimens.PADDING_LG)
+    .backgroundColor(AppColors.CARD_BG)
+    .borderRadius(AppDimens.RADIUS_LG)
+    .alignItems(HorizontalAlign.Start)
+  }
+
   build() {
     Column() {
-      // 顶部导航栏
       Row() {
         Text('←')
           .fontSize(AppDimens.FONT_XL)
@@ -142,136 +284,84 @@ export struct NodeDetailPage {
       .height(56)
       .backgroundColor(AppColors.CARD_BG)
 
-      // 内容区
-      Scroll() {
+      if (this.isLoading) {
         Column() {
-          if (this.isLoading) {
-            Column() {
-              LoadingProgress()
-                .width(36)
-                .height(36)
-            }
-            .width('100%')
-            .height(200)
-            .justifyContent(FlexAlign.Center)
-          }
-
-          // 照片轮播区
-          if (this.photos.length > 0) {
-            Swiper() {
-              ForEach(this.photos, (photo: string) => {
-                Image(photo)
-                  .width('100%')
-                  .height(240)
-                  .objectFit(ImageFit.Cover)
-              })
-            }
-            .width('100%')
-            .height(240)
-            .autoPlay(true)
-            .interval(3000)
-            .indicator(
-              Indicator.dot()
-                .itemWidth(8)
-                .itemHeight(8)
-                .selectedItemWidth(8)
-                .selectedItemHeight(8)
-                .color(AppColors.TEXT_HINT)
-                .selectedColor(AppColors.PRIMARY)
-            )
-          } else {
-            Stack() {
-              Column() {
-                Text('📷')
-                  .fontSize(48)
-                  .fontColor(AppColors.TEXT_HINT)
-                Text('暂无照片')
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_HINT)
-              }
-              .justifyContent(FlexAlign.Center)
-            }
-            .width('100%')
-            .height(240)
-            .backgroundColor(AppColors.DIVIDER)
-          }
-
-          // 基本信息
-          Column() {
-            Text(this.title)
-              .fontSize(AppDimens.FONT_XL)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(AppColors.TEXT_PRIMARY)
-
-            Row() {
-              Text(`📍 ${this.poiName}`)
-                .fontSize(AppDimens.FONT_MD)
-                .fontColor(AppColors.TEXT_SECONDARY)
-              Text(`· ${this.date}`)
-                .fontSize(AppDimens.FONT_MD)
-                .fontColor(AppColors.TEXT_HINT)
-                .margin({ left: 8 })
-            }
-            .margin({ top: 8 })
-
-            Row({ space: 8 }) {
-              Text(this.mood)
-                .fontSize(18)
-              ForEach(this.tags, (tag: string) => {
-                Text(`#${tag}`)
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.PRIMARY)
-                  .backgroundColor(AppColors.PRIMARY + '15')
-                  .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-                  .borderRadius(12)
-              })
-            }
+          LoadingProgress()
+            .width(36)
+            .height(36)
+          Text('正在加载节点详情...')
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_HINT)
             .margin({ top: 12 })
-          }
-          .width('100%')
-          .padding(AppDimens.PADDING_MD)
-          .alignItems(HorizontalAlign.Start)
-
-          Divider()
-            .color(AppColors.DIVIDER)
-            .margin({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD })
-
-          // 正文
-          Text(this.content)
-            .fontSize(AppDimens.FONT_MD)
-            .fontColor(AppColors.TEXT_PRIMARY)
-            .lineHeight(24)
-            .padding(AppDimens.PADDING_MD)
-            .width('100%')
-
-          // 所属旅行
-          if (this.tripName.length > 0) {
-            Row() {
-              Text('所属旅行')
-                .fontSize(AppDimens.FONT_MD)
-                .fontColor(AppColors.TEXT_SECONDARY)
-              Blank()
-              Text(this.tripName)
-                .fontSize(AppDimens.FONT_MD)
-                .fontColor(AppColors.PRIMARY)
-              Text(' >')
-                .fontColor(AppColors.TEXT_HINT)
-            }
-            .width('100%')
-            .padding(AppDimens.PADDING_MD)
-            .margin({ top: 12 })
-            .backgroundColor(AppColors.CARD_BG)
-            .borderRadius(AppDimens.RADIUS_SM)
-            .onClick(() => {
-              router.pushUrl({
-                url: RouterUrls.TRIP_DETAIL,
-                params: { tripId: this.tripId } as RouterParam
-              })
-            })
-          }
         }
+        .width('100%')
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Center)
+      } else {
+        Scroll() {
+          Column() {
+            this.buildPhotoHero()
+
+            Column() {
+              this.buildInfoCard()
+
+              Column() {
+                Text('正文')
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(AppColors.TEXT_PRIMARY)
+                  .width('100%')
+                Text(this.getDisplayContent())
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontColor(AppColors.TEXT_PRIMARY)
+                  .lineHeight(24)
+                  .margin({ top: 12 })
+                  .width('100%')
+              }
+              .width('100%')
+              .padding(AppDimens.PADDING_LG)
+              .margin({ top: 14 })
+              .backgroundColor(AppColors.CARD_BG)
+              .borderRadius(AppDimens.RADIUS_LG)
+              .alignItems(HorizontalAlign.Start)
+
+              if (this.tripName.length > 0) {
+                Row() {
+                  Column() {
+                    Text('所属旅行')
+                      .fontSize(AppDimens.FONT_SM)
+                      .fontColor(AppColors.TEXT_HINT)
+                    Text(this.tripName)
+                      .fontSize(AppDimens.FONT_LG)
+                      .fontWeight(FontWeight.Medium)
+                      .fontColor(AppColors.TEXT_PRIMARY)
+                      .margin({ top: 6 })
+                  }
+                  .alignItems(HorizontalAlign.Start)
+                  .layoutWeight(1)
+                  Text('查看 Track >')
+                    .fontSize(AppDimens.FONT_SM)
+                    .fontColor(AppColors.PRIMARY)
+                }
+                .width('100%')
+                .padding(AppDimens.PADDING_LG)
+                .margin({ top: 14, bottom: 24 })
+                .backgroundColor(AppColors.CARD_BG)
+                .borderRadius(AppDimens.RADIUS_LG)
+                .onClick(() => {
+                  router.pushUrl({
+                    url: RouterUrls.TRIP_DETAIL,
+                    params: { tripId: this.tripId } as RouterParam
+                  })
+                })
+              }
+            }
+            .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 16 })
+          }
+          .padding({ bottom: 24 })
+        }
+        .layoutWeight(1)
       }
-      .layoutWeight(1)
     }
     .width('100%')
     .height('100%')

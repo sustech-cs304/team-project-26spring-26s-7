@@ -182,6 +182,7 @@ export class SyncManager {
         name: cloudTravel.name,
         description: cloudTravel.description,
         coverPhoto: cloudTravel.coverPhoto,
+        isPublic: cloudTravel.isPublic,
         startDate: cloudTravel.startDate,
         endDate: cloudTravel.endDate,
         nodeIds: cloudTravel.nodeIds,

@@ -18,6 +18,8 @@
 // Views 导出
 export { MapHomeView } from './views/MapHomeView';
 export { TripListView } from './views/TripListView';
+export { TripAlbumView } from './views/TripAlbumView';
+export { NodeListView } from './views/NodeListView';
 
 // Components 导出
 export { PhotoSelector } from './components/PhotoSelector';
@@ -28,6 +30,7 @@ export { PhotoCardOverlay } from './components/PhotoCardOverlay';
 // Pages 导出（如需在 feature 间引用）
 export { NodeEditPage } from './pages/NodeEditPage';
 export { NodeDetailPage } from './pages/NodeDetailPage';
+export { TripEditPage } from './pages/TripEditPage';
 export { TripDetailPage } from './pages/TripDetailPage';
 export { TripReplayPage } from './pages/TripReplayPage';
 export { LocationPickerPage } from './pages/LocationPickerPage';

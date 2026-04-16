@@ -45,7 +45,9 @@ export struct NodeEditPage {
     if (typeof params?.latitude === 'number' && typeof params?.longitude === 'number') {
       this.latitude = params.latitude
       this.longitude = params.longitude
-      this.poiName = `${params.latitude.toFixed(4)}, ${params.longitude.toFixed(4)}`
+      this.poiName = params.poiName && params.poiName.trim().length > 0
+        ? params.poiName
+        : `${params.latitude.toFixed(4)}, ${params.longitude.toFixed(4)}`
       this.hasPickedLocation = true
     }
 
@@ -140,6 +142,7 @@ export struct NodeEditPage {
       name: `新旅行 ${this.formatDate(now)}`,
       description: '',
       coverPhoto: '',
+      isPublic: false,
       startDate: now,
       endDate: now,
       nodeIds: [],
@@ -173,6 +176,7 @@ export struct NodeEditPage {
 
       if (this.isEditMode && this.nodeId.length > 0) {
         await this.dataService.updateNode(this.nodeId, {
+          travelId: targetTripId,
           title: trimmedTitle,
           content: this.content,
           latitude: this.latitude,
@@ -217,9 +221,6 @@ export struct NodeEditPage {
   }
 
   private openTripSelector(): void {
-    if (this.isEditMode) {
-      return
-    }
     if (this.availableTrips.length === 0) {
       promptAction.showToast({ message: '暂无旅行，将在保存时自动创建' })
       return
@@ -281,28 +282,32 @@ export struct NodeEditPage {
               router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
             })
 
-            // 旅行选择 (仅创建模式)
-            if (!this.isEditMode) {
-              Row() {
-                Text('🧳')
-                  .fontSize(18)
+            Row() {
+              Text('🧳')
+                .fontSize(18)
+              Column() {
                 Text(this.getCurrentTripName())
                   .fontSize(AppDimens.FONT_MD)
                   .fontColor(AppColors.TEXT_SECONDARY)
-                  .margin({ left: 8 })
-                  .layoutWeight(1)
-                Text('选择旅行 >')
+                Text(this.isEditMode ? '切换所属旅行' : '选择旅行')
                   .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.PRIMARY)
-                  .onClick(() => this.openTripSelector())
+                  .fontColor(AppColors.TEXT_HINT)
+                  .margin({ top: 4 })
               }
-              .width('100%')
-              .padding(AppDimens.PADDING_MD)
-              .margin({ top: 12 })
-              .backgroundColor(AppColors.CARD_BG)
-              .borderRadius(AppDimens.RADIUS_SM)
-              .onClick(() => this.openTripSelector())
+              .margin({ left: 8 })
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Start)
+              Text('选择旅行 >')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.PRIMARY)
+                .onClick(() => this.openTripSelector())
             }
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .margin({ top: 12 })
+            .backgroundColor(AppColors.CARD_BG)
+            .borderRadius(AppDimens.RADIUS_SM)
+            .onClick(() => this.openTripSelector())
 
             // 照片选择区 (使用 PhotoSelector 组件)
             PhotoSelector({ photos: $photos, maxPhotos: 9 })

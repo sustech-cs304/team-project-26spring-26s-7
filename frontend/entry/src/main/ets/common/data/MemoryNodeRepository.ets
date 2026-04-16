@@ -44,6 +44,7 @@ export interface CreateNodeInput {
  * 更新节点的输入数据
  */
 export interface UpdateNodeInput {
+  travelId?: string;
   title?: string;
   latitude?: number;
   longitude?: number;
@@ -309,6 +310,10 @@ export class MemoryNodeRepository {
         'sync_status': currentNode.cloudId && currentNode.cloudId.length > 0 ? 'pending_update' : 'pending_create',
         'version': (currentNode.version ?? 1) + 1
       };
+      if (node.travelId !== undefined) {
+        valueBucket['travel_id'] = this.toDbId(node.travelId, 'travel id');
+        valueBucket[NODE_ORDER_COLUMN] = await this.getNextNodeOrder(store, node.travelId);
+      }
       if (node.title !== undefined) {
         valueBucket['title'] = node.title;
       }

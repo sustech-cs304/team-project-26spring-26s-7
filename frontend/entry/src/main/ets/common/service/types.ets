@@ -97,6 +97,7 @@ export interface RouterParam {
   tripId?: string
   latitude?: number
   longitude?: number
+  poiName?: string
   defaultPrompt?: string
   defaultTitle?: string
 }
@@ -107,6 +108,7 @@ export interface Trip {
   name: string
   description?: string
   coverPhoto?: string
+  isPublic: boolean
   startDate: number
   endDate: number
   nodeIds: string[]

@@ -1,0 +1,150 @@
+- generic [ref=e5]:
+  - banner [ref=e10]:
+    - link [ref=e11] [cursor=pointer]:
+      - /url: /consumer/cn/
+      - img [ref=e13]
+    - generic:
+      - generic:
+        - generic [ref=e18]:
+          - link "文档" [ref=e19] [cursor=pointer]:
+            - /url: /consumer/cn/doc/
+            - img [ref=e21]
+            - generic [ref=e23]: 文档
+          - link "下载 App" [ref=e24] [cursor=pointer]:
+            - /url: https://developer.huawei.com/consumer/cn/huawei-app/
+            - img [ref=e26]
+            - generic [ref=e28]: 下载 App
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - generic [ref=e32]: 我的
+            - img [ref=e34] [cursor=pointer]
+          - generic [ref=e37]:
+            - img [ref=e40]
+            - generic [ref=e43] [cursor=pointer]:
+              - generic [ref=e44]:
+                - generic [ref=e45]: Hello，
+                - generic [ref=e46]: 欢迎来到开发者联盟
+              - img [ref=e48]
+          - list [ref=e50]:
+            - link "个人中心" [ref=e51] [cursor=pointer]:
+              - /url: https://developer.huawei.com/consumer/cn/personalcenter/overview
+              - listitem [ref=e52]:
+                - generic [ref=e53]:
+                  - img [ref=e55]
+                  - text: 个人中心
+                - img [ref=e60]
+          - list [ref=e62]:
+            - link "我的学堂" [ref=e63] [cursor=pointer]:
+              - /url: https://developer.huawei.com/consumer/cn/training/mine/
+              - listitem [ref=e64]:
+                - generic [ref=e65]:
+                  - img [ref=e67]
+                  - text: 我的学堂
+                - img [ref=e77]
+            - link "我的收藏" [ref=e79] [cursor=pointer]:
+              - /url: https://developer.huawei.com/consumer/cn/personalcenter/myInfo/myCollection
+              - listitem [ref=e80]:
+                - generic [ref=e81]:
+                  - img [ref=e83]
+                  - text: 我的收藏
+                - img [ref=e88]
+            - link "我的活动" [ref=e90] [cursor=pointer]:
+              - /url: https://developer.huawei.com/consumer/cn/personalcenter/myActivity/activityList
+              - listitem [ref=e91]:
+                - generic [ref=e92]:
+                  - img [ref=e94]
+                  - text: 我的活动
+                - img [ref=e97]
+            - link "我的工单" [ref=e99] [cursor=pointer]:
+              - /url: https://developer.huawei.com/consumer/cn/personalcenter/myCustom/ticketlist
+              - listitem [ref=e100]:
+                - generic [ref=e101]:
+                  - img [ref=e103]
+                  - text: 我的工单
+                - img [ref=e108]
+          - generic [ref=e111] [cursor=pointer]: 立即登录
+      - generic:
+        - list [ref=e112]:
+          - listitem [ref=e113]:
+            - link "探索" [ref=e117] [cursor=pointer]:
+              - /url: /consumer/cn/discover/
+              - generic [ref=e118]: 探索
+          - listitem [ref=e119]:
+            - link "设计" [ref=e123] [cursor=pointer]:
+              - /url: /consumer/cn/design/
+              - generic [ref=e124]: 设计
+          - listitem [ref=e125]:
+            - link "开发" [ref=e129] [cursor=pointer]:
+              - /url: /consumer/cn/develop/
+              - generic [ref=e130]: 开发
+          - listitem [ref=e131]:
+            - link "分发" [ref=e135] [cursor=pointer]:
+              - /url: /consumer/cn/distribute/
+              - generic [ref=e136]: 分发
+          - listitem [ref=e137]:
+            - link "推广与变现" [ref=e141] [cursor=pointer]:
+              - /url: /consumer/cn/promote/
+              - generic [ref=e142]: 推广与变现
+          - listitem [ref=e143]:
+            - link "生态合作" [ref=e147] [cursor=pointer]:
+              - /url: /consumer/cn/cooperate/
+              - generic [ref=e148]: 生态合作
+          - listitem [ref=e149]:
+            - link "支持" [ref=e153] [cursor=pointer]:
+              - /url: /consumer/cn/support/
+              - generic [ref=e154]: 支持
+        - generic:
+          - generic [ref=e155]:
+            - img [ref=e157]
+            - text: 返回
+          - list [ref=e159]
+        - generic:
+          - generic [ref=e160]:
+            - img [ref=e162]
+            - text: 返回
+          - list [ref=e164]
+    - img [ref=e171]
+    - generic [ref=e178]:
+      - textbox "输入关键字搜索" [ref=e179]
+      - img [ref=e181] [cursor=pointer]
+  - generic [ref=e261]:
+    - generic [ref=e262]:
+      - generic [ref=e264] [cursor=pointer]:
+        - generic [ref=e265]:
+          - textbox [ref=e267]
+          - generic "简体中文" [ref=e268]
+        - img [ref=e270]
+      - list [ref=e273]:
+        - listitem [ref=e274]:
+          - img [ref=e276] [cursor=pointer]
+        - listitem [ref=e277]:
+          - img [ref=e279] [cursor=pointer]
+        - listitem [ref=e280]:
+          - img [ref=e282] [cursor=pointer]
+        - listitem [ref=e283]:
+          - img [ref=e285] [cursor=pointer]
+        - listitem [ref=e286]:
+          - img [ref=e288] [cursor=pointer]
+        - listitem [ref=e289]:
+          - img [ref=e291] [cursor=pointer]
+    - generic [ref=e292]:
+      - generic [ref=e294]: 华为开发者联盟 版权所有 ©2026
+      - generic [ref=e295]:
+        - link "使用条款" [ref=e297] [cursor=pointer]:
+          - /url: /consumer/cn/devservice/use
+        - generic [ref=e298]:
+          - text: "|"
+          - link "华为开发者联盟用户协议" [ref=e299] [cursor=pointer]:
+            - /url: /consumer/cn/doc/start/useragreement-0000001494912825
+        - generic [ref=e300]:
+          - text: "|"
+          - link "关于华为开发者联盟与隐私的声明" [ref=e301] [cursor=pointer]:
+            - /url: /consumer/cn/devservice/term
+        - generic [ref=e302]:
+          - text: "|"
+          - link "cookies" [ref=e303] [cursor=pointer]:
+            - /url: https://consumer.huawei.com/cn/legal/cookie-policy/
+        - generic [ref=e304]:
+          - text: "|"
+          - link "开源软件声明" [ref=e305] [cursor=pointer]:
+            - /url: /consumer/cn/opensource/

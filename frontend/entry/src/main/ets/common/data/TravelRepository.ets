@@ -28,6 +28,7 @@ const TABLE_NAME = 'travels';
 export interface CreateTravelInput {
   name: string;
   coverImageUri?: string;
+  isPublic?: boolean;
   startDate: number;
   endDate: number;
   sensitivity?: string;
@@ -39,6 +40,7 @@ export interface CreateTravelInput {
 export interface UpdateTravelInput {
   name?: string;
   coverImageUri?: string;
+  isPublic?: boolean;
   startDate?: number;
   endDate?: number;
   sensitivity?: string;
@@ -87,6 +89,7 @@ export class TravelRepository {
     const idIdx = resultSet.getColumnIndex('id');
     const nameIdx = resultSet.getColumnIndex('name');
     const coverIdx = resultSet.getColumnIndex('cover_image_uri');
+    const isPublicIdx = resultSet.getColumnIndex('is_public');
     const startIdx = resultSet.getColumnIndex('start_date');
     const endIdx = resultSet.getColumnIndex('end_date');
     const createdIdx = resultSet.getColumnIndex('created_at');
@@ -103,6 +106,7 @@ export class TravelRepository {
       name: resultSet.getString(nameIdx),
       description: '',
       coverPhoto: resultSet.getString(coverIdx),
+      isPublic: isPublicIdx >= 0 ? resultSet.getDouble(isPublicIdx) === 1 : false,
       startDate: resultSet.getDouble(startIdx),
       endDate: resultSet.getDouble(endIdx),
       nodeIds: [],
@@ -199,6 +203,7 @@ export class TravelRepository {
       const valueBucket: rdb.ValuesBucket = {
         'name': travel.name,
         'cover_image_uri': travel.coverImageUri ?? '',
+        'is_public': travel.isPublic ? 1 : 0,
         'start_date': travel.startDate,
         'end_date': travel.endDate,
         'created_at': now,
@@ -237,6 +242,9 @@ export class TravelRepository {
       }
       if (travel.coverImageUri !== undefined) {
         valueBucket['cover_image_uri'] = travel.coverImageUri;
+      }
+      if (travel.isPublic !== undefined) {
+        valueBucket['is_public'] = travel.isPublic ? 1 : 0;
       }
       if (travel.startDate !== undefined) {
         valueBucket['start_date'] = travel.startDate;

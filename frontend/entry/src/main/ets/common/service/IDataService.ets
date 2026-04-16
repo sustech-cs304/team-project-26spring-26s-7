@@ -22,6 +22,7 @@ export interface CreateTravelInput {
   name: string;
   description?: string;
   coverPhoto?: string;
+  isPublic?: boolean;
   startDate: number;
   endDate: number;
   nodeIds: string[];
@@ -35,6 +36,7 @@ export interface UpdateTravelInput {
   name?: string;
   description?: string;
   coverPhoto?: string;
+  isPublic?: boolean;
   startDate?: number;
   endDate?: number;
   nodeIds?: string[];
@@ -60,6 +62,7 @@ export interface CreateNodeInput {
  * 更新节点输入参数（所有字段可选）
  */
 export interface UpdateNodeInput {
+  travelId?: string;
   title?: string;
   content?: string;
   latitude?: number;

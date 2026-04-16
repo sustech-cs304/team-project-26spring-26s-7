@@ -25,6 +25,7 @@ export struct TripDetailPage {
   @State dateRange: string = ''
   @State nodeCount: number = 0
   @State totalDistance: number = 0
+  @State isPublic: boolean = false
   @State tripId: string = ''
   @State showMenu: boolean = false
   @State isLoading: boolean = false
@@ -118,6 +119,7 @@ export struct TripDetailPage {
       this.dateRange = this.formatDateRange(trip.startDate, trip.endDate)
       this.nodeCount = nodes.length
       this.totalDistance = trip.totalDistance
+      this.isPublic = trip.isPublic
       this.timelineNodes = nodes.map((node: MemoryNode) => this.mapNodeToTimelineNode(node))
       this.routePoints = nodes.map((node: MemoryNode): mapCommon.LatLng => ({
         latitude: node.latitude,
@@ -302,6 +304,10 @@ export struct TripDetailPage {
                 .fontSize(AppDimens.FONT_MD)
                 .fontColor(AppColors.TEXT_SECONDARY)
                 .margin({ left: 8 })
+              Text('· ' + (this.isPublic ? '公开' : '私密'))
+                .fontSize(AppDimens.FONT_MD)
+                .fontColor(this.isPublic ? AppColors.SUCCESS : AppColors.TEXT_HINT)
+                .margin({ left: 8 })
               Text('· ' + this.dateRange)
                 .fontSize(AppDimens.FONT_MD)
                 .fontColor(AppColors.TEXT_HINT)
@@ -407,7 +413,10 @@ export struct TripDetailPage {
             .padding({ left: 16, right: 16, top: 12, bottom: 12 })
             .onClick(() => {
               this.showMenu = false
-              promptAction.showToast({ message: '编辑旅行功能待补充' })
+              router.pushUrl({
+                url: RouterUrls.TRIP_EDIT,
+                params: { tripId: this.tripId } as RouterParam
+              })
             })
           Divider().color(AppColors.DIVIDER)
           Text('删除旅行')

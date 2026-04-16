@@ -251,6 +251,7 @@ export class CloudSyncService {
         name: record.name ?? '',
         description: '',
         coverPhoto: record.coverPhotoObjectKey ?? '',
+        isPublic: false,
         startDate: record.startDate ?? 0,
         endDate: record.endDate ?? 0,
         nodeIds: [],

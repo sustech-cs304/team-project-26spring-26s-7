@@ -55,6 +55,7 @@ export class RouterUrls {
   static readonly MAIN: string = 'pages/MainPage'
   static readonly NODE_EDIT: string = 'feature/map-travel/pages/NodeEditPage'
   static readonly NODE_DETAIL: string = 'feature/map-travel/pages/NodeDetailPage'
+  static readonly TRIP_EDIT: string = 'feature/map-travel/pages/TripEditPage'
   static readonly TRIP_DETAIL: string = 'feature/map-travel/pages/TripDetailPage'
   static readonly TRIP_REPLAY: string = 'feature/map-travel/pages/TripReplayPage'
   static readonly LOCATION_PICKER: string = 'feature/map-travel/pages/LocationPickerPage'

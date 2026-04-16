@@ -171,6 +171,7 @@ export class RdbDataService implements IDataService {
           name: trips[i].name,
           description: trips[i].description,
           coverPhoto: trips[i].coverPhoto,
+          isPublic: trips[i].isPublic,
           startDate: trips[i].startDate,
           endDate: trips[i].endDate,
           nodeIds: nodeIds,
@@ -208,6 +209,7 @@ export class RdbDataService implements IDataService {
         name: trip.name,
         description: trip.description,
         coverPhoto: trip.coverPhoto,
+        isPublic: trip.isPublic,
         startDate: trip.startDate,
         endDate: trip.endDate,
         nodeIds: nodeIds,
@@ -232,6 +234,7 @@ export class RdbDataService implements IDataService {
     const repoInput: RepoCreateTravelInput = {
       name: travel.name,
       coverImageUri: travel.coverPhoto,
+      isPublic: travel.isPublic ?? false,
       startDate: travel.startDate,
       endDate: travel.endDate
     };
@@ -263,6 +266,9 @@ export class RdbDataService implements IDataService {
     }
     if (data.coverPhoto !== undefined) {
       repoInput.coverImageUri = data.coverPhoto;
+    }
+    if (data.isPublic !== undefined) {
+      repoInput.isPublic = data.isPublic;
     }
     if (data.startDate !== undefined) {
       repoInput.startDate = data.startDate;
@@ -369,6 +375,9 @@ export class RdbDataService implements IDataService {
     }
 
     const repoInput: RepoUpdateNodeInput = {};
+    if (data.travelId !== undefined) {
+      repoInput.travelId = data.travelId;
+    }
     if (data.title !== undefined) {
       repoInput.title = data.title;
     }
