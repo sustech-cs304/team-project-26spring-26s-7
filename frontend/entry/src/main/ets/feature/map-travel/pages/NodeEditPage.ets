@@ -309,7 +309,6 @@ export struct NodeEditPage {
             .borderRadius(AppDimens.RADIUS_SM)
             .onClick(() => this.openTripSelector())
 
-
             // 照片选择区 (使用 PhotoSelector 组件)
             PhotoSelector({ photos: $photos, maxPhotos: 9 })
               .width('100%')

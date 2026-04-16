@@ -1,4 +1,5 @@
 import { router, promptAction } from '@kit.ArkUI'
+import { hilog } from '@kit.PerformanceAnalysisKit'
 import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
 
@@ -74,6 +75,7 @@ export struct NodeDetailPage {
       this.content = node.content
       this.photos = node.photos
       this.selectedPhotoIndex = 0
+      hilog.info(DOMAIN, TAG, `loadNodeDetail photos=${JSON.stringify(node.photos)}`)
       this.tripId = node.travelId
 
       const trip = await this.dataService.getTravelById(node.travelId)
