@@ -1,5 +1,5 @@
-import { router } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../../../common'
+import { router, promptAction } from '@kit.ArkUI'
+import { AppColors, AppDimens, AuthService, RouterUrls, RdbDataService, SyncManager } from '../../../common'
 
 /**
  * 个人中心 Tab 内容视图
@@ -7,21 +7,86 @@ import { AppColors, AppDimens, RouterUrls } from '../../../common'
  */
 @Component
 export struct ProfileView {
-  @State lastSyncTime: string = '2 分钟前'
-  @State pendingCount: number = 3
+  @State displayName: string = 'TravelPin 用户'
+  @State avatarUrl: string = ''
+  @State avatarLoadFailed: boolean = false
+  @State loginStatusText: string = '华为账号已登录'
+  @State cloudStatusText: string = '云存储未连接'
+  @State lastSyncTime: string = '未同步'
+  @State lastPushTime: string = '未上传'
+  @State lastPullTime: string = '未下载'
+  @State pendingCount: number = 0
   @State isSyncing: boolean = false
   @State exifStrip: boolean = true
   @State wifiOnlySync: boolean = true
   @State shareLinkExpiry: string = '7 天'
+  @StorageLink('networkJustReconnected') networkJustReconnected: boolean = false
 
-  private handleSync(): void {
+  aboutToAppear(): void {
+    this.loadAuthStatus()
+  }
+
+  private formatSyncTime(timestamp: number): string {
+    if (timestamp <= 0) {
+      return '未同步'
+    }
+    const diff = Date.now() - timestamp
+    if (diff < 60 * 1000) {
+      return '刚刚'
+    }
+    const minutes = Math.floor(diff / (60 * 1000))
+    if (minutes < 60) {
+      return `${minutes} 分钟前`
+    }
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) {
+      return `${hours} 小时前`
+    }
+    const days = Math.floor(hours / 24)
+    return `${days} 天前`
+  }
+
+  private async loadAuthStatus(): Promise<void> {
+    try {
+      const status = await AuthService.getAuthStatus()
+      this.displayName = status.user?.displayName ?? 'TravelPin 用户'
+      this.avatarUrl = status.user?.avatarUrl ?? ''
+      this.avatarLoadFailed = false
+      this.loginStatusText = status.isLoggedIn ? '华为账号已登录' : '未登录'
+      this.cloudStatusText = status.cloudStatusText
+
+      const syncStatus = await new RdbDataService().getSyncStatus()
+      this.pendingCount = syncStatus.pendingCount
+      this.lastSyncTime = this.formatSyncTime(syncStatus.lastSyncTime)
+      this.lastPushTime = this.formatSyncTime(syncStatus.lastPushTime ?? 0)
+      this.lastPullTime = this.formatSyncTime(syncStatus.lastPullTime ?? 0)
+      this.isSyncing = syncStatus.isSyncing
+    } catch (_) {
+      this.loginStatusText = '登录状态获取失败'
+      this.cloudStatusText = '云存储暂不可用'
+    }
+  }
+
+  private async runPushSync(): Promise<void> {
     this.isSyncing = true
-    // TODO: 触发 SyncManager 立即同步
-    setTimeout(() => {
+    try {
+      await SyncManager.pushAllLocalToCloud()
+      AppStorage.setOrCreate('networkJustReconnected', false)
+      await this.loadAuthStatus()
+    } finally {
       this.isSyncing = false
-      this.lastSyncTime = '刚刚'
-      this.pendingCount = 0
-    }, 2000)
+    }
+  }
+
+  private async runPullSync(): Promise<void> {
+    this.isSyncing = true
+    try {
+      await SyncManager.pullAllCloudToLocal()
+      AppStorage.setOrCreate('networkJustReconnected', false)
+      await this.loadAuthStatus()
+    } finally {
+      this.isSyncing = false
+    }
   }
 
   private handleLogout(): void {
@@ -35,9 +100,14 @@ export struct ProfileView {
       secondaryButton: {
         value: '退出',
         fontColor: AppColors.DANGER,
-        action: () => {
-          // TODO: 清除 Account Kit 登录态
-          router.replaceUrl({ url: RouterUrls.LOGIN })
+        action: async () => {
+          try {
+            await AuthService.signOut()
+            promptAction.showToast({ message: '已退出登录' })
+            router.replaceUrl({ url: RouterUrls.LOGIN })
+          } catch (_) {
+            promptAction.showToast({ message: '退出登录失败，请重试' })
+          }
         }
       }
     })
@@ -118,8 +188,18 @@ export struct ProfileView {
         // 用户信息卡片
         Row() {
           Column() {
-            Text('👤')
-              .fontSize(32)
+            if (this.avatarUrl.length > 0 && !this.avatarLoadFailed) {
+              Image(this.avatarUrl)
+                .width(56)
+                .height(56)
+                .borderRadius(28)
+                .onError(() => {
+                  this.avatarLoadFailed = true
+                })
+            } else {
+              Text('👤')
+                .fontSize(32)
+            }
           }
           .width(56)
           .height(56)
@@ -128,11 +208,11 @@ export struct ProfileView {
           .justifyContent(FlexAlign.Center)
 
           Column() {
-            Text('TravelPin 用户')
+            Text(this.displayName)
               .fontSize(AppDimens.FONT_LG)
               .fontWeight(FontWeight.Medium)
               .fontColor(AppColors.TEXT_PRIMARY)
-            Text('华为账号已登录')
+            Text(this.loginStatusText)
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.TEXT_HINT)
               .margin({ top: 4 })
@@ -171,11 +251,44 @@ export struct ProfileView {
           }
           .width('100%')
 
+          if (this.networkJustReconnected) {
+            Row() {
+              Text('网络已恢复，如有必要，请先点击同步再进行其他操作，否则可能导致数据丢失')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_PRIMARY)
+                .layoutWeight(1)
+              Text('知道了')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.PRIMARY)
+                .margin({ left: 8 })
+                .onClick(() => {
+                  AppStorage.setOrCreate('networkJustReconnected', false)
+                })
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_SM)
+            .margin({ top: 12 })
+            .backgroundColor('#FFF7E6')
+            .borderRadius(AppDimens.RADIUS_SM)
+          }
+
           Row() {
             Column() {
+              Text(`云状态：${this.cloudStatusText}`)
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(this.cloudStatusText === '云存储已连接' ? AppColors.SUCCESS : AppColors.TEXT_SECONDARY)
               Text(`上次同步：${this.lastSyncTime}`)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_SECONDARY)
+                .margin({ top: 4 })
+              Text(`最近上传：${this.lastPushTime}`)
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_SECONDARY)
+                .margin({ top: 4 })
+              Text(`最近下载：${this.lastPullTime}`)
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_SECONDARY)
+                .margin({ top: 4 })
               Text(`待同步：${this.pendingCount} 项`)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(this.pendingCount > 0 ? AppColors.PRIMARY : AppColors.TEXT_HINT)
@@ -184,12 +297,23 @@ export struct ProfileView {
             .alignItems(HorizontalAlign.Start)
             .layoutWeight(1)
 
-            Button(this.isSyncing ? '同步中...' : '立即同步')
+          Row() {
+            Button(this.isSyncing ? '上传中...' : '上传本地')
               .height(32)
               .fontSize(AppDimens.FONT_SM)
               .backgroundColor(AppColors.PRIMARY)
               .enabled(!this.isSyncing)
-              .onClick(() => this.handleSync())
+              .onClick(() => { void this.runPushSync() })
+
+            Button(this.isSyncing ? '下载中...' : '下载云端')
+              .height(32)
+              .fontSize(AppDimens.FONT_SM)
+              .backgroundColor(AppColors.SUCCESS)
+              .enabled(!this.isSyncing)
+              .margin({ left: 8 })
+              .onClick(() => { void this.runPullSync() })
+          }
+          .margin({ top: 12 })
           }
           .width('100%')
           .margin({ top: 12 })

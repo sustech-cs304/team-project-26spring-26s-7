@@ -12,9 +12,27 @@ import { ProfileView } from '../feature/profile/views/ProfileView'
 @Component
 struct MainPage {
   @State currentTabIndex: number = 0
+  @Watch('onNetworkDialogTokenChange')
+  @StorageLink('networkDialogToken') networkDialogToken: number = 0
+  @StorageLink('networkDialogMessage') networkDialogMessage: string = ''
+  @StorageLink('networkDialogTitle') networkDialogTitle: string = ''
 
   private tabIcons: string[] = ['🗺', '🧳', '📝', '👤']
   private tabTitles: string[] = ['地图', '旅行', '节点', '我的']
+
+  private onNetworkDialogTokenChange(): void {
+    if (this.networkDialogToken <= 0 || this.networkDialogMessage.length <= 0) {
+      return
+    }
+    this.getUIContext().showAlertDialog({
+      title: this.networkDialogTitle,
+      message: this.networkDialogMessage,
+      primaryButton: {
+        value: '我知道了',
+        action: () => {}
+      }
+    })
+  }
 
   @Builder
   tabBuilder(title: string, targetIndex: number) {

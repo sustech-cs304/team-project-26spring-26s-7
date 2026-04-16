@@ -1,0 +1,2076 @@
+> hvigor [32mUP-TO-DATE :entry:default@PreBuild...  [39m
+> hvigor [32mFinished :entry:default@CreateModuleInfo... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :entry:default@MergeProfile...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@CreateBuildProfile...  [39m
+> hvigor [32mFinished :entry:default@PreCheckSyscap... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :entry:default@GeneratePkgContextInfo...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@ProcessProfile...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@ProcessRouterMap...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@ProcessShareConfig...  [39m
+> hvigor [32mFinished :entry:default@ProcessStartupConfig... after 4 ms [39m
+> hvigor [32mFinished :entry:default@PreviewProcessResource... after 3 ms [39m
+> hvigor [32mUP-TO-DATE :entry:default@GenerateLoaderJson...  [39m
+> hvigor [33mWARN: Warning: the string of 'choose_login_method' does not have a base resource.
+Warning: the string of 'common_email_address' does not have a base resource.
+Warning: the string of 'common_login' does not have a base resource.
+Warning: the string of 'common_login_fail' does not have a base resource.
+Warning: the string of 'common_password' does not have a base resource.
+Warning: the string of 'common_phone_number' does not have a base resource.
+Warning: the string of 'common_prompt' does not have a base resource.
+Warning: the string of 'common_register' does not have a base resource.
+Warning: the string of 'common_verify_code' does not have a base resource.
+Warning: the string of 'error_code_send_interval' does not have a base resource.
+Warning: the string of 'login_method_email' does not have a base resource.
+Warning: the string of 'login_method_password' does not have a base resource.
+Warning: the string of 'login_method_phone' does not have a base resource.
+Warning: the string of 'phone_number_or_email_address' does not have a base resource.
+Warning: the string of 'register_fail' does not have a base resource.
+Warning: the string of 'register_now' does not have a base resource.
+Warning: the string of 'send_verify_code' does not have a base resource.
+Warning: the string of 'send_verify_code_fail' does not have a base resource.
+[39m
+> hvigor [32mFinished :entry:default@PreviewCompileResource... after 899 ms [39m
+> hvigor [32mFinished :entry:default@PreviewHookCompileResource... after 1 ms [39m
+> hvigor [32mFinished :entry:default@CopyPreviewProfile... after 7 ms [39m
+> hvigor [32mFinished :entry:default@ReplacePreviewerPage... after 1 ms [39m
+> hvigor [32mFinished :entry:buildPreviewerResource... after 1 ms [39m
+> hvigor [32mFinished :entry:default@PreviewUpdateAssets... after 1 ms [39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/h1/p2/q2.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/g/t1.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/g/h.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/f.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/h1/i1/w2/r2.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/i/m/y3.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/h1/i1/j1/v2.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/h1/i1/j1/u2.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/h1/i1/j1/k1.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/h1/i1/w2/y2.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/h1/i1/w2/z2.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/h1/i1/w2/x2.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/i/j.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/k/q1.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/s/o3.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/s/p3.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.255Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/i/q/w.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.256Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/i/q/i4.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.256Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/r1/s1.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.256Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/k/x4.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.256Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/k/l.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.256Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/src/main/ets/e.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.256Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/oh_modules/.ohpm/@hw-agconnect+auth@1.0.5/oh_modules/@hw-agconnect/auth/Index.d.ets:2:1\n' +
+      ' Switching off type checks with in-place comments is not allowed (arkts-strict-typing-required)\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.256Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN: For details about ArkTS syntax errors, see FAQs\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.259Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/RdbHelper.ets:185:11\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.259Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/RdbHelper.ets:186:11\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.259Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/RdbHelper.ets:187:11\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.261Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/CloudStorageService.ets:30:7\n' +
+      " The system capacity of this api 'cloudCommon' is not supported on all devices\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.261Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/CloudStorageService.ets:30:19\n' +
+      " The system capacity of this api 'init' is not supported on all devices\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.261Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/CloudStorageService.ets:31:17\n' +
+      " The system capacity of this api 'cloudCommon' is not supported on all devices\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.261Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/CloudStorageService.ets:31:29\n' +
+      " The system capacity of this api 'CloudRegion' is not supported on all devices\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.261Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/CloudStorageService.ets:31:41\n' +
+      " The system capacity of this api 'CHINA' is not supported on all devices\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.261Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/CloudStorageService.ets:38:23\n' +
+      " The system capacity of this api 'cloudStorage' is not supported on all devices\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/CloudStorageService.ets:38:36\n' +
+      " The system capacity of this api 'bucket' is not supported on all devices\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/AuthService.ets:33:18\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/AuthService.ets:34:26\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: '105',
+    level: 'error',
+    msg: '\x1B[31m10505001 ArkTS Compiler Error\r\n' +
+      "Error Message: Cannot find name 'UIAbilityContext'. At File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/AuthService.ets:86:48\r\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/AuthService.ets:92:28\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: '105',
+    level: 'error',
+    msg: '\x1B[31m10505001 ArkTS Compiler Error\r\n' +
+      "Error Message: Property 'displayName' does not exist on type 'LoginWithHuaweiIDCredential'. At File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/AuthService.ets:110:34\r\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:81:19\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:82:21\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:83:22\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:84:22\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:85:20\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:86:24\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:87:24\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.262Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:90:11\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:91:13\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:93:19\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:94:18\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:95:16\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:98:18\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/TravelRepository.ets:99:18\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:115:19\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:116:25\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:117:20\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:118:20\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:119:22\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:120:20\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:121:21\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:122:21\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:123:21\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:124:23\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:125:24\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:126:24\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:128:36\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:129:21\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:130:25\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:133:11\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:134:17\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:137:17\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:138:18\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:140:35\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:141:13\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:142:33\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:143:18\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets:144:18\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/pages/Index.ets:15:14\n' +
+      " 'replaceUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: '105',
+    level: 'error',
+    msg: '\x1B[31m10505001 ArkTS Compiler Error\r\n' +
+      "Error Message: Cannot find name 'UIAbilityContext'. At File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/pages/LoginPage.ets:19:67\r\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/pages/LoginPage.ets:21:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/pages/LoginPage.ets:22:14\n' +
+      " 'replaceUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/pages/LoginPage.ets:25:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.263Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/pages/LoginPage.ets:25:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/MapHomeView.ets:94:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/MapHomeView.ets:94:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/MapHomeView.ets:171:28\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/MapHomeView.ets:206:14\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/MapHomeView.ets:368:20\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/MapHomeView.ets:417:20\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/TripListView.ets:62:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/TripListView.ets:62:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/TripListView.ets:81:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/TripListView.ets:82:14\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/TripListView.ets:87:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/TripListView.ets:87:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/views/TripListView.ets:185:24\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets:47:17\n' +
+      " 'show' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets:60:26\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets:61:20\n' +
+      " 'replaceUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets:63:26\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets:71:17\n' +
+      " 'show' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets:82:17\n' +
+      " 'show' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets:93:17\n' +
+      " 'show' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets:105:17\n' +
+      " 'show' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets:174:22\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:34:27\n' +
+      " 'getParams' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:106:22\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:122:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:122:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:156:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:156:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:161:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:161:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:185:22\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:198:22\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.264Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:201:14\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:203:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:203:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:210:5\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:210:12\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:224:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:224:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:242:35\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:273:26\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:281:22\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:32:27\n' +
+      " 'getParams' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:56:22\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:72:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:72:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:85:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:86:14\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:88:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:88:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:93:17\n' +
+      " 'show' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:117:33\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:125:20\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:261:22\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:59:27\n' +
+      " 'getParams' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:112:22\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:128:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:128:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:155:34\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:170:28\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:199:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:200:14\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:202:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:202:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:207:17\n' +
+      " 'show' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:232:35\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:276:26\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:287:26\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:367:24\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:397:22\n' +
+      " 'pushUrl' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:410:28\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripReplayPage.ets:74:27\n' +
+      " 'getParams' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripReplayPage.ets:79:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripReplayPage.ets:79:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.265Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripReplayPage.ets:105:22\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripReplayPage.ets:131:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripReplayPage.ets:131:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripReplayPage.ets:292:13\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripReplayPage.ets:308:13\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripReplayPage.ets:593:33\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/LocationPickerPage.ets:77:12\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/LocationPickerPage.ets:97:33\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/social-share/pages/SharePage.ets:23:27\n' +
+      " 'getParams' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/social-share/pages/SharePage.ets:44:33\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/ai-copy/pages/AiCopyPage.ets:49:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/ai-copy/pages/AiCopyPage.ets:58:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/ai-copy/pages/AiCopyPage.ets:58:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/ai-copy/pages/AiCopyPage.ets:69:33\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/pages/ProfileEditPage.ets:22:5\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/pages/ProfileEditPage.ets:22:18\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/pages/ProfileEditPage.ets:27:7\n' +
+      ' Function may throw exceptions. Special handling is required.\n' +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/pages/ProfileEditPage.ets:27:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/pages/ProfileEditPage.ets:36:20\n' +
+      " 'showToast' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/pages/ProfileEditPage.ets:37:14\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.266Z',
+    category: 'etsChecker',
+    level: 'warn',
+    msg: '\x1B[33m\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/profile/pages/ProfileEditPage.ets:48:33\n' +
+      " 'back' has been deprecated.\n" +
+      '\x1B[39m',
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.541Z',
+    category: 'etsTransform',
+    level: 'warn',
+    msg: '\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripReplayPage.ets:25:1\n' +
+      " It's not a recommended way to export struct with '@Entry' decorator, which may cause ACE Engine error in component preview mode.\x1B[39m",
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.736Z',
+    category: 'etsTransform',
+    level: 'warn',
+    msg: '\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeEditPage.ets:7:1\n' +
+      " It's not a recommended way to export struct with '@Entry' decorator, which may cause ACE Engine error in component preview mode.\x1B[39m",
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:50.887Z',
+    category: 'etsTransform',
+    level: 'warn',
+    msg: '\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/NodeDetailPage.ets:9:1\n' +
+      " It's not a recommended way to export struct with '@Entry' decorator, which may cause ACE Engine error in component preview mode.\x1B[39m",
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:51.011Z',
+    category: 'etsTransform',
+    level: 'warn',
+    msg: '\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/map-travel/pages/TripDetailPage.ets:21:1\n' +
+      " It's not a recommended way to export struct with '@Entry' decorator, which may cause ACE Engine error in component preview mode.\x1B[39m",
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:51.113Z',
+    category: 'etsTransform',
+    level: 'warn',
+    msg: '\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/ai-copy/pages/AiCopyPage.ets:17:1\n' +
+      " It's not a recommended way to export struct with '@Entry' decorator, which may cause ACE Engine error in component preview mode.\x1B[39m",
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:51.166Z',
+    category: 'etsTransform',
+    level: 'warn',
+    msg: '\x1B[33mArkTS:WARN File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/feature/social-share/pages/SharePage.ets:9:1\n' +
+      " It's not a recommended way to export struct with '@Entry' decorator, which may cause ACE Engine error in component preview mode.\x1B[39m",
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [32m[
+  {
+    time: '2026-04-08T16:18:52.123Z',
+    category: 'Gen_Abc_Plugin',
+    level: 'warn',
+    msg: "\x1B[33m\x1B[33m\x1B[39m \x1B[33mArkTS:WARN Property 'sourceMapsPath' not found in '@hw-agconnect/auth'.\x1B[39m \x1B[33m\x1B[39m\x1B[39m",
+    type: 'plugin_log'
+  }
+][39m
+> hvigor [91mERROR: Failed :entry:default@PreviewArkTS... [39m
+> hvigor [91mERROR: [31m10505001 ArkTS Compiler Error
+Error Message: Cannot find name 'UIAbilityContext'. At File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/AuthService.ets:86:48
+[39m[31m10505001 ArkTS Compiler Error
+Error Message: Property 'displayName' does not exist on type 'LoginWithHuaweiIDCredential'. At File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/common/auth/AuthService.ets:110:34
+[39m[31m10505001 ArkTS Compiler Error
+Error Message: Cannot find name 'UIAbilityContext'. At File: D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/frontend/entry/src/main/ets/pages/LoginPage.ets:19:67
+[39m
+
+[31m* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --debug option to get more log output.
+[39m
+> hvigor [91mERROR: BUILD FAILED in 9 s 498 ms [39m

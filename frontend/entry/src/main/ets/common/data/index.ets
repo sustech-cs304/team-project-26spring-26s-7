@@ -24,6 +24,7 @@
 
 // RdbHelper 导出
 export { RdbHelper, SensitivityLevel } from './RdbHelper';
+export type { SyncQueueItem } from '../service/types';
 
 // Repository 导出
 export { TravelRepository, CreateTravelInput, UpdateTravelInput } from './TravelRepository';

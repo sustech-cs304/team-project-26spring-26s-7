@@ -2,6 +2,9 @@ import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
 
+const DOMAIN = 0x0000
+const TAG = 'NodeDetailPage'
+
 /**
  * P04 节点详情页
  * 路由参数：{ nodeId: string }
