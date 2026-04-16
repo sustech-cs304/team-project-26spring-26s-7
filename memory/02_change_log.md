@@ -1,6 +1,77 @@
 # Change Log
 
-**Last Updated**: 2026-04-12
+**Last Updated**: 2026-04-16
+
+---
+
+## 2026-04-16 (云同步 + 认证功能合并 / UI 页面更新)
+
+### 合并 feature/cloud → incremental-dev-20260329 (PR #105 前置合并)
+
+**合并点**: `caf00f8`
+
+- [2026-04-16-05-28-06] - MERGE - feature/cloud → incremental-dev-20260329 - 完成登录认证与云同步功能集成 - caf00f8
+
+**主要功能**:
+1. **华为账号认证** - 支持 HWID 登录/登出、用户头像获取
+2. **云存储服务** - 照片/数据上传到华为云对象存储 (OBS)
+3. **云数据库同步** - TravelPinZone 云数据库，支持 Travel/MemoryNode 上行同步
+4. **同步队列机制** - sync_queue 记录本地变更，支持手动/启动时触发上行
+5. **网络连接监测** - 网络状态变化时 UI 提醒
+6. **调试日志** - 关键操作日志输出，便于问题定位
+
+**新增文件**:
+- `common/auth/` - 认证模块 (AuthProvider, CloudStorageService 等)
+- `common/sync/CloudSyncService.ets` - 云数据库访问封装
+- `common/sync/SyncManager.ets` - 同步队列消费器
+- `common/sync/CloudTravel.ets` - Travel 云对象类型
+- `common/sync/CloudMemoryNode.ets` - MemoryNode 云对象类型
+
+**修改文件**:
+- `RdbHelper.ets` - 扩展 owner_uid/cloud_id/sync_status/deleted_at/version 字段
+- `TravelRepository.ets` - 增加 owner_uid 过滤、同步字段映射
+- `MemoryNodeRepository.ets` - 增加 photo_manifest 与软删除语义
+- `ProfileView.ets` - 显示真实待同步数量，"立即同步"按钮接入 SyncManager
+
+**测试状态**: 登录 + 云同步完成，基本测试通过 (commit 415e818)
+
+---
+
+### 合并 feature/new_page → incremental-dev-20260329 (PR #105)
+
+**合并点**: `3ce3b95`
+
+- [2026-04-16-05-28-06] - MERGE - feature/new_page → incremental-dev-20260329 - 新增 UI 页面与地图搜索功能 - 3ce3b95
+
+**主要功能**:
+1. **TripEditPage** - 旅行编辑页面 (488 行新增)
+2. **NodeListView** - 节点列表视图 (312 行新增)
+3. **瀑布式旅行列表** - 双列瀑布流展示旅行封面 (e5e1aa1)
+4. **地图真实搜索选点** - 接入 MapKit 地点搜索 API (7c96e80)
+5. **搜索目的地标记** - 新增 search_destination_marker.png 资源
+
+**修改文件**:
+- `TripEditPage.ets` - 新增旅行编辑页面
+- `NodeListView.ets` - 新增节点列表视图
+- `NodeDetailPage.ets` - 加载 UI 优化
+- `NodeEditPage.ets` - 旅行选择器 UI 更新
+- `MapHomeView.ets` - 地图搜索功能增强
+- `MainPage.ets` - 页面导航更新
+- `main_pages.json` - 路由配置更新
+
+---
+
+### feature1 分支更新合并
+
+**提交范围**: `bb8dfd3` → `20291d2`
+
+- [2026-04-14-14-29-35] - FEAT - feature1 - 加了部分小功能界面，以及两个地图搜索 bug - 20291d2
+- [2026-04-14] - FEAT - feature1 - 添加瀑布式旅行列表 - e5e1aa1
+- [2026-04-14] - FEAT - feature1 - 支持地图真实搜索选点流程 - 7c96e80
+
+**涉及变更**: 21 个文件，1640 行新增，600 行删除
+
+---
 
 ---
 

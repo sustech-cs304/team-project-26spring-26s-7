@@ -1,10 +1,10 @@
 # Task Backlog
 
-**Last Updated**: 2026-04-12 (旅行相册瀑布流页面开发)
+**Last Updated**: 2026-04-16 (云同步 + UI 页面更新合并)
 **Total Tasks**: 28 (来自 base 项目)
-**Completed**: 13 (含三层架构重构 + 动态旅程回放 + 地点搜索替换 + 首页地图搜索)
+**Completed**: 18 (含三层架构重构 + 动态旅程回放 + 地点搜索替换 + 首页地图搜索 + 云同步认证 + UI 页面更新)
 **In Progress**: 0
-**Pending**: 15
+**Pending**: 10
 
 ---
 
@@ -13,6 +13,45 @@
 - 🔄 In Progress
 - ⏳ Pending
 - 🔴 Blocked
+
+---
+
+## 2026-04-16 Update: 云同步 + UI 页面更新合并
+
+### 🔄 已完成工作 (2026-04-16)
+
+**P0 - 登录认证功能**:
+- 实现华为账号认证 (HWID 登录/登出)
+- 支持用户头像获取与展示
+- AuthProvider 封装认证逻辑
+
+**P0 - 云存储服务**:
+- 照片上传到华为云对象存储 (OBS)
+- 云存储 SDK 集成与权限配置
+- 真机测试验证通过
+
+**P0 - 云数据库同步**:
+- TravelPinZone 云数据库访问封装
+- Travel/MemoryNode 上行 upsert/delete
+- sync_queue 消费器实现
+- 支持手动/启动时触发同步
+
+**P0 - UI 页面更新 (PR #105)**:
+- TripEditPage 旅行编辑页面
+- NodeListView 节点列表视图
+- 瀑布式旅行列表展示
+- 地图真实搜索选点流程
+
+**修改文件**:
+- common/auth/ 认证模块
+- common/sync/ 同步模块
+- RdbHelper.ets / TravelRepository.ets / MemoryNodeRepository.ets
+- feature/map-travel/pages/TripEditPage.ets (新增)
+- feature/map-travel/views/NodeListView.ets (新增)
+- MapHomeView.ets / NodeDetailPage.ets / NodeEditPage.ets
+- MainPage.ets / main_pages.json
+
+**编译状态**: ✅ 远端合并验证通过
 
 ---
 
