@@ -72,5 +72,6 @@ frontend/.idea/
 # text file
 *.txt
 
-# photos
-references/photo
+# package
+package-lock.json
+package.json
