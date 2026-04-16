@@ -1,16 +1,29 @@
 {
   "app": {
-    "signingConfigs": [],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "storeFile": "../certificates/1.p12",
+          "storePassword": "0000001DDE322C24BEACD8CCEE2EABE202FA9CF88CE4AD2C40212A713D84B8C94710291F9E8B3D7C25E4B70E19",
+          "keyAlias": "test",
+          "keyPassword": "0000001D0CEA156ECF4F60C74DA614F776371BBFDB61A638C0225E4824AD9FD9422B7002670E486E3766F3A12D",
+          "signAlg": "SHA256withECDSA",
+          "profile": "../certificates/testDebug.p7b",
+          "certpath": "../certificates/test.cer"
+        }
+      }
+    ],
     "products": [
       {
         "name": "default",
         "signingConfig": "default",
-        "targetSdkVersion": "6.0.1(21)",
-        "compatibleSdkVersion": "6.0.1(21)",
+        "compatibleSdkVersion": "5.0.5(17)",
+        "targetSdkVersion": "5.0.5(17)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {
-            "caseSensitiveCheck": true,
             "useNormalizedOHMUrl": true
           }
         }
@@ -18,10 +31,33 @@
     ],
     "buildModeSet": [
       {
-        "name": "debug",
+        "name": "debug"
       },
       {
         "name": "release"
+      }
+    ],
+    "capabilities": [
+      {
+        "bundleName": "com.ran.login_test",
+        "config": [
+          {
+            "name": "Push Kit",
+            "capability": "com.huawei.service.push.base_service"
+          },
+          {
+            "name": "Device status detection",
+            "capability": "com.huawei.service.device_security.device_verify"
+          },
+          {
+            "name": "Map Kit",
+            "capability": "com.huawei.service.mapkit"
+          },
+          {
+            "name": "Safety Detect",
+            "capability": "com.huawei.service.device_security.safety_detect"
+          }
+        ]
       }
     ]
   },

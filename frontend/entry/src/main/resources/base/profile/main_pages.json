@@ -1,5 +1,16 @@
 {
   "src": [
-    "pages/Index"
+    "pages/Index",
+    "pages/LoginPage",
+    "pages/MainPage",
+    "feature/map-travel/pages/NodeEditPage",
+    "feature/map-travel/pages/NodeDetailPage",
+    "feature/map-travel/pages/TripEditPage",
+    "feature/map-travel/pages/TripDetailPage",
+    "feature/map-travel/pages/TripReplayPage",
+    "feature/map-travel/pages/LocationPickerPage",
+    "feature/social-share/pages/SharePage",
+    "feature/ai-copy/pages/AiCopyPage",
+    "feature/profile/pages/ProfileEditPage"
   ]
 }

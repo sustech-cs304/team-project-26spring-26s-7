@@ -7,6 +7,8 @@ CLAUDE.local.md
 dual_cc.md
 frontend/cc4frontend.md
 backend/cc4backend.md
+.mcp.json
+.playwright-mcp
 
 # ========================
 # Temporary files
@@ -35,6 +37,7 @@ Desktop.ini
 .clangd/
 .clang-format
 .clang-tidy
+error/
 
 # Hvigor build cache
 .hvigor/
@@ -56,5 +59,19 @@ local.properties
 **/*.hsp
 **/*.app
 
-# structure
-structure/security
+# codex 
+frontend/.codex_*/
+.codex_npm_cache_*
+frontend/.codex_npm_cache_*/
+
+# module cache
+frontend/oh_modules/
+frontend/.hvigor/
+frontend/.idea/
+
+# text file
+*.txt
+
+# package
+package-lock.json
+package.json
