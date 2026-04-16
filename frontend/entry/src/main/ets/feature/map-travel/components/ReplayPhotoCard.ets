@@ -4,12 +4,14 @@ import { ReplayNode } from '../../../common'
 /**
  * 回放照片卡片组件
  * 现代简约风格，悬浮于节点上方
- * 包含：照片轮播 + 标题 + 文字缩略（带省略号）
+ * 包含：照片手动滑动 + 标题 + 文字缩略（智能截断）
  */
 @Component
 export struct ReplayPhotoCard {
   @Prop node: ReplayNode | null = null
+  @Prop isPlaying: boolean = true  // 播放状态，用于显示提示
   @State isExpanded: boolean = false
+  @State currentPhotoIndex: number = 0  // 当前照片索引
 
   // 点击展开回调
   onExpand?: (node: ReplayNode) => void
@@ -32,13 +34,13 @@ export struct ReplayPhotoCard {
 
   /**
    * 渲染照片区域
-   * - 有照片：Swiper 轮播
+   * - 有照片：Swiper 手动滑动切换
    * - 无照片：占位符
    */
   @Builder
   PhotoArea() {
     if (this.node && this.node.photos.length > 0) {
-      // 多张照片轮播
+      // 多张照片手动滑动
       Swiper() {
         ForEach(this.node.photos, (photo: string) => {
           Image(photo)
@@ -49,8 +51,13 @@ export struct ReplayPhotoCard {
       }
       .width(280)
       .height(180)
-      .autoPlay(true)
-      .interval(3000)
+      .autoPlay(false)  // 取消自动播放
+      .index(this.currentPhotoIndex)
+      .loop(false)
+      .cachedCount(2)
+      .onChange((index: number) => {
+        this.currentPhotoIndex = index
+      })
       .indicator(
         this.node.photos.length > 1
           ? Indicator.dot()
@@ -97,13 +104,21 @@ export struct ReplayPhotoCard {
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-          // 文字缩略
-          Text(this.node.noteShort)
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor('#FFFFFFCC')
-            .margin({ top: 4 })
-            .maxLines(2)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          // 标签展示
+          if (this.node.tags.length > 0) {
+            Row() {
+              ForEach(this.node.tags.slice(0, 3), (tag: string) => {  // 最多显示3个标签
+                Text(tag)
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.PRIMARY)
+                  .backgroundColor('#1890FF33')
+                  .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                  .borderRadius(4)
+                  .margin({ right: 4 })
+              })
+            }
+            .margin({ top: 6 })
+          }
 
           // 照片数量标签
           if (this.node.photos.length > 0) {
@@ -111,6 +126,14 @@ export struct ReplayPhotoCard {
               .fontSize(AppDimens.FONT_SM)
               .fontColor('#FFFFFF99')
               .margin({ top: 4 })
+          }
+
+          // 暂停时的滑动提示
+          if (!this.isPlaying && this.node.photos.length > 1) {
+            Text('← 滑动查看更多照片 →')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor('#FFFFFFAA')
+              .margin({ top: 6 })
           }
         }
         .width('100%')

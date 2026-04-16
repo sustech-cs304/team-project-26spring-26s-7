@@ -118,14 +118,42 @@ export struct PhotoCardOverlay {
           // 照片轮播
           this.PhotoSwiper()
 
-          // 标题和照片数量
-          Row() {
-            Text(this.currentNode.title)
-              .fontSize(AppDimens.FONT_LG)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(AppColors.TEXT_PRIMARY)
-              .layoutWeight(1)
+          // 标题
+          Text(this.currentNode.title)
+            .fontSize(AppDimens.FONT_LG)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(AppColors.TEXT_PRIMARY)
+            .width('100%')
+            .margin({ top: 16, bottom: 8 })
 
+          // 心情和标签行
+          Row() {
+            // 心情
+            if (this.currentNode.mood) {
+              Text(this.currentNode.mood)
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor('#FF6B6B')
+                .backgroundColor('#FF6B6B1A')
+                .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                .borderRadius(12)
+            }
+
+            // 标签
+            if (this.currentNode.tags.length > 0) {
+              ForEach(this.currentNode.tags, (tag: string) => {
+                Text(tag)
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.PRIMARY)
+                  .backgroundColor('#1890FF1A')
+                  .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                  .borderRadius(12)
+                  .margin({ left: 6 })
+              })
+            }
+
+            Blank()
+
+            // 照片数量
             if (this.currentNode.photos.length > 0) {
               Text(`${this.currentNode.photos.length} 张`)
                 .fontSize(AppDimens.FONT_SM)
@@ -136,25 +164,28 @@ export struct PhotoCardOverlay {
             }
           }
           .width('100%')
-          .margin({ top: 16, bottom: 8 })
+          .margin({ bottom: 8 })
 
           // 完整文字笔记（可滚动）
           Scroll() {
-            Text(this.currentNode.note)
-              .fontSize(AppDimens.FONT_MD)
-              .fontColor(AppColors.TEXT_SECONDARY)
-              .lineHeight(28)
-              .width('100%')
+            Column() {
+              Text(this.currentNode.note)
+                .fontSize(AppDimens.FONT_MD)
+                .fontColor(AppColors.TEXT_SECONDARY)
+                .lineHeight(28)
+                .width('100%')
+
+              // 时间戳
+              Text(this.formatTimestamp(this.currentNode.timestamp))
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_HINT)
+                .margin({ top: 16 })
+            }
+            .width('100%')
           }
           .layoutWeight(1)
           .width('100%')
           .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG, top: 8, bottom: AppDimens.PADDING_LG })
-
-          // 时间戳
-          Text(this.formatTimestamp(this.currentNode.timestamp))
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor(AppColors.TEXT_HINT)
-            .margin({ bottom: AppDimens.PADDING_MD })
         }
         .width('100%')
         .height('65%')

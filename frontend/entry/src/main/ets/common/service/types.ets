@@ -191,11 +191,13 @@ export class ReplayNode {
   id: string = ''
   position: Position = new Position()
   photos: string[] = []       // 照片数组 (支持多张，沙箱路径)
-  title: string = ''          // 地点名称
+  title: string = ''          // 节点标题
   note: string = ''           // 完整文字笔记
   noteShort: string = ''      // 缩略文字 (最多 20 字)
   timestamp: number = 0       // 小时级时间戳 (毫秒)
   order: number = 0           // 在路线中的顺序
+  mood: string = ''           // 心情
+  tags: string[] = []         // 标签数组
 
   constructor(
     id: string,
@@ -206,7 +208,9 @@ export class ReplayNode {
     note: string,
     noteShort: string,
     timestamp: number,
-    order: number
+    order: number,
+    mood: string = '',
+    tags: string[] = []
   ) {
     this.id = id
     this.position = new Position(latitude, longitude)
@@ -216,6 +220,8 @@ export class ReplayNode {
     this.noteShort = noteShort
     this.timestamp = timestamp
     this.order = order
+    this.mood = mood
+    this.tags = tags
   }
 }
 
