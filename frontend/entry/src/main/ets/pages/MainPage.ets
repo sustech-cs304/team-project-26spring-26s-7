@@ -34,20 +34,6 @@ struct MainPage {
     })
   }
 
-  private onNetworkDialogTokenChange(): void {
-    if (this.networkDialogToken <= 0 || this.networkDialogMessage.length <= 0) {
-      return
-    }
-    this.getUIContext().showAlertDialog({
-      title: this.networkDialogTitle,
-      message: this.networkDialogMessage,
-      primaryButton: {
-        value: '我知道了',
-        action: () => {}
-      }
-    })
-  }
-
   @Builder
   tabBuilder(title: string, targetIndex: number) {
     Column() {
