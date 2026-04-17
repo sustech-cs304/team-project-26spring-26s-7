@@ -135,41 +135,50 @@ export struct NodeDetailPage {
   @Builder
   private buildPhotoHero() {
     Column() {
-      Stack() {
-        if (this.photos.length > 0) {
-          Image(this.photos[this.selectedPhotoIndex])
-            .width('100%')
-            .height('100%')
-            .objectFit(ImageFit.Cover)
-        } else {
-          Column() {
-            Text('📷')
-              .fontSize(46)
-            Text('这条节点还没有照片')
-              .fontSize(AppDimens.FONT_MD)
-              .fontColor('#E9F3FF')
-              .margin({ top: 8 })
-          }
-          .width('100%')
-          .height('100%')
-          .justifyContent(FlexAlign.Center)
-          .backgroundColor('#3C5C83')
+      // 上方大图 - Swiper 组件支持滑动切换
+      if (this.photos.length > 0) {
+        Swiper() {
+          ForEach(this.photos, (photo: string, index: number) => {
+            Image(photo)
+              .width('100%')
+              .height('100%')
+              .objectFit(ImageFit.Cover)
+          })
         }
-
+        .width('100%')
+        .height(280)
+        .index(this.selectedPhotoIndex)
+        .loop(false)
+        .autoPlay(false)
+        .onChange((index: number) => {
+          this.selectedPhotoIndex = index
+        })
+      } else {
+        // 无照片占位图
         Column() {
-          Row() {
-            Blank()
-            Text(this.photos.length > 0 ? `${this.selectedPhotoIndex + 1} / ${this.photos.length}` : '暂无照片')
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(AppColors.CARD_BG)
-              .backgroundColor('#66000000')
-              .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-              .borderRadius(14)
-          }
-          .width('100%')
+          Text('📷')
+            .fontSize(46)
+          Text('这条节点还没有照片')
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor('#E9F3FF')
+            .margin({ top: 8 })
+        }
+        .width('100%')
+        .height('100%')
+        .justifyContent(FlexAlign.Center)
+        .backgroundColor('#3C5C83')
+      }
 
+      // 指示器 + 地点名称
+      if (this.photos.length > 0) {
+        Row() {
+          Text(`${this.selectedPhotoIndex + 1} / ${this.photos.length}`)
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.CARD_BG)
+            .backgroundColor('#66000000')
+            .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+            .borderRadius(14)
           Blank()
-
           Text(this.poiName.length > 0 ? this.poiName : '未命名地点')
             .fontSize(AppDimens.FONT_MD)
             .fontColor(AppColors.CARD_BG)
@@ -178,35 +187,36 @@ export struct NodeDetailPage {
             .borderRadius(16)
         }
         .width('100%')
-        .height('100%')
         .padding(AppDimens.PADDING_MD)
-        .justifyContent(FlexAlign.SpaceBetween)
-        .alignItems(HorizontalAlign.Start)
       }
-      .width('100%')
-      .height(280)
-      .clip(true)
 
+      // 下方缩略图 - Scroll 组件支持水平滑动
       if (this.photos.length > 1) {
-        Row({ space: 10 }) {
-          ForEach(this.photos, (photo: string, index: number) => {
-            Stack() {
-              Image(photo)
-                .width('100%')
-                .height('100%')
-                .objectFit(ImageFit.Cover)
-            }
-            .width(68)
-            .height(68)
-            .borderRadius(AppDimens.RADIUS_MD)
-            .clip(true)
-            .border({
-              width: this.selectedPhotoIndex === index ? 2 : 0,
-              color: this.selectedPhotoIndex === index ? AppColors.PRIMARY : 'transparent'
+        Scroll() {
+          Row({ space: 10 }) {
+            ForEach(this.photos, (photo: string, index: number) => {
+              Stack() {
+                Image(photo)
+                  .width('100%')
+                  .height('100%')
+                  .objectFit(ImageFit.Cover)
+              }
+              .width(68)
+              .height(68)
+              .borderRadius(AppDimens.RADIUS_MD)
+              .clip(true)
+              .border({
+                width: this.selectedPhotoIndex === index ? 2 : 0,
+                color: this.selectedPhotoIndex === index ? AppColors.PRIMARY : 'transparent'
+              })
+              .onClick(() => { this.selectedPhotoIndex = index })
             })
-            .onClick(() => { this.selectedPhotoIndex = index })
-          })
+          }
+          .width(this.photos.length * 78) // 68px + 10px spacing per thumbnail
+          .height(68)
         }
+        .scrollable(ScrollDirection.Horizontal)
+        .scrollBar(BarState.Off)
         .width('100%')
         .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12, bottom: 4 })
       }
