@@ -301,7 +301,7 @@ struct LocationPickerPage {
         .width('100%')
 
         Row() {
-          TextInput({ placeholder: '搜索地点或输入经纬度(22.55,113.96)', text: this.searchKeyword })
+          TextInput({ placeholder: '搜索地点名称', text: this.searchKeyword })
             .layoutWeight(1)
             .height(40)
             .backgroundColor(AppColors.CARD_BG)
@@ -373,7 +373,7 @@ struct LocationPickerPage {
       .position({ x: 0, y: 0 })
 
       if (!this.hasSelected) {
-        Text('点击地图、搜索地点，或直接输入经纬度')
+        Text('点击地图、搜索地点名称')
           .fontSize(AppDimens.FONT_MD)
           .fontColor(AppColors.CARD_BG)
           .backgroundColor('#00000066')
