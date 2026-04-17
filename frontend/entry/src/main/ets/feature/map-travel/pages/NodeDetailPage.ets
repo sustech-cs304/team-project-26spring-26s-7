@@ -25,6 +25,7 @@ export struct NodeDetailPage {
   @State nodeId: string = ''
   @State isLoading: boolean = false
   @State selectedPhotoIndex: number = 0
+  @State pageVisible: boolean = false
 
   private dataService = getDataService()
 
@@ -39,6 +40,18 @@ export struct NodeDetailPage {
       this.nodeId = params.nodeId
       this.loadNodeDetail()
     }
+  }
+
+  onPageShow(): void {
+    this.pageVisible = true
+    // 从子页面返回时重新加载节点数据（首次加载由 aboutToAppear 处理）
+    if (this.nodeId && !this.isLoading) {
+      this.loadNodeDetail()
+    }
+  }
+
+  onPageHide(): void {
+    this.pageVisible = false
   }
 
   private formatDate(timestamp: number): string {
