@@ -16,7 +16,7 @@
 // Common Layer 统一导出入口
 
 // Utils 导出
-export { AppColors, AppDimens, RouterUrls } from './utils/Constants';
+export { AppColors, AppDimens, RouterUrls, TravelSpecialValues } from './utils/Constants';
 export { logger } from './utils/Logger';
 export { PhotoPickerUtil } from './utils/PhotoPickerUtil';
 

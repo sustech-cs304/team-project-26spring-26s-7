@@ -1,5 +1,5 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
+import { AppColors, AppDimens, RouterUrls, TravelSpecialValues, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
 import type { MemoryNode, Trip } from '../../../common'
 
@@ -72,17 +72,45 @@ export struct NodeListView {
     }
   }
 
+  private async appendTripNodes(feedItems: NodeFeedItem[], trip: Trip): Promise<void> {
+    const nodes = await this.dataService.getNodesByTravelId(trip.id)
+    for (const node of nodes) {
+      feedItems.push(this.mapNodeToFeedItem(node, trip))
+    }
+  }
+
+  private buildUncategorizedTrip(): Trip {
+    return {
+      id: TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID,
+      name: TravelSpecialValues.UNCATEGORIZED_TRAVEL_NAME,
+      description: '',
+      coverPhoto: '',
+      isPublic: false,
+      startDate: 0,
+      endDate: 0,
+      nodeIds: [],
+      totalDistance: 0,
+      createdAt: 0,
+      updatedAt: 0,
+      ownerUid: '',
+      cloudId: '',
+      syncStatus: 'synced',
+      deletedAt: 0,
+      lastSyncedAt: 0,
+      version: 1
+    }
+  }
+
   private async loadNodes(): Promise<void> {
     this.isLoading = true
     try {
       const trips = await this.dataService.getAllTravels()
       const feedItems: NodeFeedItem[] = []
       for (const trip of trips) {
-        const nodes = await this.dataService.getNodesByTravelId(trip.id)
-        for (const node of nodes) {
-          feedItems.push(this.mapNodeToFeedItem(node, trip))
-        }
+        await this.appendTripNodes(feedItems, trip)
       }
+      const uncategorizedTrip = this.buildUncategorizedTrip()
+      await this.appendTripNodes(feedItems, uncategorizedTrip)
       feedItems.sort((left: NodeFeedItem, right: NodeFeedItem) => right.createdAt - left.createdAt)
       this.nodes = feedItems
       this.totalTripCount = trips.length

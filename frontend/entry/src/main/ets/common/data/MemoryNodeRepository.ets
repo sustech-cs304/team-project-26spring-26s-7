@@ -15,6 +15,7 @@
 
 import { relationalStore as rdb } from '@kit.ArkData';
 import { logger } from '../utils/Logger';
+import { TravelSpecialValues } from '../utils/Constants';
 import { RdbHelper } from './RdbHelper';
 import { AuthService } from '../auth';
 import type { MemoryNode } from '../service/types';
@@ -84,7 +85,8 @@ export class MemoryNodeRepository {
 
   private toDbId(id: string, fieldName: string): number {
     const parsed = Number(id);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
+    const uncategorizedId = Number(TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID);
+    if (!Number.isInteger(parsed) || parsed === 0 || parsed < uncategorizedId) {
       throw new Error(`Invalid ${fieldName}: ${id}`);
     }
     return parsed;
@@ -350,6 +352,41 @@ export class MemoryNodeRepository {
     } catch (err) {
       logger.error(TAG, `updateNode failed: ${JSON.stringify(err)}`);
       return false;
+    }
+  }
+
+  async moveNodesToTravel(oldTravelId: string, newTravelId: string): Promise<number> {
+    try {
+      const store = await this.getRdbStore();
+      const now = Date.now();
+      const currentNodes = await this.getNodesByTravelId(oldTravelId);
+      let movedCount = 0;
+      let nextNodeOrder = await this.getNextNodeOrder(store, newTravelId);
+
+      for (let i = 0; i < currentNodes.length; i++) {
+        const currentNode = currentNodes[i];
+        const valueBucket: rdb.ValuesBucket = {
+          'travel_id': this.toDbId(newTravelId, 'travel id'),
+          'updated_at': now,
+          'sync_status': currentNode.cloudId && currentNode.cloudId.length > 0 ? 'pending_update' : 'pending_create',
+          'version': (currentNode.version ?? 1) + 1
+        };
+        valueBucket[NODE_ORDER_COLUMN] = nextNodeOrder;
+        const predicates = new rdb.RdbPredicates(TABLE_NAME);
+        predicates.equalTo('id', this.toDbId(currentNode.id, 'node id'));
+        predicates.equalTo('deleted_at', 0);
+        const affectedRows = await store.update(valueBucket, predicates);
+        if (affectedRows > 0) {
+          movedCount += affectedRows;
+          nextNodeOrder += 1;
+        }
+      }
+
+      logger.info(TAG, `Moved ${movedCount} nodes from travel ${oldTravelId} to ${newTravelId}`);
+      return movedCount;
+    } catch (err) {
+      logger.error(TAG, `moveNodesToTravel failed: ${JSON.stringify(err)}`);
+      return 0;
     }
   }
 

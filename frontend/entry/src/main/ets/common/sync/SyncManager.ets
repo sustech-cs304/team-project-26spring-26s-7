@@ -1,5 +1,6 @@
 import { hilog } from '@kit.PerformanceAnalysisKit'
 import { logger } from '../utils/Logger'
+import { TravelSpecialValues } from '../utils/Constants'
 import { RdbHelper } from '../data/RdbHelper'
 import { TravelRepository } from '../data/TravelRepository'
 import { MemoryNodeRepository } from '../data/MemoryNodeRepository'
@@ -334,6 +335,9 @@ export class SyncManager {
       const localNode = localNodes[i]
       const cloudId = localNode.cloudId && localNode.cloudId.length > 0 ? localNode.cloudId : `node_${localNode.id}`
       if (!activeCloudNodeIds.has(cloudId)) {
+        if (localNode.travelId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
+          continue
+        }
         await nodeRepo.deleteNode(localNode.id)
         await nodeRepo.updateSyncMetadata(localNode.id, cloudId, 'synced', Date.now())
       }

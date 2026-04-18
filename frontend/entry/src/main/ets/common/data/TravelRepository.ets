@@ -15,6 +15,7 @@
 
 import { relationalStore as rdb } from '@kit.ArkData';
 import { logger } from '../utils/Logger';
+import { TravelSpecialValues } from '../utils/Constants';
 import { RdbHelper } from './RdbHelper';
 import { AuthService } from '../auth';
 import type { Trip } from '../service/types';
@@ -74,7 +75,8 @@ export class TravelRepository {
 
   private toDbId(id: string, fieldName: string): number {
     const parsed = Number(id);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
+    const uncategorizedId = Number(TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID);
+    if (!Number.isInteger(parsed) || parsed === 0 || parsed < uncategorizedId) {
       throw new Error(`Invalid ${fieldName}: ${id}`);
     }
     return parsed;
@@ -277,10 +279,9 @@ export class TravelRepository {
       const travelId = this.toDbId(id, 'travel id');
 
       const nodeValues: rdb.ValuesBucket = {
-        deleted_at: now,
+        travel_id: this.toDbId(TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID, 'travel id'),
         updated_at: now,
-        sync_status: 'pending_delete',
-        version: now
+        sync_status: currentTrip.cloudId && currentTrip.cloudId.length > 0 ? 'pending_update' : 'pending_create'
       };
       const nodePredicates = new rdb.RdbPredicates('memory_nodes');
       nodePredicates.equalTo('travel_id', travelId);
