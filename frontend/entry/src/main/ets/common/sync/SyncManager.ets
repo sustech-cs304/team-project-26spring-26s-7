@@ -208,6 +208,9 @@ export class SyncManager {
       if (!cloudId || localNodeMap.has(cloudId)) {
         continue
       }
+      if (cloudNode.travelId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
+        continue
+      }
       const deletedNode: MemoryNode = {
         id: cloudId.replace('node_', ''),
         travelId: cloudNode.travelId,
@@ -291,27 +294,35 @@ export class SyncManager {
     for (let i = 0; i < cloudNodes.length; i++) {
       const node = cloudNodes[i]
       const travelCloudId = node.travelId
-      if (!travelCloudId) {
-        hilog.info(DOMAIN, TAG, `[debug] skip cloud node without travelCloudId, cloudId=${node.cloudId ?? ''}`)
+      if (!node.cloudId) {
         continue
       }
-      const localTravelId = await travelRepo.findLocalIdByCloudId(travelCloudId)
-      hilog.info(
-        DOMAIN,
-        TAG,
-        `[debug] download node start cloudId=${node.cloudId ?? ''}, travelCloudId=${travelCloudId}, localTravelId=${localTravelId ?? ''}, deletedAt=${node.deletedAt ?? 0}, photoManifest=${node.photoManifest ?? ''}`
-      )
-      if (!localTravelId || !node.cloudId) {
+      if (travelCloudId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
         hilog.info(
           DOMAIN,
           TAG,
-          `[debug] skip cloud node due to missing mapping, cloudId=${node.cloudId ?? ''}, localTravelId=${localTravelId ?? ''}`
+          `[debug] download uncategorized node cloudId=${node.cloudId}, localTravelId=${TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID}`
         )
-        continue
+        node.travelId = TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
+      } else {
+        const localTravelId = await travelRepo.findLocalIdByCloudId(travelCloudId)
+        hilog.info(
+          DOMAIN,
+          TAG,
+          `[debug] download node start cloudId=${node.cloudId ?? ''}, travelCloudId=${travelCloudId}, localTravelId=${localTravelId ?? ''}, deletedAt=${node.deletedAt ?? 0}, photoManifest=${node.photoManifest ?? ''}`
+        )
+        if (!localTravelId) {
+          hilog.info(
+            DOMAIN,
+            TAG,
+            `[debug] skip cloud node due to missing mapping, cloudId=${node.cloudId ?? ''}, localTravelId=${localTravelId ?? ''}`
+          )
+          continue
+        }
+        node.travelId = localTravelId
       }
-      node.travelId = localTravelId
       if ((node.deletedAt ?? 0) > 0) {
-        const localNodeId = node.cloudId ? await nodeRepo.findLocalIdByCloudId(node.cloudId) : null
+        const localNodeId = await nodeRepo.findLocalIdByCloudId(node.cloudId)
         hilog.info(
           DOMAIN,
           TAG,

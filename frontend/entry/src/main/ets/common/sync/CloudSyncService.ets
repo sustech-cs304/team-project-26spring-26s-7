@@ -3,6 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import auth from '@hw-agconnect/auth'
 import type { Trip, MemoryNode } from '../service/types'
+import { TravelSpecialValues } from '../utils/Constants'
 import { CloudTravel } from './CloudTravel'
 import { CloudMemoryNode } from './CloudMemoryNode'
 
@@ -99,7 +100,7 @@ export class CloudSyncService {
       ownerUid: node.ownerUid ?? '',
       localId: node.id,
       cloudId: node.cloudId && node.cloudId.length > 0 ? node.cloudId : `node_${node.id}`,
-      travelId: node.travelId,
+      travelId: node.travelId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID ? '' : node.travelId,
       title: node.title,
       content: node.content,
       latitude: node.latitude,
@@ -167,7 +168,9 @@ export class CloudSyncService {
     const node = new CloudMemoryNode()
     node.cloudId = cloudId
     node.ownerUid = data.ownerUid
-    node.travelCloudId = `travel_${data.travelId}`
+    node.travelCloudId = data.travelId.length > 0 && data.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
+      ? `travel_${data.travelId}`
+      : ''
     node.title = data.title
     node.content = data.content
     node.latitude = data.latitude
@@ -284,7 +287,9 @@ export class CloudSyncService {
       const record = records[i]
       const node: MemoryNode = {
         id: '0',
-        travelId: record.travelCloudId ?? '',
+        travelId: (record.travelCloudId && record.travelCloudId.length > 0)
+          ? record.travelCloudId
+          : TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID,
         title: record.title ?? '',
         content: record.content ?? '',
         latitude: record.latitude ?? 0,

@@ -48,6 +48,11 @@ export class RdbDataService implements IDataService {
     void SyncManager.pushLocalNow();
   }
 
+  private async enqueueSyncSilently(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
+    await this.rdbHelper.removeSyncItems(entityType, entityId);
+    await this.rdbHelper.enqueueSyncItem(entityType, entityId, operation, payload);
+  }
+
   async getSyncStatus(): Promise<SyncStatus> {
     const pendingItems = await this.rdbHelper.getPendingSyncQueueItems();
     const lastPushTime = await this.rdbHelper.getSyncState('last_push_at');
@@ -301,15 +306,45 @@ export class RdbDataService implements IDataService {
   }
 
   async deleteTravel(travelId: string): Promise<void> {
+    const affectedNodes = await this.nodeRepo.getNodesByTravelId(travelId)
     const deleted = await this.travelRepo.softDeleteTravel(travelId);
     if (!deleted) {
       throw new Error(`Failed to delete travel: ${travelId}`);
     }
+
+    for (let i = 0; i < affectedNodes.length; i++) {
+      const affectedNode = affectedNodes[i]
+      const node = await this.nodeRepo.getNodeById(affectedNode.id)
+      if (!node) {
+        continue
+      }
+      const payload = JSON.stringify({
+        ownerUid: node.ownerUid ?? '',
+        localId: node.id,
+        cloudId: node.cloudId ?? '',
+        travelId: node.travelId,
+        title: node.title,
+        content: node.content,
+        latitude: node.latitude,
+        longitude: node.longitude,
+        poiName: node.poiName,
+        photos: node.photos,
+        mood: node.mood,
+        tags: node.tags,
+        updatedAt: node.updatedAt,
+        deletedAt: node.deletedAt ?? 0,
+        version: node.version ?? 1,
+        photoManifest: this.buildPhotoManifest(node.travelId, node.id, node.photos)
+      })
+      await this.enqueueSyncSilently('memory_node', node.id, 'upsert', payload)
+    }
+
     const payload = JSON.stringify({
       localId: travelId,
       deletedAt: Date.now()
     })
-    await this.enqueueSync('travel', travelId, 'delete', payload);
+    await this.enqueueSyncSilently('travel', travelId, 'delete', payload);
+    void SyncManager.pushLocalNow()
   }
 
   // ==================== MemoryNode 相关 ====================
