@@ -262,39 +262,76 @@ MapHomeView.onTravelDataVersionChange() → 自动刷新
 
 ---
 
-## 组件交互时序图
+## 组件交互时序图（优化版）
+
+**设计原则**：业务场景驱动，减少技术细节，增加上下文说明
 
 ```mermaid
 sequenceDiagram
+    autonumber
     participant User as 用户
     participant View as MapHomeView
     participant Service as IDataService
     participant RDB as RdbDataService
 
-    User->>View: 页面显示 (onPageShow)
-    View->>Service: getAllTravels()
-    Service-->>View: Trip[]
-    loop 每个旅行
-        View->>Service: getNodesByTravelId(travelId)
-        Service-->>View: MemoryNode[]
-    end
-    View->>View: loadedNodes = 聚合结果
-    View->>View: applyFilters()
-    View->>View: syncMarkers()
+    %% 业务场景说明
+    note over User, RDB: 业务场景：地图首页节点加载与交互
+    note over User, RDB: 功能：加载节点、查看详情、创建节点
+    note over User, RDB: 入口：MainPage > 地图 Tab
     
-    par 并行：用户交互
-        User->>View: 点击 Marker
-        View->>View: 显示预览卡片
-        View->>View: router.pushUrl(NODE_DETAIL)
-    and 数据更新
-        User->>View: 新建节点
-        View->>Service: createNode(CreateNodeInput)
-        Service->>RDB: insert()
-        RDB-->>Service: 成功
-        Note over View: travelDataVersion++
-        View->>View: onTravelDataVersionChange()
-        View->>View: 重新加载节点
+    %% 数据模型说明
+    note right of Service: 数据模型：Trip(旅行) 包含多个 MemoryNode(节点)
+    note right of Service: 节点包含：位置、照片、文字内容
+    
+    %% 启动流程
+    User->>View: 打开地图首页
+    activate View
+    View->>View: 页面显示
+    
+    %% 数据加载主流程
+    View->>Service: 获取所有旅行
+    activate Service
+    
+    alt 数据加载成功
+        Service-->>View: Trip[]
+        loop 遍历每个旅行
+            View->>Service: 获取该旅行的节点
+            Service->>RDB: 查询节点列表
+            RDB-->>Service: MemoryNode[]
+            Service-->>View: MemoryNode[]
+        end
+        View->>View: 聚合所有节点
+        View->>View: 在地图上渲染标记点
+    else 数据库异常
+        RDB-->>Service: Error: 数据库未初始化
+        Service-->>View: 空数据
+        View->>View: 显示创建第一个旅行提示
     end
+    deactivate Service
+    
+    %% 并行交互场景
+    par 场景1：查看节点详情
+        User->>View: 点击地图标记点
+        View->>View: 显示节点预览卡片
+        User->>View: 点击查看详情
+        View->>View: 跳转到节点详情页
+    and 场景2：创建新节点
+        User->>View: 长按地图或点击+按钮
+        View->>View: 跳转到节点编辑页
+        User->>View: 填写内容后提交
+        View->>Service: 创建节点
+        Service->>RDB: 插入数据库
+        RDB-->>Service: 成功
+        Service-->>View: 新节点ID
+        View->>View: 数据版本更新
+        View->>View: 自动刷新地图
+    end
+    
+    deactivate View
+    
+    %% 组件层级说明
+    note over View: 组件层级：MainPage(产品层) > MapHomeView(特性层)
+    note over View: 状态同步：通过全局监听器实现跨组件刷新
 ```
 
 ---
