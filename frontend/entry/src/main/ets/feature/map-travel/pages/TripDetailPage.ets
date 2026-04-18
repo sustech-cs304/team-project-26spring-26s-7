@@ -2,11 +2,22 @@ import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
 import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
-import { TimelineNodeInfo, RouterParam } from '../../../common'
+import { RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
 
 interface RemovableOverlay {
   remove: () => void
+}
+
+interface TimelineNodeCard {
+  id: string
+  date: string
+  title: string
+  place: string
+  summary: string
+  photoCount: number
+  mood: string
+  tags: string[]
 }
 
 const DEFAULT_TRIP_CENTER: mapCommon.LatLng = {
@@ -30,7 +41,7 @@ export struct TripDetailPage {
   @State showMenu: boolean = false
   @State isLoading: boolean = false
 
-  @State timelineNodes: TimelineNodeInfo[] = []
+  @State timelineNodes: TimelineNodeCard[] = []
 
   private routePoints: mapCommon.LatLng[] = []
   private mapOptions: mapCommon.MapOptions = {
@@ -91,14 +102,20 @@ export struct TripDetailPage {
     return start === end ? start : `${start} ~ ${end}`
   }
 
-  private mapNodeToTimelineNode(node: MemoryNode): TimelineNodeInfo {
-    return new TimelineNodeInfo(
-      node.id,
-      this.formatShortDate(node.createdAt),
-      node.poiName,
-      node.content || node.title,
-      node.photos.length.toString()
-    )
+  private mapNodeToTimelineNode(node: MemoryNode): TimelineNodeCard {
+    const trimmedTitle = node.title.trim()
+    const trimmedPlace = node.poiName.trim()
+    const trimmedContent = node.content.trim()
+    return {
+      id: node.id,
+      date: this.formatShortDate(node.createdAt),
+      title: trimmedTitle.length > 0 ? trimmedTitle : (trimmedPlace.length > 0 ? trimmedPlace : '未命名节点'),
+      place: trimmedPlace.length > 0 ? trimmedPlace : '未命名地点',
+      summary: trimmedContent,
+      photoCount: node.photos.length,
+      mood: node.mood,
+      tags: [...node.tags]
+    }
   }
 
   private async loadTripDetail(): Promise<void> {
@@ -223,6 +240,200 @@ export struct TripDetailPage {
     })
   }
 
+  @Builder
+  private buildRouteHero() {
+    Stack() {
+      MapComponent({ mapOptions: this.mapOptions, mapCallback: this.mapCallback })
+        .width('100%')
+        .height('100%')
+
+      Column() {
+        Text(this.tripName || '旅行详情')
+          .fontSize(26)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#FFFFFF')
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .width('100%')
+      }
+      .width('100%')
+      .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG, top: 14, bottom: 14 })
+      .backgroundColor('#00000055')
+      .alignItems(HorizontalAlign.Start)
+      .position({ x: 0, y: 174 })
+    }
+    .width('100%')
+    .height(232)
+    .borderRadius(24)
+    .clip(true)
+  }
+
+  @Builder
+  private buildTripSummary() {
+    Column() {
+      Row({ space: 10 }) {
+        Column() {
+          Text(this.nodeCount.toString())
+            .fontSize(22)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(AppColors.TEXT_PRIMARY)
+            .width('100%')
+          Text('节点')
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_HINT)
+            .margin({ top: 4 })
+        }
+        .layoutWeight(10)
+        .padding({ left: 12, right: 12, top: 14, bottom: 14 })
+        .backgroundColor(AppColors.BACKGROUND)
+        .borderRadius(16)
+        .alignItems(HorizontalAlign.Start)
+
+        Column() {
+          Row({ space: 4 }) {
+            Text(this.totalDistance.toString())
+              .fontSize(22)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(AppColors.TEXT_PRIMARY)
+            Text('km')
+              .fontSize(AppDimens.FONT_MD)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(AppColors.TEXT_SECONDARY)
+              .margin({ top: 5 })
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Bottom)
+          Text('距离')
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_HINT)
+            .margin({ top: 4 })
+        }
+        .layoutWeight(12)
+        .padding({ left: 12, right: 12, top: 14, bottom: 14 })
+        .backgroundColor(AppColors.BACKGROUND)
+        .borderRadius(16)
+        .alignItems(HorizontalAlign.Start)
+
+        Column() {
+          Text(this.isPublic ? '公开' : '私密')
+            .fontSize(22)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.isPublic ? AppColors.SUCCESS : '#A55B00')
+            .width('100%')
+          Text('可见性')
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_HINT)
+            .margin({ top: 4 })
+        }
+        .layoutWeight(9)
+        .padding({ left: 12, right: 12, top: 14, bottom: 14 })
+        .backgroundColor(AppColors.BACKGROUND)
+        .borderRadius(16)
+        .alignItems(HorizontalAlign.Start)
+      }
+      .width('100%')
+    }
+    .width('100%')
+    .padding(AppDimens.PADDING_LG)
+    .backgroundColor(AppColors.CARD_BG)
+    .borderRadius(20)
+    .margin({ top: 14 })
+    .shadow({ radius: 10, color: '#00000012', offsetY: 4 })
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  private buildTimelineItem(node: TimelineNodeCard, index: number) {
+    Column() {
+      Row() {
+        Text(node.date)
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_HINT)
+          .backgroundColor(AppColors.BACKGROUND)
+          .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+          .borderRadius(12)
+
+        Blank()
+
+        if (node.photoCount > 0) {
+          Text(`${node.photoCount} 张照片`)
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.PRIMARY)
+            .backgroundColor(AppColors.PRIMARY + '12')
+            .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+            .borderRadius(12)
+        }
+      }
+      .width('100%')
+
+      Text(node.title)
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(AppColors.TEXT_PRIMARY)
+        .width('100%')
+        .margin({ top: 12 })
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+      Text(node.place)
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(AppColors.TEXT_SECONDARY)
+        .lineHeight(21)
+        .width('100%')
+        .margin({ top: 6 })
+        .maxLines(2)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+      if (node.summary.length > 0 && node.summary !== node.title) {
+        Text(node.summary)
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_HINT)
+          .lineHeight(20)
+          .width('100%')
+          .margin({ top: 8 })
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+
+      if (node.mood.length > 0 || node.tags.length > 0) {
+        Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
+          if (node.mood.length > 0) {
+            Text(node.mood)
+              .fontSize(AppDimens.FONT_SM)
+              .backgroundColor('#FFF3E8')
+              .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+              .borderRadius(12)
+              .margin({ right: 8, top: 10, bottom: 2 })
+          }
+
+          ForEach(node.tags.slice(0, 3), (tag: string) => {
+            Text(`#${tag}`)
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.PRIMARY)
+              .backgroundColor(AppColors.PRIMARY + '12')
+              .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+              .borderRadius(12)
+              .margin({ right: 8, top: 10, bottom: 2 })
+          })
+        }
+        .width('100%')
+      }
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 14, bottom: 14 })
+    .backgroundColor(AppColors.CARD_BG)
+    .borderRadius(18)
+    .border({ width: 1, color: '#EEF2F8' })
+    .shadow({ radius: 4, color: '#0000000A', offsetY: 2 })
+    .margin({ bottom: index < this.timelineNodes.length - 1 ? 10 : 0 })
+    .onClick(() => {
+      router.pushUrl({
+        url: RouterUrls.NODE_DETAIL,
+        params: { nodeId: node.id } as RouterParam
+      })
+    })
+  }
+
   build() {
     Stack() {
       Column() {
@@ -237,6 +448,8 @@ export struct TripDetailPage {
             .fontSize(AppDimens.FONT_LG)
             .fontWeight(FontWeight.Bold)
             .layoutWeight(1)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
           Text('···')
             .fontSize(AppDimens.FONT_XL)
             .fontColor(AppColors.TEXT_SECONDARY)
@@ -254,130 +467,112 @@ export struct TripDetailPage {
                 LoadingProgress()
                   .width(36)
                   .height(36)
+                Text('正在整理路线内容...')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_HINT)
+                  .margin({ top: 12 })
               }
               .width('100%')
-              .height(200)
+              .height(232)
               .justifyContent(FlexAlign.Center)
+              .backgroundColor(AppColors.CARD_BG)
+              .borderRadius(24)
+            }
+            if (!this.isLoading) {
+              this.buildRouteHero()
             }
 
-            // 路线地图（真实 MapComponent）
-            MapComponent({ mapOptions: this.mapOptions, mapCallback: this.mapCallback })
-              .width('100%')
-              .height(200)
-              .borderRadius(AppDimens.RADIUS_MD)
-              .margin({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12 })
+            if (!this.isLoading) {
+              this.buildTripSummary()
+            }
 
-            // 操作按钮
-            Row({ space: 12 }) {
-              Button('▶ 回放')
-                .layoutWeight(1)
-                .height(44)
-                .fontSize(AppDimens.FONT_MD)
-                .backgroundColor(AppColors.PRIMARY)
-                .onClick(() => {
-                  router.pushUrl({
-                    url: RouterUrls.TRIP_REPLAY,
-                    params: { tripId: this.tripId } as RouterParam
+            if (!this.isLoading) {
+              Row({ space: 12 }) {
+                Button('播放路线')
+                  .layoutWeight(1)
+                  .height(46)
+                  .fontSize(AppDimens.FONT_MD)
+                  .backgroundColor(AppColors.PRIMARY)
+                  .borderRadius(16)
+                  .onClick(() => {
+                    router.pushUrl({
+                      url: RouterUrls.TRIP_REPLAY,
+                      params: { tripId: this.tripId } as RouterParam
+                    })
                   })
-                })
-              Button('↗ 分享')
-                .layoutWeight(1)
-                .height(44)
-                .fontSize(AppDimens.FONT_MD)
-                .backgroundColor('#FF8C00')
-                .onClick(() => {
-                  router.pushUrl({
-                    url: RouterUrls.SHARE,
-                    params: { tripId: this.tripId } as RouterParam
+                Button('分享路线')
+                  .layoutWeight(1)
+                  .height(46)
+                  .fontSize(AppDimens.FONT_MD)
+                  .backgroundColor('#FF8C00')
+                  .borderRadius(16)
+                  .onClick(() => {
+                    router.pushUrl({
+                      url: RouterUrls.SHARE,
+                      params: { tripId: this.tripId } as RouterParam
+                    })
                   })
-                })
-            }
-            .width('100%')
-            .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12 })
-
-            // 统计信息
-            Row() {
-              Text('📍 ' + this.nodeCount + ' 个节点')
-                .fontSize(AppDimens.FONT_MD)
-                .fontColor(AppColors.TEXT_SECONDARY)
-              Text('· ' + this.totalDistance + ' km')
-                .fontSize(AppDimens.FONT_MD)
-                .fontColor(AppColors.TEXT_SECONDARY)
-                .margin({ left: 8 })
-              Text('· ' + (this.isPublic ? '公开' : '私密'))
-                .fontSize(AppDimens.FONT_MD)
-                .fontColor(this.isPublic ? AppColors.SUCCESS : AppColors.TEXT_HINT)
-                .margin({ left: 8 })
-              Text('· ' + this.dateRange)
-                .fontSize(AppDimens.FONT_MD)
-                .fontColor(AppColors.TEXT_HINT)
-                .margin({ left: 8 })
-            }
-            .width('100%')
-            .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 16 })
-
-            // 分隔标题
-            Text('时间轴')
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.TEXT_PRIMARY)
-              .padding({ left: AppDimens.PADDING_MD, top: 16, bottom: 8 })
+              }
               .width('100%')
+              .margin({ top: 16 })
 
-            // 时间轴列表
-            ForEach(this.timelineNodes, (node: TimelineNodeInfo, index: number) => {
-              Row() {
-                Column() {
-                  Circle()
-                    .width(10)
-                    .height(10)
-                    .fill(AppColors.PRIMARY)
-                  if (index < this.timelineNodes.length - 1) {
-                    Line()
-                      .width(2)
-                      .height(50)
-                      .backgroundColor(AppColors.DIVIDER)
+              Column() {
+                Row() {
+                  Column() {
+                    Text('路线节点')
+                      .fontSize(AppDimens.FONT_LG)
+                      .fontWeight(FontWeight.Bold)
+                      .fontColor(AppColors.TEXT_PRIMARY)
+                    Text('按顺序查看这次旅行的每一站')
+                      .fontSize(AppDimens.FONT_SM)
+                      .fontColor(AppColors.TEXT_HINT)
+                      .margin({ top: 6 })
                   }
-                }
-                .width(30)
-                .alignItems(HorizontalAlign.Center)
+                  .layoutWeight(1)
+                  .alignItems(HorizontalAlign.Start)
 
-                Column() {
-                  Text(node.date)
-                    .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.TEXT_HINT)
-                  Text(node.place)
-                    .fontSize(AppDimens.FONT_LG)
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor(AppColors.TEXT_PRIMARY)
-                    .margin({ top: 2 })
-                  Text('📷 ' + node.photoCount + '张 · "' + node.summary + '"')
+                  Text(`${this.timelineNodes.length} 个节点`)
                     .fontSize(AppDimens.FONT_SM)
                     .fontColor(AppColors.TEXT_SECONDARY)
-                    .margin({ top: 4 })
-                    .maxLines(1)
-                    .textOverflow({ overflow: TextOverflow.Ellipsis })
+                    .backgroundColor(AppColors.BACKGROUND)
+                    .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+                    .borderRadius(14)
                 }
-                .layoutWeight(1)
-                .alignItems(HorizontalAlign.Start)
-                .padding({ left: 8, bottom: 16 })
+                .width('100%')
 
-                Text('>')
-                  .fontSize(AppDimens.FONT_MD)
-                  .fontColor(AppColors.TEXT_HINT)
+                if (this.timelineNodes.length === 0) {
+                  Column() {
+                    Text('这条路线还没有节点')
+                      .fontSize(AppDimens.FONT_MD)
+                      .fontWeight(FontWeight.Medium)
+                      .fontColor(AppColors.TEXT_PRIMARY)
+                    Text('添加节点后，这里会按时间顺序展示路线内容。')
+                      .fontSize(AppDimens.FONT_SM)
+                      .fontColor(AppColors.TEXT_HINT)
+                      .margin({ top: 8 })
+                  }
+                  .width('100%')
+                  .padding({ top: 28, bottom: 12 })
+                  .alignItems(HorizontalAlign.Start)
+                } else {
+                  Column() {
+                    ForEach(this.timelineNodes, (node: TimelineNodeCard, index: number) => {
+                      this.buildTimelineItem(node, index)
+                    })
+                  }
+                  .width('100%')
+                  .margin({ top: 14 })
+                }
               }
               .width('100%')
-              .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD })
-              .alignItems(VerticalAlign.Top)
-              .onClick(() => {
-                router.pushUrl({
-                  url: RouterUrls.NODE_DETAIL,
-                  params: { nodeId: node.id } as RouterParam
-                })
-              })
-            })
+              .padding(AppDimens.PADDING_MD)
+              .margin({ top: 16 })
+              .backgroundColor(AppColors.CARD_BG)
+              .borderRadius(20)
+              .shadow({ radius: 8, color: '#0000000D', offsetY: 3 })
+            }
           }
-          .padding({ bottom: 24 })
+          .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12, bottom: 24 })
         }
         .layoutWeight(1)
       }
