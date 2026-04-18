@@ -179,12 +179,6 @@ export struct NodeDetailPage {
             .padding({ left: 10, right: 10, top: 6, bottom: 6 })
             .borderRadius(14)
           Blank()
-          Text(this.poiName.length > 0 ? this.poiName : '未命名地点')
-            .fontSize(AppDimens.FONT_MD)
-            .fontColor(AppColors.CARD_BG)
-            .backgroundColor('#66000000')
-            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-            .borderRadius(16)
         }
         .width('100%')
         .padding(AppDimens.PADDING_MD)
@@ -228,37 +222,43 @@ export struct NodeDetailPage {
   @Builder
   private buildInfoCard() {
     Column() {
-      Text(this.title.length > 0 ? this.title : '未命名记忆')
-        .fontSize(28)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(AppColors.TEXT_PRIMARY)
-        .width('100%')
+      Row({ space: 10 }) {
+        Text(this.title.length > 0 ? this.title : '未命名记忆')
+          .fontSize(28)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(AppColors.TEXT_PRIMARY)
+          .layoutWeight(1)
+          .lineHeight(38)
 
-      Row({ space: 8 }) {
-        Text(`📍 ${this.poiName}`)
-          .fontSize(AppDimens.FONT_SM)
-          .fontColor(AppColors.TEXT_SECONDARY)
-          .backgroundColor(AppColors.BACKGROUND)
-          .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-          .borderRadius(14)
-        Text(this.date)
-          .fontSize(AppDimens.FONT_SM)
-          .fontColor(AppColors.TEXT_SECONDARY)
-          .backgroundColor(AppColors.BACKGROUND)
-          .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-          .borderRadius(14)
         if (this.mood.length > 0) {
           Text(this.mood)
-            .fontSize(AppDimens.FONT_SM)
+            .fontSize(22)
+            .width(42)
+            .height(42)
+            .textAlign(TextAlign.Center)
             .backgroundColor('#FFF4E5')
-            .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-            .borderRadius(14)
+            .borderRadius(21)
         }
       }
-      .margin({ top: 12 })
+      .width('100%')
+      .alignItems(VerticalAlign.Top)
+
+      Text(`📍 ${this.poiName.length > 0 ? this.poiName : '未命名地点'}`)
+        .fontSize(AppDimens.FONT_MD)
+        .fontColor(AppColors.TEXT_SECONDARY)
+        .lineHeight(22)
+        .width('100%')
+        .margin({ top: 12 })
+
+      Text(this.getDisplayContent())
+        .fontSize(AppDimens.FONT_MD)
+        .fontColor(AppColors.TEXT_PRIMARY)
+        .lineHeight(24)
+        .margin({ top: 18 })
+        .width('100%')
 
       if (this.tags.length > 0) {
-        Row({ space: 8 }) {
+        Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
           ForEach(this.tags, (tag: string) => {
             Text(`#${tag}`)
               .fontSize(AppDimens.FONT_SM)
@@ -266,10 +266,21 @@ export struct NodeDetailPage {
               .backgroundColor(AppColors.PRIMARY + '12')
               .padding({ left: 10, right: 10, top: 6, bottom: 6 })
               .borderRadius(14)
+              .margin({ right: 8, bottom: 8 })
           })
         }
-        .margin({ top: 12 })
+        .width('100%')
+        .margin({ top: 18 })
       }
+
+      Row() {
+        Text(this.date)
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_HINT)
+      }
+      .width('100%')
+      .margin({ top: 18 })
+
     }
     .width('100%')
     .padding(AppDimens.PADDING_LG)
@@ -328,26 +339,6 @@ export struct NodeDetailPage {
             Column() {
               this.buildInfoCard()
 
-              Column() {
-                Text('正文')
-                  .fontSize(AppDimens.FONT_MD)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor(AppColors.TEXT_PRIMARY)
-                  .width('100%')
-                Text(this.getDisplayContent())
-                  .fontSize(AppDimens.FONT_MD)
-                  .fontColor(AppColors.TEXT_PRIMARY)
-                  .lineHeight(24)
-                  .margin({ top: 12 })
-                  .width('100%')
-              }
-              .width('100%')
-              .padding(AppDimens.PADDING_LG)
-              .margin({ top: 14 })
-              .backgroundColor(AppColors.CARD_BG)
-              .borderRadius(AppDimens.RADIUS_LG)
-              .alignItems(HorizontalAlign.Start)
-
               if (this.tripName.length > 0) {
                 Row() {
                   Column() {
@@ -358,11 +349,13 @@ export struct NodeDetailPage {
                       .fontSize(AppDimens.FONT_LG)
                       .fontWeight(FontWeight.Medium)
                       .fontColor(AppColors.TEXT_PRIMARY)
+                      .lineHeight(24)
                       .margin({ top: 6 })
+                      .width('100%')
                   }
                   .alignItems(HorizontalAlign.Start)
                   .layoutWeight(1)
-                  Text('查看 Track >')
+                  Text('查看路线 >')
                     .fontSize(AppDimens.FONT_SM)
                     .fontColor(AppColors.PRIMARY)
                 }

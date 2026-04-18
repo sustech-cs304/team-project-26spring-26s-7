@@ -197,6 +197,43 @@ export struct TripEditPage {
     }
   }
 
+  private async deleteCurrentTrip(): Promise<void> {
+    if (!this.isEditMode || this.tripId.length === 0) {
+      return
+    }
+
+    try {
+      await this.dataService.deleteTravel(this.tripId)
+      this.bumpTravelDataVersion()
+      promptAction.showToast({ message: 'Track 已删除' })
+      router.back()
+    } catch (_) {
+      promptAction.showToast({ message: '删除 Track 失败' })
+    }
+  }
+
+  private handleDeleteTrip(): void {
+    if (!this.isEditMode || this.tripId.length === 0) {
+      return
+    }
+
+    AlertDialog.show({
+      title: '删除旅行',
+      message: `确定要删除「${this.title.trim().length > 0 ? this.title : '当前旅行'}」吗？删除后不可恢复。`,
+      primaryButton: {
+        value: '取消',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '删除',
+        fontColor: AppColors.DANGER,
+        action: () => {
+          this.deleteCurrentTrip()
+        }
+      }
+    })
+  }
+
   @Builder
   private buildVisibilityCard() {
     Column() {
@@ -270,20 +307,30 @@ export struct TripEditPage {
         .alignItems(HorizontalAlign.Start)
 
         Column({ space: 8 }) {
-          Button('↑')
-            .width(32)
-            .height(28)
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor(AppColors.TEXT_PRIMARY)
-            .backgroundColor(AppColors.BACKGROUND)
+          Button() {
+            Text('上移')
+              .fontSize(12)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(index > 0 ? AppColors.TEXT_PRIMARY : AppColors.TEXT_HINT)
+          }
+            .constraintSize({ minWidth: 72 })
+            .height(32)
+            .padding({ left: 14, right: 14 })
+            .backgroundColor(index > 0 ? AppColors.BACKGROUND : '#F0F1F4')
+            .borderRadius(16)
             .enabled(index > 0)
             .onClick(() => { this.moveNode(index, -1) })
-          Button('↓')
-            .width(32)
-            .height(28)
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor(AppColors.TEXT_PRIMARY)
-            .backgroundColor(AppColors.BACKGROUND)
+          Button() {
+            Text('下移')
+              .fontSize(12)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(index < this.nodes.length - 1 ? AppColors.TEXT_PRIMARY : AppColors.TEXT_HINT)
+          }
+            .constraintSize({ minWidth: 72 })
+            .height(32)
+            .padding({ left: 14, right: 14 })
+            .backgroundColor(index < this.nodes.length - 1 ? AppColors.BACKGROUND : '#F0F1F4')
+            .borderRadius(16)
             .enabled(index < this.nodes.length - 1)
             .onClick(() => { this.moveNode(index, 1) })
         }
@@ -475,6 +522,38 @@ export struct TripEditPage {
             .backgroundColor(AppColors.CARD_BG)
             .borderRadius(AppDimens.RADIUS_MD)
             .alignItems(HorizontalAlign.Start)
+
+            if (this.isEditMode) {
+              Column() {
+                Text('危险操作')
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(AppColors.TEXT_PRIMARY)
+
+                Text('删除后，这条旅行及其节点关联将无法恢复。')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_HINT)
+                  .lineHeight(20)
+                  .width('100%')
+                  .margin({ top: 8 })
+
+                Button('删除旅行')
+                  .width('100%')
+                  .height(42)
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontColor(AppColors.DANGER)
+                  .backgroundColor('#FFF3F2')
+                  .borderRadius(18)
+                  .margin({ top: 14 })
+                  .onClick(() => this.handleDeleteTrip())
+              }
+              .width('100%')
+              .padding(AppDimens.PADDING_MD)
+              .margin({ top: -8, bottom: 24 })
+              .backgroundColor(AppColors.CARD_BG)
+              .borderRadius(AppDimens.RADIUS_MD)
+              .alignItems(HorizontalAlign.Start)
+            }
           }
           .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 16 })
         }

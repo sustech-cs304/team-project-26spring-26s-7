@@ -13,6 +13,7 @@ interface LoadedNodeData {
   longitude: number
   createdAt: number
   tags: string[]
+  coverPhoto: string
 }
 
 interface HomeSearchResult {
@@ -22,6 +23,7 @@ interface HomeSearchResult {
   latitude: number
   longitude: number
   type: 'node' | 'site'
+  coverPhoto?: string
 }
 
 interface SiteLike {
@@ -83,6 +85,7 @@ export struct MapHomeView {
   @State previewNodeId: string = ''
   @State previewTitle: string = ''
   @State previewPoi: string = ''
+  @State previewPhoto: string = ''
 
   private mapCallback: AsyncCallback<map.MapComponentController> = async (err, controller) => {
     if (!err && controller) {
@@ -135,8 +138,13 @@ export struct MapHomeView {
       latitude: node.latitude,
       longitude: node.longitude,
       createdAt: node.createdAt,
-      tags: node.tags
+      tags: node.tags,
+      coverPhoto: node.photos.length > 0 ? node.photos[0] : ''
     }
+  }
+
+  private findLoadedNodeById(nodeId: string): LoadedNodeData | undefined {
+    return this.loadedNodes.find((node: LoadedNodeData) => node.id === nodeId)
   }
 
   private getSearchCenter(): mapCommon.LatLng {
@@ -182,7 +190,8 @@ export struct MapHomeView {
         subtitle: node.poiName,
         latitude: node.latitude,
         longitude: node.longitude,
-        type: 'node'
+        type: 'node',
+        coverPhoto: node.coverPhoto
       })
       if (results.length >= 8) {
         break
@@ -223,6 +232,7 @@ export struct MapHomeView {
     this.previewNodeId = ''
     this.previewTitle = ''
     this.previewPoi = ''
+    this.previewPhoto = ''
     if (this.selectedSearchMarker) {
       try {
         this.selectedSearchMarker.remove()
@@ -382,6 +392,7 @@ export struct MapHomeView {
       this.previewNodeId = item.id
       this.previewTitle = item.title
       this.previewPoi = item.subtitle
+      this.previewPhoto = item.coverPhoto ?? ''
       this.previewVisible = true
     }
   }
@@ -484,9 +495,11 @@ export struct MapHomeView {
       for (const node of this.mapNodes) {
         if (Math.abs(node.latitude - position.latitude) < 0.0001 &&
           Math.abs(node.longitude - position.longitude) < 0.0001) {
+          const loadedNode = this.findLoadedNodeById(node.id)
           this.previewNodeId = node.id
           this.previewTitle = node.title
           this.previewPoi = node.poiName
+          this.previewPhoto = loadedNode ? loadedNode.coverPhoto : ''
           this.previewVisible = true
           break
         }
@@ -742,25 +755,42 @@ export struct MapHomeView {
             .onClick(() => { this.previewVisible = false })
 
           Row() {
-            Column() {
-              Text('📷')
-                .fontSize(24)
+            Stack() {
+              if (this.previewPhoto.length > 0) {
+                Image(this.previewPhoto)
+                  .width('100%')
+                  .height('100%')
+                  .objectFit(ImageFit.Cover)
+              } else {
+                Column() {
+                  Text('📷')
+                    .fontSize(24)
+                }
+                .width('100%')
+                .height('100%')
+                .justifyContent(FlexAlign.Center)
+              }
             }
             .width(64)
             .height(64)
             .backgroundColor(AppColors.BACKGROUND)
             .borderRadius(AppDimens.RADIUS_SM)
-            .justifyContent(FlexAlign.Center)
+            .clip(true)
 
             Column() {
               Text(this.previewTitle)
                 .fontSize(AppDimens.FONT_LG)
                 .fontWeight(FontWeight.Medium)
                 .fontColor(AppColors.TEXT_PRIMARY)
+                .width('100%')
+                .maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
               Text('📍 ' + this.previewPoi)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_SECONDARY)
                 .margin({ top: 4 })
+                .width('100%')
+                .maxLines(2)
               Text('点击查看详情 >')
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.PRIMARY)
