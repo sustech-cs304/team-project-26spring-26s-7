@@ -372,17 +372,6 @@ struct LocationPickerPage {
       .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12 })
       .position({ x: 0, y: 0 })
 
-      if (!this.hasSelected) {
-        Text('点击地图、搜索地点名称')
-          .fontSize(AppDimens.FONT_MD)
-          .fontColor(AppColors.CARD_BG)
-          .backgroundColor('#00000066')
-          .padding({ left: 16, right: 16, top: 8, bottom: 8 })
-          .borderRadius(20)
-          .position({ x: '50%', y: '50%' })
-          .translate({ x: '-50%' })
-      }
-
       if (this.hasSelected) {
         Row() {
           Column() {

@@ -720,17 +720,26 @@ export struct MapHomeView {
         .alignItems(HorizontalAlign.Start)
       }
 
-      // 右下角操作按钮
+      // 右下角操作按钮（回到地图原点）
       Column({ space: 12 }) {
-        Button('◎')
-          .width(44)
-          .height(44)
-          .fontSize(20)
-          .fontColor(AppColors.PRIMARY)
-          .backgroundColor(AppColors.CARD_BG)
-          .borderRadius(22)
-          .shadow({ radius: 4, color: '#0000001A', offsetY: 2 })
-          .onClick(() => this.flyToCenter())
+        Button() {
+          Stack() {
+            Text('⌖')
+              .fontSize(32)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(AppColors.PRIMARY)
+          }
+          .width('100%')
+          .height('100%')
+          .alignContent(Alignment.Center)
+        }
+        .width(48)
+        .height(48)
+        .backgroundColor(AppColors.CARD_BG)
+        .borderRadius(24)
+        .padding(0)
+        .shadow({ radius: 4, color: '#0000001A', offsetY: 2 })
+        .onClick(() => this.flyToCenter())
 
         Button('+')
           .width(52)
