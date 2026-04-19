@@ -75,24 +75,33 @@ export class RdbDataService implements IDataService {
     return JSON.stringify(cloudPaths);
   }
 
-  private syncNodePhotosToCloud(travelId: string, nodeId: string, photos: string[]): void {
+  private syncNodePhotosToCloud(travelId: string, nodeId: string, photos: string[], previousTravelId?: string): void {
     if (photos.length === 0) {
       return;
     }
 
-    void this.uploadNodePhotosToCloud(travelId, nodeId, photos);
+    void this.uploadNodePhotosToCloud(travelId, nodeId, photos, previousTravelId);
   }
 
-  private async uploadNodePhotosToCloud(travelId: string, nodeId: string, photos: string[]): Promise<void> {
+  private async uploadNodePhotosToCloud(travelId: string, nodeId: string, photos: string[], previousTravelId?: string): Promise<boolean> {
+    let allSucceeded = true;
+    const shouldMigrate = previousTravelId !== undefined && previousTravelId !== travelId;
     for (const photo of photos) {
       try {
-        await CloudStorageService.uploadNodePhoto(travelId, nodeId, photo);
-        logger.info(TAG, `Uploaded node photo to cloud: ${nodeId} -> ${photo}`);
+        if (shouldMigrate && previousTravelId) {
+          await CloudStorageService.copyNodePhoto(previousTravelId, travelId, nodeId, photo);
+          logger.info(TAG, `Migrated node photo in cloud: ${nodeId} ${previousTravelId} -> ${travelId}`);
+        } else {
+          await CloudStorageService.uploadNodePhoto(travelId, nodeId, photo);
+          logger.info(TAG, `Uploaded node photo to cloud: ${nodeId} -> ${photo}`);
+        }
       } catch (err) {
         const error = err as Error;
         logger.error(TAG, `Failed to upload node photo ${photo}: ${error.message}`);
+        allSucceeded = false;
       }
     }
+    return allSucceeded;
   }
 
   private syncDeletedNodePhotosToCloud(travelId: string, nodeId: string, photos: string[]): void {
@@ -307,6 +316,7 @@ export class RdbDataService implements IDataService {
 
   async deleteTravel(travelId: string): Promise<void> {
     const affectedNodes = await this.nodeRepo.getNodesByTravelId(travelId)
+    const shouldSyncCloudNow = (AppStorage.get('networkOnline') as boolean) ?? false
     const deleted = await this.travelRepo.softDeleteTravel(travelId);
     if (!deleted) {
       throw new Error(`Failed to delete travel: ${travelId}`);
@@ -314,27 +324,38 @@ export class RdbDataService implements IDataService {
 
     for (let i = 0; i < affectedNodes.length; i++) {
       const affectedNode = affectedNodes[i]
+      logger.info(TAG, `[debug] deleteTravel affectedNode before localId=${affectedNode.id}, travelId=${affectedNode.travelId}, photos=${JSON.stringify(affectedNode.photos)}`)
       const node = await this.nodeRepo.getNodeById(affectedNode.id)
       if (!node) {
         continue
+      }
+      logger.info(TAG, `[debug] deleteTravel affectedNode after localId=${node.id}, travelId=${node.travelId}, photos=${JSON.stringify(node.photos)}`)
+      let nextTravelId = node.travelId;
+      let nextPhotos = [...node.photos];
+      if (shouldSyncCloudNow && node.photos.length > 0 && affectedNode.travelId !== node.travelId) {
+        const migrated = await this.uploadNodePhotosToCloud(node.travelId, node.id, node.photos, affectedNode.travelId)
+        if (!migrated) {
+          nextTravelId = affectedNode.travelId;
+          nextPhotos = [...affectedNode.photos];
+        }
       }
       const payload = JSON.stringify({
         ownerUid: node.ownerUid ?? '',
         localId: node.id,
         cloudId: node.cloudId ?? '',
-        travelId: node.travelId,
+        travelId: nextTravelId,
         title: node.title,
         content: node.content,
         latitude: node.latitude,
         longitude: node.longitude,
         poiName: node.poiName,
-        photos: node.photos,
+        photos: nextPhotos,
         mood: node.mood,
         tags: node.tags,
         updatedAt: node.updatedAt,
         deletedAt: node.deletedAt ?? 0,
         version: node.version ?? 1,
-        photoManifest: this.buildPhotoManifest(node.travelId, node.id, node.photos)
+        photoManifest: this.buildPhotoManifest(nextTravelId, node.id, nextPhotos)
       })
       await this.enqueueSyncSilently('memory_node', node.id, 'upsert', payload)
     }
@@ -344,7 +365,9 @@ export class RdbDataService implements IDataService {
       deletedAt: Date.now()
     })
     await this.enqueueSyncSilently('travel', travelId, 'delete', payload);
-    void SyncManager.pushLocalNow()
+    if (shouldSyncCloudNow) {
+      void SyncManager.pushLocalNow()
+    }
   }
 
   // ==================== MemoryNode 相关 ====================
@@ -401,11 +424,13 @@ export class RdbDataService implements IDataService {
   async updateNode(nodeId: string, data: UpdateNodeInput): Promise<MemoryNode> {
     let oldPhotos: string[] = [];
     let travelId: string = '';
-    if (data.photos !== undefined) {
+    let oldTravelId: string = '';
+    if (data.photos !== undefined || data.travelId !== undefined) {
       const oldNode = await this.nodeRepo.getNodeById(nodeId);
       if (oldNode) {
         oldPhotos = [...oldNode.photos];
         travelId = oldNode.travelId;
+        oldTravelId = oldNode.travelId;
       }
     }
 
@@ -463,23 +488,36 @@ export class RdbDataService implements IDataService {
       this.syncNodePhotosToCloud(updated.travelId, updated.id, addedPhotos);
     }
 
+    if (data.travelId !== undefined && oldTravelId.length > 0 && oldTravelId !== updated.travelId && updated.photos.length > 0) {
+      const shouldSyncCloudNow = (AppStorage.get('networkOnline') as boolean) ?? false;
+      if (shouldSyncCloudNow) {
+        const migrated = await this.uploadNodePhotosToCloud(updated.travelId, updated.id, updated.photos, oldTravelId);
+        if (!migrated) {
+          data.travelId = oldTravelId;
+          updated.photos = [...oldPhotos];
+        }
+      }
+    }
+
+    const nextTravelId = data.travelId ?? updated.travelId;
+    const nextPhotos = [...updated.photos];
     const payload = JSON.stringify({
       ownerUid: updated.ownerUid ?? '',
       localId: updated.id,
       cloudId: updated.cloudId ?? '',
-      travelId: updated.travelId,
+      travelId: nextTravelId,
       title: updated.title,
       content: updated.content,
       latitude: updated.latitude,
       longitude: updated.longitude,
       poiName: updated.poiName,
-      photos: updated.photos,
+      photos: nextPhotos,
       mood: updated.mood,
       tags: updated.tags,
       updatedAt: updated.updatedAt,
       deletedAt: updated.deletedAt ?? 0,
       version: updated.version ?? 1,
-      photoManifest: this.buildPhotoManifest(updated.travelId, updated.id, updated.photos)
+      photoManifest: this.buildPhotoManifest(nextTravelId, updated.id, nextPhotos)
     })
     await this.enqueueSync('memory_node', updated.id, 'upsert', payload);
 

@@ -47,6 +47,11 @@ export interface UpdateTravelInput {
   sensitivity?: string;
 }
 
+interface NodePhotoData {
+  photos: string;
+  photoManifest: string;
+}
+
 export class TravelRepository {
   private rdbHelper: RdbHelper;
 
@@ -286,7 +291,42 @@ export class TravelRepository {
       const nodePredicates = new rdb.RdbPredicates('memory_nodes');
       nodePredicates.equalTo('travel_id', travelId);
       nodePredicates.equalTo('deleted_at', 0);
+      const currentNodesResultSet = await store.query(nodePredicates);
+      const nodePhotosMap: Map<number, NodePhotoData> = new Map();
+      try {
+        if (currentNodesResultSet.goToFirstRow()) {
+          do {
+            const nodeId = currentNodesResultSet.getDouble(currentNodesResultSet.getColumnIndex('id'));
+            const photos = currentNodesResultSet.getString(currentNodesResultSet.getColumnIndex('photos')) ?? '[]';
+            logger.info(TAG, `[debug] softDeleteTravel before move nodeId=${nodeId}, photos=${photos}`);
+            const photoManifestIndex = currentNodesResultSet.getColumnIndex('photo_manifest');
+            const photoManifest = photoManifestIndex >= 0
+              ? (currentNodesResultSet.getString(photoManifestIndex) ?? '')
+              : '';
+            const nodePhotoData: NodePhotoData = {
+              photos: photos,
+              photoManifest: photoManifest
+            };
+            nodePhotosMap.set(nodeId, nodePhotoData);
+          } while (currentNodesResultSet.goToNextRow());
+        }
+      } finally {
+        currentNodesResultSet.close();
+      }
       await store.update(nodeValues, nodePredicates);
+      const nodePhotoEntries = nodePhotosMap.entries();
+      for (const entry of nodePhotoEntries) {
+        const nodeId = entry[0];
+        const nodePhotoData = entry[1];
+        const restorePhotoValues: rdb.ValuesBucket = {
+          photos: nodePhotoData.photos,
+          photo_manifest: nodePhotoData.photoManifest.length > 0 ? nodePhotoData.photoManifest : nodePhotoData.photos
+        };
+        const restorePhotoPredicates = new rdb.RdbPredicates('memory_nodes');
+        restorePhotoPredicates.equalTo('id', nodeId);
+        await store.update(restorePhotoValues, restorePhotoPredicates);
+        logger.info(TAG, `[debug] softDeleteTravel after move nodeId=${nodeId}, photos=${nodePhotoData.photos}, photoManifest=${restorePhotoValues.photo_manifest}`);
+      }
 
       const travelValues: rdb.ValuesBucket = {
         deleted_at: now,

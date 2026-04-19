@@ -208,9 +208,6 @@ export class SyncManager {
       if (!cloudId || localNodeMap.has(cloudId)) {
         continue
       }
-      if (cloudNode.travelId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
-        continue
-      }
       const deletedNode: MemoryNode = {
         id: cloudId.replace('node_', ''),
         travelId: cloudNode.travelId,
@@ -284,6 +281,9 @@ export class SyncManager {
 
     for (let i = 0; i < localTravels.length; i++) {
       const localTravel = localTravels[i]
+      if ((localTravel.deletedAt ?? 0) > 0) {
+        continue
+      }
       const cloudId = localTravel.cloudId && localTravel.cloudId.length > 0 ? localTravel.cloudId : `travel_${localTravel.id}`
       if (!activeCloudTravelIds.has(cloudId)) {
         await travelRepo.deleteTravel(localTravel.id)
@@ -334,16 +334,19 @@ export class SyncManager {
         continue
       }
       activeCloudNodeIds.add(node.cloudId)
-      await nodeRepo.upsertFromCloud(node)
       const localNodeId = await nodeRepo.findLocalIdByCloudId(node.cloudId)
       if (localNodeId) {
         node.id = localNodeId
       }
       await SyncManager.syncNodePhotosForDownload(node)
+      await nodeRepo.upsertFromCloud(node)
     }
 
     for (let i = 0; i < localNodes.length; i++) {
       const localNode = localNodes[i]
+      if ((localNode.deletedAt ?? 0) > 0) {
+        continue
+      }
       const cloudId = localNode.cloudId && localNode.cloudId.length > 0 ? localNode.cloudId : `node_${localNode.id}`
       if (!activeCloudNodeIds.has(cloudId)) {
         if (localNode.travelId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
@@ -447,8 +450,7 @@ export class SyncManager {
     hilog.info(
       DOMAIN,
       TAG,
-      `[debug] syncNodePhotosForDownload wrote photos cloudId=${node.cloudId ?? ''}, photos=${JSON.stringify(downloadedPhotos)}, photoManifest=${node.photoManifest ?? ''}`
+      `[debug] syncNodePhotosForDownload prepared photos cloudId=${node.cloudId ?? ''}, photos=${JSON.stringify(downloadedPhotos)}, photoManifest=${node.photoManifest ?? ''}`
     )
-    await new MemoryNodeRepository().upsertFromCloud(node)
   }
 }
