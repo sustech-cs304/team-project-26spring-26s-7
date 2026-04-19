@@ -15,7 +15,7 @@ flowchart TB
   classDef ext fill:#e0e0e0,stroke:#666666,stroke-width:2px,color:#000,stroke-dasharray:5 5
 
   %% 用户角色
-  user["👤 用户<br/>科研人员/旅行者"]:::user
+  user["👤 用户<br/>如旅行者"]:::user
   admin["👤 管理员<br/>内容审核/运维"]:::user
 
   %% 本系统
@@ -33,7 +33,7 @@ flowchart TB
   %% 外部系统 - 下排
   subgraph External2["第三方社交平台"]
     wechat["微信<br/>社交平台"]:::ext
-    weibo["微博<br/>社交平台"]:::ext
+    weibo["QQ<br/>社交平台"]:::ext
   end
 
   %% 用户关系
@@ -48,10 +48,7 @@ flowchart TB
   self_hosted_api -->|分享链接 | wechat
   self_hosted_api -->|分享链接 | weibo
 
-  %% 布局优化 - 使用隐形连接引导布局
-  huawei_account ~~~ huawei_cloud ~~~ self_hosted_api
-  wechat ~~~ weibo
-
+  %% 布局优化
   linkStyle default stroke:#000000,stroke-width:1.5px,fill:none
 ```
 
@@ -63,7 +60,7 @@ flowchart TB
 
 | 角色 | 描述 |
 |------|------|
-| **用户** | 科研人员、旅行者等核心用户群体，使用鸿蒙设备记录旅行回忆 |
+| **用户** | 旅行者等核心用户群体，使用鸿蒙设备记录旅行回忆 |
 | **管理员** | 负责内容审核、系统运维的后台人员 |
 
 ### 系统边界
