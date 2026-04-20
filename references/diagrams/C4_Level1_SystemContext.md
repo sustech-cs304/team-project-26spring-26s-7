@@ -28,6 +28,7 @@ flowchart TB
     huawei_account["华为账号服务<br/>Huawei ID 认证"]:::ext
     huawei_cloud["华为云存储 OSS<br/>对象存储服务"]:::ext
     self_hosted_api["自建服务器 API<br/>AI 文案/审核/验证"]:::ext
+    share_link["分享链接服务<br/>跨平台分享"]:::ext
   end
 
   %% 外部系统 - 下排
@@ -41,12 +42,13 @@ flowchart TB
   admin -->|管理 Web 后台| self_hosted_api
 
   %% 系统关系 - 清晰布局
-  travelpin_app -->|OAuth 2.0 认证 | huawei_account
+  travelpin_app -->|OAuth 2.0 认证| huawei_account
   travelpin_app -->|上传下载媒体| huawei_cloud
   travelpin_app -->|AI 文案生成| self_hosted_api
-  
-  self_hosted_api -->|分享链接 | wechat
-  self_hosted_api -->|分享链接 | weibo
+  travelpin_app -->|请求分享链接| share_link
+
+  travelpin_app -->|分享链接| wechat
+  travelpin_app -->|分享链接| weibo
 
   %% 布局优化
   linkStyle default stroke:#000000,stroke-width:1.5px,fill:none
