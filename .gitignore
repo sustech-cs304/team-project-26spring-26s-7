@@ -76,3 +76,6 @@ frontend/.idea/
 # package
 package-lock.json
 package.json
+
+# Codex
+AGENTS.md
