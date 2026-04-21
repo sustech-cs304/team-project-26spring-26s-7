@@ -21,6 +21,9 @@ export struct NodeListView {
   @State isLoading: boolean = false
   @Watch('onTravelDataVersionChange')
   @StorageLink('travelDataVersion') travelDataVersion: number = 0
+  @Watch('onTabRefresh')
+  @StorageLink('tabRefreshToken') tabRefreshToken: number = 0
+  @StorageLink('activeTabIndex') activeTabIndex: number = 0
 
   private dataService = getDataService()
 
@@ -28,12 +31,14 @@ export struct NodeListView {
     this.loadNodes()
   }
 
-  onPageShow(): void {
+  private onTravelDataVersionChange(): void {
     this.loadNodes()
   }
 
-  private onTravelDataVersionChange(): void {
-    this.loadNodes()
+  private onTabRefresh(): void {
+    if (this.activeTabIndex === 2) {
+      this.loadNodes()
+    }
   }
 
   private formatDate(timestamp: number): string {

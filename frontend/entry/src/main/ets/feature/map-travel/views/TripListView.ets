@@ -13,6 +13,9 @@ export struct TripListView {
   @State isLoading: boolean = false
   @Watch('onTravelDataVersionChange')
   @StorageLink('travelDataVersion') travelDataVersion: number = 0
+  @Watch('onTabRefresh')
+  @StorageLink('tabRefreshToken') tabRefreshToken: number = 0
+  @StorageLink('activeTabIndex') activeTabIndex: number = 0
 
   private dataService = getDataService()
 
@@ -20,12 +23,14 @@ export struct TripListView {
     this.loadTrips()
   }
 
-  onPageShow(): void {
+  private onTravelDataVersionChange(): void {
     this.loadTrips()
   }
 
-  private onTravelDataVersionChange(): void {
-    this.loadTrips()
+  private onTabRefresh(): void {
+    if (this.activeTabIndex === 1) {
+      this.loadTrips()
+    }
   }
 
   private formatDate(timestamp: number): string {

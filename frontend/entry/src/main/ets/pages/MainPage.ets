@@ -55,16 +55,28 @@ struct MainPage {
         MapHomeView()
       }
       .tabBar(this.tabBuilder('地图', 0))
+      .onWillShow(() => {
+        AppStorage.setOrCreate('activeTabIndex', 0)
+        AppStorage.setOrCreate('tabRefreshToken', Date.now())
+      })
 
       TabContent() {
         TripListView()
       }
       .tabBar(this.tabBuilder('旅行', 1))
+      .onWillShow(() => {
+        AppStorage.setOrCreate('activeTabIndex', 1)
+        AppStorage.setOrCreate('tabRefreshToken', Date.now())
+      })
 
       TabContent() {
         NodeListView()
       }
       .tabBar(this.tabBuilder('节点', 2))
+      .onWillShow(() => {
+        AppStorage.setOrCreate('activeTabIndex', 2)
+        AppStorage.setOrCreate('tabRefreshToken', Date.now())
+      })
 
       TabContent() {
         ProfileView()

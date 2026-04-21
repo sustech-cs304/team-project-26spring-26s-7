@@ -247,21 +247,24 @@ export class SyncManager {
   }
 
   private static async replaceLocalWithCloud(): Promise<void> {
-    const user = await AuthService.getCurrentUser()
-    if (!user) {
-      return
-    }
+    const failedNodeIds: string[] = []
 
-    const travelRepo = new TravelRepository()
-    const nodeRepo = new MemoryNodeRepository()
-    const localTravels = await travelRepo.getAllTravelsIncludingDeleted()
-    const localNodes = await nodeRepo.getAllNodesIncludingDeleted()
-    const cloudTravels = await CloudSyncService.fetchTravels(user.uid)
-    const cloudNodes = await CloudSyncService.fetchMemoryNodes(user.uid)
-    hilog.info(DOMAIN, TAG, `replaceLocalWithCloud fetched travels=${cloudTravels.length}, nodes=${cloudNodes.length}`)
+    try {
+      const user = await AuthService.getCurrentUser()
+      if (!user) {
+        return
+      }
 
-    const activeCloudTravelIds = new Set<string>()
-    const activeCloudNodeIds = new Set<string>()
+      const travelRepo = new TravelRepository()
+      const nodeRepo = new MemoryNodeRepository()
+      const localTravels = await travelRepo.getAllTravelsIncludingDeleted()
+      const localNodes = await nodeRepo.getAllNodesIncludingDeleted()
+      const cloudTravels = await CloudSyncService.fetchTravels(user.uid)
+      const cloudNodes = await CloudSyncService.fetchMemoryNodes(user.uid)
+      hilog.info(DOMAIN, TAG, `replaceLocalWithCloud fetched travels=${cloudTravels.length}, nodes=${cloudNodes.length}`)
+
+      const activeCloudTravelIds = new Set<string>()
+      const activeCloudNodeIds = new Set<string>()
 
     for (let i = 0; i < cloudTravels.length; i++) {
       const travel = cloudTravels[i]
@@ -338,7 +341,12 @@ export class SyncManager {
       if (localNodeId) {
         node.id = localNodeId
       }
-      await SyncManager.syncNodePhotosForDownload(node)
+      try {
+        await SyncManager.syncNodePhotosForDownload(node)
+      } catch (err) {
+        hilog.warn(DOMAIN, TAG, `Photo download failed for node ${node.id}: ${JSON.stringify(err)}`)
+        failedNodeIds.push(node.id)
+      }
       await nodeRepo.upsertFromCloud(node)
     }
 
@@ -356,8 +364,17 @@ export class SyncManager {
         await nodeRepo.updateSyncMetadata(localNode.id, cloudId, 'synced', Date.now())
       }
     }
+    } finally {
+      await SyncManager.bumpTravelDataVersion()
 
-    await SyncManager.bumpTravelDataVersion()
+      if (failedNodeIds.length > 0) {
+        AppStorage.setOrCreate('syncPartialFailure', true)
+        AppStorage.setOrCreate('syncFailedNodeCount', failedNodeIds.length)
+      } else {
+        AppStorage.setOrCreate('syncPartialFailure', false)
+        AppStorage.setOrCreate('syncFailedNodeCount', 0)
+      }
+    }
   }
 
   private static async bumpTravelDataVersion(): Promise<void> {
