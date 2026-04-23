@@ -1,5 +1,6 @@
 import { hilog } from '@kit.PerformanceAnalysisKit'
 import { logger } from '../utils/Logger'
+import { TravelSpecialValues } from '../utils/Constants'
 import { RdbHelper } from '../data/RdbHelper'
 import { TravelRepository } from '../data/TravelRepository'
 import { MemoryNodeRepository } from '../data/MemoryNodeRepository'
@@ -246,21 +247,24 @@ export class SyncManager {
   }
 
   private static async replaceLocalWithCloud(): Promise<void> {
-    const user = await AuthService.getCurrentUser()
-    if (!user) {
-      return
-    }
+    const failedNodeIds: string[] = []
 
-    const travelRepo = new TravelRepository()
-    const nodeRepo = new MemoryNodeRepository()
-    const localTravels = await travelRepo.getAllTravelsIncludingDeleted()
-    const localNodes = await nodeRepo.getAllNodesIncludingDeleted()
-    const cloudTravels = await CloudSyncService.fetchTravels(user.uid)
-    const cloudNodes = await CloudSyncService.fetchMemoryNodes(user.uid)
-    hilog.info(DOMAIN, TAG, `replaceLocalWithCloud fetched travels=${cloudTravels.length}, nodes=${cloudNodes.length}`)
+    try {
+      const user = await AuthService.getCurrentUser()
+      if (!user) {
+        return
+      }
 
-    const activeCloudTravelIds = new Set<string>()
-    const activeCloudNodeIds = new Set<string>()
+      const travelRepo = new TravelRepository()
+      const nodeRepo = new MemoryNodeRepository()
+      const localTravels = await travelRepo.getAllTravelsIncludingDeleted()
+      const localNodes = await nodeRepo.getAllNodesIncludingDeleted()
+      const cloudTravels = await CloudSyncService.fetchTravels(user.uid)
+      const cloudNodes = await CloudSyncService.fetchMemoryNodes(user.uid)
+      hilog.info(DOMAIN, TAG, `replaceLocalWithCloud fetched travels=${cloudTravels.length}, nodes=${cloudNodes.length}`)
+
+      const activeCloudTravelIds = new Set<string>()
+      const activeCloudNodeIds = new Set<string>()
 
     for (let i = 0; i < cloudTravels.length; i++) {
       const travel = cloudTravels[i]
@@ -280,6 +284,9 @@ export class SyncManager {
 
     for (let i = 0; i < localTravels.length; i++) {
       const localTravel = localTravels[i]
+      if ((localTravel.deletedAt ?? 0) > 0) {
+        continue
+      }
       const cloudId = localTravel.cloudId && localTravel.cloudId.length > 0 ? localTravel.cloudId : `travel_${localTravel.id}`
       if (!activeCloudTravelIds.has(cloudId)) {
         await travelRepo.deleteTravel(localTravel.id)
@@ -290,27 +297,35 @@ export class SyncManager {
     for (let i = 0; i < cloudNodes.length; i++) {
       const node = cloudNodes[i]
       const travelCloudId = node.travelId
-      if (!travelCloudId) {
-        hilog.info(DOMAIN, TAG, `[debug] skip cloud node without travelCloudId, cloudId=${node.cloudId ?? ''}`)
+      if (!node.cloudId) {
         continue
       }
-      const localTravelId = await travelRepo.findLocalIdByCloudId(travelCloudId)
-      hilog.info(
-        DOMAIN,
-        TAG,
-        `[debug] download node start cloudId=${node.cloudId ?? ''}, travelCloudId=${travelCloudId}, localTravelId=${localTravelId ?? ''}, deletedAt=${node.deletedAt ?? 0}, photoManifest=${node.photoManifest ?? ''}`
-      )
-      if (!localTravelId || !node.cloudId) {
+      if (travelCloudId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
         hilog.info(
           DOMAIN,
           TAG,
-          `[debug] skip cloud node due to missing mapping, cloudId=${node.cloudId ?? ''}, localTravelId=${localTravelId ?? ''}`
+          `[debug] download uncategorized node cloudId=${node.cloudId}, localTravelId=${TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID}`
         )
-        continue
+        node.travelId = TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
+      } else {
+        const localTravelId = await travelRepo.findLocalIdByCloudId(travelCloudId)
+        hilog.info(
+          DOMAIN,
+          TAG,
+          `[debug] download node start cloudId=${node.cloudId ?? ''}, travelCloudId=${travelCloudId}, localTravelId=${localTravelId ?? ''}, deletedAt=${node.deletedAt ?? 0}, photoManifest=${node.photoManifest ?? ''}`
+        )
+        if (!localTravelId) {
+          hilog.info(
+            DOMAIN,
+            TAG,
+            `[debug] skip cloud node due to missing mapping, cloudId=${node.cloudId ?? ''}, localTravelId=${localTravelId ?? ''}`
+          )
+          continue
+        }
+        node.travelId = localTravelId
       }
-      node.travelId = localTravelId
       if ((node.deletedAt ?? 0) > 0) {
-        const localNodeId = node.cloudId ? await nodeRepo.findLocalIdByCloudId(node.cloudId) : null
+        const localNodeId = await nodeRepo.findLocalIdByCloudId(node.cloudId)
         hilog.info(
           DOMAIN,
           TAG,
@@ -322,24 +337,44 @@ export class SyncManager {
         continue
       }
       activeCloudNodeIds.add(node.cloudId)
-      await nodeRepo.upsertFromCloud(node)
       const localNodeId = await nodeRepo.findLocalIdByCloudId(node.cloudId)
       if (localNodeId) {
         node.id = localNodeId
       }
-      await SyncManager.syncNodePhotosForDownload(node)
+      try {
+        await SyncManager.syncNodePhotosForDownload(node)
+      } catch (err) {
+        hilog.warn(DOMAIN, TAG, `Photo download failed for node ${node.id}: ${JSON.stringify(err)}`)
+        failedNodeIds.push(node.id)
+      }
+      await nodeRepo.upsertFromCloud(node)
     }
 
     for (let i = 0; i < localNodes.length; i++) {
       const localNode = localNodes[i]
+      if ((localNode.deletedAt ?? 0) > 0) {
+        continue
+      }
       const cloudId = localNode.cloudId && localNode.cloudId.length > 0 ? localNode.cloudId : `node_${localNode.id}`
       if (!activeCloudNodeIds.has(cloudId)) {
+        if (localNode.travelId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
+          continue
+        }
         await nodeRepo.deleteNode(localNode.id)
         await nodeRepo.updateSyncMetadata(localNode.id, cloudId, 'synced', Date.now())
       }
     }
+    } finally {
+      await SyncManager.bumpTravelDataVersion()
 
-    await SyncManager.bumpTravelDataVersion()
+      if (failedNodeIds.length > 0) {
+        AppStorage.setOrCreate('syncPartialFailure', true)
+        AppStorage.setOrCreate('syncFailedNodeCount', failedNodeIds.length)
+      } else {
+        AppStorage.setOrCreate('syncPartialFailure', false)
+        AppStorage.setOrCreate('syncFailedNodeCount', 0)
+      }
+    }
   }
 
   private static async bumpTravelDataVersion(): Promise<void> {
@@ -432,8 +467,7 @@ export class SyncManager {
     hilog.info(
       DOMAIN,
       TAG,
-      `[debug] syncNodePhotosForDownload wrote photos cloudId=${node.cloudId ?? ''}, photos=${JSON.stringify(downloadedPhotos)}, photoManifest=${node.photoManifest ?? ''}`
+      `[debug] syncNodePhotosForDownload prepared photos cloudId=${node.cloudId ?? ''}, photos=${JSON.stringify(downloadedPhotos)}, photoManifest=${node.photoManifest ?? ''}`
     )
-    await new MemoryNodeRepository().upsertFromCloud(node)
   }
 }

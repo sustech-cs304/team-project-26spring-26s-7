@@ -1,6 +1,7 @@
 # ========================
 # Claude Code
 # ========================
+CLAUDE.md
 .claude_state/
 .claude/
 CLAUDE.local.md
@@ -64,6 +65,7 @@ local.properties
 frontend/.codex_*/
 .codex_npm_cache_*
 frontend/.codex_npm_cache_*/
+AGENTS.md
 
 # module cache
 frontend/oh_modules/

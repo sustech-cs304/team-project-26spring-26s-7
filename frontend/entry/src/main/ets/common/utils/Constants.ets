@@ -46,6 +46,11 @@ export class AppDimens {
   static readonly FONT_TITLE: number = 24
 }
 
+export class TravelSpecialValues {
+  static readonly UNCATEGORIZED_TRAVEL_ID: string = '-1'
+  static readonly UNCATEGORIZED_TRAVEL_NAME: string = '未分类节点'
+}
+
 /**
  * 路由 URL 常量
  */

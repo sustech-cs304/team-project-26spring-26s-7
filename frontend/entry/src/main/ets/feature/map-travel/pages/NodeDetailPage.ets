@@ -1,6 +1,6 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { hilog } from '@kit.PerformanceAnalysisKit'
-import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
+import { AppColors, AppDimens, RouterUrls, getDataService, PhotoPickerUtil } from '../../../common'
 import { RouterParam } from '../../../common'
 
 const DOMAIN = 0x0000
@@ -20,6 +20,7 @@ export struct NodeDetailPage {
   @State tags: string[] = []
   @State content: string = ''
   @State photos: string[] = []
+  @State photoRenderVersion: number = 0
   @State tripName: string = ''
   @State tripId: string = ''
   @State nodeId: string = ''
@@ -86,9 +87,14 @@ export struct NodeDetailPage {
       this.mood = node.mood
       this.tags = node.tags
       this.content = node.content
-      this.photos = node.photos
+      this.photos = [...node.photos]
+      this.photoRenderVersion += 1
       this.selectedPhotoIndex = 0
-      hilog.info(DOMAIN, TAG, `loadNodeDetail photos=${JSON.stringify(node.photos)}`)
+      const photoExists: boolean[] = []
+      for (let i = 0; i < node.photos.length; i++) {
+        photoExists.push(PhotoPickerUtil.photoExists(node.photos[i]))
+      }
+      hilog.info(DOMAIN, TAG, `loadNodeDetail photos=${JSON.stringify(node.photos)}, exists=${JSON.stringify(photoExists)}`)
       this.tripId = node.travelId
 
       const trip = await this.dataService.getTravelById(node.travelId)
@@ -139,7 +145,7 @@ export struct NodeDetailPage {
       if (this.photos.length > 0) {
         Swiper() {
           ForEach(this.photos, (photo: string, index: number) => {
-            Image(photo)
+            Image(`${photo}?v=${this.photoRenderVersion}`)
               .width('100%')
               .height('100%')
               .objectFit(ImageFit.Cover)
@@ -190,7 +196,7 @@ export struct NodeDetailPage {
           Row({ space: 10 }) {
             ForEach(this.photos, (photo: string, index: number) => {
               Stack() {
-                Image(photo)
+                Image(`${photo}?v=${this.photoRenderVersion}`)
                   .width('100%')
                   .height('100%')
                   .objectFit(ImageFit.Cover)

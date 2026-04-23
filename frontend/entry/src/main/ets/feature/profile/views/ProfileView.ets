@@ -84,6 +84,15 @@ export struct ProfileView {
       await SyncManager.pullAllCloudToLocal()
       AppStorage.setOrCreate('networkJustReconnected', false)
       await this.loadAuthStatus()
+      const partialFailure = AppStorage.get('syncPartialFailure') as boolean
+      const failedCount = AppStorage.get('syncFailedNodeCount') as number
+      if (partialFailure && failedCount > 0) {
+        promptAction.showToast({ message: `下载完成，${failedCount} 个节点图片下载失败` })
+      } else {
+        promptAction.showToast({ message: '云端数据下载完成' })
+      }
+    } catch (err) {
+      promptAction.showToast({ message: '云端数据下载失败，请重试' })
     } finally {
       this.isSyncing = false
     }

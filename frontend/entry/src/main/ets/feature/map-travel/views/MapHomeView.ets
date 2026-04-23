@@ -63,6 +63,9 @@ export struct MapHomeView {
   @State selectedSearchLongitude: number = 0
   @Watch('onTravelDataVersionChange')
   @StorageLink('travelDataVersion') travelDataVersion: number = 0
+  @Watch('onTabRefresh')
+  @StorageLink('tabRefreshToken') tabRefreshToken: number = 0
+  @StorageLink('activeTabIndex') activeTabIndex: number = 0
 
   // 地图配置：默认中心为深圳
   private mapOptions: mapCommon.MapOptions = {
@@ -100,12 +103,14 @@ export struct MapHomeView {
     this.loadNodes()
   }
 
-  onPageShow(): void {
+  private onTravelDataVersionChange(): void {
     this.loadNodes()
   }
 
-  private onTravelDataVersionChange(): void {
-    this.loadNodes()
+  private onTabRefresh(): void {
+    if (this.activeTabIndex === 0) {
+      this.loadNodes()
+    }
   }
 
   private async loadNodes(): Promise<void> {

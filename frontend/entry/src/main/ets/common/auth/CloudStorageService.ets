@@ -255,6 +255,28 @@ export class CloudStorageService {
     await CloudStorageService.deleteFile(cloudPath)
   }
 
+  static async copyNodePhoto(fromTravelId: string, toTravelId: string, nodeId: string, localPath: string): Promise<void> {
+    if (fromTravelId === toTravelId) {
+      return
+    }
+    if (appContext === null) {
+      throw new Error('应用上下文未初始化')
+    }
+    const sourceCloudPath = CloudStorageService.buildNodePhotoPath(fromTravelId, nodeId, localPath)
+    const targetCloudPath = CloudStorageService.buildNodePhotoPath(toTravelId, nodeId, localPath)
+    const fileName = `${Date.now()}_${CloudStorageService.getFileName(localPath)}`
+    const tempRelativePath = `migrate/${fileName}`
+    await CloudStorageService.downloadFile(sourceCloudPath, tempRelativePath)
+    const tempLocalPath = CloudStorageService.normalizeCachePath(tempRelativePath)
+    try {
+      await CloudStorageService.uploadFile(tempLocalPath, targetCloudPath)
+    } finally {
+      try {
+        fs.unlinkSync(tempLocalPath)
+      } catch (_) {}
+    }
+  }
+
   static async uploadFile(localPath: string, cloudPath: string): Promise<void> {
     const ready = await CloudStorageService.ensureReady()
     if (!ready) {
