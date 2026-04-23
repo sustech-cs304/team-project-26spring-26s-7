@@ -320,9 +320,11 @@ export class MemoryNodeRepository {
       };
       if (node.travelId !== undefined) {
         valueBucket['travel_id'] = this.toDbId(node.travelId, 'travel id');
-        valueBucket[NODE_ORDER_COLUMN] = await this.getNextNodeOrder(store, node.travelId);
-        valueBucket['photos'] = JSON.stringify(currentNode.photos ?? []);
-        valueBucket['photo_manifest'] = currentNode.photoManifest ?? '[]';
+        if (node.travelId !== currentNode.travelId) {
+          valueBucket[NODE_ORDER_COLUMN] = await this.getNextNodeOrder(store, node.travelId);
+          valueBucket['photos'] = JSON.stringify(currentNode.photos ?? []);
+          valueBucket['photo_manifest'] = currentNode.photoManifest ?? '[]';
+        }
       }
       if (node.title !== undefined) {
         valueBucket['title'] = node.title;

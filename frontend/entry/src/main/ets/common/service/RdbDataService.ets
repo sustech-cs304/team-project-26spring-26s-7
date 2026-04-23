@@ -496,13 +496,22 @@ export class RdbDataService implements IDataService {
       this.syncNodePhotosToCloud(updated.travelId, updated.id, addedPhotos);
     }
 
-    if (data.travelId !== undefined && oldTravelId.length > 0 && oldTravelId !== updated.travelId && updated.photos.length > 0) {
-      const shouldSyncCloudNow = (AppStorage.get('networkOnline') as boolean) ?? false;
-      if (shouldSyncCloudNow) {
-        const migrated = await this.uploadNodePhotosToCloud(updated.travelId, updated.id, updated.photos, oldTravelId);
-        if (!migrated) {
-          data.travelId = oldTravelId;
-          updated.photos = [...oldPhotos];
+    if (data.travelId !== undefined && oldTravelId.length > 0 && oldTravelId !== updated.travelId) {
+      // Renormalize node orders in the source travel after the node left
+      const remainingNodes = await this.nodeRepo.getNodesByTravelId(oldTravelId);
+      const remainingIds = remainingNodes.map((n: MemoryNode) => n.id);
+      if (remainingIds.length > 0) {
+        await this.nodeRepo.reorderNodes(oldTravelId, remainingIds);
+      }
+
+      if (updated.photos.length > 0) {
+        const shouldSyncCloudNow = (AppStorage.get('networkOnline') as boolean) ?? false;
+        if (shouldSyncCloudNow) {
+          const migrated = await this.uploadNodePhotosToCloud(updated.travelId, updated.id, updated.photos, oldTravelId);
+          if (!migrated) {
+            data.travelId = oldTravelId;
+            updated.photos = [...oldPhotos];
+          }
         }
       }
     }

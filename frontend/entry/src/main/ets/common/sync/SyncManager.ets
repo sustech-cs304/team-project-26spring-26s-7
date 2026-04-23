@@ -14,21 +14,31 @@ const DOMAIN = 0x0000
 
 export class SyncManager {
   private static syncing: boolean = false
+  private static pendingRetry: boolean = false
 
   static async pushLocalNow(): Promise<void> {
     if (SyncManager.syncing) {
+      SyncManager.pendingRetry = true
       return
     }
 
     SyncManager.syncing = true
     try {
-      const items = await RdbHelper.getInstance().getPendingSyncQueueItems()
-      for (let i = 0; i < items.length; i++) {
-        await SyncManager.handleItem(items[i])
+      let items = await RdbHelper.getInstance().getPendingSyncQueueItems()
+      while (items.length > 0) {
+        SyncManager.pendingRetry = false
+        for (let i = 0; i < items.length; i++) {
+          await SyncManager.handleItem(items[i])
+        }
+        items = await RdbHelper.getInstance().getPendingSyncQueueItems()
       }
       await RdbHelper.getInstance().setSyncState('last_push_at', Date.now())
     } finally {
       SyncManager.syncing = false
+      if (SyncManager.pendingRetry) {
+        SyncManager.pendingRetry = false
+        void SyncManager.pushLocalNow()
+      }
     }
   }
 

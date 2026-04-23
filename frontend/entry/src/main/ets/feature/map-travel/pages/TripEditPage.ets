@@ -159,8 +159,8 @@ export struct TripEditPage {
         if (this.orderDirty) {
           await this.dataService.reorderNodes(this.tripId, this.nodes.map((item: TripNodeItem) => item.id))
           this.orderDirty = false
+          await this.dataService.syncNodeOrdersToCloud(this.tripId)
         }
-        await this.dataService.syncNodeOrdersToCloud(this.tripId)
         await this.dataService.updateTravel(this.tripId, {
           name: trimmedTitle,
           isPublic: this.isPublic
