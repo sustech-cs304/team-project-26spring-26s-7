@@ -86,10 +86,12 @@ export class RdbDataService implements IDataService {
   private async uploadNodePhotosToCloud(travelId: string, nodeId: string, photos: string[], previousTravelId?: string): Promise<boolean> {
     let allSucceeded = true;
     const shouldMigrate = previousTravelId !== undefined && previousTravelId !== travelId;
+    const migratedPhotos: string[] = [];
     for (const photo of photos) {
       try {
         if (shouldMigrate && previousTravelId) {
           await CloudStorageService.copyNodePhoto(previousTravelId, travelId, nodeId, photo);
+          migratedPhotos.push(photo);
           logger.info(TAG, `Migrated node photo in cloud: ${nodeId} ${previousTravelId} -> ${travelId}`);
         } else {
           await CloudStorageService.uploadNodePhoto(travelId, nodeId, photo);
@@ -100,6 +102,9 @@ export class RdbDataService implements IDataService {
         logger.error(TAG, `Failed to upload node photo ${photo}: ${error.message}`);
         allSucceeded = false;
       }
+    }
+    if (shouldMigrate && previousTravelId && migratedPhotos.length > 0) {
+      await this.deleteNodePhotosFromCloud(previousTravelId, nodeId, migratedPhotos);
     }
     return allSucceeded;
   }
