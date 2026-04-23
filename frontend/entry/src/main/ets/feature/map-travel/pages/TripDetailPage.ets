@@ -251,7 +251,7 @@ export struct TripDetailPage {
         Text(this.tripName || '旅行详情')
           .fontSize(26)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#FFFFFF')
+          .fontColor('#000000')
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
@@ -260,7 +260,7 @@ export struct TripDetailPage {
       .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG, top: 14, bottom: 14 })
       .backgroundColor('#00000055')
       .alignItems(HorizontalAlign.Start)
-      .position({ x: 0, y: 174 })
+      .position({ x: 0, y: 0 })
     }
     .width('100%')
     .height(232)
