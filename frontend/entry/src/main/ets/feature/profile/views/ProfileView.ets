@@ -262,7 +262,7 @@ export struct ProfileView {
 
           if (this.networkJustReconnected) {
             Row() {
-              Text('网络已恢复，如有必要，请先点击同步再进行其他操作，否则可能导致数据丢失')
+              Text('网络已恢复，离线期间的更改不会自动同步，请手动点击同步按钮上传到云端')
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_PRIMARY)
                 .layoutWeight(1)

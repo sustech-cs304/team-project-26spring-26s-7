@@ -36,7 +36,7 @@ export default class EntryAbility extends UIAbility {
     AppStorage.setOrCreate('networkOnline', isOnline)
     if (isOnline) {
       AppStorage.setOrCreate('networkJustReconnected', true)
-      this.publishNetworkDialog('网络已恢复', '如有必要，请先点击同步再进行其他操作，否则会数据丢失')
+      this.publishNetworkDialog('网络已恢复', '离线期间的更改不会自动同步，请前往个人页手动同步')
       return
     }
 

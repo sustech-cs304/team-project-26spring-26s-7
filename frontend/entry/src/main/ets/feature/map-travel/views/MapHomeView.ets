@@ -1,7 +1,7 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map, site } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens, RouterUrls, getDataService, logger } from '../../../common'
+import { AppColors, AppDimens, RouterUrls, getDataService, logger, TravelSpecialValues } from '../../../common'
 import { MapNodeInfo, RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
 
@@ -123,6 +123,11 @@ export struct MapHomeView {
         for (const node of tripNodes) {
           nodes.push(this.mapNode(node))
         }
+      }
+      // 加载不属于任何旅行的节点
+      const uncategorizedNodes = await this.dataService.getNodesByTravelId(TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID)
+      for (const node of uncategorizedNodes) {
+        nodes.push(this.mapNode(node))
       }
 
       this.loadedNodes = nodes

@@ -46,7 +46,10 @@ export class RdbDataService implements IDataService {
   private async enqueueSync(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
     await this.rdbHelper.removeSyncItems(entityType, entityId);
     await this.rdbHelper.enqueueSyncItem(entityType, entityId, operation, payload);
-    void SyncManager.pushLocalNow();
+    const isOnline = (AppStorage.get('networkOnline') as boolean) ?? false;
+    if (isOnline) {
+      void SyncManager.pushLocalNow();
+    }
   }
 
   private async enqueueSyncSilently(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
@@ -425,7 +428,10 @@ export class RdbDataService implements IDataService {
       photoManifest: this.buildPhotoManifest(created.travelId, created.id, created.photos)
     })
     await this.enqueueSync('memory_node', created.id, 'upsert', payload);
-    this.syncNodePhotosToCloud(created.travelId, created.id, created.photos);
+    const isOnlineForCreate = (AppStorage.get('networkOnline') as boolean) ?? false;
+    if (isOnlineForCreate) {
+      this.syncNodePhotosToCloud(created.travelId, created.id, created.photos);
+    }
     return created;
   }
 
@@ -480,7 +486,8 @@ export class RdbDataService implements IDataService {
       if (removedPhotos.length > 0) {
         await PhotoPickerUtil.deletePhotos(removedPhotos);
         logger.info(TAG, `Cleaned ${removedPhotos.length} removed photos for node ${nodeId}`);
-        if (travelId.length > 0) {
+        const isOnlineForDelete = (AppStorage.get('networkOnline') as boolean) ?? false;
+        if (isOnlineForDelete && travelId.length > 0) {
           this.syncDeletedNodePhotosToCloud(travelId, nodeId, removedPhotos);
         }
       }
@@ -492,8 +499,11 @@ export class RdbDataService implements IDataService {
     }
 
     if (data.photos !== undefined) {
-      const addedPhotos = this.getAddedPhotos(oldPhotos, updated.photos);
-      this.syncNodePhotosToCloud(updated.travelId, updated.id, addedPhotos);
+      const isOnlineForPhotos = (AppStorage.get('networkOnline') as boolean) ?? false;
+      if (isOnlineForPhotos) {
+        const addedPhotos = this.getAddedPhotos(oldPhotos, updated.photos);
+        this.syncNodePhotosToCloud(updated.travelId, updated.id, addedPhotos);
+      }
     }
 
     if (data.travelId !== undefined && oldTravelId.length > 0 && oldTravelId !== updated.travelId) {
@@ -562,7 +572,8 @@ export class RdbDataService implements IDataService {
         await this.nodeRepo.reorderNodes(travelId, remainingIds);
       }
     }
-    if (node && node.photos.length > 0) {
+    const isOnlineForNodeDelete = (AppStorage.get('networkOnline') as boolean) ?? false;
+    if (isOnlineForNodeDelete && node && node.photos.length > 0) {
       this.syncDeletedNodePhotosToCloud(node.travelId, node.id, node.photos);
     }
     const photoCloudPaths: string[] = [];
@@ -614,6 +625,9 @@ export class RdbDataService implements IDataService {
       });
       await this.enqueueSyncSilently('memory_node', sibling.id, 'upsert', siblingPayload);
     }
-    await SyncManager.pushLocalNow();
+    const isOnline = (AppStorage.get('networkOnline') as boolean) ?? false;
+    if (isOnline) {
+      await SyncManager.pushLocalNow();
+    }
   }
 }
