@@ -153,4 +153,9 @@ export class DataServiceStub implements IDataService {
     logger.warn(TAG, `reorderNodes() called but not implemented (STUB)`);
     // 不执行任何操作
   }
+
+  async syncNodeOrdersToCloud(travelId: string): Promise<void> {
+    logger.warn(TAG, `syncNodeOrdersToCloud(${travelId}) called but not implemented (STUB)`);
+    // 不执行任何操作
+  }
 }

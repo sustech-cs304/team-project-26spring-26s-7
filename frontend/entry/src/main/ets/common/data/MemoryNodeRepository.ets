@@ -57,6 +57,11 @@ export interface UpdateNodeInput {
   mood?: string;
 }
 
+export interface SoftDeleteResult {
+  success: boolean;
+  travelId: string;
+}
+
 export class MemoryNodeRepository {
   private rdbHelper: RdbHelper;
 
@@ -176,6 +181,7 @@ export class MemoryNodeRepository {
     try {
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('travel_id', this.toDbId(travelId, 'travel id'));
+      predicates.equalTo('deleted_at', 0);
       predicates.orderByDesc(NODE_ORDER_COLUMN);
       resultSet = await store.query(predicates);
       if (resultSet.goToFirstRow()) {
@@ -279,7 +285,7 @@ export class MemoryNodeRepository {
         'mood': node.mood ?? '',
         'tags': JSON.stringify(node.tags ?? []),
         'photos': JSON.stringify(node.photos ?? []),
-        'photo_manifest': JSON.stringify(node.photos ?? []),
+        'photo_manifest': '[]',
         node_order: nodeOrder,
         'created_at': now,
         'updated_at': now,
@@ -316,7 +322,7 @@ export class MemoryNodeRepository {
         valueBucket['travel_id'] = this.toDbId(node.travelId, 'travel id');
         valueBucket[NODE_ORDER_COLUMN] = await this.getNextNodeOrder(store, node.travelId);
         valueBucket['photos'] = JSON.stringify(currentNode.photos ?? []);
-        valueBucket['photo_manifest'] = currentNode.photoManifest ?? JSON.stringify(currentNode.photos ?? []);
+        valueBucket['photo_manifest'] = currentNode.photoManifest ?? '[]';
       }
       if (node.title !== undefined) {
         valueBucket['title'] = node.title;
@@ -344,7 +350,7 @@ export class MemoryNodeRepository {
       }
       if (node.photos !== undefined) {
         valueBucket['photos'] = JSON.stringify(node.photos);
-        valueBucket['photo_manifest'] = JSON.stringify(node.photos);
+        valueBucket['photo_manifest'] = '[]';
       }
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'node id'));
@@ -392,13 +398,15 @@ export class MemoryNodeRepository {
     }
   }
 
-  async softDeleteNode(id: string): Promise<boolean> {
+  async softDeleteNode(id: string): Promise<SoftDeleteResult> {
     try {
       const store = await this.getRdbStore();
       const currentNode = await this.getNodeById(id);
       if (!currentNode) {
-        return false;
+        const fail: SoftDeleteResult = { success: false, travelId: '' };
+        return fail;
       }
+      const travelId = currentNode.travelId;
       const valueBucket: rdb.ValuesBucket = {
         'deleted_at': Date.now(),
         'updated_at': Date.now(),
@@ -410,10 +418,12 @@ export class MemoryNodeRepository {
       predicates.equalTo('deleted_at', 0);
       const affectedRows = await store.update(valueBucket, predicates);
       logger.info(TAG, `Soft deleted node ${id}, affected=${affectedRows}`);
-      return affectedRows > 0;
+      const ok: SoftDeleteResult = { success: affectedRows > 0, travelId: travelId };
+      return ok;
     } catch (err) {
       logger.error(TAG, `softDeleteNode failed: ${JSON.stringify(err)}`);
-      return false;
+      const fail: SoftDeleteResult = { success: false, travelId: '' };
+      return fail;
     }
   }
 
@@ -448,6 +458,16 @@ export class MemoryNodeRepository {
     await store.update(valueBucket, predicates);
   }
 
+  async updatePhotoManifest(id: string, manifest: string): Promise<void> {
+    const store = await this.getRdbStore();
+    const valueBucket: rdb.ValuesBucket = {
+      photo_manifest: manifest
+    };
+    const predicates = new rdb.RdbPredicates(TABLE_NAME);
+    predicates.equalTo('id', this.toDbId(id, 'node id'));
+    await store.update(valueBucket, predicates);
+  }
+
   async upsertFromCloud(node: MemoryNode): Promise<void> {
     const store = await this.getRdbStore();
     const predicates = new rdb.RdbPredicates(TABLE_NAME);
@@ -463,7 +483,7 @@ export class MemoryNodeRepository {
       mood: node.mood,
       tags: JSON.stringify(node.tags),
       photos: JSON.stringify(node.photos),
-      photo_manifest: node.photoManifest ?? JSON.stringify(node.photos),
+      photo_manifest: node.photoManifest && node.photoManifest.length > 2 ? node.photoManifest : '[]',
       node_order: node.nodeOrder ?? 0,
       created_at: node.createdAt,
       updated_at: node.updatedAt,
@@ -512,10 +532,31 @@ export class MemoryNodeRepository {
   async deleteNode(id: string): Promise<boolean> {
     try {
       const store = await this.getRdbStore();
+      // Read travelId before deleting so we can renormalize afterwards
+      let travelId: string | undefined = undefined;
+      let lookupResultSet: rdb.ResultSet | undefined = undefined;
+      try {
+        const lookupPredicates = new rdb.RdbPredicates(TABLE_NAME);
+        lookupPredicates.equalTo('id', this.toDbId(id, 'node id'));
+        lookupResultSet = await store.query(lookupPredicates);
+        if (lookupResultSet.goToFirstRow()) {
+          travelId = lookupResultSet.getDouble(lookupResultSet.getColumnIndex('travel_id')).toString();
+        }
+      } finally {
+        this.closeResultSet(lookupResultSet);
+      }
+
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'node id'));
       const affectedRows = await store.delete(predicates);
       logger.info(TAG, `Deleted node ${id}, affected=${affectedRows}`);
+      if (affectedRows > 0 && travelId !== undefined) {
+        const siblings = await this.getNodesByTravelId(travelId);
+        const siblingIds = siblings.map((n: MemoryNode) => n.id);
+        if (siblingIds.length > 0) {
+          await this.reorderNodes(travelId, siblingIds);
+        }
+      }
       return affectedRows > 0;
     } catch (err) {
       logger.error(TAG, `deleteNode failed: ${JSON.stringify(err)}`);

@@ -22,6 +22,7 @@ export struct TripEditPage {
   @State isLoading: boolean = false
   @State isSaving: boolean = false
   @State nodes: TripNodeItem[] = []
+  private orderDirty: boolean = false
 
   private dataService = getDataService()
 
@@ -131,7 +132,7 @@ export struct TripEditPage {
     })
   }
 
-  private async moveNode(index: number, offset: number): Promise<void> {
+  private moveNode(index: number, offset: number): void {
     const targetIndex = index + offset
     if (targetIndex < 0 || targetIndex >= this.nodes.length) {
       return
@@ -142,14 +143,7 @@ export struct TripEditPage {
     nextNodes[index] = nextNodes[targetIndex]
     nextNodes[targetIndex] = temp
     this.nodes = nextNodes
-
-    try {
-      await this.dataService.reorderNodes(this.tripId, nextNodes.map((item: TripNodeItem) => item.id))
-      this.bumpTravelDataVersion()
-    } catch (_) {
-      promptAction.showToast({ message: '节点排序失败' })
-      await this.loadNodesOnly()
-    }
+    this.orderDirty = true
   }
 
   private async handleSave(): Promise<void> {
@@ -162,6 +156,11 @@ export struct TripEditPage {
     this.isSaving = true
     try {
       if (this.isEditMode && this.tripId.length > 0) {
+        if (this.orderDirty) {
+          await this.dataService.reorderNodes(this.tripId, this.nodes.map((item: TripNodeItem) => item.id))
+          this.orderDirty = false
+        }
+        await this.dataService.syncNodeOrdersToCloud(this.tripId)
         await this.dataService.updateTravel(this.tripId, {
           name: trimmedTitle,
           isPublic: this.isPublic

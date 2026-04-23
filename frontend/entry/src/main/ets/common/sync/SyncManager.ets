@@ -167,6 +167,9 @@ export class SyncManager {
       } else {
         await CloudSyncService.upsertMemoryNode(payload)
         await SyncManager.syncNodePhotosForUpload(node)
+        // 上传照片后 photoManifest 已更新，重新 upsert 以写入正确的云端路径
+        const updatedPayload = await CloudSyncService.buildNodePayload(node)
+        await CloudSyncService.upsertMemoryNode(updatedPayload)
       }
       await nodeRepo.updateSyncMetadata(node.id, cloudId, 'synced', Date.now())
     }
@@ -409,6 +412,7 @@ export class SyncManager {
       return
     }
     const expectedCloudFiles: Set<string> = new Set<string>()
+    const manifestPaths: string[] = []
     for (let i = 0; i < node.photos.length; i++) {
       const photo = node.photos[i]
       if (!PhotoPickerUtil.photoExists(photo)) {
@@ -416,6 +420,7 @@ export class SyncManager {
       }
       const cloudPath = CloudStorageService.buildNodePhotoPath(node.travelId, node.id, photo)
       expectedCloudFiles.add(cloudPath)
+      manifestPaths.push(cloudPath)
       await CloudStorageService.uploadFile(photo, cloudPath)
     }
 
@@ -426,6 +431,12 @@ export class SyncManager {
         await CloudStorageService.deleteFile(relativeCloudPath)
       }
     }
+
+    // 上传完成后，用正确的云端路径更新本地 DB 的 photo_manifest
+    const manifest = JSON.stringify(manifestPaths)
+    const nodeRepo = new MemoryNodeRepository()
+    await nodeRepo.updatePhotoManifest(node.id, manifest)
+    node.photoManifest = manifest
   }
 
   private static async syncNodePhotosForDownload(node: MemoryNode): Promise<void> {

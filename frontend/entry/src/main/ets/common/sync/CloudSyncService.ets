@@ -114,7 +114,7 @@ export class CloudSyncService {
       updatedAt: node.updatedAt,
       deletedAt: node.deletedAt ?? 0,
       version: node.version ?? 1,
-      photoManifest: node.photoManifest ?? JSON.stringify(node.photos)
+      photoManifest: node.photoManifest && node.photoManifest.length > 2 ? node.photoManifest : '[]'
     }
     return JSON.stringify(payload)
   }
