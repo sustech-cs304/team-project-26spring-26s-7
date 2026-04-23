@@ -61,8 +61,9 @@ export { getDataService } from './ServiceConfig';
 
 // API Layer 导出
 export { HttpClient, HttpResponse } from './api/index';
-export { AiGatewayClient } from './api/index';
+export { AiGatewayClient, ImageCopyRequest } from './api/index';
 export { AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION } from './api/index';
+export { MultipartFormData, VisionLLMClient, VisionLLMRequest, VisionLLMResponse } from './api/index';
 
 // AI Layer 导出
 export { LocalImageTagger } from './ai/index';

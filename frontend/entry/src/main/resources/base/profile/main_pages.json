@@ -10,6 +10,7 @@
     "feature/map-travel/pages/LocationPickerPage",
     "feature/social-share/pages/SharePage",
     "feature/ai-copy/pages/AiCopyPage",
+    "feature/ai-copy/pages/VisionLLMPage",
     "feature/profile/pages/ProfileEditPage"
   ]
 }

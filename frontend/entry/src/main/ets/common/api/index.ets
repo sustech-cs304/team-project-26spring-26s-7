@@ -16,5 +16,7 @@
 // API Layer 统一导出
 
 export { HttpClient, HttpResponse } from './HttpClient';
-export { AiGatewayClient } from './AiGatewayClient';
+export { AiGatewayClient, ImageCopyRequest } from './AiGatewayClient';
 export { AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION } from './ApiEndpoints';
+export { MultipartFormData } from './MultipartFormData';
+export { VisionLLMClient, VisionLLMRequest, VisionLLMResponse } from './VisionLLMClient';

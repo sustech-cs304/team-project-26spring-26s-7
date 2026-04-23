@@ -39,6 +39,7 @@ export class AppDimens {
   static readonly RADIUS_SM: number = 8
   static readonly RADIUS_MD: number = 12
   static readonly RADIUS_LG: number = 16
+  static readonly FONT_XS: number = 10
   static readonly FONT_SM: number = 12
   static readonly FONT_MD: number = 14
   static readonly FONT_LG: number = 16
@@ -60,5 +61,6 @@ export class RouterUrls {
   static readonly LOCATION_PICKER: string = 'feature/map-travel/pages/LocationPickerPage'
   static readonly SHARE: string = 'feature/social-share/pages/SharePage'
   static readonly AI_COPY: string = 'feature/ai-copy/pages/AiCopyPage'
+  static readonly VISION_LLM: string = 'feature/ai-copy/pages/VisionLLMPage'
   static readonly PROFILE_EDIT: string = 'feature/profile/pages/ProfileEditPage'
 }

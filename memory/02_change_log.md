@@ -1,6 +1,6 @@
 # Change Log
 
-**Last Updated**: 2026-04-08
+**Last Updated**: 2026-04-23
 
 ---
 
@@ -319,3 +319,18 @@
 - [2026-03-30] - FIX - PhotoSelector.ets - 修复 ArkTS 语法错误（RelativeStack→Stack, FlexSpaceOptions 类型）
 - [2026-03-30] - FIX - PhotoPickerUtil.ets - 修复 throw 语句类型错误（ArkTS 要求 Error 类型）
 - [2026-03-30] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 7s 903ms
+- [2026-04-18-23-12-23] - ANALYZE - backend/backend_ai.py - 分析后端 LLM 调用代码，准备实现前端 ArkTS 客户端
+- [2026-04-18-23-58-50] - CREATE - common/api/MultipartFormData.ets - Multipart/form-data 构建器（支持文本字段和文件字段）
+- [2026-04-18-23-59-58] - CREATE - common/api/VisionLLMClient.ets - 视觉 LLM 客户端（调用 Qwen-VL 图像分析 API）
+- [2026-04-19-00-02-04] - UPDATE - common/api/index.ets - 添加 MultipartFormData 和 VisionLLMClient 导出
+- [2026-04-19-00-02-04] - UPDATE - common/index.ets - 添加 Vision LLM 相关导出到公共层
+- [2026-04-19-03-10-41] - CREATE - feature/ai-copy/components/VisionLLMTest.ets - 视觉 LLM 测试组件（用于测试图像分析功能）
+- [2026-04-19-03-11-25] - UPDATE - feature/ai-copy/index.ets - 添加 VisionLLMTest 组件导出
+- [2026-04-19-15-41-42] - UPDATE - feature/ai-copy/components/VisionLLMTest.ets - 完善图片选择功能，使用 PhotoPickerUtil 和 getUIContext()
+- [2026-04-23-13-51-00] - FIX - common/api/MultipartFormData.ets - 修复 ArkTS 编译错误：BusinessError 改为 Error、TextEncoder 改为 util.TextEncoder
+- [2026-04-23-13-51-10] - FIX - common/api/VisionLLMClient.ets - 修复对象字面量类型声明错误，提取为 QwenApiResponse 等接口
+- [2026-04-23-13-51-20] - UPDATE - common/utils/Constants.ets - 添加 AppDimens.FONT_XS (10) 尺寸常量
+- [2026-04-23-13-51-30] - FIX - feature/ai-copy/pages/VisionLLMPage.ets - 移除错误的 @kit.ArkUI common 导入和未使用的 context 状态
+- [2026-04-23-13-51-40] - UPDATE - feature/ai-copy/pages/AiCopyPage.ets - 重写：集成图片选择 + generateCopyFromImage()，替代纯元数据 mock 方案
+- [2026-04-23-13-51-45] - UPDATE - common/index.ets - 添加 ImageCopyRequest 导出
+- [2026-04-23-13-51-50] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 12s 388ms
