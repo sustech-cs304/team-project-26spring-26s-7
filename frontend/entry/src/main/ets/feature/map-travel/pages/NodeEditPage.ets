@@ -72,6 +72,24 @@ export struct NodeEditPage {
       this.hasPickedLocation = true
       AppStorage.setOrCreate('locationPicked', false)
     }
+
+    const aiApplied = AppStorage.get('aiCopyApplied') as boolean
+    if (aiApplied) {
+      const aiContent = (AppStorage.get('aiCopyContent') as string) || ''
+      if (aiContent.length > 0) {
+        if (this.content.trim().length > 0) {
+          this.content = this.content + '\n' + aiContent
+        } else {
+          this.content = aiContent
+        }
+        if (this.content.length > NODE_CONTENT_MAX_LENGTH) {
+          this.content = this.content.slice(0, NODE_CONTENT_MAX_LENGTH)
+          promptAction.showToast({ message: `内容已截断至${NODE_CONTENT_MAX_LENGTH}字上限` })
+        }
+      }
+      AppStorage.setOrCreate('aiCopyApplied', false)
+      AppStorage.setOrCreate('aiCopyContent', '')
+    }
   }
 
   private async loadAvailableTrips(): Promise<void> {
@@ -225,14 +243,17 @@ export struct NodeEditPage {
   }
 
   private handleNavigateToAI(): void {
+    const poiValue = this.poiName.trim()
+    const safePoiName =
+      (poiValue === '点击选择位置' || poiValue === '获取位置中...' || poiValue.length === 0)
+        ? '' : poiValue
     router.pushUrl({
       url: RouterUrls.AI_COPY,
       params: {
         nodeId: this.nodeId,
         tripId: this.tripId,
-        poiName: this.poiName,
-        defaultPrompt: this.content,
-        defaultTitle: this.title
+        poiName: safePoiName,
+        defaultPhoto: this.photos.length > 0 ? this.photos[0] : ''
       }
     })
   }

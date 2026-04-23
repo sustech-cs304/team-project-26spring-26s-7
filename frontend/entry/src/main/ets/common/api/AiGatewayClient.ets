@@ -26,8 +26,14 @@ const STYLE_PROMPTS: Record<string, string> = {
   'poetic': '诗意盎然、优美浪漫',
   'factual': '客观纪实、真实记录',
   'casual': '轻松随意、生活化',
-  'minimal': '极简主义、言简意赅',
-  'social': '社交媒体风格、吸引眼球'
+  'minimal': '极简主义、言简意赅'
+};
+
+/** 长度等级→prompt 描述映射 */
+const LENGTH_PROMPTS: Record<string, string> = {
+  'short': '1-2句话，不超过30字，精炼概括',
+  'medium': '3-5句话，约50-80字，适当展开描写',
+  'long': '6-10句话，约120-200字，详细描绘场景细节和感受'
 };
 
 /**
@@ -38,8 +44,8 @@ export interface ImageCopyRequest {
   imagePath: string;
   /** 文案风格 */
   style: string;
-  /** 字数限制 */
-  wordLimit: number;
+  /** 长度等级：short / medium / long */
+  lengthLevel: string;
   /** 用户补充提示词 */
   userPrompt?: string;
   /** 地点名称（可选，从 MemoryNode 获取） */
@@ -68,14 +74,16 @@ export class AiGatewayClient {
 
     try {
       const styleDesc = STYLE_PROMPTS[request.style] || request.style;
+      const lengthDesc = LENGTH_PROMPTS[request.lengthLevel] || LENGTH_PROMPTS['medium'];
       const poiHint = request.poiName ? `拍摄地点是「${request.poiName}」。` : '';
       const userHint = request.userPrompt ? `用户补充说明：${request.userPrompt}。` : '';
 
       const question =
         `请你作为一名旅行博主，仔细观察这张照片，` +
         `${poiHint}${userHint}` +
-        `用${styleDesc}的风格，写一段约${request.wordLimit}字的旅行文案。` +
-        `要求：生动描述照片中的场景和氛围，适合发布在社交媒体上。`;
+        `用${styleDesc}的风格，写一段旅行文案。` +
+        `长度要求：${lengthDesc}。` +
+        `要求：生动描述照片中的场景和氛围，富有感染力，严格遵守长度要求。`;
 
       const visionRequest: VisionLLMRequest = {
         imagePath: request.imagePath,

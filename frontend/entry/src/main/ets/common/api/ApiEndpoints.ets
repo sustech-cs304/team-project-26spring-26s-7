@@ -21,6 +21,9 @@
 /** API 基础地址 - TODO: 替换为实际服务器地址 */
 export const API_BASE_URL: string = 'https://api.example.com'
 
+/** VisionLLM 服务地址 */
+export const VISION_LLM_BASE_URL: string = 'http://172.18.35.215:8000'
+
 /** API 版本号 */
 export const API_VERSION: string = 'v1'
 

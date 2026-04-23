@@ -18,6 +18,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { logger } from '../utils/Logger';
 import { MultipartFormData, FormField, FileField } from './MultipartFormData';
 import { HttpResponse } from './HttpClient';
+import { VISION_LLM_BASE_URL, HttpTimeout } from './ApiEndpoints';
 
 const TAG = 'VisionLLMClient';
 
@@ -82,10 +83,10 @@ export class VisionLLMClient {
 
   /**
    * 构造函数
-   * @param baseUrl API 基础地址（默认：http://172.18.35.215:8000）
-   * @param timeout 请求超时（毫秒，默认：300000）
+   * @param baseUrl API 基础地址（默认取 VISION_LLM_BASE_URL 配置）
+   * @param timeout 请求超时（毫秒，默认取 HttpTimeout.AI_GENERATE）
    */
-  constructor(baseUrl: string = 'http://172.18.35.215:8000', timeout: number = 300000) {
+  constructor(baseUrl: string = VISION_LLM_BASE_URL, timeout: number = HttpTimeout.AI_GENERATE) {
     this.baseUrl = baseUrl;
     this.timeout = timeout;
   }
