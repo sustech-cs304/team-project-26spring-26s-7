@@ -66,6 +66,10 @@ export struct AiCopyPage {
       this.nodeId = params['nodeId'] || '';
       this.tripId = params['tripId'] || '';
       this.poiName = params['poiName'] || '';
+      const defaultPrompt = params['defaultPrompt'] || '';
+      if (defaultPrompt.length > 0) {
+        this.userPrompt = defaultPrompt;
+      }
     }
   }
 

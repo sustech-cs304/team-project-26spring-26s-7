@@ -228,6 +228,9 @@ export struct NodeEditPage {
     router.pushUrl({
       url: RouterUrls.AI_COPY,
       params: {
+        nodeId: this.nodeId,
+        tripId: this.tripId,
+        poiName: this.poiName,
         defaultPrompt: this.content,
         defaultTitle: this.title
       }
