@@ -16,6 +16,7 @@
 import { relationalStore as rdb } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { logger } from '../utils/Logger';
+import type { SyncQueueItem } from '../service/types';
 
 const TAG = 'RdbHelper';
 
@@ -31,7 +32,7 @@ export enum SensitivityLevel {
 }
 
 const DB_NAME = 'TravelPin.db';
-const DB_VERSION = 2;
+const DB_VERSION = 1;
 
 const STORE_CONFIG: rdb.StoreConfig = {
   name: DB_NAME,
@@ -43,11 +44,18 @@ const SQL_CREATE_TRAVELS = `
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     cover_image_uri TEXT,
+    is_public INTEGER NOT NULL DEFAULT 0,
     start_date INTEGER NOT NULL,
     end_date INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL,
-    sensitivity TEXT NOT NULL DEFAULT 'S1'
+    sensitivity TEXT NOT NULL DEFAULT 'S1',
+    owner_uid TEXT NOT NULL DEFAULT '',
+    cloud_id TEXT DEFAULT '',
+    sync_status TEXT NOT NULL DEFAULT 'local_only',
+    deleted_at INTEGER DEFAULT 0,
+    last_synced_at INTEGER DEFAULT 0,
+    version INTEGER NOT NULL DEFAULT 1
   )
 `;
 
@@ -64,12 +72,43 @@ const SQL_CREATE_MEMORY_NODES = `
     mood TEXT,
     tags TEXT,
     photos TEXT,
+    photo_manifest TEXT DEFAULT '',
     node_order INTEGER DEFAULT 0,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL,
     sensitivity TEXT NOT NULL DEFAULT 'S2',
+    owner_uid TEXT NOT NULL DEFAULT '',
+    cloud_id TEXT DEFAULT '',
+    sync_status TEXT NOT NULL DEFAULT 'local_only',
+    deleted_at INTEGER DEFAULT 0,
+    last_synced_at INTEGER DEFAULT 0,
+    version INTEGER NOT NULL DEFAULT 1,
     FOREIGN KEY (travel_id) REFERENCES travels(id) ON DELETE CASCADE
   )
+`;
+
+const SQL_ADD_TRAVEL_OWNER_UID = `
+  ALTER TABLE travels ADD COLUMN owner_uid TEXT NOT NULL DEFAULT ''
+`;
+
+const SQL_ADD_TRAVEL_CLOUD_ID = `
+  ALTER TABLE travels ADD COLUMN cloud_id TEXT DEFAULT ''
+`;
+
+const SQL_ADD_TRAVEL_SYNC_STATUS = `
+  ALTER TABLE travels ADD COLUMN sync_status TEXT NOT NULL DEFAULT 'local_only'
+`;
+
+const SQL_ADD_TRAVEL_DELETED_AT = `
+  ALTER TABLE travels ADD COLUMN deleted_at INTEGER DEFAULT 0
+`;
+
+const SQL_ADD_TRAVEL_LAST_SYNCED_AT = `
+  ALTER TABLE travels ADD COLUMN last_synced_at INTEGER DEFAULT 0
+`;
+
+const SQL_ADD_TRAVEL_VERSION = `
+  ALTER TABLE travels ADD COLUMN version INTEGER NOT NULL DEFAULT 1
 `;
 
 const SQL_ADD_MEMORY_NODE_TITLE = `
@@ -100,12 +139,44 @@ const SQL_ADD_MEMORY_NODE_PHOTOS = `
   ALTER TABLE memory_nodes ADD COLUMN photos TEXT
 `;
 
+const SQL_ADD_MEMORY_NODE_PHOTO_MANIFEST = `
+  ALTER TABLE memory_nodes ADD COLUMN photo_manifest TEXT DEFAULT ''
+`;
+
 const SQL_ADD_MEMORY_NODE_ORDER = `
   ALTER TABLE memory_nodes ADD COLUMN node_order INTEGER DEFAULT 0
 `;
 
 const SQL_ADD_MEMORY_NODE_SENSITIVITY = `
   ALTER TABLE memory_nodes ADD COLUMN sensitivity TEXT NOT NULL DEFAULT 'S2'
+`;
+
+const SQL_ADD_TRAVEL_IS_PUBLIC = `
+  ALTER TABLE travels ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0
+`;
+
+const SQL_ADD_MEMORY_NODE_OWNER_UID = `
+  ALTER TABLE memory_nodes ADD COLUMN owner_uid TEXT NOT NULL DEFAULT ''
+`;
+
+const SQL_ADD_MEMORY_NODE_CLOUD_ID = `
+  ALTER TABLE memory_nodes ADD COLUMN cloud_id TEXT DEFAULT ''
+`;
+
+const SQL_ADD_MEMORY_NODE_SYNC_STATUS = `
+  ALTER TABLE memory_nodes ADD COLUMN sync_status TEXT NOT NULL DEFAULT 'local_only'
+`;
+
+const SQL_ADD_MEMORY_NODE_DELETED_AT = `
+  ALTER TABLE memory_nodes ADD COLUMN deleted_at INTEGER DEFAULT 0
+`;
+
+const SQL_ADD_MEMORY_NODE_LAST_SYNCED_AT = `
+  ALTER TABLE memory_nodes ADD COLUMN last_synced_at INTEGER DEFAULT 0
+`;
+
+const SQL_ADD_MEMORY_NODE_VERSION = `
+  ALTER TABLE memory_nodes ADD COLUMN version INTEGER NOT NULL DEFAULT 1
 `;
 
 const SQL_MIGRATE_MEMORY_NODE_ORDER = `
@@ -124,16 +195,10 @@ const SQL_CREATE_SYNC_QUEUE = `
   )
 `;
 
-const SQL_CREATE_PHOTO_METADATA = `
-  CREATE TABLE IF NOT EXISTS photo_metadata(
-    photo_path TEXT PRIMARY KEY,
-    scene_tags TEXT,
-    object_tags TEXT,
-    color_tags TEXT,
-    time_tags TEXT,
-    emotion_tags TEXT,
-    extracted_at INTEGER NOT NULL,
-    sensitivity TEXT NOT NULL DEFAULT 'S2'
+const SQL_CREATE_APP_SYNC_STATE = `
+  CREATE TABLE IF NOT EXISTS app_sync_state(
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
   )
 `;
 
@@ -198,13 +263,20 @@ export class RdbHelper {
     await this.rdbStore.executeSql(SQL_CREATE_TRAVELS);
     await this.rdbStore.executeSql(SQL_CREATE_MEMORY_NODES);
     await this.rdbStore.executeSql(SQL_CREATE_SYNC_QUEUE);
-    await this.rdbStore.executeSql(SQL_CREATE_PHOTO_METADATA);
+    await this.rdbStore.executeSql(SQL_CREATE_APP_SYNC_STATE);
     await this.ensureLatestSchema();
     logger.info(TAG, 'Tables created successfully');
   }
 
   private async ensureLatestSchema(): Promise<void> {
     const optionalSchemaUpdates: string[] = [
+      SQL_ADD_TRAVEL_IS_PUBLIC,
+      SQL_ADD_TRAVEL_OWNER_UID,
+      SQL_ADD_TRAVEL_CLOUD_ID,
+      SQL_ADD_TRAVEL_SYNC_STATUS,
+      SQL_ADD_TRAVEL_DELETED_AT,
+      SQL_ADD_TRAVEL_LAST_SYNCED_AT,
+      SQL_ADD_TRAVEL_VERSION,
       SQL_ADD_MEMORY_NODE_TITLE,
       SQL_ADD_MEMORY_NODE_POI_NAME,
       SQL_ADD_MEMORY_NODE_DESCRIPTION,
@@ -212,8 +284,15 @@ export class RdbHelper {
       SQL_ADD_MEMORY_NODE_MOOD,
       SQL_ADD_MEMORY_NODE_TAGS,
       SQL_ADD_MEMORY_NODE_PHOTOS,
+      SQL_ADD_MEMORY_NODE_PHOTO_MANIFEST,
       SQL_ADD_MEMORY_NODE_ORDER,
-      SQL_ADD_MEMORY_NODE_SENSITIVITY
+      SQL_ADD_MEMORY_NODE_SENSITIVITY,
+      SQL_ADD_MEMORY_NODE_OWNER_UID,
+      SQL_ADD_MEMORY_NODE_CLOUD_ID,
+      SQL_ADD_MEMORY_NODE_SYNC_STATUS,
+      SQL_ADD_MEMORY_NODE_DELETED_AT,
+      SQL_ADD_MEMORY_NODE_LAST_SYNCED_AT,
+      SQL_ADD_MEMORY_NODE_VERSION
     ];
 
     for (let i = 0; i < optionalSchemaUpdates.length; i++) {
@@ -252,6 +331,112 @@ export class RdbHelper {
       throw new Error('RdbStore not initialized. Call RdbHelper.initDatabase() first.');
     }
     return this.rdbStore;
+  }
+
+  async getPendingSyncQueueItems(): Promise<SyncQueueItem[]> {
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getStore();
+      const predicates = new rdb.RdbPredicates('sync_queue');
+      predicates.orderByAsc('created_at');
+      resultSet = await store.query(predicates);
+      const items: SyncQueueItem[] = [];
+      if (resultSet.goToFirstRow()) {
+        do {
+          items.push({
+            id: resultSet.getDouble(resultSet.getColumnIndex('id')).toString(),
+            entityType: resultSet.getString(resultSet.getColumnIndex('entity_type')),
+            entityId: resultSet.getDouble(resultSet.getColumnIndex('entity_id')).toString(),
+            operation: resultSet.getString(resultSet.getColumnIndex('operation')),
+            payload: resultSet.getString(resultSet.getColumnIndex('payload')),
+            createdAt: resultSet.getDouble(resultSet.getColumnIndex('created_at')),
+            retryCount: resultSet.getDouble(resultSet.getColumnIndex('retry_count'))
+          });
+        } while (resultSet.goToNextRow());
+      }
+      return items;
+    } catch (err) {
+      logger.error(TAG, `getPendingSyncQueueItems failed: ${JSON.stringify(err)}`);
+      return [];
+    } finally {
+      if (resultSet) {
+        try {
+          resultSet.close();
+        } catch (_) {}
+      }
+    }
+  }
+
+  async getLatestSyncTimestamp(): Promise<number> {
+    const lastPush = await this.getSyncState('last_push_at');
+    const lastPull = await this.getSyncState('last_pull_at');
+    return Math.max(lastPush, lastPull);
+  }
+
+  async getSyncState(key: string): Promise<number> {
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getStore();
+      const predicates = new rdb.RdbPredicates('app_sync_state');
+      predicates.equalTo('key', key);
+      resultSet = await store.query(predicates);
+      if (!resultSet.goToFirstRow()) {
+        return 0;
+      }
+      const value = resultSet.getString(resultSet.getColumnIndex('value'));
+      return Number(value ?? '0');
+    } catch (err) {
+      logger.error(TAG, `getSyncState failed: ${JSON.stringify(err)}`);
+      return 0;
+    } finally {
+      if (resultSet) {
+        try {
+          resultSet.close();
+        } catch (_) {}
+      }
+    }
+  }
+
+  async setSyncState(key: string, value: number): Promise<void> {
+    const store = await this.getStore();
+    const predicates = new rdb.RdbPredicates('app_sync_state');
+    predicates.equalTo('key', key);
+    const resultSet = await store.query(predicates);
+    try {
+      if (resultSet.goToFirstRow()) {
+        await store.update({ value: value.toString() }, predicates);
+      } else {
+        await store.insert('app_sync_state', { key: key, value: value.toString() });
+      }
+    } finally {
+      resultSet.close();
+    }
+  }
+
+  async enqueueSyncItem(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
+    const store = await this.getStore();
+    await store.insert('sync_queue', {
+      entity_type: entityType,
+      entity_id: Number(entityId),
+      operation: operation,
+      payload: payload,
+      created_at: Date.now(),
+      retry_count: 0
+    });
+  }
+
+  async removeSyncItems(entityType: string, entityId: string): Promise<void> {
+    const store = await this.getStore();
+    const predicates = new rdb.RdbPredicates('sync_queue');
+    predicates.equalTo('entity_type', entityType);
+    predicates.equalTo('entity_id', Number(entityId));
+    await store.delete(predicates);
+  }
+
+  async clearSyncQueue(): Promise<void> {
+    const store = await this.getStore();
+    const predicates = new rdb.RdbPredicates('sync_queue');
+    await store.delete(predicates);
   }
 
   isInitialized(): boolean {

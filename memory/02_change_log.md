@@ -1,6 +1,77 @@
 # Change Log
 
-**Last Updated**: 2026-04-23
+**Last Updated**: 2026-04-16
+
+---
+
+## 2026-04-16 (云同步 + 认证功能合并 / UI 页面更新)
+
+### 合并 feature/cloud → incremental-dev-20260329 (PR #105 前置合并)
+
+**合并点**: `caf00f8`
+
+- [2026-04-16-05-28-06] - MERGE - feature/cloud → incremental-dev-20260329 - 完成登录认证与云同步功能集成 - caf00f8
+
+**主要功能**:
+1. **华为账号认证** - 支持 HWID 登录/登出、用户头像获取
+2. **云存储服务** - 照片/数据上传到华为云对象存储 (OBS)
+3. **云数据库同步** - TravelPinZone 云数据库，支持 Travel/MemoryNode 上行同步
+4. **同步队列机制** - sync_queue 记录本地变更，支持手动/启动时触发上行
+5. **网络连接监测** - 网络状态变化时 UI 提醒
+6. **调试日志** - 关键操作日志输出，便于问题定位
+
+**新增文件**:
+- `common/auth/` - 认证模块 (AuthProvider, CloudStorageService 等)
+- `common/sync/CloudSyncService.ets` - 云数据库访问封装
+- `common/sync/SyncManager.ets` - 同步队列消费器
+- `common/sync/CloudTravel.ets` - Travel 云对象类型
+- `common/sync/CloudMemoryNode.ets` - MemoryNode 云对象类型
+
+**修改文件**:
+- `RdbHelper.ets` - 扩展 owner_uid/cloud_id/sync_status/deleted_at/version 字段
+- `TravelRepository.ets` - 增加 owner_uid 过滤、同步字段映射
+- `MemoryNodeRepository.ets` - 增加 photo_manifest 与软删除语义
+- `ProfileView.ets` - 显示真实待同步数量，"立即同步"按钮接入 SyncManager
+
+**测试状态**: 登录 + 云同步完成，基本测试通过 (commit 415e818)
+
+---
+
+### 合并 feature/new_page → incremental-dev-20260329 (PR #105)
+
+**合并点**: `3ce3b95`
+
+- [2026-04-16-05-28-06] - MERGE - feature/new_page → incremental-dev-20260329 - 新增 UI 页面与地图搜索功能 - 3ce3b95
+
+**主要功能**:
+1. **TripEditPage** - 旅行编辑页面 (488 行新增)
+2. **NodeListView** - 节点列表视图 (312 行新增)
+3. **瀑布式旅行列表** - 双列瀑布流展示旅行封面 (e5e1aa1)
+4. **地图真实搜索选点** - 接入 MapKit 地点搜索 API (7c96e80)
+5. **搜索目的地标记** - 新增 search_destination_marker.png 资源
+
+**修改文件**:
+- `TripEditPage.ets` - 新增旅行编辑页面
+- `NodeListView.ets` - 新增节点列表视图
+- `NodeDetailPage.ets` - 加载 UI 优化
+- `NodeEditPage.ets` - 旅行选择器 UI 更新
+- `MapHomeView.ets` - 地图搜索功能增强
+- `MainPage.ets` - 页面导航更新
+- `main_pages.json` - 路由配置更新
+
+---
+
+### feature1 分支更新合并
+
+**提交范围**: `bb8dfd3` → `20291d2`
+
+- [2026-04-14-14-29-35] - FEAT - feature1 - 加了部分小功能界面，以及两个地图搜索 bug - 20291d2
+- [2026-04-14] - FEAT - feature1 - 添加瀑布式旅行列表 - e5e1aa1
+- [2026-04-14] - FEAT - feature1 - 支持地图真实搜索选点流程 - 7c96e80
+
+**涉及变更**: 21 个文件，1640 行新增，600 行删除
+
+---
 
 ---
 
@@ -11,56 +82,33 @@
 
 ---
 
-## 2026-04-08 (feature/ai AI 功能接口开发)
+## 2026-04-12 (旅行相册瀑布流页面)
+### 2026-04-12 (登录与云同步架构文档更新)
 
-### 新增 AI 功能模块
+- [2026-04-12-02-01-53] - UPDATE - frontend/docs/sync-architecture.md - 重写登录与云同步架构文档，补充自动增量同步、手动全量纠偏、云数据库/云存储职责、photoManifest 规则与测试清单 - uncommitted
 
-**分支**: feature/ai (基于 incremental-dev-20260329)
-
-- [2026-04-08-20-44-00] - CREATE - common/api/ - API 层目录创建
-- [2026-04-08-20-44-10] - CREATE - common/api/ApiEndpoints.ets - API 端点常量定义
-- [2026-04-08-20-44-20] - CREATE - common/api/HttpClient.ets - HTTP 客户端封装 (GET/POST)
-- [2026-04-08-20-44-30] - CREATE - common/api/AiGatewayClient.ets - AI Gateway 客户端 (TODO: 后端接口实现)
-- [2026-04-08-20-44-40] - CREATE - common/api/index.ets - API 层统一导出
-
-### 新增 AI 能力层
-
-- [2026-04-08-20-45-00] - CREATE - common/ai/ - AI 能力层目录创建
-- [2026-04-08-20-45-10] - CREATE - common/ai/PhotoMetadata.ets - 照片元数据类型定义 (PhotoMetadata, JourneyMetadata, AiCopyRequest, AiCopyResponse)
-- [2026-04-08-20-45-20] - CREATE - common/ai/LocalImageTagger.ets - 本地图片标签提取器 (TODO: 视觉 Kit 队友实现)
-- [2026-04-08-20-45-30] - CREATE - common/ai/MetadataAggregator.ets - 元数据聚合器 (支持 MemoryNode/Trip 聚合)
-- [2026-04-08-20-45-40] - CREATE - common/ai/index.ets - AI 层统一导出
-
-### 扩展数据库层
-
-- [2026-04-08-20-46-00] - UPDATE - RdbHelper.ets - 数据库版本升级 v1→v2
-- [2026-04-08-20-46-10] - CREATE - photo_metadata 表 - 照片元数据存储 (photo_path 主键, 各类标签字段)
-- [2026-04-08-20-46-20] - CREATE - common/data/PhotoMetadataRepository.ets - 照片元数据仓库 (CRUD 操作)
-- [2026-04-08-20-46-30] - UPDATE - common/data/index.ets - 添加 PhotoMetadataRepository 导出
-
-### 更新导出索引
-
-- [2026-04-08-20-47-00] - UPDATE - common/index.ets - 添加 API Layer 和 AI Layer 导出
-- [2026-04-08-20-47-10] - UPDATE - common/index.ets - 添加 PhotoMetadataRepository 导出
-
-### 修改 AI 页面调用流程
-
-- [2026-04-08-20-48-00] - UPDATE - AiCopyPage.ets - 导入 MetadataAggregator 和 AiGatewayClient
-- [2026-04-08-20-48-10] - UPDATE - AiCopyPage.ets - 添加 nodeId/tripId 路由参数
-- [2026-04-08-20-48-20] - UPDATE - AiCopyPage.ets - handleGenerate() 改为异步调用真实 API 流程
-- [2026-04-08-20-48-30] - UPDATE - AiCopyPage.ets - 添加备选文案展示 UI
-- [2026-04-08-20-48-40] - UPDATE - AiCopyPage.ets - 添加 aboutToAppear() 解析路由参数
-- [2026-04-08-20-49-00] - BUILD - 编译验证通过 (仅警告，无错误)
-
-### TODO 占位说明
-
-**视觉套件队友需要实现**:
-- `LocalImageTagger.extractMetadata()` - 调用鸿蒙视觉 Kit 提取图片标签
-
-**后端开发同事需要实现**:
-- `/api/v1/ai/generate` - AI 文案生成接口
-- `/api/v1/ai/moderate` - 内容审核接口
-- 认证方式配置 (Bearer Token / Session)
+- [2026-04-09-01-52-32] - UPDATE - frontend/entry/src/main/ets/common/auth/CloudStorageService.ets - 对齐 sample：云存储初始化前先 signOut，再用 hwid 重新 signIn 并记录会话重建日志，修复上传 403 的候选根因 - uncommitted
+- [2026-04-09-01-52-32] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 15 s 673 ms - uncommitted
+- [2026-04-09-13-34-15] - UPDATE - frontend/entry/src/main/ets/common/auth/CloudStorageService.ets - 上传前将 filesDir 照片复制到 cacheDir，并按云存储 SDK 要求传递 cache 相对路径，修复真机上传 403 - uncommitted
+- [2026-04-09-13-34-15] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 13 s 760 ms - uncommitted
+- [2026-04-09-13-40-31] - UPDATE - frontend/entry/src/main/ets/common/auth/CloudStorageService.ets - 增加 AuthProvider token 诊断日志，确认上传前凭据可获取，辅助排查真机 403 - uncommitted
+- [2026-04-09-13-40-31] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 8 s 572 ms - uncommitted
+- [2026-04-09-13-41-00] - VERIFY - 华为云存储真机上传 - 真机验证通过，文件成功写入 users/1916859267856523328/travels/1/nodes/1/ - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/data/RdbHelper.ets - 为 travels/memory_nodes 扩展 owner_uid/cloud_id/sync_status/deleted_at/version 等同步字段，并补充 sync_queue 读写接口 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/data/TravelRepository.ets - 增加 owner_uid 过滤、同步字段映射与旅行软删除语义 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets - 增加节点同步字段映射、photo_manifest 与节点软删除语义 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/service/RdbDataService.ets - 本地 CRUD 后写入 sync_queue，并让 Profile 同步状态读取真实待同步数量 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets - 用真实 sync_queue 数量替换占位同步状态展示 - uncommitted
+- [2026-04-09-14-38-02] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 8 s 278 ms - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/resources/rawfile/schema.json - 引入 TravelPinZone 云数据库 schema 文件，准备客户端接入 - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/CloudTravel.ets - 新增 Travel 云数据库对象类型类 - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/CloudMemoryNode.ets - 新增 MemoryNode 云数据库对象类型类 - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/CloudSyncService.ets - 新增 TravelPinZone 云数据库访问封装，支持 Travel/MemoryNode 上行 upsert/delete - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/SyncManager.ets - 新增 sync_queue 消费器，支持手动/启动时触发上行同步 - uncommitted
+- [2026-04-09-14-39-02] - UPDATE - frontend/entry/src/main/ets/common/index.ets - 导出 CloudSyncService 与 SyncManager - uncommitted
+- [2026-04-09-14-39-02] - UPDATE - frontend/entry/src/main/ets/entryability/EntryAbility.ets - 云存储恢复成功后自动触发 SyncManager 上行同步 - uncommitted
+- [2026-04-09-14-39-02] - UPDATE - frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets - “立即同步”按钮接入 SyncManager.triggerNow() - uncommitted
+- [2026-04-09-14-39-02] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 9 s 234 ms - uncommitted
 
 ---
 
@@ -75,8 +123,6 @@
 - [2026-04-08-16-15-00] - RESOLVE - NodeEditPage.ets - 手动解决冲突：合并旅行选择器 + PhotoSelector 组件
 - [2026-04-08-16-20-00] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 2 min 46 s
 - [2026-04-08-16-25-00] - GIT - c515563 - Merge branch 'feature/photo' into incremental-dev-20260329: 照片功能集成
-
-### 合并内容
 
 **新增文件**:
 - PhotoPickerUtil.ets - 沙箱照片选择与存储工具
@@ -188,64 +234,105 @@
 
 ## 2026-04-03 (动态旅程回放功能 bug 修复)
 
-- [2026-04-03-03-13-38] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 18s 929ms
-- [2026-04-03] - FIX - types.ets - 为 ReplayNode 类添加 @Observed 装饰器，支持状态管理框架观察
-- [2026-04-03] - FIX - ReplayPhotoCard.ets - 将 node 从 @State 改为 @Prop，支持接收父组件传入的新对象引用
-- [2026-04-03] - FIX - TripReplayPage.ets - 添加 forceRefreshCard() 方法，通过先隐藏再显示强制刷新卡片状态
-- [2026-04-03] - FIX - TripReplayPage.ets - moveToNode() 动画完成后自动显示卡片（setTimeout 延迟）
-- [2026-04-03] - FIX - TripReplayPage.ets - jumpToNode() 人为拖动进度条时立即显示卡片
-- [2026-04-03] - FIX - types.ets - 修复 photoUri 类型为 ResourceStr（内建类型，无需导入）
-- [2026-04-03] - 问题修复 - 地点变换时图文不切换：三个节点都显示第一个节点的图文数据
-- [2026-04-03] - 问题修复 - 拖动进度条时图文不显示：jumpToNode 后 isCardVisible 未设置为 true
-
-### 根因分析
-
-**问题 1：地点变换时图文不切换**
-- 根因：ReplayPhotoCard 使用 @State node 装饰节点数据，无法响应对象引用切换
-- 解决：@State → @Prop，并为 ReplayNode 添加 @Observed 装饰器
-
-**问题 2：拖动进度条时图文不显示**
-- 根因：jumpToNode 调用 moveToNode 后，isCardVisible=false，但未在拖动后恢复
-- 解决：jumpToNode 末尾显式设置 isCardVisible=true
+- [2026-04-12-21-25-53] - CREATE - feature/map-travel/views/TripAlbumView.ets - 新增旅行相册 Tab 视图，双列瀑布流展示旅行封面（首节点首图），点击跳转 TripDetailPage
+- [2026-04-12-21-25-53] - UPDATE - pages/MainPage.ets - 底部 Tabs 新增第 4 个并列 Tab「相册」，接入 TripAlbumView
+- [2026-04-12-21-25-53] - UPDATE - feature/map-travel/index.ets - 导出 TripAlbumView 供页面层引用
+- [2026-04-12-21-25-53] - BUILD - 编译验证未执行 - 当前环境缺少 DevEco 依赖路径（C:\Apps 与 D:\software 均不存在对应 node.exe）
 
 ---
 
-## 2026-04-02 (动态旅程回放功能开发)
+## 2026-04-10 (Map Kit 地点搜索替换)
 
-- [2026-04-02-09-09-18] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 16s 967ms
-- [2026-04-02-09-19-46] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 15s 950ms
-- [2026-04-02-09-27-51] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 14s 193ms
-- [2026-04-02-09-40-03] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 13s 936ms
-- [2026-04-02-09-43-20] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 13s 936ms
-- [2026-04-02-09-44-52] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 14s 973ms
-- [2026-04-02-09-56-32] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 14s 973ms
-- [2026-04-02] - GIT - branch - 创建 feature/trip-replay 分支（基于 incremental-dev-20260329）
-- [2026-04-02] - CREATE - references/task/P02_动态旅程回放功能设计.md - 完整设计文档（用户故事、架构、数据模型、UAT）
-- [2026-04-02] - CREATE - references/photo/ - 复制 6 张照片素材（pexels-*.jpg）
-- [2026-04-02] - RENAME - resources/base/media/ - 照片重命名为 photo_1.jpg ~ photo_6.jpg
-- [2026-04-02] - UPDATE - common/service/types.ets - 添加 ReplayNode、ReplayRoute、Position 类（非 interface）
-- [2026-04-02] - UPDATE - common/service/types.ets - 添加 RouteGenerator 接口
-- [2026-04-02] - UPDATE - common/index.ets - 导出 ReplayNode、ReplayRoute、Position 类
-- [2026-04-02] - CREATE - feature/map-travel/components/ReplayPhotoCard.ets - 照片卡片组件（现代简约风格）
-- [2026-04-02] - CREATE - feature/map-travel/components/ReplayProgressBar.ets - 离散步进进度条
-- [2026-04-02] - CREATE - feature/map-travel/components/PhotoCardOverlay.ets - 底部半屏照片展开覆盖层
-- [2026-04-02] - REWRITE - feature/map-travel/pages/TripReplayPage.ets - 完整重写动画播放逻辑
-- [2026-04-02] - FIX - TripReplayPage.ets - 照片路径从 $rawfile 改为 $r('app.media.xxx')
-- [2026-04-02] - FIX - ReplayProgressBar.ets - @State 改为 @Prop，支持外部传入进度值
-- [2026-04-02] - FIX - TripReplayPage.ets - 退出按钮从 '✕' 改为 '←'，加深背景遮罩
-- [2026-04-02] - FIX - TripReplayPage.ets - 修复退出按钮容器遮挡点击事件（100% 尺寸改为 40x40）
-- [2026-04-02] - GIT - 79df842 - feat: 修复动态旅程回放功能编译错误
-- [2026-04-02] - GIT - b425452 - fix: 修复 TripReplayPage 照片资源路径
-- [2026-04-02] - GIT - a026056 - fix: 修复照片显示和退出按钮层级问题
-- [2026-04-02] - GIT - 566ba14 - fix: 修复退出按钮显示问题（回退）
-- [2026-04-02] - GIT - 61c7710 - fix: 修复照片资源引用和退出按钮显示
-- [2026-04-02] - GIT - 11689b8 - fix: 修复退出按钮容器遮挡点击事件
-- [2026-04-02] - GIT - 87040b8 - feat: 优化退出按钮样式和进度条联动
+- [2026-04-10-12-04-00] - UPDATE - feature/map-travel/pages/LocationPickerPage.ets - 用 @kit.MapKit.site.searchByText 替换硬编码地点搜索，保留坐标输入选点
+- [2026-04-10-12-04-00] - UPDATE - feature/map-travel/pages/LocationPickerPage.ets - 新增 site.reverseGeocode 地图点选地址解析，失败时回退经纬度标签
+- [2026-04-10-12-04-00] - UPDATE - feature/map-travel/pages/LocationPickerPage.ets - 增加搜索中/空结果提示与搜索失败 toast，并用轻量接口规避 site 返回类型编译不确定性
+- [2026-04-10-12-30-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 将首页静态搜索栏改为可输入搜索框，支持本地记忆节点标题/地点/标签搜索
+- [2026-04-10-12-30-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 接入 @kit.MapKit.site.searchByText 合并 POI 结果，去重后展示首页搜索列表
+- [2026-04-10-12-30-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 选中首页搜索结果后联动地图相机，节点结果同步打开底部预览卡片
+- [2026-04-10-12-36-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 在首页搜索栏右侧补回“新增”按钮，保留从地图主页直达 NodeEditPage 的入口
+- [2026-04-10-12-45-00] - UPDATE - common/service/types.ets - 为 RouterParam 增加 poiName，支持从首页搜索结果直接带地址进入 NodeEditPage
+- [2026-04-10-12-45-00] - UPDATE - feature/map-travel/pages/NodeEditPage.ets - 新建节点时优先读取路由传入的 poiName，避免仅显示经纬度
+- [2026-04-10-12-45-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 选中首页搜索结果后保留选中态，隐藏误报空结果提示，并提供“作为地址新建”入口
+- [2026-04-10-12-52-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 精简搜索栏右侧按钮，仅保留“用该地址新建记忆”，移除冗余新增入口
+- [2026-04-10-13-00-00] - UPDATE - feature/map-travel/views/MapHomeView.ets - 选中首页搜索结果后立即在地图上打点，高亮当前待新建地址位置
+
+### 2026-04-12 (登录与云同步架构文档更新)
+
+- [2026-04-12-02-01-53] - UPDATE - frontend/docs/sync-architecture.md - 重写登录与云同步架构文档，补充自动增量同步、手动全量纠偏、云数据库/云存储职责、photoManifest 规则与测试清单 - uncommitted
+
+- [2026-04-09-01-52-32] - UPDATE - frontend/entry/src/main/ets/common/auth/CloudStorageService.ets - 对齐 sample：云存储初始化前先 signOut，再用 hwid 重新 signIn 并记录会话重建日志，修复上传 403 的候选根因 - uncommitted
+- [2026-04-09-01-52-32] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 15 s 673 ms - uncommitted
+- [2026-04-09-13-34-15] - UPDATE - frontend/entry/src/main/ets/common/auth/CloudStorageService.ets - 上传前将 filesDir 照片复制到 cacheDir，并按云存储 SDK 要求传递 cache 相对路径，修复真机上传 403 - uncommitted
+- [2026-04-09-13-34-15] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 13 s 760 ms - uncommitted
+- [2026-04-09-13-40-31] - UPDATE - frontend/entry/src/main/ets/common/auth/CloudStorageService.ets - 增加 AuthProvider token 诊断日志，确认上传前凭据可获取，辅助排查真机 403 - uncommitted
+- [2026-04-09-13-40-31] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 8 s 572 ms - uncommitted
+- [2026-04-09-13-41-00] - VERIFY - 华为云存储真机上传 - 真机验证通过，文件成功写入 users/1916859267856523328/travels/1/nodes/1/ - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/data/RdbHelper.ets - 为 travels/memory_nodes 扩展 owner_uid/cloud_id/sync_status/deleted_at/version 等同步字段，并补充 sync_queue 读写接口 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/data/TravelRepository.ets - 增加 owner_uid 过滤、同步字段映射与旅行软删除语义 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets - 增加节点同步字段映射、photo_manifest 与节点软删除语义 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/common/service/RdbDataService.ets - 本地 CRUD 后写入 sync_queue，并让 Profile 同步状态读取真实待同步数量 - uncommitted
+- [2026-04-09-14-38-02] - UPDATE - frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets - 用真实 sync_queue 数量替换占位同步状态展示 - uncommitted
+- [2026-04-09-14-38-02] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 8 s 278 ms - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/resources/rawfile/schema.json - 引入 TravelPinZone 云数据库 schema 文件，准备客户端接入 - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/CloudTravel.ets - 新增 Travel 云数据库对象类型类 - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/CloudMemoryNode.ets - 新增 MemoryNode 云数据库对象类型类 - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/CloudSyncService.ets - 新增 TravelPinZone 云数据库访问封装，支持 Travel/MemoryNode 上行 upsert/delete - uncommitted
+- [2026-04-09-14-39-02] - CREATE - frontend/entry/src/main/ets/common/sync/SyncManager.ets - 新增 sync_queue 消费器，支持手动/启动时触发上行同步 - uncommitted
+- [2026-04-09-14-39-02] - UPDATE - frontend/entry/src/main/ets/common/index.ets - 导出 CloudSyncService 与 SyncManager - uncommitted
+- [2026-04-09-14-39-02] - UPDATE - frontend/entry/src/main/ets/entryability/EntryAbility.ets - 云存储恢复成功后自动触发 SyncManager 上行同步 - uncommitted
+- [2026-04-09-14-39-02] - UPDATE - frontend/entry/src/main/ets/feature/profile/views/ProfileView.ets - “立即同步”按钮接入 SyncManager.triggerNow() - uncommitted
+- [2026-04-09-14-39-02] - BUILD - frontend/.preview - PreviewBuild 编译验证通过，BUILD SUCCESSFUL in 9 s 234 ms - uncommitted
 
 ---
 
-## 2026-03-30
+## 2026-04-08 (feature/photo 合并到 incremental-dev-20260329)
 
+### 合并 feature/photo → incremental-dev-20260329
+
+- [2026-04-08-15-55-09] - BACKUP - 本地分支 - 创建备份分支 backup-feature-photo-20260408155509, backup-incremental-dev-20260408155509
+- [2026-04-08-16-00-00] - FETCH - origin/incremental-dev-20260329 - 拉取远端最新提交 (2 个新提交: 7096512, bb8dfd3)
+- [2026-04-08-16-05-00] - MERGE - feature/photo → incremental-dev-20260329 - 合并照片选择功能
+- [2026-04-08-16-10-00] - RESOLVE - RdbDataService.ets - 手动解决冲突：合并错误检查 + 照片清理逻辑
+- [2026-04-08-16-15-00] - RESOLVE - NodeEditPage.ets - 手动解决冲突：合并旅行选择器 + PhotoSelector 组件
+- [2026-04-08-16-20-00] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 2 min 46 s
+- [2026-04-08-16-25-00] - GIT - c515563 - Merge branch 'feature/photo' into incremental-dev-20260329: 照片功能集成
+
+**新增文件**:
+- PhotoPickerUtil.ets - 沙箱照片选择与存储工具
+- PhotoSelector.ets - 照片选择网格组件
+
+**修改文件**:
+- RdbDataService.ets - 添加照片自动清理逻辑 (updateNode/deleteNode)
+- NodeEditPage.ets - 集成 PhotoSelector 组件，保留旅行选择器功能
+- NodeDetailPage.ets - 照片轮播显示
+- ReplayPhotoCard.ets - 多张照片轮播支持
+- PhotoCardOverlay.ets - 多张照片轮播支持
+
+### 远端分支清理建议
+
+| 分支 | 状态 | 建议 |
+|------|------|------|
+| origin/frontend | 孤立分支，无共同祖先 | 可删除 |
+| origin/前端设计测试2026/3/20 | 已完全合并到 incremental | 可删除 |
+| origin/feature/photo | 已合并到 incremental | 可删除 |
+
+---
+
+## 2026-04-05 (照片选择与沙箱存储功能)
+
+### Phase 6: NodeDetailPage 照片轮播
+
+- [2026-04-05-15-20-00] - FIX - NodeDetailPage.ets - 照片区域从占位符改为 Swiper 组件实际展示照片
+- [2026-04-05-15-25-00] - FIX - NodeDetailPage.ets - 修复 SwiperIndicator 类型错误，改为 Indicator.dot()
+- [2026-04-05-15-25-05] - BUILD - assembleHap 编译验证通过
+
+### Phase 7: Replay 照片策略优化
+
+- [2026-04-05-15-35-00] - UPDATE - types.ets - ReplayNode.photoUri 改为 photos: string[]，支持多张照片
+- [2026-04-05-15-35-10] - UPDATE - TripReplayPage.ets - 移除 resolvePhotoUri 方法，直接传递照片数组
+- [2026-04-05-15-35-20] - UPDATE - ReplayPhotoCard.ets - 支持 Swiper 多张照片轮播，无照片显示占位符
+- [2026-04-05-15-35-30] - UPDATE - PhotoCardOverlay.ets - 支持 Swiper 多张照片轮播，显示照片数量
+- [2026-04-05-15-35-40] - BUILD - assembleHap 编译验证通过
 - [2026-03-29] - CREATE - memory/01_project_state.md - 初始化项目状态文件（增量开发模式）
 - [2026-03-29] - CREATE - memory/03_task_backlog.md - 初始化任务清单
 - [2026-03-29] - CREATE - memory/02_change_log.md - 初始化变更日志
@@ -319,18 +406,19 @@
 - [2026-03-30] - FIX - PhotoSelector.ets - 修复 ArkTS 语法错误（RelativeStack→Stack, FlexSpaceOptions 类型）
 - [2026-03-30] - FIX - PhotoPickerUtil.ets - 修复 throw 语句类型错误（ArkTS 要求 Error 类型）
 - [2026-03-30] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 7s 903ms
-- [2026-04-18-23-12-23] - ANALYZE - backend/backend_ai.py - 分析后端 LLM 调用代码，准备实现前端 ArkTS 客户端
-- [2026-04-18-23-58-50] - CREATE - common/api/MultipartFormData.ets - Multipart/form-data 构建器（支持文本字段和文件字段）
-- [2026-04-18-23-59-58] - CREATE - common/api/VisionLLMClient.ets - 视觉 LLM 客户端（调用 Qwen-VL 图像分析 API）
-- [2026-04-19-00-02-04] - UPDATE - common/api/index.ets - 添加 MultipartFormData 和 VisionLLMClient 导出
-- [2026-04-19-00-02-04] - UPDATE - common/index.ets - 添加 Vision LLM 相关导出到公共层
-- [2026-04-19-03-10-41] - CREATE - feature/ai-copy/components/VisionLLMTest.ets - 视觉 LLM 测试组件（用于测试图像分析功能）
-- [2026-04-19-03-11-25] - UPDATE - feature/ai-copy/index.ets - 添加 VisionLLMTest 组件导出
-- [2026-04-19-15-41-42] - UPDATE - feature/ai-copy/components/VisionLLMTest.ets - 完善图片选择功能，使用 PhotoPickerUtil 和 getUIContext()
-- [2026-04-23-13-51-00] - FIX - common/api/MultipartFormData.ets - 修复 ArkTS 编译错误：BusinessError 改为 Error、TextEncoder 改为 util.TextEncoder
-- [2026-04-23-13-51-10] - FIX - common/api/VisionLLMClient.ets - 修复对象字面量类型声明错误，提取为 QwenApiResponse 等接口
-- [2026-04-23-13-51-20] - UPDATE - common/utils/Constants.ets - 添加 AppDimens.FONT_XS (10) 尺寸常量
-- [2026-04-23-13-51-30] - FIX - feature/ai-copy/pages/VisionLLMPage.ets - 移除错误的 @kit.ArkUI common 导入和未使用的 context 状态
-- [2026-04-23-13-51-40] - UPDATE - feature/ai-copy/pages/AiCopyPage.ets - 重写：集成图片选择 + generateCopyFromImage()，替代纯元数据 mock 方案
-- [2026-04-23-13-51-45] - UPDATE - common/index.ets - 添加 ImageCopyRequest 导出
-- [2026-04-23-13-51-50] - BUILD - 编译验证通过 - BUILD SUCCESSFUL in 12s 388ms
+
+---
+
+## 2026-04-09 (架构文档同步)
+
+- [2026-04-09-12-34-30] - UPDATE - references/software_architecture.md - 架构文档同步实际状态（修正 Product/Feature/Common 层差异，更新三层架构）
+- [2026-04-09-12-34-35] - UPDATE - references/architecture_current.png - 重新生成架构图 PNG（4307x1143, 187KB）
+- [2026-04-09-12-45-00] - UPDATE - README.md - 添加 references/ 目录详细导览（软件架构、用户故事、功能设计、示例代码、工具文档、安全规范）
+
+---
+
+## 2026-04-09 (测试体系建立)
+
+- [2026-04-09-14-30-00] - CREATE - memory/04_test_checklist.md - 测试清单文件初始化
+- [2026-04-09-14-50-00] - UPDATE - memory/04_test_checklist.md - 重构测试清单，增加 P0/P1/P2 优先级体系，聚焦 Feature 集成测试（29 个测试用例：P0=13, P1=10, P2=6）
+- [2026-04-09-14-50-30] - UPDATE - CLAUDE.md - 添加测试监督机制章节（测试通过标记规则、AI 监督责任、通过率追踪）

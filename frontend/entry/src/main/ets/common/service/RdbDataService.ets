@@ -15,12 +15,16 @@
 
 import { logger } from '../utils/Logger';
 import { PhotoPickerUtil } from '../utils/PhotoPickerUtil';
+import { TravelSpecialValues } from '../utils/Constants';
+import { CloudStorageService, AuthService } from '../auth';
+import { SyncManager } from '../sync/SyncManager';
+import { RdbHelper } from '../data/RdbHelper';
 import { TravelRepository } from '../data/TravelRepository';
 import { MemoryNodeRepository } from '../data/MemoryNodeRepository';
 import type { IDataService, CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput } from './IDataService';
-import type { Trip, MemoryNode } from './types';
+import type { Trip, MemoryNode, SyncStatus } from './types';
 import type { CreateTravelInput as RepoCreateTravelInput, UpdateTravelInput as RepoUpdateTravelInput } from '../data/TravelRepository';
-import type { CreateNodeInput as RepoCreateNodeInput, UpdateNodeInput as RepoUpdateNodeInput } from '../data/MemoryNodeRepository';
+import type { CreateNodeInput as RepoCreateNodeInput, UpdateNodeInput as RepoUpdateNodeInput, SoftDeleteResult } from '../data/MemoryNodeRepository';
 
 const TAG = 'RdbDataService';
 
@@ -31,10 +35,107 @@ const TAG = 'RdbDataService';
 export class RdbDataService implements IDataService {
   private travelRepo: TravelRepository;
   private nodeRepo: MemoryNodeRepository;
+  private rdbHelper: RdbHelper;
 
   constructor() {
     this.travelRepo = new TravelRepository();
     this.nodeRepo = new MemoryNodeRepository();
+    this.rdbHelper = RdbHelper.getInstance();
+  }
+
+  private async enqueueSync(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
+    await this.rdbHelper.removeSyncItems(entityType, entityId);
+    await this.rdbHelper.enqueueSyncItem(entityType, entityId, operation, payload);
+    void SyncManager.pushLocalNow();
+  }
+
+  private async enqueueSyncSilently(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
+    await this.rdbHelper.removeSyncItems(entityType, entityId);
+    await this.rdbHelper.enqueueSyncItem(entityType, entityId, operation, payload);
+  }
+
+  async getSyncStatus(): Promise<SyncStatus> {
+    const pendingItems = await this.rdbHelper.getPendingSyncQueueItems();
+    const lastPushTime = await this.rdbHelper.getSyncState('last_push_at');
+    const lastPullTime = await this.rdbHelper.getSyncState('last_pull_at');
+    const status: SyncStatus = {
+      lastSyncTime: Math.max(lastPushTime, lastPullTime),
+      lastPushTime: lastPushTime,
+      lastPullTime: lastPullTime,
+      pendingCount: pendingItems.length,
+      isSyncing: SyncManager.isSyncing()
+    }
+    return status;
+  }
+
+  private buildPhotoManifest(travelId: string, nodeId: string, photos: string[]): string {
+    const cloudPaths: string[] = [];
+    for (let i = 0; i < photos.length; i++) {
+      cloudPaths.push(CloudStorageService.buildNodePhotoPath(travelId, nodeId, photos[i]));
+    }
+    return JSON.stringify(cloudPaths);
+  }
+
+  private syncNodePhotosToCloud(travelId: string, nodeId: string, photos: string[], previousTravelId?: string): void {
+    if (photos.length === 0) {
+      return;
+    }
+
+    void this.uploadNodePhotosToCloud(travelId, nodeId, photos, previousTravelId);
+  }
+
+  private async uploadNodePhotosToCloud(travelId: string, nodeId: string, photos: string[], previousTravelId?: string): Promise<boolean> {
+    let allSucceeded = true;
+    const shouldMigrate = previousTravelId !== undefined && previousTravelId !== travelId;
+    const migratedPhotos: string[] = [];
+    for (const photo of photos) {
+      try {
+        if (shouldMigrate && previousTravelId) {
+          await CloudStorageService.copyNodePhoto(previousTravelId, travelId, nodeId, photo);
+          migratedPhotos.push(photo);
+          logger.info(TAG, `Migrated node photo in cloud: ${nodeId} ${previousTravelId} -> ${travelId}`);
+        } else {
+          await CloudStorageService.uploadNodePhoto(travelId, nodeId, photo);
+          logger.info(TAG, `Uploaded node photo to cloud: ${nodeId} -> ${photo}`);
+        }
+      } catch (err) {
+        const error = err as Error;
+        logger.error(TAG, `Failed to upload node photo ${photo}: ${error.message}`);
+        allSucceeded = false;
+      }
+    }
+    if (shouldMigrate && previousTravelId && migratedPhotos.length > 0) {
+      await this.deleteNodePhotosFromCloud(previousTravelId, nodeId, migratedPhotos);
+    }
+    return allSucceeded;
+  }
+
+  private syncDeletedNodePhotosToCloud(travelId: string, nodeId: string, photos: string[]): void {
+    if (photos.length === 0) {
+      return;
+    }
+
+    void this.deleteNodePhotosFromCloud(travelId, nodeId, photos);
+  }
+
+  private async deleteNodePhotosFromCloud(travelId: string, nodeId: string, photos: string[]): Promise<void> {
+    for (const photo of photos) {
+      try {
+        await CloudStorageService.deleteNodePhoto(travelId, nodeId, photo);
+        logger.info(TAG, `Deleted node photo from cloud: ${nodeId} -> ${photo}`);
+      } catch (err) {
+        const error = err as Error;
+        logger.error(TAG, `Failed to delete node photo ${photo}: ${error.message}`);
+      }
+    }
+  }
+
+  private getAddedPhotos(oldPhotos: string[], newPhotos: string[]): string[] {
+    return newPhotos.filter((photo: string) => !oldPhotos.includes(photo));
+  }
+
+  private getRemovedPhotos(oldPhotos: string[], newPhotos: string[]): string[] {
+    return oldPhotos.filter((photo: string) => !newPhotos.includes(photo));
   }
 
   private calculateDistanceBetweenPoints(
@@ -90,12 +191,19 @@ export class RdbDataService implements IDataService {
           name: trips[i].name,
           description: trips[i].description,
           coverPhoto: trips[i].coverPhoto,
+          isPublic: trips[i].isPublic,
           startDate: trips[i].startDate,
           endDate: trips[i].endDate,
           nodeIds: nodeIds,
           totalDistance: this.calculateTotalDistance(nodes),
           createdAt: trips[i].createdAt,
-          updatedAt: trips[i].updatedAt
+          updatedAt: trips[i].updatedAt,
+          ownerUid: trips[i].ownerUid,
+          cloudId: trips[i].cloudId,
+          syncStatus: trips[i].syncStatus,
+          deletedAt: trips[i].deletedAt,
+          lastSyncedAt: trips[i].lastSyncedAt,
+          version: trips[i].version
         };
       }
       return trips;
@@ -121,12 +229,19 @@ export class RdbDataService implements IDataService {
         name: trip.name,
         description: trip.description,
         coverPhoto: trip.coverPhoto,
+        isPublic: trip.isPublic,
         startDate: trip.startDate,
         endDate: trip.endDate,
         nodeIds: nodeIds,
         totalDistance: this.calculateTotalDistance(nodes),
         createdAt: trip.createdAt,
-        updatedAt: trip.updatedAt
+        updatedAt: trip.updatedAt,
+        ownerUid: trip.ownerUid,
+        cloudId: trip.cloudId,
+        syncStatus: trip.syncStatus,
+        deletedAt: trip.deletedAt,
+        lastSyncedAt: trip.lastSyncedAt,
+        version: trip.version
       };
       return result;
     } catch (err) {
@@ -139,6 +254,7 @@ export class RdbDataService implements IDataService {
     const repoInput: RepoCreateTravelInput = {
       name: travel.name,
       coverImageUri: travel.coverPhoto,
+      isPublic: travel.isPublic ?? false,
       startDate: travel.startDate,
       endDate: travel.endDate
     };
@@ -147,6 +263,19 @@ export class RdbDataService implements IDataService {
     if (!created) {
       throw new Error('Failed to retrieve created travel');
     }
+    const payload = JSON.stringify({
+      ownerUid: created.ownerUid ?? '',
+      localId: created.id,
+      cloudId: created.cloudId ?? '',
+      name: created.name,
+      coverPhoto: created.coverPhoto ?? '',
+      startDate: created.startDate,
+      endDate: created.endDate,
+      updatedAt: created.updatedAt,
+      deletedAt: created.deletedAt ?? 0,
+      version: created.version ?? 1
+    })
+    await this.enqueueSync('travel', created.id, 'upsert', payload);
     return created;
   }
 
@@ -157,6 +286,9 @@ export class RdbDataService implements IDataService {
     }
     if (data.coverPhoto !== undefined) {
       repoInput.coverImageUri = data.coverPhoto;
+    }
+    if (data.isPublic !== undefined) {
+      repoInput.isPublic = data.isPublic;
     }
     if (data.startDate !== undefined) {
       repoInput.startDate = data.startDate;
@@ -172,13 +304,76 @@ export class RdbDataService implements IDataService {
     if (!updated) {
       throw new Error('Failed to retrieve updated travel');
     }
+    const payload = JSON.stringify({
+      ownerUid: updated.ownerUid ?? '',
+      localId: updated.id,
+      cloudId: updated.cloudId ?? '',
+      name: updated.name,
+      coverPhoto: updated.coverPhoto ?? '',
+      startDate: updated.startDate,
+      endDate: updated.endDate,
+      updatedAt: updated.updatedAt,
+      deletedAt: updated.deletedAt ?? 0,
+      version: updated.version ?? 1
+    })
+    await this.enqueueSync('travel', updated.id, 'upsert', payload);
     return updated;
   }
 
   async deleteTravel(travelId: string): Promise<void> {
-    const deleted = await this.travelRepo.deleteTravel(travelId);
+    const affectedNodes = await this.nodeRepo.getNodesByTravelId(travelId)
+    const shouldSyncCloudNow = (AppStorage.get('networkOnline') as boolean) ?? false
+    const deleted = await this.travelRepo.softDeleteTravel(travelId);
     if (!deleted) {
       throw new Error(`Failed to delete travel: ${travelId}`);
+    }
+
+    for (let i = 0; i < affectedNodes.length; i++) {
+      const affectedNode = affectedNodes[i]
+      logger.info(TAG, `[debug] deleteTravel affectedNode before localId=${affectedNode.id}, travelId=${affectedNode.travelId}, photos=${JSON.stringify(affectedNode.photos)}`)
+      const node = await this.nodeRepo.getNodeById(affectedNode.id)
+      if (!node) {
+        continue
+      }
+      logger.info(TAG, `[debug] deleteTravel affectedNode after localId=${node.id}, travelId=${node.travelId}, photos=${JSON.stringify(node.photos)}`)
+      let nextTravelId = node.travelId;
+      let nextPhotos = [...node.photos];
+      if (shouldSyncCloudNow && node.photos.length > 0 && affectedNode.travelId !== node.travelId) {
+        const migrated = await this.uploadNodePhotosToCloud(node.travelId, node.id, node.photos, affectedNode.travelId)
+        if (!migrated) {
+          nextTravelId = affectedNode.travelId;
+          nextPhotos = [...affectedNode.photos];
+        }
+      }
+      const payload = JSON.stringify({
+        ownerUid: node.ownerUid ?? '',
+        localId: node.id,
+        cloudId: node.cloudId ?? '',
+        travelId: nextTravelId,
+        title: node.title,
+        content: node.content,
+        latitude: node.latitude,
+        longitude: node.longitude,
+        poiName: node.poiName,
+        photos: nextPhotos,
+        mood: node.mood,
+        tags: node.tags,
+        nodeOrder: node.nodeOrder ?? 0,
+        updatedAt: node.updatedAt,
+        deletedAt: node.deletedAt ?? 0,
+        version: node.version ?? 1,
+        photoManifest: this.buildPhotoManifest(nextTravelId, node.id, nextPhotos)
+      })
+      await this.enqueueSyncSilently('memory_node', node.id, 'upsert', payload)
+    }
+
+    const payload = JSON.stringify({
+      localId: travelId,
+      deletedAt: Date.now()
+    })
+    await this.enqueueSyncSilently('travel', travelId, 'delete', payload);
+    if (shouldSyncCloudNow) {
+      void SyncManager.pushLocalNow()
     }
   }
 
@@ -210,20 +405,47 @@ export class RdbDataService implements IDataService {
     if (!created) {
       throw new Error('Failed to retrieve created node');
     }
+    const payload = JSON.stringify({
+      ownerUid: created.ownerUid ?? '',
+      localId: created.id,
+      cloudId: created.cloudId ?? '',
+      travelId: created.travelId,
+      title: created.title,
+      content: created.content,
+      latitude: created.latitude,
+      longitude: created.longitude,
+      poiName: created.poiName,
+      photos: created.photos,
+      mood: created.mood,
+      tags: created.tags,
+      nodeOrder: created.nodeOrder ?? 0,
+      updatedAt: created.updatedAt,
+      deletedAt: created.deletedAt ?? 0,
+      version: created.version ?? 1,
+      photoManifest: this.buildPhotoManifest(created.travelId, created.id, created.photos)
+    })
+    await this.enqueueSync('memory_node', created.id, 'upsert', payload);
+    this.syncNodePhotosToCloud(created.travelId, created.id, created.photos);
     return created;
   }
 
   async updateNode(nodeId: string, data: UpdateNodeInput): Promise<MemoryNode> {
-    // 如果更新了照片，先获取旧照片列表以便清理
     let oldPhotos: string[] = [];
-    if (data.photos !== undefined) {
+    let travelId: string = '';
+    let oldTravelId: string = '';
+    if (data.photos !== undefined || data.travelId !== undefined) {
       const oldNode = await this.nodeRepo.getNodeById(nodeId);
       if (oldNode) {
         oldPhotos = [...oldNode.photos];
+        travelId = oldNode.travelId;
+        oldTravelId = oldNode.travelId;
       }
     }
 
     const repoInput: RepoUpdateNodeInput = {};
+    if (data.travelId !== undefined) {
+      repoInput.travelId = data.travelId;
+    }
     if (data.title !== undefined) {
       repoInput.title = data.title;
     }
@@ -248,17 +470,19 @@ export class RdbDataService implements IDataService {
     if (data.tags !== undefined) {
       repoInput.tags = data.tags;
     }
-const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
+    const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
     if (!updatedOk) {
       throw new Error(`Failed to update node: ${nodeId}`);
     }
 
-    // 清理被移除的照片
     if (data.photos !== undefined) {
-      const removedPhotos = oldPhotos.filter((photo: string) => !data.photos!.includes(photo));
+      const removedPhotos = this.getRemovedPhotos(oldPhotos, data.photos);
       if (removedPhotos.length > 0) {
         await PhotoPickerUtil.deletePhotos(removedPhotos);
         logger.info(TAG, `Cleaned ${removedPhotos.length} removed photos for node ${nodeId}`);
+        if (travelId.length > 0) {
+          this.syncDeletedNodePhotosToCloud(travelId, nodeId, removedPhotos);
+        }
       }
     }
 
@@ -266,25 +490,130 @@ const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
     if (!updated) {
       throw new Error('Failed to retrieve updated node');
     }
+
+    if (data.photos !== undefined) {
+      const addedPhotos = this.getAddedPhotos(oldPhotos, updated.photos);
+      this.syncNodePhotosToCloud(updated.travelId, updated.id, addedPhotos);
+    }
+
+    if (data.travelId !== undefined && oldTravelId.length > 0 && oldTravelId !== updated.travelId) {
+      // Renormalize node orders in the source travel after the node left
+      const remainingNodes = await this.nodeRepo.getNodesByTravelId(oldTravelId);
+      const remainingIds = remainingNodes.map((n: MemoryNode) => n.id);
+      if (remainingIds.length > 0) {
+        await this.nodeRepo.reorderNodes(oldTravelId, remainingIds);
+      }
+
+      if (updated.photos.length > 0) {
+        const shouldSyncCloudNow = (AppStorage.get('networkOnline') as boolean) ?? false;
+        if (shouldSyncCloudNow) {
+          const migrated = await this.uploadNodePhotosToCloud(updated.travelId, updated.id, updated.photos, oldTravelId);
+          if (!migrated) {
+            data.travelId = oldTravelId;
+            updated.photos = [...oldPhotos];
+          }
+        }
+      }
+    }
+
+    const nextTravelId = data.travelId ?? updated.travelId;
+    const nextPhotos = [...updated.photos];
+    const payload = JSON.stringify({
+      ownerUid: updated.ownerUid ?? '',
+      localId: updated.id,
+      cloudId: updated.cloudId ?? '',
+      travelId: nextTravelId,
+      title: updated.title,
+      content: updated.content,
+      latitude: updated.latitude,
+      longitude: updated.longitude,
+      poiName: updated.poiName,
+      photos: nextPhotos,
+      mood: updated.mood,
+      tags: updated.tags,
+      nodeOrder: updated.nodeOrder ?? 0,
+      updatedAt: updated.updatedAt,
+      deletedAt: updated.deletedAt ?? 0,
+      version: updated.version ?? 1,
+      photoManifest: this.buildPhotoManifest(nextTravelId, updated.id, nextPhotos)
+    })
+    await this.enqueueSync('memory_node', updated.id, 'upsert', payload);
+
     return updated;
   }
 
   async deleteNode(nodeId: string): Promise<void> {
-    // 先获取节点的照片列表
     const node = await this.nodeRepo.getNodeById(nodeId);
     if (node && node.photos.length > 0) {
-      // 清理沙箱照片
       await PhotoPickerUtil.deletePhotos(node.photos);
       logger.info(TAG, `Cleaned ${node.photos.length} photos for deleted node ${nodeId}`);
     }
-    // 删除数据库记录
-    const deleted = await this.nodeRepo.deleteNode(nodeId);
-    if (!deleted) {
+    const result = await this.nodeRepo.softDeleteNode(nodeId);
+    if (!result.success) {
       throw new Error(`Failed to delete node: ${nodeId}`);
+    }
+    // Renormalize sibling node orders and sync to cloud
+    const travelId = result.travelId;
+    const belongsToTravel = travelId.length > 0 && travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID;
+    if (travelId.length > 0) {
+      const remainingNodes = await this.nodeRepo.getNodesByTravelId(travelId);
+      const remainingIds = remainingNodes.map((n: MemoryNode) => n.id);
+      if (remainingIds.length > 0) {
+        await this.nodeRepo.reorderNodes(travelId, remainingIds);
+      }
+    }
+    if (node && node.photos.length > 0) {
+      this.syncDeletedNodePhotosToCloud(node.travelId, node.id, node.photos);
+    }
+    const photoCloudPaths: string[] = [];
+    if (node) {
+      for (let i = 0; i < node.photos.length; i++) {
+        photoCloudPaths.push(CloudStorageService.buildNodePhotoPath(node.travelId, node.id, node.photos[i]));
+      }
+    }
+    const payload = JSON.stringify({
+      localId: nodeId,
+      travelId: travelId,
+      deletedAt: Date.now(),
+      photoCloudPaths: photoCloudPaths
+    })
+    if (belongsToTravel) {
+      await this.enqueueSyncSilently('memory_node', nodeId, 'delete', payload);
+      await this.syncNodeOrdersToCloud(travelId);
+    } else {
+      await this.enqueueSync('memory_node', nodeId, 'delete', payload);
     }
   }
 
   async reorderNodes(travelId: string, nodeIds: string[]): Promise<void> {
     await this.nodeRepo.reorderNodes(travelId, nodeIds);
+  }
+
+  async syncNodeOrdersToCloud(travelId: string): Promise<void> {
+    const siblings = await this.nodeRepo.getNodesByTravelId(travelId);
+    for (let i = 0; i < siblings.length; i++) {
+      const sibling = siblings[i];
+      const siblingPayload = JSON.stringify({
+        ownerUid: sibling.ownerUid ?? '',
+        localId: sibling.id,
+        cloudId: sibling.cloudId ?? '',
+        travelId: sibling.travelId,
+        title: sibling.title,
+        content: sibling.content,
+        latitude: sibling.latitude,
+        longitude: sibling.longitude,
+        poiName: sibling.poiName,
+        photos: sibling.photos,
+        mood: sibling.mood,
+        tags: sibling.tags,
+        nodeOrder: sibling.nodeOrder ?? 0,
+        updatedAt: sibling.updatedAt,
+        deletedAt: sibling.deletedAt ?? 0,
+        version: sibling.version ?? 1,
+        photoManifest: this.buildPhotoManifest(sibling.travelId, sibling.id, sibling.photos)
+      });
+      await this.enqueueSyncSilently('memory_node', sibling.id, 'upsert', siblingPayload);
+    }
+    await SyncManager.pushLocalNow();
   }
 }

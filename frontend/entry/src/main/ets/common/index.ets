@@ -16,9 +16,15 @@
 // Common Layer 统一导出入口
 
 // Utils 导出
-export { AppColors, AppDimens, RouterUrls } from './utils/Constants';
+export { AppColors, AppDimens, RouterUrls, TravelSpecialValues } from './utils/Constants';
 export { logger } from './utils/Logger';
 export { PhotoPickerUtil } from './utils/PhotoPickerUtil';
+
+// Auth 导出
+export { AuthService, CloudStorageService } from './auth';
+export { CloudSyncService } from './sync/CloudSyncService';
+export { SyncManager } from './sync/SyncManager';
+export type { AuthUser } from './auth';
 
 // Data Layer 导出
 export { RdbHelper, SensitivityLevel } from './data/index';

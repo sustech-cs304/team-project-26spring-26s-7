@@ -1,6 +1,7 @@
 # ========================
 # Claude Code
 # ========================
+CLAUDE.md
 .claude_state/
 .claude/
 CLAUDE.local.md
@@ -8,6 +9,8 @@ dual_cc.md
 frontend/cc4frontend.md
 backend/cc4backend.md
 .mcp.json
+.playwright-mcp
+CLAUDE.md
 
 # ========================
 # Temporary files
@@ -60,6 +63,9 @@ local.properties
 
 # codex 
 frontend/.codex_*/
+.codex_npm_cache_*
+frontend/.codex_npm_cache_*/
+AGENTS.md
 
 # module cache
 frontend/oh_modules/
@@ -68,3 +74,10 @@ frontend/.idea/
 
 # text file
 *.txt
+
+# package
+package-lock.json
+package.json
+
+# Codex
+AGENTS.md

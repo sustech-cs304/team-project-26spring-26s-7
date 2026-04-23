@@ -48,6 +48,7 @@ export class MockDataService implements IDataService {
         name: '深圳三日游',
         description: '春天的深圳美景，与家人一起游玩',
         coverPhoto: '',
+        isPublic: false,
         startDate: now - dayMs * 7,
         endDate: now - dayMs * 5,
         nodeIds: ['node-001', 'node-002', 'node-003'],
@@ -60,6 +61,7 @@ export class MockDataService implements IDataService {
         name: '广州周末游',
         description: '周末短途旅行',
         coverPhoto: '',
+        isPublic: true,
         startDate: now - dayMs * 30,
         endDate: now - dayMs * 29,
         nodeIds: ['node-004', 'node-005'],
@@ -92,6 +94,7 @@ export class MockDataService implements IDataService {
       name: travel.name,
       description: travel.description,
       coverPhoto: travel.coverPhoto,
+      isPublic: travel.isPublic ?? false,
       startDate: travel.startDate,
       endDate: travel.endDate,
       nodeIds: travel.nodeIds,
@@ -114,6 +117,7 @@ export class MockDataService implements IDataService {
     if (data.name !== undefined) current.name = data.name;
     if (data.description !== undefined) current.description = data.description;
     if (data.coverPhoto !== undefined) current.coverPhoto = data.coverPhoto;
+    if (data.isPublic !== undefined) current.isPublic = data.isPublic;
     if (data.startDate !== undefined) current.startDate = data.startDate;
     if (data.endDate !== undefined) current.endDate = data.endDate;
     if (data.nodeIds !== undefined) current.nodeIds = data.nodeIds;
@@ -248,6 +252,10 @@ export class MockDataService implements IDataService {
     travel.nodeIds = nodeIds;
     travel.updatedAt = Date.now();
     logger.info(TAG, `Nodes reordered for travel: ${travelId}`);
+  }
+
+  async syncNodeOrdersToCloud(travelId: string): Promise<void> {
+    logger.info(TAG, `syncNodeOrdersToCloud() called for travel: ${travelId} (MOCK, no-op)`);
   }
 
   // ==================== 工具方法 ====================

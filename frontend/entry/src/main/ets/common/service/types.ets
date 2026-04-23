@@ -97,6 +97,7 @@ export interface RouterParam {
   tripId?: string
   latitude?: number
   longitude?: number
+  poiName?: string
   defaultPrompt?: string
   defaultTitle?: string
 }
@@ -107,12 +108,19 @@ export interface Trip {
   name: string
   description?: string
   coverPhoto?: string
+  isPublic: boolean
   startDate: number
   endDate: number
   nodeIds: string[]
   totalDistance: number
   createdAt: number
   updatedAt: number
+  ownerUid?: string
+  cloudId?: string
+  syncStatus?: string
+  deletedAt?: number
+  lastSyncedAt?: number
+  version?: number
 }
 
 /** 记忆节点 - 完整数据模型 */
@@ -129,13 +137,33 @@ export interface MemoryNode {
   tags: string[]
   createdAt: number
   updatedAt: number
+  nodeOrder?: number
+  ownerUid?: string
+  cloudId?: string
+  syncStatus?: string
+  deletedAt?: number
+  lastSyncedAt?: number
+  version?: number
+  photoManifest?: string
 }
 
 /** 同步状态 */
 export interface SyncStatus {
   lastSyncTime: number
+  lastPushTime?: number
+  lastPullTime?: number
   pendingCount: number
   isSyncing: boolean
+}
+
+export interface SyncQueueItem {
+  id: string
+  entityType: string
+  entityId: string
+  operation: string
+  payload: string
+  createdAt: number
+  retryCount: number
 }
 
 /** AI 文案请求 */
@@ -163,11 +191,13 @@ export class ReplayNode {
   id: string = ''
   position: Position = new Position()
   photos: string[] = []       // 照片数组 (支持多张，沙箱路径)
-  title: string = ''          // 地点名称
+  title: string = ''          // 节点标题
   note: string = ''           // 完整文字笔记
   noteShort: string = ''      // 缩略文字 (最多 20 字)
   timestamp: number = 0       // 小时级时间戳 (毫秒)
   order: number = 0           // 在路线中的顺序
+  mood: string = ''           // 心情
+  tags: string[] = []         // 标签数组
 
   constructor(
     id: string,
@@ -178,7 +208,9 @@ export class ReplayNode {
     note: string,
     noteShort: string,
     timestamp: number,
-    order: number
+    order: number,
+    mood: string = '',
+    tags: string[] = []
   ) {
     this.id = id
     this.position = new Position(latitude, longitude)
@@ -188,6 +220,8 @@ export class ReplayNode {
     this.noteShort = noteShort
     this.timestamp = timestamp
     this.order = order
+    this.mood = mood
+    this.tags = tags
   }
 }
 

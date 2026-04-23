@@ -22,6 +22,7 @@ export interface CreateTravelInput {
   name: string;
   description?: string;
   coverPhoto?: string;
+  isPublic?: boolean;
   startDate: number;
   endDate: number;
   nodeIds: string[];
@@ -35,6 +36,7 @@ export interface UpdateTravelInput {
   name?: string;
   description?: string;
   coverPhoto?: string;
+  isPublic?: boolean;
   startDate?: number;
   endDate?: number;
   nodeIds?: string[];
@@ -60,6 +62,7 @@ export interface CreateNodeInput {
  * 更新节点输入参数（所有字段可选）
  */
 export interface UpdateNodeInput {
+  travelId?: string;
   title?: string;
   content?: string;
   latitude?: number;
@@ -137,7 +140,13 @@ export interface IDataService {
   deleteNode(nodeId: string): Promise<void>;
 
   /**
-   * 重新排序节点
+   * 重新排序节点（仅更新本地数据库）
    */
   reorderNodes(travelId: string, nodeIds: string[]): Promise<void>;
+
+  /**
+   * 将指定旅行下所有节点的 nodeOrder 同步到云端
+   * 应在 TripEditPage 点击保存时调用
+   */
+  syncNodeOrdersToCloud(travelId: string): Promise<void>;
 }

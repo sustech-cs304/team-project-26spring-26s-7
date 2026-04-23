@@ -1,10 +1,10 @@
 # Task Backlog
 
-**Last Updated**: 2026-04-03 (动态旅程回放功能 bug 修复)
+**Last Updated**: 2026-04-16 (云同步 + UI 页面更新合并)
 **Total Tasks**: 28 (来自 base 项目)
-**Completed**: 12 (含三层架构重构 + 动态旅程回放)
+**Completed**: 18 (含三层架构重构 + 动态旅程回放 + 地点搜索替换 + 首页地图搜索 + 云同步认证 + UI 页面更新)
 **In Progress**: 0
-**Pending**: 16
+**Pending**: 10
 
 ---
 
@@ -13,6 +13,103 @@
 - 🔄 In Progress
 - ⏳ Pending
 - 🔴 Blocked
+
+---
+
+## 2026-04-16 Update: 云同步 + UI 页面更新合并
+
+### 🔄 已完成工作 (2026-04-16)
+
+**P0 - 登录认证功能**:
+- 实现华为账号认证 (HWID 登录/登出)
+- 支持用户头像获取与展示
+- AuthProvider 封装认证逻辑
+
+**P0 - 云存储服务**:
+- 照片上传到华为云对象存储 (OBS)
+- 云存储 SDK 集成与权限配置
+- 真机测试验证通过
+
+**P0 - 云数据库同步**:
+- TravelPinZone 云数据库访问封装
+- Travel/MemoryNode 上行 upsert/delete
+- sync_queue 消费器实现
+- 支持手动/启动时触发同步
+
+**P0 - UI 页面更新 (PR #105)**:
+- TripEditPage 旅行编辑页面
+- NodeListView 节点列表视图
+- 瀑布式旅行列表展示
+- 地图真实搜索选点流程
+
+**修改文件**:
+- common/auth/ 认证模块
+- common/sync/ 同步模块
+- RdbHelper.ets / TravelRepository.ets / MemoryNodeRepository.ets
+- feature/map-travel/pages/TripEditPage.ets (新增)
+- feature/map-travel/views/NodeListView.ets (新增)
+- MapHomeView.ets / NodeDetailPage.ets / NodeEditPage.ets
+- MainPage.ets / main_pages.json
+
+**编译状态**: ✅ 远端合并验证通过
+
+---
+
+## 2026-04-12 Update: 旅行相册瀑布流页面开发
+
+### 🔄 已完成工作 (2026-04-12)
+
+**P0 - 新增并列相册页（双列瀑布流）**:
+
+- 新增 `feature/map-travel/views/TripAlbumView.ets`，以双列瀑布流形式纵向展示旅行封面
+- 封面逻辑采用“旅行第一个 node 的第一张图片”，无节点/无图片时自动回退占位卡片
+- 点击任意旅行卡片复用既有路由协议进入 `TripDetailPage`
+- 复用 `travelDataVersion` 监听机制，保证旅行数据变化后相册自动刷新
+
+**P0 - MainPage 并列入口扩展**:
+
+- 在 `pages/MainPage.ets` 底部 Tabs 中新增第 4 个并列页「相册」
+- 保持既有三个 Tab（地图/旅行/我的）逻辑不变，仅新增并列入口
+
+**修改文件**:
+- `feature/map-travel/views/TripAlbumView.ets`
+- `pages/MainPage.ets`
+- `feature/map-travel/index.ets`
+- `memory/02_change_log.md`
+- `memory/03_task_backlog.md`
+
+**编译状态**: ⚠️ 受当前会话环境限制未完成（DevEco 工具链路径缺失，需本机 DevEco 环境手动验证）
+
+---
+
+## 2026-04-10 Update: Map Kit 地点搜索替换
+
+### 🔄 已完成工作 (2026-04-10)
+
+**P0 - LocationPicker 真实地点搜索接入**:
+
+- 将 `feature/map-travel/pages/LocationPickerPage.ets` 的硬编码地点匹配替换为 `@kit.MapKit.site.searchByText(...)`
+- 保留经纬度直输能力，继续支持 `22.55,113.96` 这类输入直接选点
+- 地图点击后增加 `site.reverseGeocode(...)`，优先展示真实 POI/地址，失败时回退为经纬度
+- 保持 `AppStorage` 回填契约不变，`NodeEditPage.ets` 无需改动
+- 增加搜索中、空结果与失败提示，避免用户误以为页面无响应
+- 使用页面内轻量结果接口，降低 `site` 返回类型字段名差异导致的 ArkTS 编译风险
+
+**P0 - 首页地图搜索接入**:
+
+- 将 `feature/map-travel/views/MapHomeView.ets` 顶部静态搜索栏替换为真实 `TextInput`
+- 先搜索本地记忆节点（标题 / 地点 / 标签），再合并 `@kit.MapKit.site.searchByText(...)` 的 POI 结果
+- 搜索结果去重后以下拉列表展示，避免首页已有节点和 POI 重复堆叠
+- 选中节点结果时联动地图相机并打开底部预览卡片；选中 POI 结果时仅移动地图
+- 保留原有筛选面板、长按建点、Marker 预览等首页交互
+
+**修改文件**:
+- `feature/map-travel/pages/LocationPickerPage.ets`
+- `feature/map-travel/views/MapHomeView.ets`
+- `memory/02_change_log.md`
+- `memory/03_task_backlog.md`
+
+**编译状态**: ⚠️ 待用户手动验证（本次仅完成代码修复，未在会话内执行编译）
 
 ---
 
