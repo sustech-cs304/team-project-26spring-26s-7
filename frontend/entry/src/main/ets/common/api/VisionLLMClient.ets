@@ -62,6 +62,34 @@ export interface VisionLLMRequest {
 }
 
 /**
+ * 纯文本 LLM 请求参数（不含图片）
+ */
+export interface TextLLMRequest {
+  /** 提示词文本 */
+  prompt: string;
+  /** 模型名称（默认：Qwen-VL-Chat-Int4） */
+  modelName?: string;
+  /** 温度（默认：0.9） */
+  temperature?: number;
+  /** top-p（默认：0.85） */
+  topP?: number;
+}
+
+/** OpenAI 兼容请求中的 message 结构 */
+interface ChatMessage {
+  role: string;
+  content: string;
+}
+
+/** OpenAI 兼容请求体 */
+interface ChatCompletionRequest {
+  model: string;
+  messages: ChatMessage[];
+  temperature: number;
+  top_p: number;
+}
+
+/**
  * 视觉 LLM 响应数据
  * 对应 Qwen-VL API 的响应格式
  */
@@ -171,6 +199,81 @@ export class VisionLLMClient {
     } catch (err) {
       const error = err as BusinessError;
       const errorMsg = `Request failed: ${error.message}`;
+      logger.error(TAG, errorMsg);
+      return {
+        statusCode: 0,
+        data: undefined,
+        error: errorMsg
+      };
+    } finally {
+      httpRequest.destroy();
+    }
+  }
+
+  /**
+   * 纯文本方式调用 LLM（不发送图片）
+   * 使用标准 OpenAI 兼容 /v1/chat/completions 端点
+   * @param request 纯文本请求
+   * @returns 生成的文本响应
+   */
+  async askText(request: TextLLMRequest): Promise<HttpResponse<VisionLLMResponse>> {
+    logger.info(TAG, 'Sending text-only request to LLM...');
+
+    const httpRequest = http.createHttp();
+
+    try {
+      const userMessage: ChatMessage = { role: 'user', content: request.prompt };
+      const requestBody: ChatCompletionRequest = {
+        model: request.modelName || 'Qwen-VL-Chat-Int4',
+        messages: [userMessage],
+        temperature: request.temperature ?? 0.9,
+        top_p: request.topP ?? 0.85
+      };
+
+      const url = `${this.baseUrl}/v1/chat/completions`;
+      logger.info(TAG, `Sending POST request to: ${url}`);
+
+      const options: http.HttpRequestOptions = {
+        method: http.RequestMethod.POST,
+        header: {
+          'Content-Type': 'application/json'
+        },
+        readTimeout: this.timeout,
+        connectTimeout: this.timeout,
+        expectDataType: http.HttpDataType.OBJECT,
+        extraData: JSON.stringify(requestBody)
+      };
+
+      const response = await httpRequest.request(url, options);
+      logger.info(TAG, `Response status: ${response.responseCode}`);
+
+      if (response.responseCode === 200 || response.responseCode === 201) {
+        const result = response.result as Object;
+        logger.debug(TAG, `Response raw: ${JSON.stringify(result)}`);
+
+        const content = this.extractContent(result);
+
+        const textResponse: VisionLLMResponse = {
+          content,
+          raw: result
+        };
+
+        return {
+          statusCode: response.responseCode,
+          data: textResponse
+        };
+      } else {
+        const errorMsg = `HTTP ${response.responseCode}: ${JSON.stringify(response.result)}`;
+        logger.error(TAG, errorMsg);
+        return {
+          statusCode: response.responseCode,
+          data: undefined,
+          error: errorMsg
+        };
+      }
+    } catch (err) {
+      const error = err as BusinessError;
+      const errorMsg = `Text request failed: ${error.message}`;
       logger.error(TAG, errorMsg);
       return {
         statusCode: 0,

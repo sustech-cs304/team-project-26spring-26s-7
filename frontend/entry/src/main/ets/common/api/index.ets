@@ -19,4 +19,4 @@ export { HttpClient, HttpResponse } from './HttpClient';
 export { AiGatewayClient, ImageCopyRequest } from './AiGatewayClient';
 export { AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION, VISION_LLM_BASE_URL } from './ApiEndpoints';
 export { MultipartFormData } from './MultipartFormData';
-export { VisionLLMClient, VisionLLMRequest, VisionLLMResponse } from './VisionLLMClient';
+export { VisionLLMClient, VisionLLMRequest, VisionLLMResponse, TextLLMRequest } from './VisionLLMClient';

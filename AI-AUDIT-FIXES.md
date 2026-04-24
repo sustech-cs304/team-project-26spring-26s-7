@@ -7,7 +7,50 @@
 
 ## 修复总览
 
-基于对 AI 文案生成功能的全面审查，共发现并修复 9 项问题（+ 2 项后续优化），涉及 6 个文件。
+基于对 AI 文案生成功能的全面审查，共发现并修复 9 项问题（+ 2 项后续优化 + 1 项架构重构），涉及 6 个文件。
+
+---
+
+## 11. [架构] 图片不出设备 — 端侧分析 + 纯文本 LLM 生成
+
+**文件**:
+- `frontend/entry/src/main/ets/common/ai/LocalImageTagger.ets`（重写）
+- `frontend/entry/src/main/ets/common/api/VisionLLMClient.ets`（新增 askText）
+- `frontend/entry/src/main/ets/common/api/AiGatewayClient.ets`（重写生成流程）
+- `frontend/entry/src/main/ets/common/api/index.ets`（新增导出）
+
+**问题**: 原方案将用户照片通过明文 HTTP 上传到 Qwen-VL 服务器做图片分析，存在隐私合规风险（违反《个人信息保护法》、无法通过华为应用市场审核）。
+
+**修复**: 实施"方案 A — 图片不出设备"：
+
+1. **端侧图片元数据提取** (`LocalImageTagger.ets`)：
+   - 使用 `@kit.ImageKit` 的 `ImageSource` 提取图片尺寸（判断横幅/竖幅/方形构图）
+   - 通过 EXIF `DateTimeOriginal` 提取拍摄时段（清晨/上午/中午/下午/傍晚/夜晚/深夜）
+   - 所有分析在设备本地完成，照片不出设备
+   - 分析失败时返回空标签的 `PhotoMetadata`，不崩溃
+   - 注：`@kit.CoreVisionKit` 的 `imageClassifier` 在当前 SDK 5.0.5 (API 17) 中不可用，未来 SDK 更新后可增强为 AI 图片分类
+
+2. **纯文本 LLM 调用** (`VisionLLMClient.askText()`)：
+   - 新增 `TextLLMRequest` 接口和 `askText()` 方法
+   - 调用 `/v1/chat/completions`（标准 OpenAI 兼容端点），请求体为 JSON 纯文本
+   - 不发送任何图片数据
+
+3. **生成流程重写** (`AiGatewayClient.generateCopyFromImage()`)：
+   - 步骤一：`LocalImageTagger.extractMetadata()` 端侧分析照片
+   - 步骤二：将标签组装为文字描述，与风格/长度/地点/用户提示词合并为纯文本 prompt
+   - 步骤三：`VisionLLMClient.askText()` 发送纯文本，不含图片
+   - 降级方案：端侧分析不可用时，基于用户手动输入的地点和提示词直接生成
+
+**数据流变化**:
+```
+修改前: 选图 → 上传图片到服务器 → Qwen-VL 看图生成 → 返回
+修改后: 选图 → 端侧 CoreVisionKit 分析 → 纯文本发给 LLM → 返回（照片不出设备）
+```
+
+**风险提示**:
+- Qwen 服务器需确认支持 `/v1/chat/completions` 纯文本端点（标准 OpenAI 兼容格式）
+- CoreVisionKit 在模拟器上可能不可用，会走降级路径
+- AiCopyPage.ets 无需修改，接口 `ImageCopyRequest` 未变，变化对 UI 透明
 
 ---
 

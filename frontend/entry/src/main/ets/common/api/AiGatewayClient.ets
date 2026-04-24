@@ -15,9 +15,11 @@
 
 import { HttpClient, HttpResponse } from './HttpClient';
 import { AiEndpoints, HttpTimeout } from './ApiEndpoints';
-import { VisionLLMClient, VisionLLMRequest } from './VisionLLMClient';
+import { VisionLLMClient, TextLLMRequest } from './VisionLLMClient';
 import { logger } from '../utils/Logger';
 import { AiCopyRequest, AiCopyResponse, AiCopyResponseData, VisualKitResult } from '../ai/PhotoMetadata';
+import { LocalImageTagger } from '../ai/LocalImageTagger';
+import { PhotoMetadata } from '../ai/PhotoMetadata';
 
 const TAG = 'AiGatewayClient';
 
@@ -59,45 +61,44 @@ export interface ImageCopyRequest {
 export class AiGatewayClient {
   private httpClient: HttpClient;
   private visionClient: VisionLLMClient;
+  private localTagger: LocalImageTagger;
 
   constructor() {
     this.httpClient = new HttpClient();
     this.visionClient = new VisionLLMClient();
+    this.localTagger = new LocalImageTagger();
   }
 
   /**
    * 基于图片生成旅行文案（核心方法）
-   * 流程：将图片 + 构建好的 prompt 发送给 Qwen-VL，由模型分析图片内容并生成文案
+   * 流程：端侧分析图片提取标签 → 纯文本 prompt 发给 LLM → 生成文案
+   * 照片不会离开设备
    */
   async generateCopyFromImage(request: ImageCopyRequest): Promise<HttpResponse<AiCopyResponse>> {
     logger.info(TAG, `Generating copy from image: ${request.imagePath}`);
 
     try {
-      const styleDesc = STYLE_PROMPTS[request.style] || request.style;
-      const lengthDesc = LENGTH_PROMPTS[request.lengthLevel] || LENGTH_PROMPTS['medium'];
-      const poiHint = request.poiName ? `拍摄地点是「${request.poiName}」。` : '';
-      const userHint = request.userPrompt ? `用户补充说明：${request.userPrompt}。` : '';
+      // 第一步：端侧图片分析（照片不出设备）
+      const metadata = await this.localTagger.extractMetadata(request.imagePath);
+      logger.info(TAG, `On-device analysis done: scene=[${metadata.sceneTags.join(',')}], object=[${metadata.objectTags.join(',')}]`);
 
-      const question =
-        `请你作为一名旅行博主，仔细观察这张照片，` +
-        `${poiHint}${userHint}` +
-        `用${styleDesc}的风格，写一段旅行文案。` +
-        `长度要求：${lengthDesc}。` +
-        `要求：生动描述照片中的场景和氛围，富有感染力，严格遵守长度要求。`;
+      // 第二步：构建纯文本 prompt
+      const question = this.buildPrompt(request, metadata);
+      logger.debug(TAG, `Built prompt: ${question}`);
 
-      const visionRequest: VisionLLMRequest = {
-        imagePath: request.imagePath,
-        question: question,
+      // 第三步：纯文本调用 LLM（不发送图片）
+      const textRequest: TextLLMRequest = {
+        prompt: question,
         modelName: 'Qwen-VL-Chat-Int4',
         temperature: 0.9,
         topP: 0.85
       };
 
-      const visionResponse = await this.visionClient.askImage(visionRequest);
+      const llmResponse = await this.visionClient.askText(textRequest);
 
-      if (visionResponse.statusCode === 200 && visionResponse.data) {
+      if (llmResponse.statusCode === 200 && llmResponse.data) {
         const responseData: AiCopyResponseData = {
-          generated_text: visionResponse.data.content,
+          generated_text: llmResponse.data.content,
           alternatives: []
         };
         const aiResponse: AiCopyResponse = {
@@ -105,16 +106,16 @@ export class AiGatewayClient {
           data: responseData
         };
 
-        logger.info(TAG, 'Image copy generated successfully');
+        logger.info(TAG, 'Copy generated successfully (text-only, no image uploaded)');
         return {
           statusCode: 200,
           data: aiResponse
         };
       } else {
-        const errorMsg = visionResponse.error || `VisionLLM 返回状态码: ${visionResponse.statusCode}`;
+        const errorMsg = llmResponse.error || `LLM 返回状态码: ${llmResponse.statusCode}`;
         logger.error(TAG, errorMsg);
         return {
-          statusCode: visionResponse.statusCode,
+          statusCode: llmResponse.statusCode,
           data: undefined,
           error: errorMsg
         };
@@ -128,6 +129,36 @@ export class AiGatewayClient {
         error: errorMsg
       };
     }
+  }
+
+  /**
+   * 根据端侧分析结果和用户输入构建纯文本 prompt
+   */
+  private buildPrompt(request: ImageCopyRequest, metadata: PhotoMetadata): string {
+    const styleDesc = STYLE_PROMPTS[request.style] || request.style;
+    const lengthDesc = LENGTH_PROMPTS[request.lengthLevel] || LENGTH_PROMPTS['medium'];
+    const poiHint = request.poiName ? `拍摄地点是「${request.poiName}」。` : '';
+    const userHint = request.userPrompt ? `用户补充说明：${request.userPrompt}。` : '';
+
+    // 组装图片元数据描述
+    const metaParts: string[] = [];
+    if (metadata.sceneTags.length > 0) {
+      metaParts.push(`照片构图：${metadata.sceneTags.join('、')}`);
+    }
+    if (metadata.timeTags.length > 0) {
+      metaParts.push(`拍摄时段：${metadata.timeTags.join('、')}`);
+    }
+    if (metadata.objectTags.length > 0) {
+      metaParts.push(`画面内容：${metadata.objectTags.join('、')}`);
+    }
+    const metaDesc = metaParts.length > 0 ? metaParts.join('。') + '。' : '';
+
+    return `请你作为一名旅行博主，` +
+      `${metaDesc}` +
+      `${poiHint}${userHint}` +
+      `用${styleDesc}的风格，写一段旅行文案。` +
+      `长度要求：${lengthDesc}。` +
+      `要求：生动描绘旅行场景和氛围，富有感染力，严格遵守长度要求。`;
   }
 
   /**
