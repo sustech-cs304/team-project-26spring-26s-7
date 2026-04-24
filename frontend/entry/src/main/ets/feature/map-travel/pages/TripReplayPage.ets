@@ -883,9 +883,9 @@ export struct TripReplayPage {
       // 移动图标（节点间移动时显示）
       if (this.movingIconVisible) {
         Column() {
-          Text('🚶')
+          SymbolGlyph($r('sys.symbol.figure_walk'))
             .fontSize(32)
-            .fontColor('#FFFFFF')
+            .fontColor([Color.White])
         }
         .width(44)
         .height(44)
@@ -931,9 +931,9 @@ export struct TripReplayPage {
         // 布局：使用 Row 一次性布局所有元素，避免负 margin 层级问题
         Row() {
           // 左侧：上一节点
-          Text('◄◄')
-            .fontSize(AppDimens.FONT_LG)
-            .fontColor('#333333')  // 黑色
+          SymbolGlyph($r('sys.symbol.backward_end_fill'))
+            .fontSize(22)
+            .fontColor([Color.Black])
             .padding(AppDimens.PADDING_MD)
             .onClick(() => this.goToPrevNode())
 
@@ -942,11 +942,19 @@ export struct TripReplayPage {
             .layoutWeight(1)
 
           // 播放键
-          Text(this.isPlaying ? '⏸' : '▶')
-            .fontSize(28)
-            .fontColor('#333333')  // 黑色
-            .padding({ left: AppDimens.PADDING_SM, right: AppDimens.PADDING_SM })
-            .onClick(() => this.togglePlay())
+          if (this.isPlaying) {
+            SymbolGlyph($r('sys.symbol.pause_fill'))
+              .fontSize(28)
+              .fontColor([Color.Black])
+              .padding({ left: AppDimens.PADDING_SM, right: AppDimens.PADDING_SM })
+              .onClick(() => this.togglePlay())
+          } else {
+            SymbolGlyph($r('sys.symbol.play_fill'))
+              .fontSize(28)
+              .fontColor([Color.Black])
+              .padding({ left: AppDimens.PADDING_SM, right: AppDimens.PADDING_SM })
+              .onClick(() => this.togglePlay())
+          }
 
           // 倍速按钮
           Text(this.playbackSpeed)
@@ -960,9 +968,9 @@ export struct TripReplayPage {
             .layoutWeight(1)
 
           // 右侧：下一节点
-          Text('►►')
-            .fontSize(AppDimens.FONT_LG)
-            .fontColor('#333333')  // 黑色
+          SymbolGlyph($r('sys.symbol.forward_end_fill'))
+            .fontSize(22)
+            .fontColor([Color.Black])
             .padding(AppDimens.PADDING_MD)
             .onClick(() => this.goToNextNode())
         }
@@ -978,17 +986,15 @@ export struct TripReplayPage {
 
       // 退出按钮 (左上角) - 使用 Stack 绝对定位
       Stack() {
-        Text('←')
+        SymbolGlyph($r('sys.symbol.arrow_left'))
           .fontSize(AppDimens.FONT_XL)
-          .fontColor('#FFFFFF')
-          .fontWeight(FontWeight.Bold)
-          .backgroundColor('rgba(0, 0, 0, 0.7)')
-          .borderRadius(20)
-          .width(40)
-          .height(40)
-          .textAlign(TextAlign.Center)
-          .onClick(() => router.back())
+          .fontColor([Color.White])
       }
+      .width(40)
+      .height(40)
+      .backgroundColor('rgba(0, 0, 0, 0.7)')
+      .borderRadius(20)
+      .onClick(() => router.back())
       .width(40)
       .height(40)
       .position({ x: 16, y: 48 })
