@@ -1,5 +1,5 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
+import { AppColors, AppDimens, RouterUrls, TravelSpecialValues, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
 import type { Trip } from '../../../common'
 import { PhotoSelector } from '../components/PhotoSelector'
@@ -97,10 +97,8 @@ export struct NodeEditPage {
       const trips = await this.dataService.getAllTravels()
       this.availableTrips = trips
 
-      // For create mode, default to latest trip when user does not choose.
-      if (!this.isEditMode && this.tripId.length === 0 && trips.length > 0) {
-        this.tripId = trips[0].id
-      }
+      // For edit mode, restore the trip selection.
+      // For create mode, do NOT auto-assign - user must explicitly choose or leave as "未分类"
     } catch (_) {
       this.availableTrips = []
     }
@@ -159,25 +157,13 @@ export struct NodeEditPage {
 
     const existingTrips = await this.dataService.getAllTravels()
     if (existingTrips.length > 0) {
-      // Default to latest trip when user did not choose.
+      // User explicitly selected a trip
       this.tripId = existingTrips[0].id
       return this.tripId
     }
 
-    const now = Date.now()
-    const createdTrip = await this.dataService.createTravel({
-      name: `新旅行 ${this.formatDate(now)}`,
-      description: '',
-      coverPhoto: '',
-      isPublic: false,
-      startDate: now,
-      endDate: now,
-      nodeIds: [],
-      totalDistance: 0
-    })
-    this.tripId = createdTrip.id
-    await this.loadAvailableTrips()
-    return this.tripId
+    // No trips exist - use uncategorized instead of auto-creating a new trip
+    return TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
   }
 
   private async handleSave(): Promise<void> {
@@ -273,6 +259,11 @@ export struct NodeEditPage {
 
   private chooseTrip(trip: Trip): void {
     this.tripId = trip.id
+    this.closeTripSelector()
+  }
+
+  private selectNoTrip(): void {
+    this.tripId = TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
     this.closeTripSelector()
   }
 
@@ -716,7 +707,7 @@ export struct NodeEditPage {
                       : value
                   })
                   .maxLength(QUICK_TRIP_NAME_MAX_LENGTH)
-                  .backgroundColor(AppColors.CARD_BG)
+                  .backgroundColor(AppColors.BACKGROUND)
                   .borderRadius(16)
                 Row() {
                   Text(`${this.quickTripName.length}/${QUICK_TRIP_NAME_MAX_LENGTH}`)
@@ -727,7 +718,7 @@ export struct NodeEditPage {
                     .height(34)
                     .fontSize(AppDimens.FONT_SM)
                     .fontColor(AppColors.TEXT_SECONDARY)
-                    .backgroundColor(AppColors.CARD_BG)
+                    .backgroundColor(AppColors.BACKGROUND)
                     .borderRadius(17)
                     .onClick(() => this.cancelQuickTripCreator())
                   Button(this.isCreatingQuickTrip ? '创建中...' : '创建')
@@ -777,6 +768,47 @@ export struct NodeEditPage {
             } else {
               Scroll() {
                 Column() {
+                  // 不归类选项（始终显示）
+                  Row() {
+                    Column() {
+                      Text('不关联任何旅行')
+                        .fontSize(AppDimens.FONT_MD)
+                        .fontWeight(FontWeight.Medium)
+                        .fontColor(AppColors.TEXT_PRIMARY)
+                        .width('100%')
+                      Text('节点将显示在地图「未分类」分组中')
+                        .fontSize(AppDimens.FONT_SM)
+                        .fontColor(AppColors.TEXT_HINT)
+                        .margin({ top: 4 })
+                    }
+                    .layoutWeight(1)
+                    .alignItems(HorizontalAlign.Start)
+
+                    if (this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
+                      Text('已选')
+                        .fontSize(AppDimens.FONT_SM)
+                        .fontColor(AppColors.PRIMARY)
+                        .fontWeight(FontWeight.Medium)
+                        .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+                        .backgroundColor(AppColors.PRIMARY + '12')
+                        .borderRadius(12)
+                    }
+                  }
+                  .width('100%')
+                  .padding({ left: 14, right: 14, top: 14, bottom: 14 })
+                  .margin({ bottom: 10 })
+                  .backgroundColor(
+                    this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
+                      ? AppColors.PRIMARY + '10'
+                      : AppColors.BACKGROUND
+                  )
+                  .borderRadius(18)
+                  .border({
+                    width: this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID ? 1 : 0,
+                    color: this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID ? AppColors.PRIMARY + '55' : 'transparent'
+                  })
+                  .onClick(() => this.selectNoTrip())
+
                   ForEach(this.availableTrips, (trip: Trip) => {
                     Row() {
                       Column() {
@@ -820,7 +852,7 @@ export struct NodeEditPage {
                 .width('100%')
               }
               .width('100%')
-              .height(this.getTripSelectorListHeight())
+              .height(this.getTripSelectorListHeight() + 78)
             }
           }
           .width('100%')

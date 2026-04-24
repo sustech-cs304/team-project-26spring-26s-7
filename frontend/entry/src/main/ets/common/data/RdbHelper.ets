@@ -31,6 +31,13 @@ export enum SensitivityLevel {
   S4 = 'S4'
 }
 
+/** 用户 profile 数据结构，对应 user_profile 表 */
+export interface UserProfileRow {
+  displayName: string;
+  avatarPath: string;
+  bio: string;
+}
+
 const DB_NAME = 'TravelPin.db';
 const DB_VERSION = 1;
 
@@ -202,6 +209,15 @@ const SQL_CREATE_APP_SYNC_STATE = `
   )
 `;
 
+const SQL_CREATE_USER_PROFILE = `
+  CREATE TABLE IF NOT EXISTS user_profile(
+    id INTEGER PRIMARY KEY,
+    display_name TEXT DEFAULT '',
+    avatar_path TEXT DEFAULT '',
+    bio TEXT DEFAULT ''
+  )
+`;
+
 export class RdbHelper {
   private static instance: RdbHelper;
   private rdbStore: rdb.RdbStore | undefined = undefined;
@@ -236,23 +252,24 @@ export class RdbHelper {
       return;
     }
 
-    this.initPromise = (async () => {
-      try {
-        logger.info(TAG, `Initializing database v${DB_VERSION}...`);
-        this.rdbStore = await rdb.getRdbStore(context, STORE_CONFIG);
-        await this.createTables();
-        this.initialized = true;
-        logger.info(TAG, 'Database initialized successfully');
-      } catch (err) {
-        logger.error(TAG, `Database initialization failed: ${JSON.stringify(err)}`);
-        throw this.toError(err);
-      }
-    })();
+    // 创建初始化 promise 并等待其完全完成（包括所有内部 await）
+    this.initPromise = this.initDatabaseInner(context);
+    await this.initPromise;
+    this.initPromise = null;
+  }
 
+  private async initDatabaseInner(context: common.Context): Promise<void> {
     try {
-      await this.initPromise;
-    } finally {
-      this.initPromise = null;
+      logger.info(TAG, `Initializing database v${DB_VERSION}...`);
+      this.rdbStore = await rdb.getRdbStore(context, STORE_CONFIG);
+      await this.createTables();
+      this.initialized = true;
+      logger.info(TAG, 'Database initialized successfully, rdbStore is ready');
+    } catch (err) {
+      this.initialized = false;
+      this.rdbStore = undefined;
+      logger.error(TAG, `Database initialization failed: ${JSON.stringify(err)}`);
+      throw this.toError(err);
     }
   }
 
@@ -264,6 +281,7 @@ export class RdbHelper {
     await this.rdbStore.executeSql(SQL_CREATE_MEMORY_NODES);
     await this.rdbStore.executeSql(SQL_CREATE_SYNC_QUEUE);
     await this.rdbStore.executeSql(SQL_CREATE_APP_SYNC_STATE);
+    await this.rdbStore.executeSql(SQL_CREATE_USER_PROFILE);
     await this.ensureLatestSchema();
     logger.info(TAG, 'Tables created successfully');
   }
@@ -437,6 +455,78 @@ export class RdbHelper {
     const store = await this.getStore();
     const predicates = new rdb.RdbPredicates('sync_queue');
     await store.delete(predicates);
+  }
+
+  /** 保存用户 profile 到 user_profile 表（id=1 的单行） */
+  async saveUserProfile(displayName: string, avatarPath: string, bio: string): Promise<void> {
+    logger.info(TAG, `saveUserProfile CALLED: displayName=${displayName}, avatarPath=${avatarPath}, bio=${bio}`);
+    const store = await this.getStore();
+    const predicates = new rdb.RdbPredicates('user_profile');
+    predicates.equalTo('id', 1);
+    const resultSet = await store.query(predicates);
+    try {
+      if (resultSet.goToFirstRow()) {
+        const rowId = resultSet.getLong(resultSet.getColumnIndex('id'));
+        logger.info(TAG, `saveUserProfile: updating row id=${rowId}`);
+        await store.update({
+          display_name: displayName,
+          avatar_path: avatarPath,
+          bio: bio
+        }, predicates.equalTo('id', rowId));
+      } else {
+        logger.info(TAG, `saveUserProfile: inserting new row with id=1`);
+        await store.insert('user_profile', {
+          id: 1,
+          display_name: displayName,
+          avatar_path: avatarPath,
+          bio: bio
+        });
+      }
+      logger.info(TAG, `saveUserProfile SUCCESS: displayName=${displayName}`);
+    } finally {
+      resultSet.close();
+    }
+  }
+
+  /** 从 user_profile 表加载 profile，返回 null 表示从未保存过 */
+  async loadUserProfile(): Promise<UserProfileRow | null> {
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getStore();
+      const predicates = new rdb.RdbPredicates('user_profile');
+      predicates.equalTo('id', 1);
+      resultSet = await store.query(predicates);
+      if (!resultSet.goToFirstRow()) {
+        logger.info(TAG, 'loadUserProfile: no row found, returning null');
+        return null;
+      }
+      const displayName: string = resultSet.getString(resultSet.getColumnIndex('display_name')) ?? '';
+      const avatarPath: string = resultSet.getString(resultSet.getColumnIndex('avatar_path')) ?? '';
+      const bio: string = resultSet.getString(resultSet.getColumnIndex('bio')) ?? '';
+      if (!displayName && !avatarPath && !bio) {
+        logger.info(TAG, 'loadUserProfile: row exists but all fields empty, returning null');
+        return null;
+      }
+      logger.info(TAG, `loadUserProfile SUCCESS: displayName=${displayName}, avatarPath=${avatarPath}, bio=${bio}`);
+      const row: UserProfileRow = { displayName: displayName, avatarPath: avatarPath, bio: bio };
+      return row;
+    } catch (err) {
+      logger.error(TAG, `loadUserProfile FAILED: ${JSON.stringify(err)}`);
+      return null;
+    } finally {
+      if (resultSet) {
+        try { resultSet.close(); } catch (_) {}
+      }
+    }
+  }
+
+  /** 清除 user_profile */
+  async clearUserProfile(): Promise<void> {
+    const store = await this.getStore();
+    const predicates = new rdb.RdbPredicates('user_profile');
+    predicates.equalTo('id', 1);
+    await store.delete(predicates);
+    logger.info(TAG, 'clearUserProfile done');
   }
 
   isInitialized(): boolean {

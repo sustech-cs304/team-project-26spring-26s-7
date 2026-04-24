@@ -1,5 +1,12 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls } from '../../../common'
+import { AppColors, AppDimens, AuthService } from '../../../common'
+import { photoAccessHelper } from '@kit.MediaLibraryKit';
+import { fileIo as fs } from '@kit.CoreFileKit';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+
+const DOMAIN = 0x0000;
+const TAG = 'ProfileEditPage';
 
 /**
  * P09 编辑个人资料页
@@ -14,15 +21,82 @@ struct ProfileEditPage {
   @State isSaving: boolean = false
 
   aboutToAppear(): void {
-    // TODO: 从 Preferences 加载用户资料
+    this.loadProfile()
   }
 
-  private handlePickAvatar(): void {
-    // TODO: 调用系统 Photo Picker 选择头像
-    promptAction.showToast({ message: '选择头像占位' })
+  private async loadProfile(): Promise<void> {
+    try {
+      const effective = await AuthService.getEffectiveProfile()
+      if (effective) {
+        this.nickname = effective.displayName
+        // 本地沙箱路径需加 file:// 前缀，华为 HTTP URL 直接使用
+        this.avatar = effective.avatarUrl && !effective.avatarUrl.startsWith('http')
+          ? `file://${effective.avatarUrl}` : effective.avatarUrl
+        this.bio = effective.bio
+      } else {
+        const status = await AuthService.getAuthStatus()
+        this.nickname = status.user?.displayName ?? 'TravelPin 用户'
+        this.avatar = status.user?.avatarUrl ?? ''
+      }
+    } catch (_) {
+      // 读取失败时保留默认值
+    }
   }
 
-  private handleSave(): void {
+  private async handlePickAvatar(): Promise<void> {
+    try {
+      const photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
+      photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
+      photoSelectOptions.maxSelectNumber = 1;
+
+      const photoPicker = new photoAccessHelper.PhotoViewPicker();
+      const result = await photoPicker.select(photoSelectOptions);
+
+      if (result.photoUris && result.photoUris.length > 0) {
+        const uri = result.photoUris[0];
+        const context = getContext(this);
+
+        // 确保目录存在
+        const sandboxDir = context.filesDir + '/photos';
+        try {
+          fs.mkdirSync(sandboxDir, true);
+        } catch (_) {
+          // 目录已存在时会报错，忽略
+        }
+
+        const fileName = `avatar_${Date.now()}.jpg`;
+        const targetPath = `${sandboxDir}/${fileName}`;
+
+        // 打开源文件并复制到沙箱
+        const sourceFile = fs.openSync(uri, fs.OpenMode.READ_ONLY);
+        const targetFile = fs.openSync(targetPath, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY);
+
+        const bufferSize = 4096;
+        const buffer = new ArrayBuffer(bufferSize);
+
+        try {
+          let readLen = fs.readSync(sourceFile.fd, buffer);
+          while (readLen > 0) {
+            fs.writeSync(targetFile.fd, buffer.slice(0, readLen));
+            readLen = fs.readSync(sourceFile.fd, buffer);
+          }
+        } finally {
+          fs.closeSync(sourceFile);
+          fs.closeSync(targetFile);
+        }
+
+        // 存储沙箱路径（不含 file:// 前缀，loadProfile 时统一加）
+        this.avatar = targetPath;
+        promptAction.showToast({ message: '头像已选择' });
+      }
+    } catch (err) {
+      const error = err as BusinessError;
+      hilog.warn(DOMAIN, TAG, `Avatar pick failed: ${error?.code ?? 'unknown'} - ${error?.message ?? error}`);
+      promptAction.showToast({ message: '选择头像失败，请重试' });
+    }
+  }
+
+  private async handleSave(): Promise<void> {
     if (this.nickname.trim().length === 0) {
       promptAction.showToast({ message: '昵称不能为空' })
       return
@@ -30,12 +104,24 @@ struct ProfileEditPage {
 
     this.isSaving = true
 
-    // TODO: 保存到 Preferences / 同步到云端
-    setTimeout(() => {
-      this.isSaving = false
+    try {
+      await AuthService.saveLocalProfile({
+        displayName: this.nickname.trim(),
+        avatarPath: this.avatar,
+        bio: this.bio.trim(),
+        userModified: true  // 标记为用户主动修改，登录时不再被华为账号覆盖
+      })
+      // 写一个递增版本号，让 ProfileView 检测到返回事件并刷新
+      const currentVersion = (AppStorage.get<number>('profile_version') ?? 0) + 1
+      AppStorage.setOrCreate('profile_version', currentVersion)
       promptAction.showToast({ message: '保存成功' })
       router.back()
-    }, 1000)
+    } catch (err) {
+      const error = err as BusinessError;
+      promptAction.showToast({ message: error.message || '保存失败，请重试' });
+    } finally {
+      this.isSaving = false
+    }
   }
 
   build() {
@@ -78,7 +164,8 @@ struct ProfileEditPage {
               // 头像预览 / 添加按钮
               Column() {
                 if (this.avatar) {
-                  Image(this.avatar)
+                  Image(this.avatar.startsWith('file://') || this.avatar.startsWith('http')
+                    ? this.avatar : `file://${this.avatar}`)
                     .width(80)
                     .height(80)
                     .borderRadius(40)

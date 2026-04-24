@@ -21,9 +21,23 @@ export struct ProfileView {
   @State wifiOnlySync: boolean = true
   @State shareLinkExpiry: string = '7 天'
   @StorageLink('networkJustReconnected') networkJustReconnected: boolean = false
+  @Watch('onTabRefresh')
+  @StorageLink('tabRefreshToken') tabRefreshToken: number = 0
+  @StorageLink('activeTabIndex') activeTabIndex: number = 0
 
   aboutToAppear(): void {
     this.loadAuthStatus()
+  }
+
+  onPageShow(): void {
+    // 从编辑页返回后，刷新用户资料
+    this.loadAuthStatus()
+  }
+
+  private onTabRefresh(): void {
+    if (this.activeTabIndex === 3) {
+      this.loadAuthStatus()
+    }
   }
 
   private formatSyncTime(timestamp: number): string {
@@ -48,10 +62,19 @@ export struct ProfileView {
 
   private async loadAuthStatus(): Promise<void> {
     try {
+      const effective = await AuthService.getEffectiveProfile()
+      if (effective) {
+        this.displayName = effective.displayName
+        this.avatarUrl = effective.avatarUrl
+        this.avatarLoadFailed = false
+      } else {
+        const status = await AuthService.getAuthStatus()
+        this.displayName = status.user?.displayName ?? 'TravelPin 用户'
+        this.avatarUrl = status.user?.avatarUrl ?? ''
+        this.avatarLoadFailed = false
+      }
+
       const status = await AuthService.getAuthStatus()
-      this.displayName = status.user?.displayName ?? 'TravelPin 用户'
-      this.avatarUrl = status.user?.avatarUrl ?? ''
-      this.avatarLoadFailed = false
       this.loginStatusText = status.isLoggedIn ? '华为账号已登录' : '未登录'
       this.cloudStatusText = status.cloudStatusText
 
@@ -191,6 +214,10 @@ export struct ProfileView {
     .onClick(action)
   }
 
+  private resolveAvatarUrl(url: string): string {
+    return url && (url.startsWith('file://') || url.startsWith('http')) ? url : `file://${url}`
+  }
+
   build() {
     Scroll() {
       Column() {
@@ -198,7 +225,7 @@ export struct ProfileView {
         Row() {
           Column() {
             if (this.avatarUrl.length > 0 && !this.avatarLoadFailed) {
-              Image(this.avatarUrl)
+              Image(this.resolveAvatarUrl(this.avatarUrl))
                 .width(56)
                 .height(56)
                 .borderRadius(28)

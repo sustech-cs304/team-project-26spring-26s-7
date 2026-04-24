@@ -82,6 +82,10 @@ struct MainPage {
         ProfileView()
       }
       .tabBar(this.tabBuilder('我的', 3))
+      .onWillShow(() => {
+        AppStorage.setOrCreate('activeTabIndex', 3)
+        AppStorage.setOrCreate('tabRefreshToken', Date.now())
+      })
     }
     .scrollable(false)
     .barHeight(56)

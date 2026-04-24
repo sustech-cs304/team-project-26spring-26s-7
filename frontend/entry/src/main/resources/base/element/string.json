@@ -15,6 +15,10 @@
     {
       "name": "location_reason",
       "value": "用于在地图上记录您的旅行足迹和记忆节点位置"
+    },
+    {
+      "name": "media_reason",
+      "value": "用于选择头像和旅行照片"
     }
   ]
 }
