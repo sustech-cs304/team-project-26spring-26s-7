@@ -87,28 +87,41 @@ export class RdbDataService implements IDataService {
     void this.uploadNodePhotosToCloud(travelId, nodeId, photos, previousTravelId);
   }
 
+  private migrateNodePhotosToNewTravel(travelId: string, nodeId: string, photos: string[], oldTravelId: string): void {
+    if (photos.length === 0) {
+      return;
+    }
+    void this.uploadNodePhotosToCloud(travelId, nodeId, photos, oldTravelId);
+  }
+
   private async uploadNodePhotosToCloud(travelId: string, nodeId: string, photos: string[], previousTravelId?: string): Promise<boolean> {
     let allSucceeded = true;
     const shouldMigrate = previousTravelId !== undefined && previousTravelId !== travelId;
-    const migratedPhotos: string[] = [];
+
+    if (shouldMigrate && photos.length > 0) {
+      // 直接上传本地文件到新云目录（不下载！）
+      for (const photo of photos) {
+        try {
+          await CloudStorageService.uploadNodePhoto(travelId, nodeId, photo);
+          logger.info(TAG, `Migrated photo to new travel: ${nodeId} -> ${photo}`);
+        } catch (err) {
+          logger.error(TAG, `Migrate photo failed: ${(err as Error).message}`);
+          allSucceeded = false;
+        }
+      }
+      // 后台删除旧云目录照片（fire-and-forget）
+      this.deleteNodePhotosFromCloud(previousTravelId, nodeId, photos);
+      return allSucceeded;
+    }
+
+    // 新增照片上传（原有逻辑不变）
     for (const photo of photos) {
       try {
-        if (shouldMigrate && previousTravelId) {
-          await CloudStorageService.copyNodePhoto(previousTravelId, travelId, nodeId, photo);
-          migratedPhotos.push(photo);
-          logger.info(TAG, `Migrated node photo in cloud: ${nodeId} ${previousTravelId} -> ${travelId}`);
-        } else {
-          await CloudStorageService.uploadNodePhoto(travelId, nodeId, photo);
-          logger.info(TAG, `Uploaded node photo to cloud: ${nodeId} -> ${photo}`);
-        }
+        await CloudStorageService.uploadNodePhoto(travelId, nodeId, photo);
+        logger.info(TAG, `Uploaded node photo to cloud: ${nodeId} -> ${photo}`);
       } catch (err) {
-        const error = err as Error;
-        logger.error(TAG, `Failed to upload node photo ${photo}: ${error.message}`);
         allSucceeded = false;
       }
-    }
-    if (shouldMigrate && previousTravelId && migratedPhotos.length > 0) {
-      await this.deleteNodePhotosFromCloud(previousTravelId, nodeId, migratedPhotos);
     }
     return allSucceeded;
   }
@@ -121,15 +134,11 @@ export class RdbDataService implements IDataService {
     void this.deleteNodePhotosFromCloud(travelId, nodeId, photos);
   }
 
-  private async deleteNodePhotosFromCloud(travelId: string, nodeId: string, photos: string[]): Promise<void> {
+  private deleteNodePhotosFromCloud(travelId: string, nodeId: string, photos: string[]): void {
     for (const photo of photos) {
       try {
-        await CloudStorageService.deleteNodePhoto(travelId, nodeId, photo);
-        logger.info(TAG, `Deleted node photo from cloud: ${nodeId} -> ${photo}`);
-      } catch (err) {
-        const error = err as Error;
-        logger.error(TAG, `Failed to delete node photo ${photo}: ${error.message}`);
-      }
+        void CloudStorageService.deleteNodePhoto(travelId, nodeId, photo);
+      } catch (_) {}
     }
   }
 
@@ -341,12 +350,9 @@ export class RdbDataService implements IDataService {
       logger.info(TAG, `[debug] deleteTravel affectedNode after localId=${node.id}, travelId=${node.travelId}, photos=${JSON.stringify(node.photos)}`)
       let nextTravelId = node.travelId;
       let nextPhotos = [...node.photos];
-      if (shouldSyncCloudNow && node.photos.length > 0 && affectedNode.travelId !== node.travelId) {
-        const migrated = await this.uploadNodePhotosToCloud(node.travelId, node.id, node.photos, affectedNode.travelId)
-        if (!migrated) {
-          nextTravelId = affectedNode.travelId;
-          nextPhotos = [...affectedNode.photos];
-        }
+      if (node.photos.length > 0 && affectedNode.travelId !== node.travelId) {
+        // 照片迁移到新目录，后台执行
+        this.migrateNodePhotosToNewTravel(node.travelId, node.id, node.photos, affectedNode.travelId);
       }
       const payload = JSON.stringify({
         ownerUid: node.ownerUid ?? '',
@@ -514,15 +520,12 @@ export class RdbDataService implements IDataService {
         await this.nodeRepo.reorderNodes(oldTravelId, remainingIds);
       }
 
+      // 照片迁移：直接上传本地文件到新云目录，后台执行
       if (updated.photos.length > 0) {
-        const shouldSyncCloudNow = (AppStorage.get('networkOnline') as boolean) ?? false;
-        if (shouldSyncCloudNow) {
-          const migrated = await this.uploadNodePhotosToCloud(updated.travelId, updated.id, updated.photos, oldTravelId);
-          if (!migrated) {
-            data.travelId = oldTravelId;
-            updated.photos = [...oldPhotos];
-          }
-        }
+        const newManifest = this.buildPhotoManifest(updated.travelId, updated.id, updated.photos);
+        updated.photoManifest = newManifest;
+        void this.nodeRepo.updatePhotoManifest(updated.id, newManifest);
+        this.migrateNodePhotosToNewTravel(updated.travelId, updated.id, updated.photos, oldTravelId);
       }
     }
 

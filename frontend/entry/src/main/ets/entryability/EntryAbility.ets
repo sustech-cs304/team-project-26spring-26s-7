@@ -4,7 +4,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { window } from '@kit.ArkUI';
 import { connection } from '@kit.NetworkKit';
 import { RdbHelper } from '../common/data/RdbHelper';
-import { AuthService, SyncManager } from '../common';
+import { AuthService } from '../common';
 
 const DOMAIN = 0x0000;
 
@@ -104,9 +104,6 @@ export default class EntryAbility extends UIAbility {
       hilog.info(DOMAIN, 'testTag', 'Auth initialized successfully');
       AuthService.restoreSession().then((cloudReady: boolean) => {
         AppStorage.setOrCreate('cloudStatusText', cloudReady ? '云存储已连接' : '云存储暂不可用');
-        if (cloudReady) {
-          void SyncManager.triggerNow();
-        }
       }).catch((err: Error) => {
         hilog.error(DOMAIN, 'testTag', 'Cloud restore failed: %{public}s', err.message);
         AppStorage.setOrCreate('cloudStatusText', '云存储暂不可用');
