@@ -213,13 +213,13 @@ export struct NodeListView {
               .fontSize(20)
             Text('无封面')
               .fontSize(10)
-              .fontColor('#8EB4D6')
+              .fontColor(AppColors.PLACEHOLDER_TEXT)
               .margin({ top: 4 })
           }
           .width('100%')
           .height('100%')
           .justifyContent(FlexAlign.Center)
-          .backgroundColor('#D6E8F5')
+          .backgroundColor(AppColors.PLACEHOLDER_BG)
         }
       }
       .width(64)

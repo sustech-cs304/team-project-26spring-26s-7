@@ -166,13 +166,13 @@ export struct NodeDetailPage {
             .fontSize(46)
           Text('这条节点还没有照片')
             .fontSize(AppDimens.FONT_MD)
-            .fontColor('#A8C4DE')
+            .fontColor(AppColors.PLACEHOLDER_TEXT_LIGHT)
             .margin({ top: 8 })
         }
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor('#2E4A6A')
+        .backgroundColor(AppColors.PLACEHOLDER_BG_DARK)
       }
 
       // 指示器 + 地点名称

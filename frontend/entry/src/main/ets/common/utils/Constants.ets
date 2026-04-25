@@ -27,6 +27,10 @@ export class AppColors {
   static readonly DIVIDER: string = '#E8E8E8'
   static readonly DANGER: string = '#FF4D4F'
   static readonly SUCCESS: string = '#52C41A'
+  static readonly PLACEHOLDER_BG: string = '#D6E8F5'
+  static readonly PLACEHOLDER_TEXT: string = '#8EB4D6'
+  static readonly PLACEHOLDER_BG_DARK: string = '#2E4A6A'
+  static readonly PLACEHOLDER_TEXT_LIGHT: string = '#A8C4DE'
 }
 
 /**
