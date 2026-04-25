@@ -99,7 +99,7 @@ export struct TripReplayPage {
 
   // 音频播放器
   private avPlayer: media.AVPlayer | undefined = undefined
-  private isAudioPlaying: boolean = false
+  @State private isAudioPlaying: boolean = false
 
   /**
    * 初始化并播放背景音乐
@@ -215,6 +215,17 @@ export struct TripReplayPage {
     // TODO: 待实现 - 需要找到正确的 API 来设置播放速度
     // 当前 SDK 版本中 AVPlayer 的 speed 属性可能不可用
     console.info(`TripReplayPage: 倍速调整为 ${_speed} (音乐倍速功能待实现)`)
+  }
+
+  private toggleMusic(): void {
+    if (!this.avPlayer) {
+      return
+    }
+    if (this.isAudioPlaying) {
+      this.avPlayer.pause()
+    } else {
+      this.avPlayer.play()
+    }
   }
 
   /**
@@ -998,6 +1009,21 @@ export struct TripReplayPage {
       .width(40)
       .height(40)
       .position({ x: 16, y: 48 })
+      .zIndex(100)
+
+      // 音乐开关按钮 (右上角)
+      Stack() {
+        SymbolGlyph($r('sys.symbol.music'))
+          .fontSize(20)
+          .fontColor([this.isAudioPlaying ? Color.White : '#999999'])
+      }
+      .width(40)
+      .height(40)
+      .backgroundColor(this.isAudioPlaying ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.4)')
+      .borderRadius(20)
+      .onClick(() => this.toggleMusic())
+      .position({ x: '100%', y: 48 })
+      .translate({ x: -56 })
       .zIndex(100)
 
       // 照片卡片展开覆盖层
