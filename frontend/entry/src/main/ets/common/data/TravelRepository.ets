@@ -385,6 +385,7 @@ export class TravelRepository {
     const valueBucket: rdb.ValuesBucket = {
       name: travel.name,
       cover_image_uri: travel.coverPhoto ?? '',
+      is_public: travel.isPublic ? 1 : 0,
       start_date: travel.startDate,
       end_date: travel.endDate,
       created_at: travel.createdAt,

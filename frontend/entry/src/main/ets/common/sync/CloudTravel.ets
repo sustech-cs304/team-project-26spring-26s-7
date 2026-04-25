@@ -8,6 +8,7 @@ export class CloudTravel extends cloudDatabase.DatabaseObject {
   public cloudId: string | undefined
   public ownerUid: string | undefined
   public name: string | undefined
+  public isPublic: number | undefined
   public coverPhotoObjectKey: string | undefined
   public startDate: number | undefined
   public endDate: number | undefined

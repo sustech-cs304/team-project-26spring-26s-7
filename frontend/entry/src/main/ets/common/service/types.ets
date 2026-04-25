@@ -108,6 +108,11 @@ export interface Trip {
   name: string
   description?: string
   coverPhoto?: string
+  /**
+   * 公开性语义（前后端统一）：
+   * - true: 可生成常规分享链接（可重复访问，受有效期控制）
+   * - false: 默认仅所有者可见；若分享则必须生成受限链接（短有效期/一次性）
+   */
   isPublic: boolean
   startDate: number
   endDate: number
@@ -181,6 +186,8 @@ export interface ShareInfo {
   url: string
   copyText: string
   expireDays: number
+  isOneTime?: boolean
+  accessScope?: 'public' | 'private_limited'
 }
 
 /**

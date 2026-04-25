@@ -38,6 +38,9 @@ export class AiEndpoints {
 
 /** 分享服务端点 */
 export class ShareEndpoints {
+  /** 生成分享链接: POST /api/v1/share/{travel_id} */
+  static readonly GENERATE: string = `/api/${API_VERSION}/share`
+
   /** 分享链接验证: GET /api/v1/share/{travel_id} */
   static readonly VERIFY: string = `/api/${API_VERSION}/share`
 }

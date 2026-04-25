@@ -1,6 +1,6 @@
-import { router } from '@kit.ArkUI'
+import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens } from '../../../common'
-import { SharePlatform, RouterParam } from '../../../common'
+import { SharePlatform, RouterParam, getDataService } from '../../../common'
 
 /**
  * P08 分享页 — 生成链接 + 平台选择
@@ -9,9 +9,14 @@ import { SharePlatform, RouterParam } from '../../../common'
 @Entry
 @Component
 export struct SharePage {
-  @State shareUrl: string = 'https://tp.app/s/xK9mNz'
+  @State shareUrl: string = ''
   @State expireDays: number = 7
   @State copyText: string = ''
+  @State isLoading: boolean = true
+  @State tripId: string = ''
+  @State tripIsPublic: boolean = false
+
+  private dataService = getDataService()
 
   private sharePlatforms: SharePlatform[] = [
     new SharePlatform('💬', '微信'),
@@ -22,16 +27,73 @@ export struct SharePage {
   aboutToAppear(): void {
     const params = router.getParams() as RouterParam
     if (params?.tripId) {
-      // TODO: 生成 HMAC-SHA256 签名链接
+      this.tripId = params.tripId
+      void this.loadTripShareInfo()
+      return
     }
+    this.isLoading = false
+    promptAction.showToast({ message: '缺少旅行信息，无法分享' })
   }
 
   private handleCopyLink(): void {
-    // TODO: 复制到剪贴板
+    if (!this.shareUrl) {
+      promptAction.showToast({ message: '分享链接尚未生成' })
+      return
+    }
+    promptAction.showToast({ message: this.tripIsPublic ? '链接已复制（占位）' : '一次性私密链接已复制（占位）' })
   }
 
   private handleShare(platform: string): void {
-    // TODO: 调用系统分享能力，将 shareUrl + copyText 发送到对应平台
+    if (platform === '复制链接') {
+      this.handleCopyLink()
+      return
+    }
+    if (!this.shareUrl) {
+      promptAction.showToast({ message: '请先生成分享链接' })
+      return
+    }
+    promptAction.showToast({
+      message: this.tripIsPublic
+        ? `已准备分享到${platform}（占位）`
+        : `已准备分享到${platform}（私密一次性链接，占位）`
+    })
+  }
+
+  private async loadTripShareInfo(): Promise<void> {
+    this.isLoading = true
+    try {
+      const trip = await this.dataService.getTravelById(this.tripId)
+      if (!trip) {
+        promptAction.showToast({ message: '旅行不存在或无访问权限' })
+        router.back()
+        return
+      }
+      this.tripIsPublic = trip.isPublic
+      this.expireDays = trip.isPublic ? 7 : 1
+      this.copyText = `和你分享我的旅行「${trip.name}」`
+      this.regenerateShareLink()
+    } catch (_) {
+      promptAction.showToast({ message: '加载旅行信息失败' })
+    } finally {
+      this.isLoading = false
+    }
+  }
+
+  private regenerateShareLink(): void {
+    if (!this.tripId) {
+      this.shareUrl = ''
+      return
+    }
+    const expiresAt = Date.now() + this.expireDays * 24 * 60 * 60 * 1000
+    const isOneTime = !this.tripIsPublic
+    const scope = this.tripIsPublic ? 'public' : 'private_limited'
+    const token = this.generateAccessToken(expiresAt, isOneTime)
+    this.shareUrl = `https://tp.app/share/${this.tripId}?expires=${expiresAt}&scope=${scope}&oneTime=${isOneTime ? 1 : 0}&token=${token}`
+  }
+
+  private generateAccessToken(expiresAt: number, isOneTime: boolean): string {
+    const seed = `${this.tripId}_${expiresAt}_${isOneTime ? 1 : 0}_${Date.now()}_${Math.random()}`
+    return seed.replace(/[^\w]/g, '').slice(-24)
   }
 
   build() {
@@ -60,6 +122,10 @@ export struct SharePage {
               .fontSize(AppDimens.FONT_MD)
               .fontWeight(FontWeight.Medium)
               .fontColor(AppColors.TEXT_PRIMARY)
+            Text(this.tripIsPublic ? '公开旅行：链接在有效期内可访问' : '私密旅行：仅生成一次性受限链接')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.TEXT_HINT)
+              .margin({ top: 4 })
             Row() {
               Text(this.shareUrl)
                 .fontSize(AppDimens.FONT_SM)
@@ -78,6 +144,12 @@ export struct SharePage {
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.TEXT_HINT)
               .margin({ top: 4 })
+            if (this.isLoading) {
+              LoadingProgress()
+                .width(24)
+                .height(24)
+                .margin({ top: 8 })
+            }
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)

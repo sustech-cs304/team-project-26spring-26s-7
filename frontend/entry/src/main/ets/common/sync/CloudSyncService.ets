@@ -19,6 +19,7 @@ interface TravelPayload {
   localId: string
   cloudId: string
   name: string
+  isPublic?: boolean
   coverPhoto: string
   startDate: number
   endDate: number
@@ -84,6 +85,7 @@ export class CloudSyncService {
       localId: travel.id,
       cloudId: travel.cloudId && travel.cloudId.length > 0 ? travel.cloudId : `travel_${travel.id}`,
       name: travel.name,
+      isPublic: travel.isPublic,
       coverPhoto: travel.coverPhoto ?? '',
       startDate: travel.startDate,
       endDate: travel.endDate,
@@ -131,6 +133,9 @@ export class CloudSyncService {
     travel.cloudId = cloudId
     travel.ownerUid = data.ownerUid
     travel.name = data.name
+    if (data.isPublic !== undefined) {
+      travel.isPublic = data.isPublic ? 1 : 0
+    }
     travel.coverPhotoObjectKey = data.coverPhoto
     travel.startDate = data.startDate
     travel.endDate = data.endDate
@@ -249,12 +254,13 @@ export class CloudSyncService {
     const result: Trip[] = []
     for (let i = 0; i < records.length; i++) {
       const record = records[i]
+      const isPublic = Number(record.isPublic ?? 0) === 1
       const trip: Trip = {
         id: '0',
         name: record.name ?? '',
         description: '',
         coverPhoto: record.coverPhotoObjectKey ?? '',
-        isPublic: false,
+        isPublic: isPublic,
         startDate: record.startDate ?? 0,
         endDate: record.endDate ?? 0,
         nodeIds: [],
