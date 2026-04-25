@@ -209,17 +209,14 @@ export struct NodeListView {
             .objectFit(ImageFit.Cover)
         } else {
           Column() {
-            Text('📍')
-              .fontSize(24)
-            Text('无封面')
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(AppColors.TEXT_HINT)
-              .margin({ top: 6 })
+            Text('📷')
+              .fontSize(20)
+              .opacity(0.4)
           }
           .width('100%')
           .height('100%')
           .justifyContent(FlexAlign.Center)
-          .backgroundColor('#EAF4FF')
+          .backgroundColor('#F5F5F5')
         }
       }
       .width(92)
