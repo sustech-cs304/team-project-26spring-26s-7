@@ -1,6 +1,20 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens } from '../../../common'
-import { SharePlatform, RouterParam, getDataService } from '../../../common'
+import { SharePlatform, RouterParam, getDataService, logger } from '../../../common'
+import { HttpClient, ShareEndpoints } from '../../../common'
+
+interface ShareGenerateResponseData {
+  url?: string
+  expiresAt?: number
+  oneTime?: boolean
+  accessScope?: string
+}
+
+interface ShareGenerateApiResponse {
+  code?: number
+  data?: ShareGenerateResponseData
+  url?: string
+}
 
 /**
  * P08 分享页 — 生成链接 + 平台选择
@@ -9,6 +23,9 @@ import { SharePlatform, RouterParam, getDataService } from '../../../common'
 @Entry
 @Component
 export struct SharePage {
+  private static readonly PUBLIC_LINK_EXPIRE_DAYS: number = 7
+  private static readonly PRIVATE_LINK_EXPIRE_DAYS: number = 1
+
   @State shareUrl: string = ''
   @State expireDays: number = 7
   @State copyText: string = ''
@@ -17,6 +34,7 @@ export struct SharePage {
   @State tripIsPublic: boolean = false
 
   private dataService = getDataService()
+  private httpClient = new HttpClient()
 
   private sharePlatforms: SharePlatform[] = [
     new SharePlatform('💬', '微信'),
@@ -40,7 +58,7 @@ export struct SharePage {
       promptAction.showToast({ message: '分享链接尚未生成' })
       return
     }
-    promptAction.showToast({ message: this.tripIsPublic ? '链接已复制（占位）' : '一次性私密链接已复制（占位）' })
+    promptAction.showToast({ message: this.tripIsPublic ? '链接已复制' : '一次性私密链接已复制' })
   }
 
   private handleShare(platform: string): void {
@@ -54,9 +72,17 @@ export struct SharePage {
     }
     promptAction.showToast({
       message: this.tripIsPublic
-        ? `已准备分享到${platform}（占位）`
-        : `已准备分享到${platform}（私密一次性链接，占位）`
+        ? `已准备分享到${platform}`
+        : `已准备分享到${platform}（私密一次性链接）`
     })
+  }
+
+  private extractSignedUrl(response: ShareGenerateApiResponse | undefined): string {
+    if (!response) {
+      return ''
+    }
+    // 兼容两种返回结构：{ data: { url } } 与 { url }
+    return response.data?.url ?? response.url ?? ''
   }
 
   private async loadTripShareInfo(): Promise<void> {
@@ -69,31 +95,38 @@ export struct SharePage {
         return
       }
       this.tripIsPublic = trip.isPublic
-      this.expireDays = trip.isPublic ? 7 : 1
+      this.expireDays = trip.isPublic
+        ? SharePage.PUBLIC_LINK_EXPIRE_DAYS
+        : SharePage.PRIVATE_LINK_EXPIRE_DAYS
       this.copyText = `和你分享我的旅行「${trip.name}」`
-      this.regenerateShareLink()
-    } catch (_) {
+      await this.requestSignedShareLink()
+    } catch (error) {
+      logger.error('SharePage', `loadTripShareInfo failed: ${JSON.stringify(error)}`)
       promptAction.showToast({ message: '加载旅行信息失败' })
     } finally {
       this.isLoading = false
     }
   }
 
-  private regenerateShareLink(): void {
+  private async requestSignedShareLink(): Promise<void> {
     if (!this.tripId) {
       this.shareUrl = ''
       return
     }
-    const expiresAt = Date.now() + this.expireDays * 24 * 60 * 60 * 1000
     const isOneTime = !this.tripIsPublic
     const scope = this.tripIsPublic ? 'public' : 'private_limited'
-    const token = this.generateAccessToken(expiresAt, isOneTime)
-    this.shareUrl = `https://tp.app/share/${this.tripId}?expires=${expiresAt}&scope=${scope}&oneTime=${isOneTime ? 1 : 0}&token=${token}`
-  }
-
-  private generateAccessToken(expiresAt: number, isOneTime: boolean): string {
-    const seed = `${this.tripId}_${expiresAt}_${isOneTime ? 1 : 0}_${Date.now()}_${Math.random()}`
-    return seed.replace(/[^\w]/g, '').slice(-24)
+    const response = await this.httpClient.post<ShareGenerateApiResponse>(
+      `${ShareEndpoints.GENERATE}/${this.tripId}`,
+      {
+        expireDays: this.expireDays,
+        oneTime: isOneTime,
+        accessScope: scope
+      }
+    )
+    this.shareUrl = this.extractSignedUrl(response.data)
+    if (!this.shareUrl) {
+      promptAction.showToast({ message: '后端未返回有效签名链接，分享已禁用' })
+    }
   }
 
   build() {

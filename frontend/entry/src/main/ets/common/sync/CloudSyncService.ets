@@ -51,6 +51,11 @@ interface NodePayload {
 }
 
 export class CloudSyncService {
+  // 云端 schema 使用 Integer 存储公开性：0=false, 1=true
+  private static parseIsPublic(value: number | undefined): boolean {
+    return (value ?? 0) === 1
+  }
+
   static async ensureReady(): Promise<boolean> {
     if (initialized && databaseZone !== null) {
       return true
@@ -254,7 +259,7 @@ export class CloudSyncService {
     const result: Trip[] = []
     for (let i = 0; i < records.length; i++) {
       const record = records[i]
-      const isPublic = Number(record.isPublic ?? 0) === 1
+      const isPublic = CloudSyncService.parseIsPublic(record.isPublic)
       const trip: Trip = {
         id: '0',
         name: record.name ?? '',
