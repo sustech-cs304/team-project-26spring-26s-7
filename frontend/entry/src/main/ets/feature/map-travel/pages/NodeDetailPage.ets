@@ -27,6 +27,7 @@ export struct NodeDetailPage {
   @State isLoading: boolean = false
   @State selectedPhotoIndex: number = 0
   @State pageVisible: boolean = false
+  @State showFullPhoto: boolean = false
 
   private dataService = getDataService()
 
@@ -145,10 +146,19 @@ export struct NodeDetailPage {
       if (this.photos.length > 0) {
         Swiper() {
           ForEach(this.photos, (photo: string, index: number) => {
-            Image(`${photo}?v=${this.photoRenderVersion}`)
-              .width('100%')
-              .height('100%')
-              .objectFit(ImageFit.Cover)
+            Stack() {
+              Image(`${photo}?v=${this.photoRenderVersion}`)
+                .width('100%')
+                .height('100%')
+                .objectFit(ImageFit.Contain)
+            }
+            .width('100%')
+            .height('100%')
+            .backgroundColor('#F0F0F0')
+            .onClick(() => {
+              this.selectedPhotoIndex = index
+              this.showFullPhoto = true
+            })
           })
         }
         .width('100%')
@@ -388,5 +398,55 @@ export struct NodeDetailPage {
     .width('100%')
     .height('100%')
     .backgroundColor(AppColors.BACKGROUND)
+    .bindContentCover(this.showFullPhoto, this.buildFullPhotoViewer(), {
+      modalTransition: ModalTransition.DEFAULT,
+      onDisappear: () => { this.showFullPhoto = false }
+    })
+  }
+
+  @Builder
+  private buildFullPhotoViewer() {
+    Column() {
+      Row() {
+        Text('←')
+          .fontSize(AppDimens.FONT_XL)
+          .fontColor(Color.White)
+          .padding(AppDimens.PADDING_MD)
+          .onClick(() => { this.showFullPhoto = false })
+        Blank()
+        Text(`${this.selectedPhotoIndex + 1} / ${this.photos.length}`)
+          .fontSize(AppDimens.FONT_MD)
+          .fontColor(Color.White)
+          .padding(AppDimens.PADDING_MD)
+      }
+      .width('100%')
+      .height(56)
+
+      if (this.photos.length > 0) {
+        Swiper() {
+          ForEach(this.photos, (photo: string) => {
+            Stack() {
+              Image(`${photo}?v=${this.photoRenderVersion}`)
+                .width('100%')
+                .height('100%')
+                .objectFit(ImageFit.Contain)
+            }
+            .width('100%')
+            .height('100%')
+          })
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .index(this.selectedPhotoIndex)
+        .loop(false)
+        .autoPlay(false)
+        .onChange((index: number) => {
+          this.selectedPhotoIndex = index
+        })
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor('#000000')
   }
 }

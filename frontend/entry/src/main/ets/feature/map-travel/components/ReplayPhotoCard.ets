@@ -43,10 +43,15 @@ export struct ReplayPhotoCard {
       // 多张照片手动滑动
       Swiper() {
         ForEach(this.node.photos, (photo: string) => {
-          Image(photo)
-            .width(280)
-            .height(180)
-            .objectFit(ImageFit.Cover)
+          Stack() {
+            Image(photo)
+              .width('100%')
+              .height('100%')
+              .objectFit(ImageFit.Contain)
+          }
+          .width(280)
+          .height(180)
+          .backgroundColor('#2A2A2A')
         })
       }
       .width(280)

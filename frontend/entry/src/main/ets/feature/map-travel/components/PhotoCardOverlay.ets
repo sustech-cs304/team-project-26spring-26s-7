@@ -48,10 +48,15 @@ export struct PhotoCardOverlay {
     if (this.currentNode && this.currentNode.photos.length > 0) {
       Swiper() {
         ForEach(this.currentNode.photos, (photo: string) => {
-          Image(photo)
-            .width('100%')
-            .height(250)
-            .objectFit(ImageFit.Cover)
+          Stack() {
+            Image(photo)
+              .width('100%')
+              .height('100%')
+              .objectFit(ImageFit.Contain)
+          }
+          .width('100%')
+          .height(250)
+          .backgroundColor('#F0F0F0')
         })
       }
       .width('100%')
