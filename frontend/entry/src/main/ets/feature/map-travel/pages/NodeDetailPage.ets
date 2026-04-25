@@ -162,17 +162,17 @@ export struct NodeDetailPage {
       } else {
         // 无照片占位图
         Column() {
-          Text('📷')
+          Text('🖼️')
             .fontSize(46)
           Text('这条节点还没有照片')
             .fontSize(AppDimens.FONT_MD)
-            .fontColor('#E9F3FF')
+            .fontColor('#A8C4DE')
             .margin({ top: 8 })
         }
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor('#3C5C83')
+        .backgroundColor('#2E4A6A')
       }
 
       // 指示器 + 地点名称

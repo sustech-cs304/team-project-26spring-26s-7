@@ -209,21 +209,21 @@ export struct NodeListView {
             .objectFit(ImageFit.Cover)
         } else {
           Column() {
-            Text('📍')
-              .fontSize(24)
+            Text('🖼️')
+              .fontSize(20)
             Text('无封面')
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(AppColors.TEXT_HINT)
-              .margin({ top: 6 })
+              .fontSize(10)
+              .fontColor('#8EB4D6')
+              .margin({ top: 4 })
           }
           .width('100%')
           .height('100%')
           .justifyContent(FlexAlign.Center)
-          .backgroundColor('#EAF4FF')
+          .backgroundColor('#D6E8F5')
         }
       }
-      .width(92)
-      .height(92)
+      .width(64)
+      .height(64)
       .borderRadius(AppDimens.RADIUS_MD)
       .clip(true)
 
