@@ -53,6 +53,8 @@ struct MainPage {
     Tabs({ barPosition: BarPosition.End, index: this.currentTabIndex }) {
       TabContent() {
         MapHomeView()
+          .width('100%')
+          .height('100%')
       }
       .tabBar(this.tabBuilder('地图', 0))
       .onWillShow(() => {

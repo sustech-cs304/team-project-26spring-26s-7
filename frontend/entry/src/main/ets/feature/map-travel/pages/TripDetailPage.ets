@@ -246,6 +246,7 @@ export struct TripDetailPage {
       MapComponent({ mapOptions: this.mapOptions, mapCallback: this.mapCallback })
         .width('100%')
         .height('100%')
+        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 
       Column() {
         Text(this.tripName || '旅行详情')

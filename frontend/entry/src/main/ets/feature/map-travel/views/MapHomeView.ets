@@ -565,6 +565,7 @@ export struct MapHomeView {
       MapComponent({ mapOptions: this.mapOptions, mapCallback: this.mapCallback })
         .width('100%')
         .height('100%')
+        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 
       if (this.isLoadingNodes) {
         Column() {
@@ -833,5 +834,6 @@ export struct MapHomeView {
     }
     .width('100%')
     .height('100%')
+    .layoutWeight(1)
   }
 }
