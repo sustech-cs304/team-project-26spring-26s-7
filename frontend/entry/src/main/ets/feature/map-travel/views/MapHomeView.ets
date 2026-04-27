@@ -230,6 +230,7 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
  */
 @Component
 export struct MapHomeView {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State showFilter: boolean = false
   @State selectedFilterTime: string = '全部'
   @State selectedFilterTag: string = '全部'
@@ -896,7 +897,10 @@ export struct MapHomeView {
           TextInput({ placeholder: '搜索地点、标签...', text: this.searchKeyword })
             .layoutWeight(1)
             .height(40)
-            .backgroundColor(AppColors.CARD_BG)
+            .fontColor(AppColors.INPUT_TEXT)
+            .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+            .caretColor(AppColors.INPUT_CARET)
+            .backgroundColor(AppColors.INPUT_BG)
             .borderRadius(20)
             .padding({ left: 14, right: 14 })
             .onChange((value: string) => this.handleSearchInputChange(value))
@@ -912,7 +916,7 @@ export struct MapHomeView {
           if (this.hasSelectedSearchResult) {
             Text('用该地址新建记忆')
               .fontSize(AppDimens.FONT_MD)
-              .fontColor(AppColors.CARD_BG)
+              .fontColor(AppColors.TEXT_ON_PRIMARY)
               .backgroundColor(AppColors.PRIMARY)
               .padding({ left: 12, right: 12, top: 8, bottom: 8 })
               .borderRadius(20)
@@ -923,7 +927,7 @@ export struct MapHomeView {
 
           Text('筛选')
             .fontSize(AppDimens.FONT_MD)
-            .fontColor(this.showFilter ? AppColors.CARD_BG : AppColors.PRIMARY)
+            .fontColor(this.showFilter ? AppColors.TEXT_ON_PRIMARY : AppColors.PRIMARY)
             .backgroundColor(this.showFilter ? AppColors.PRIMARY : AppColors.CARD_BG)
             .padding({ left: 12, right: 12, top: 8, bottom: 8 })
             .borderRadius(20)
@@ -997,7 +1001,7 @@ export struct MapHomeView {
             ForEach(['全部', '近 7 天', '近 30 天', '近一年'], (label: string) => {
               Text(label)
                 .fontSize(AppDimens.FONT_SM)
-                .fontColor(this.selectedFilterTime === label ? AppColors.CARD_BG : AppColors.TEXT_SECONDARY)
+                .fontColor(this.selectedFilterTime === label ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
                 .backgroundColor(this.selectedFilterTime === label ? AppColors.PRIMARY : AppColors.BACKGROUND)
                 .padding({ left: 10, right: 10, top: 6, bottom: 6 })
                 .borderRadius(14)
@@ -1015,7 +1019,7 @@ export struct MapHomeView {
             ForEach(['全部', '旅行', '美食', '风景', '打卡'], (label: string) => {
               Text(label)
                 .fontSize(AppDimens.FONT_SM)
-                .fontColor(this.selectedFilterTag === label ? AppColors.CARD_BG : AppColors.TEXT_SECONDARY)
+                .fontColor(this.selectedFilterTag === label ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
                 .backgroundColor(this.selectedFilterTag === label ? AppColors.PRIMARY : AppColors.BACKGROUND)
                 .padding({ left: 10, right: 10, top: 6, bottom: 6 })
                 .borderRadius(14)
@@ -1058,7 +1062,7 @@ export struct MapHomeView {
           .width(52)
           .height(52)
           .fontSize(24)
-          .fontColor(AppColors.CARD_BG)
+          .fontColor(AppColors.TEXT_ON_PRIMARY)
           .backgroundColor(AppColors.PRIMARY)
           .borderRadius(26)
           .shadow({ radius: 6, color: '#1890FF66', offsetY: 3 })

@@ -24,6 +24,7 @@ import { VisionLLMTest } from '../components/VisionLLMTest';
 @Entry
 @Component
 export struct VisionLLMPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   aboutToAppear(): void {
     console.log('VisionLLMPage loaded');
   }

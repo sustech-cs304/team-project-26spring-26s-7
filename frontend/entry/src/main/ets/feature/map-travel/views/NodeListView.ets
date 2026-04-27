@@ -16,6 +16,7 @@ interface NodeFeedItem {
 
 @Component
 export struct NodeListView {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State nodes: NodeFeedItem[] = []
   @State totalTripCount: number = 0
   @State isLoading: boolean = false

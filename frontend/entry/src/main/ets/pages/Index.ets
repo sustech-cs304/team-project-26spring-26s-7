@@ -7,6 +7,7 @@ import { AuthService, RouterUrls, AppColors, AppDimens } from '../common'
 @Entry
 @Component
 struct Index {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   private timeoutId: number = -1
 
   aboutToAppear(): void {

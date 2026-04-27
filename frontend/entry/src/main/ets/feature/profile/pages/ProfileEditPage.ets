@@ -15,6 +15,7 @@ const TAG = 'ProfileEditPage';
 @Entry
 @Component
 struct ProfileEditPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State nickname: string = 'TravelPin 用户'
   @State avatar: string = ''
   @State bio: string = ''
@@ -204,7 +205,10 @@ struct ProfileEditPage {
             TextInput({ placeholder: '请输入昵称', text: this.nickname })
               .onChange((value: string) => { this.nickname = value })
               .margin({ top: 8 })
-              .backgroundColor(AppColors.BACKGROUND)
+              .fontColor(AppColors.INPUT_TEXT)
+              .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+              .caretColor(AppColors.INPUT_CARET)
+              .backgroundColor(AppColors.INPUT_BG)
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
@@ -224,7 +228,10 @@ struct ProfileEditPage {
               .onChange((value: string) => { this.bio = value })
               .height(100)
               .margin({ top: 8 })
-              .backgroundColor(AppColors.BACKGROUND)
+              .fontColor(AppColors.INPUT_TEXT)
+              .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+              .caretColor(AppColors.INPUT_CARET)
+              .backgroundColor(AppColors.INPUT_BG)
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)

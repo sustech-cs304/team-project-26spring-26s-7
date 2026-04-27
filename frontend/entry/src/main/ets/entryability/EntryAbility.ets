@@ -1,10 +1,10 @@
-import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
+import { AbilityConstant, Configuration, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { window } from '@kit.ArkUI';
 import { connection } from '@kit.NetworkKit';
 import { RdbHelper } from '../common/data/RdbHelper';
-import { AuthService } from '../common';
+import { AppTheme, AuthService } from '../common';
 
 const DOMAIN = 0x0000;
 
@@ -12,6 +12,15 @@ export default class EntryAbility extends UIAbility {
   private netConnection?: connection.NetConnection
   private isOnline: boolean = true
   private networkDialogToken: number = 0
+
+  private syncThemeColorMode(colorMode?: number, initialize: boolean = false): void {
+    if (initialize) {
+      AppTheme.initialize(colorMode)
+      return
+    }
+
+    AppTheme.syncColorMode(colorMode)
+  }
 
   private getCurrentNetworkStatus(): boolean {
     try {
@@ -86,6 +95,8 @@ export default class EntryAbility extends UIAbility {
     } catch (err) {
       hilog.error(DOMAIN, 'testTag', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
     }
+    const initialColorMode = this.context.config.colorMode
+    this.syncThemeColorMode(initialColorMode, true)
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
     AppStorage.setOrCreate('travelDataVersion', 0);
     AppStorage.setOrCreate('cloudStatusText', '云存储未连接');
@@ -142,6 +153,11 @@ export default class EntryAbility extends UIAbility {
 
   onWindowStageDestroy(): void {
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageDestroy');
+  }
+
+  onConfigurationUpdate(config: Configuration): void {
+    this.syncThemeColorMode(config.colorMode)
+    hilog.info(DOMAIN, 'testTag', 'Configuration updated, colorMode=%{public}d', config.colorMode ?? -1)
   }
 
   onForeground(): void {

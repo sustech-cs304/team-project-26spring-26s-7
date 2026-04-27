@@ -37,6 +37,7 @@ interface LengthOption {
 @Entry
 @Component
 export struct AiCopyPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   // 页面参数 (从路由传入)
   @State nodeId: string = ''
   @State tripId: string = ''
@@ -396,7 +397,10 @@ export struct AiCopyPage {
               .fontSize(AppDimens.FONT_MD)
               .padding(AppDimens.PADDING_MD)
               .height(48)
-              .backgroundColor(AppColors.BACKGROUND)
+              .fontColor(AppColors.INPUT_TEXT)
+              .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+              .caretColor(AppColors.INPUT_CARET)
+              .backgroundColor(AppColors.INPUT_BG)
               .borderRadius(AppDimens.RADIUS_SM)
               .onChange((value: string) => { this.poiName = value })
           }
@@ -431,7 +435,10 @@ export struct AiCopyPage {
               .fontSize(AppDimens.FONT_MD)
               .padding(AppDimens.PADDING_MD)
               .height(100)
-              .backgroundColor(AppColors.BACKGROUND)
+              .fontColor(AppColors.INPUT_TEXT)
+              .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+              .caretColor(AppColors.INPUT_CARET)
+              .backgroundColor(AppColors.INPUT_BG)
               .borderRadius(AppDimens.RADIUS_SM)
               .onChange((value: string) => { this.userPrompt = value })
           }

@@ -15,6 +15,7 @@ interface TripNodeItem {
 @Entry
 @Component
 export struct TripEditPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State tripId: string = ''
   @State title: string = ''
   @State isPublic: boolean = false
@@ -245,14 +246,14 @@ export struct TripEditPage {
       Row({ space: 10 }) {
         Text('私密')
           .fontSize(AppDimens.FONT_MD)
-          .fontColor(!this.isPublic ? AppColors.CARD_BG : AppColors.TEXT_SECONDARY)
+          .fontColor(!this.isPublic ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
           .backgroundColor(!this.isPublic ? '#A55B00' : AppColors.BACKGROUND)
           .padding({ left: 16, right: 16, top: 10, bottom: 10 })
           .borderRadius(18)
           .onClick(() => { this.isPublic = false })
         Text('公开')
           .fontSize(AppDimens.FONT_MD)
-          .fontColor(this.isPublic ? AppColors.CARD_BG : AppColors.TEXT_SECONDARY)
+          .fontColor(this.isPublic ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
           .backgroundColor(this.isPublic ? '#167D3E' : AppColors.BACKGROUND)
           .padding({ left: 16, right: 16, top: 10, bottom: 10 })
           .borderRadius(18)
@@ -452,7 +453,10 @@ export struct TripEditPage {
               TextInput({ placeholder: '例如：清明杭州 City Walk', text: this.title })
                 .width('100%')
                 .margin({ top: 10 })
-                .backgroundColor(AppColors.BACKGROUND)
+                .fontColor(AppColors.INPUT_TEXT)
+                .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+                .caretColor(AppColors.INPUT_CARET)
+                .backgroundColor(AppColors.INPUT_BG)
                 .onChange((value: string) => { this.title = value })
             }
             .width('100%')
