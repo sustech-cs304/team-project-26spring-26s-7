@@ -371,7 +371,8 @@ export class RdbDataService implements IDataService {
         updatedAt: node.updatedAt,
         deletedAt: node.deletedAt ?? 0,
         version: node.version ?? 1,
-        photoManifest: this.buildPhotoManifest(nextTravelId, node.id, nextPhotos)
+        photoManifest: this.buildPhotoManifest(nextTravelId, node.id, nextPhotos),
+        visitedAt: node.visitedAt ?? 0
       })
       await this.enqueueSyncSilently('memory_node', node.id, 'upsert', payload)
     }
@@ -407,7 +408,8 @@ export class RdbDataService implements IDataService {
       description: node.content,
       photos: node.photos,
       tags: node.tags,
-      mood: node.mood
+      mood: node.mood,
+      visitedAt: node.visitedAt
     };
     const id = await this.nodeRepo.createNode(repoInput);
     const created = await this.nodeRepo.getNodeById(id);
@@ -431,7 +433,8 @@ export class RdbDataService implements IDataService {
       updatedAt: created.updatedAt,
       deletedAt: created.deletedAt ?? 0,
       version: created.version ?? 1,
-      photoManifest: this.buildPhotoManifest(created.travelId, created.id, created.photos)
+      photoManifest: this.buildPhotoManifest(created.travelId, created.id, created.photos),
+      visitedAt: created.visitedAt ?? 0
     })
     await this.enqueueSync('memory_node', created.id, 'upsert', payload);
     const isOnlineForCreate = (AppStorage.get('networkOnline') as boolean) ?? false;
@@ -481,6 +484,9 @@ export class RdbDataService implements IDataService {
     }
     if (data.tags !== undefined) {
       repoInput.tags = data.tags;
+    }
+    if (data.visitedAt !== undefined) {
+      repoInput.visitedAt = data.visitedAt;
     }
     const updatedOk = await this.nodeRepo.updateNode(nodeId, repoInput);
     if (!updatedOk) {
@@ -548,7 +554,8 @@ export class RdbDataService implements IDataService {
       updatedAt: updated.updatedAt,
       deletedAt: updated.deletedAt ?? 0,
       version: updated.version ?? 1,
-      photoManifest: this.buildPhotoManifest(nextTravelId, updated.id, nextPhotos)
+      photoManifest: this.buildPhotoManifest(nextTravelId, updated.id, nextPhotos),
+      visitedAt: updated.visitedAt ?? 0
     })
     await this.enqueueSync('memory_node', updated.id, 'upsert', payload);
 
@@ -624,7 +631,8 @@ export class RdbDataService implements IDataService {
         updatedAt: sibling.updatedAt,
         deletedAt: sibling.deletedAt ?? 0,
         version: sibling.version ?? 1,
-        photoManifest: this.buildPhotoManifest(sibling.travelId, sibling.id, sibling.photos)
+        photoManifest: this.buildPhotoManifest(sibling.travelId, sibling.id, sibling.photos),
+        visitedAt: sibling.visitedAt ?? 0
       });
       await this.enqueueSyncSilently('memory_node', sibling.id, 'upsert', siblingPayload);
     }
