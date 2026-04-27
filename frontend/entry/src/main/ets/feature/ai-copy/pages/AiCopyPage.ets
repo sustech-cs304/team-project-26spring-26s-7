@@ -5,9 +5,10 @@ import {
   AppColors,
   AppDimens,
   AiGatewayClient,
-  ImageCopyRequest,
+  ImagesCopyRequest,
   AiCopyResponse,
   PhotoPickerUtil,
+  ConsentManager,
   logger
 } from '../../../common'
 
@@ -41,18 +42,39 @@ export struct AiCopyPage {
   @State nodeId: string = ''
   @State tripId: string = ''
 
-  // 图片选择状态
-  @State imagePath: string = ''
+  // 图片选择状态：支持多张，沙箱路径
+  @State imagePaths: string[] = []
+  @State metadataSummary: string = ''
+  @State isExtracting: boolean = false
 
   // 页面状态
   @State selectedStyle: string = 'poetic'
   @State selectedLength: string = 'medium'
   @State userPrompt: string = ''
   @State poiName: string = ''
+  // 上下文 GPS / 心情 / 标签（从节点带入，作为元数据兜底）
+  @State latitude: number = 0
+  @State longitude: number = 0
+  @State mood: string = ''
+  @State nodeTags: string[] = []
   @State isGenerating: boolean = false
   @State generatedCopy: string = ''
   @State alternatives: string[] = []
+  // 调试：实际发送给后端的 prompt
+  @State debugPrompt: string = ''
+  @State debugPromptExpanded: boolean = true
+  @State isPreviewingPrompt: boolean = false
+  // 云端打标签同意状态（来自 ConsentManager）
+  @StorageProp('aiCloudTaggingEnabled') @Watch('onCloudTaggingChanged') cloudTaggingEnabled: boolean = false
+  // JIT 同意对话框展示
+  @State showConsentDialog: boolean = false
+  @State pendingAfterConsent: string = ''  // 'generate' | 'preview' | ''
   private isCancelled: boolean = false
+  private static readonly MAX_PHOTOS: number = 9
+
+  private onCloudTaggingChanged(): void {
+    logger.info(TAG, `cloudTaggingEnabled changed to ${this.cloudTaggingEnabled}`)
+  }
 
   // 服务实例
   private aiClient: AiGatewayClient = new AiGatewayClient()
@@ -73,15 +95,67 @@ export struct AiCopyPage {
   ]
 
   aboutToAppear(): void {
+    // 先把同意状态从 preferences 加载到 AppStorage，后续读 cloudTaggingEnabled 就是同步的
+    const uiContext = this.getUIContext();
+    const ctx = uiContext.getHostContext() as common.UIAbilityContext;
+    if (ctx) {
+      ConsentManager.ensureLoaded(ctx);
+    }
+
     const params = router.getParams() as Record<string, Object>;
     if (params) {
       this.nodeId = (params['nodeId'] as string) || '';
       this.tripId = (params['tripId'] as string) || '';
       this.poiName = (params['poiName'] as string) || '';
-      const defaultPhoto = (params['defaultPhoto'] as string) || '';
-      if (defaultPhoto.length > 0) {
-        this.imagePath = defaultPhoto;
+      this.latitude = (params['latitude'] as number) || 0;
+      this.longitude = (params['longitude'] as number) || 0;
+      this.mood = (params['mood'] as string) || '';
+      const tagsParam = params['tags'];
+      if (Array.isArray(tagsParam)) {
+        this.nodeTags = (tagsParam as string[]).filter((s: string) => typeof s === 'string');
       }
+      const userPromptParam = (params['defaultPrompt'] as string) || '';
+      if (userPromptParam.length > 0) {
+        this.userPrompt = userPromptParam;
+      }
+
+      // 优先用 photos 数组；否则回退到旧的 defaultPhoto 单图字段
+      const photosParam = params['photos'];
+      if (Array.isArray(photosParam)) {
+        const arr = (photosParam as string[]).filter((s: string) => typeof s === 'string' && s.length > 0);
+        if (arr.length > 0) {
+          this.imagePaths = arr.slice(0, AiCopyPage.MAX_PHOTOS);
+        }
+      } else {
+        const defaultPhoto = (params['defaultPhoto'] as string) || '';
+        if (defaultPhoto.length > 0) {
+          this.imagePaths = [defaultPhoto];
+        }
+      }
+
+      if (this.imagePaths.length > 0) {
+        this.refreshMetadataSummary();
+      }
+    }
+  }
+
+  /**
+   * 端侧抽 EXIF 并展示给用户，让用户知道有哪些信息会进入 prompt
+   */
+  private async refreshMetadataSummary(): Promise<void> {
+    if (this.imagePaths.length === 0) {
+      this.metadataSummary = '';
+      return;
+    }
+    this.isExtracting = true;
+    try {
+      const desc = await this.aiClient.describeImages(this.imagePaths);
+      this.metadataSummary = desc;
+    } catch (err) {
+      logger.error(TAG, `describeImages failed: ${JSON.stringify(err)}`);
+      this.metadataSummary = '';
+    } finally {
+      this.isExtracting = false;
     }
   }
 
@@ -94,7 +168,7 @@ export struct AiCopyPage {
   }
 
   /**
-   * 选择图片
+   * 追加选择图片（最多 9 张）
    */
   private async handleSelectImage(): Promise<void> {
     try {
@@ -105,11 +179,16 @@ export struct AiCopyPage {
         return;
       }
 
-      const paths = await PhotoPickerUtil.pickAndSavePhotos(context, 1);
+      const remaining = AiCopyPage.MAX_PHOTOS - this.imagePaths.length;
+      if (remaining <= 0) {
+        promptAction.showToast({ message: `最多 ${AiCopyPage.MAX_PHOTOS} 张照片` });
+        return;
+      }
+      const paths = await PhotoPickerUtil.pickAndSavePhotos(context, remaining);
       if (paths.length > 0) {
-        this.imagePath = paths[0];
-        logger.info(TAG, `Selected image: ${this.imagePath}`);
-        promptAction.showToast({ message: '图片选择成功' });
+        this.imagePaths = [...this.imagePaths, ...paths].slice(0, AiCopyPage.MAX_PHOTOS);
+        logger.info(TAG, `Selected ${paths.length} images, total=${this.imagePaths.length}`);
+        await this.refreshMetadataSummary();
       }
     } catch (err) {
       logger.error(TAG, `选择图片失败: ${err}`);
@@ -117,16 +196,28 @@ export struct AiCopyPage {
     }
   }
 
+  private async handleRemoveImage(index: number): Promise<void> {
+    if (index < 0 || index >= this.imagePaths.length) {
+      return;
+    }
+    const next = this.imagePaths.slice();
+    next.splice(index, 1);
+    this.imagePaths = next;
+    await this.refreshMetadataSummary();
+  }
+
   /**
-   * 生成文案 — 基于图片 + VisionLLM
+   * 生成文案 — 端侧批量抽 EXIF -> 文本 prompt -> LLM
+   * 若 ProfileView 中开启了"云端识别画面内容"，且本次还没获取过同意，
+   * 这里会先弹 JIT 对话框，用户同意后再继续。
    */
   private async handleGenerate(): Promise<void> {
     if (this.isGenerating) {
       return;
     }
 
-    if (!this.imagePath) {
-      promptAction.showToast({ message: '请先选择一张图片' });
+    if (this.imagePaths.length === 0) {
+      promptAction.showToast({ message: '请先选择至少一张图片' });
       return;
     }
 
@@ -136,21 +227,40 @@ export struct AiCopyPage {
       return;
     }
 
+    // 云端打标签开关开启 + 用户未明示过 -> 先 JIT 同意
+    if (ConsentManager.isCloudTaggingEnabled() && !ConsentManager.hasPrompted()) {
+      this.pendingAfterConsent = 'generate';
+      this.showConsentDialog = true;
+      return;
+    }
+
     this.isGenerating = true;
     this.isCancelled = false;
     this.generatedCopy = '';
     this.alternatives = [];
 
     try {
-      const request: ImageCopyRequest = {
-        imagePath: this.imagePath,
+      const uiContext = this.getUIContext();
+      const ctx = uiContext.getHostContext() as common.UIAbilityContext;
+      const cloudOn = ConsentManager.isCloudTaggingEnabled();
+
+      const request: ImagesCopyRequest = {
+        imagePaths: this.imagePaths,
         style: this.selectedStyle,
         lengthLevel: this.selectedLength,
         userPrompt: this.userPrompt || undefined,
-        poiName: this.poiName || undefined
+        poiName: this.poiName || undefined,
+        latitude: this.latitude !== 0 ? this.latitude : undefined,
+        longitude: this.longitude !== 0 ? this.longitude : undefined,
+        mood: this.mood || undefined,
+        tags: this.nodeTags.length > 0 ? this.nodeTags : undefined,
+        enableCloudTagging: cloudOn,
+        context: cloudOn ? ctx : undefined
       };
 
-      const response = await this.aiClient.generateCopyFromImage(request);
+      const response = await this.aiClient.generateCopyFromImages(request);
+      // 不管成功失败都把构建好的 prompt 暴露出来调试
+      this.debugPrompt = this.aiClient.getLastBatchPrompt();
 
       if (this.isCancelled) {
         logger.info(TAG, 'Generation cancelled by user');
@@ -166,6 +276,10 @@ export struct AiCopyPage {
         } else {
           promptAction.showToast({ message: '生成失败，请重试' });
         }
+      } else if (response.statusCode === 401) {
+        promptAction.showToast({ message: 'AI 服务鉴权失败，请联系管理员' });
+      } else if (response.statusCode === 429) {
+        promptAction.showToast({ message: '请求过于频繁，请稍后再试（30 次/分钟）' });
       } else {
         promptAction.showToast({ message: response.error || '网络错误，请重试' });
       }
@@ -173,7 +287,7 @@ export struct AiCopyPage {
       if (this.isCancelled) {
         return;
       }
-      const errorMsg = `生成失败: ${err}`;
+      const errorMsg = `生成失败: ${JSON.stringify(err)}`;
       logger.error(TAG, errorMsg);
       promptAction.showToast({ message: '生成失败，请检查网络' });
     } finally {
@@ -188,6 +302,99 @@ export struct AiCopyPage {
     this.isCancelled = true;
     this.isGenerating = false;
     promptAction.showToast({ message: '已取消生成' });
+  }
+
+  /**
+   * 预览 prompt（不调 LLM）
+   * 若开启了 cloud tagging 且未同意，先 JIT 同意；
+   * 同意 / 已同意后才会真发出云端打标请求。
+   */
+  private async handlePreviewPrompt(): Promise<void> {
+    if (this.imagePaths.length === 0) {
+      promptAction.showToast({ message: '请先选择至少一张图片' });
+      return;
+    }
+    if (this.isPreviewingPrompt) {
+      return;
+    }
+
+    if (ConsentManager.isCloudTaggingEnabled() && !ConsentManager.hasPrompted()) {
+      this.pendingAfterConsent = 'preview';
+      this.showConsentDialog = true;
+      return;
+    }
+
+    this.isPreviewingPrompt = true;
+    try {
+      const uiContext = this.getUIContext();
+      const ctx = uiContext.getHostContext() as common.UIAbilityContext;
+      const cloudOn = ConsentManager.isCloudTaggingEnabled();
+      const request: ImagesCopyRequest = {
+        imagePaths: this.imagePaths,
+        style: this.selectedStyle,
+        lengthLevel: this.selectedLength,
+        userPrompt: this.userPrompt || undefined,
+        poiName: this.poiName || undefined,
+        latitude: this.latitude !== 0 ? this.latitude : undefined,
+        longitude: this.longitude !== 0 ? this.longitude : undefined,
+        mood: this.mood || undefined,
+        tags: this.nodeTags.length > 0 ? this.nodeTags : undefined,
+        enableCloudTagging: cloudOn,
+        context: cloudOn ? ctx : undefined
+      };
+      const prompt = await this.aiClient.previewPromptForImages(request);
+      this.debugPrompt = prompt;
+      this.debugPromptExpanded = true;
+      promptAction.showToast({ message: 'prompt 已生成，未发送' });
+    } catch (err) {
+      logger.error(TAG, `预览 prompt 失败: ${JSON.stringify(err)}`);
+      promptAction.showToast({ message: '预览失败' });
+    } finally {
+      this.isPreviewingPrompt = false;
+    }
+  }
+
+  /**
+   * 用户在 JIT 对话框做选择后调用
+   */
+  private async handleConsentChoice(agreed: boolean): Promise<void> {
+    this.showConsentDialog = false;
+    const uiContext = this.getUIContext();
+    const ctx = uiContext.getHostContext() as common.UIAbilityContext;
+    if (!ctx) {
+      promptAction.showToast({ message: '无法获取应用上下文' });
+      return;
+    }
+    await ConsentManager.recordPromptResult(ctx, agreed);
+    if (!agreed) {
+      promptAction.showToast({ message: '已选择不上传照片，仅使用 EXIF 元数据生成' });
+      // 用户拒绝后也允许继续生成，只不过走 EXIF-only 路径
+    }
+    const next = this.pendingAfterConsent;
+    this.pendingAfterConsent = '';
+    if (next === 'generate') {
+      await this.handleGenerate();
+    } else if (next === 'preview') {
+      await this.handlePreviewPrompt();
+    }
+  }
+
+  /**
+   * 复制 debug prompt 到剪贴板
+   */
+  private async handleCopyPrompt(): Promise<void> {
+    if (!this.debugPrompt) {
+      return;
+    }
+    try {
+      const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.debugPrompt);
+      const systemPasteboard = pasteboard.getSystemPasteboard();
+      await systemPasteboard.setData(pasteData);
+      promptAction.showToast({ message: 'prompt 已复制' });
+    } catch (err) {
+      logger.error(TAG, `复制 prompt 失败: ${err}`);
+      promptAction.showToast({ message: '复制失败' });
+    }
   }
 
   /**
@@ -222,8 +429,9 @@ export struct AiCopyPage {
   }
 
   build() {
-    Column() {
-      // 头部栏
+    Stack() {
+      Column() {
+        // 头部栏
       Row() {
         Text('←')
           .fontSize(AppDimens.FONT_XL)
@@ -251,60 +459,117 @@ export struct AiCopyPage {
       // 内容区域
       Scroll() {
         Column() {
-          // 图片选择区域
+          // 图片选择区域（多图）
           Column() {
-            Text('选择照片')
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.TEXT_PRIMARY)
-              .margin({ bottom: 12 })
-
-            if (this.imagePath) {
-              Image(this.imagePath)
-                .width(160)
-                .height(160)
-                .objectFit(ImageFit.Cover)
-                .borderRadius(AppDimens.RADIUS_SM)
-                .margin({ bottom: 8 })
-
-              Text('点击下方按钮更换照片')
+            Row() {
+              Text('选择照片')
+                .fontSize(AppDimens.FONT_MD)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(AppColors.TEXT_PRIMARY)
+              Blank()
+              Text(`${this.imagePaths.length}/${AiCopyPage.MAX_PHOTOS}`)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_HINT)
-                .margin({ bottom: 8 })
-            } else {
+            }
+            .width('100%')
+            .margin({ bottom: 12 })
+
+            if (this.imagePaths.length === 0) {
               Column() {
                 Text('+')
                   .fontSize(40)
                   .fontColor(AppColors.TEXT_HINT)
-                Text('点击选择照片')
+                Text('点击选择照片（最多 9 张）')
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.TEXT_HINT)
                   .margin({ top: 4 })
               }
-              .width(160)
-              .height(160)
+              .width('100%')
+              .height(140)
               .justifyContent(FlexAlign.Center)
               .backgroundColor(AppColors.BACKGROUND)
               .borderRadius(AppDimens.RADIUS_SM)
               .border({ width: 1, color: AppColors.DIVIDER, style: BorderStyle.Dashed })
               .onClick(() => this.handleSelectImage())
-              .margin({ bottom: 8 })
+            } else {
+              Scroll() {
+                Row({ space: 8 }) {
+                  ForEach(this.imagePaths, (path: string, index: number) => {
+                    Stack({ alignContent: Alignment.TopEnd }) {
+                      Image(path)
+                        .width(96)
+                        .height(96)
+                        .objectFit(ImageFit.Cover)
+                        .borderRadius(AppDimens.RADIUS_SM)
+                      Text('×')
+                        .fontSize(14)
+                        .fontColor(Color.White)
+                        .width(22)
+                        .height(22)
+                        .textAlign(TextAlign.Center)
+                        .backgroundColor('#80000000')
+                        .borderRadius(11)
+                        .margin(4)
+                        .onClick(() => this.handleRemoveImage(index))
+                    }
+                  })
+                  if (this.imagePaths.length < AiCopyPage.MAX_PHOTOS) {
+                    Column() {
+                      Text('+')
+                        .fontSize(28)
+                        .fontColor(AppColors.TEXT_HINT)
+                    }
+                    .width(96)
+                    .height(96)
+                    .justifyContent(FlexAlign.Center)
+                    .alignItems(HorizontalAlign.Center)
+                    .backgroundColor(AppColors.BACKGROUND)
+                    .borderRadius(AppDimens.RADIUS_SM)
+                    .border({ width: 1, color: AppColors.DIVIDER, style: BorderStyle.Dashed })
+                    .onClick(() => this.handleSelectImage())
+                  }
+                }
+              }
+              .scrollable(ScrollDirection.Horizontal)
+              .width('100%')
+              .height(96)
             }
 
-            Button(this.imagePath ? '更换照片' : '选择照片')
-              .fontSize(AppDimens.FONT_MD)
+            // 端侧元数据摘要 —— 让用户知道有哪些信息会进入 prompt
+            if (this.isExtracting) {
+              Row({ space: 8 }) {
+                LoadingProgress().width(16).height(16)
+                Text('正在端侧识别照片元数据...')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_HINT)
+              }
               .width('100%')
-              .height(40)
-              .backgroundColor(AppColors.PRIMARY)
-              .fontColor(Color.White)
-              .onClick(() => this.handleSelectImage())
+              .margin({ top: 12 })
+            } else if (this.metadataSummary.length > 0) {
+              Column() {
+                Text('已识别元数据（仅文本进入 prompt，照片不出设备）')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.PRIMARY)
+                  .margin({ bottom: 6 })
+                Text(this.metadataSummary)
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_SECONDARY)
+                  .lineHeight(20)
+              }
+              .width('100%')
+              .padding(10)
+              .margin({ top: 12 })
+              .backgroundColor(AppColors.PRIMARY + '10')
+              .borderRadius(AppDimens.RADIUS_SM)
+              .alignItems(HorizontalAlign.Start)
+            }
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
           .backgroundColor(AppColors.CARD_BG)
           .borderRadius(AppDimens.RADIUS_SM)
           .margin({ bottom: 12 })
-          .alignItems(HorizontalAlign.Center)
+          .alignItems(HorizontalAlign.Start)
 
           // 文案风格选择
           Column() {
@@ -463,15 +728,80 @@ export struct AiCopyPage {
             .width('100%')
             .margin({ bottom: 12 })
           } else {
-            Button('生成文案')
-              .fontSize(AppDimens.FONT_LG)
+            Row({ space: 8 }) {
+              Button(this.isPreviewingPrompt ? '预览中...' : '预览 prompt')
+                .fontSize(AppDimens.FONT_MD)
+                .height(50)
+                .layoutWeight(1)
+                .backgroundColor(AppColors.BACKGROUND)
+                .fontColor(AppColors.PRIMARY)
+                .border({ width: 1, color: AppColors.PRIMARY })
+                .enabled(this.imagePaths.length > 0 && !this.isPreviewingPrompt)
+                .onClick(() => this.handlePreviewPrompt())
+
+              Button(this.imagePaths.length > 0 ? `生成（${this.imagePaths.length} 张）` : '生成文案')
+                .fontSize(AppDimens.FONT_LG)
+                .height(50)
+                .layoutWeight(2)
+                .backgroundColor(this.imagePaths.length > 0 ? AppColors.PRIMARY : AppColors.TEXT_HINT)
+                .fontColor(Color.White)
+                .enabled(this.imagePaths.length > 0)
+                .onClick(() => this.handleGenerate())
+            }
+            .width('100%')
+            .margin({ bottom: 12 })
+          }
+
+          // 调试：实际发送的 prompt
+          if (this.debugPrompt.length > 0) {
+            Column() {
+              Row() {
+                Text('🔧 实际 prompt（调试）')
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(AppColors.TEXT_PRIMARY)
+                Blank()
+                Text(this.debugPromptExpanded ? '收起' : '展开')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.PRIMARY)
+                  .padding({ left: 8, right: 8 })
+                  .onClick(() => { this.debugPromptExpanded = !this.debugPromptExpanded })
+                Text('复制')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.PRIMARY)
+                  .padding({ left: 8, right: 8 })
+                  .onClick(() => this.handleCopyPrompt())
+              }
               .width('100%')
-              .height(50)
-              .backgroundColor(this.imagePath ? AppColors.PRIMARY : AppColors.TEXT_HINT)
-              .fontColor(Color.White)
-              .enabled(this.imagePath.length > 0)
-              .onClick(() => this.handleGenerate())
-              .margin({ bottom: 12 })
+              .margin({ bottom: 8 })
+
+              if (this.debugPromptExpanded) {
+                Scroll() {
+                  Text(this.debugPrompt)
+                    .fontSize(12)
+                    .fontColor(AppColors.TEXT_SECONDARY)
+                    .lineHeight(18)
+                    .width('100%')
+                    .copyOption(CopyOptions.LocalDevice)
+                }
+                .width('100%')
+                .constraintSize({ maxHeight: 260 })
+                .padding(10)
+                .backgroundColor('#0F000000')
+                .borderRadius(AppDimens.RADIUS_SM)
+
+                Text(`长度：${this.debugPrompt.length} 字符`)
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_HINT)
+                  .margin({ top: 6 })
+              }
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .margin({ bottom: 12 })
+            .backgroundColor(AppColors.CARD_BG)
+            .borderRadius(AppDimens.RADIUS_SM)
+            .alignItems(HorizontalAlign.Start)
           }
 
           // 生成结果展示
@@ -555,9 +885,72 @@ export struct AiCopyPage {
         .padding(AppDimens.PADDING_MD)
       }
       .layoutWeight(1)
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor(AppColors.BACKGROUND)
+
+      // JIT 同意对话框
+      if (this.showConsentDialog) {
+        Column() {
+          Column()
+            .width('100%')
+            .layoutWeight(1)
+
+          Column() {
+            Text('🛡️ 隐私授权请求')
+              .fontSize(AppDimens.FONT_LG)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(AppColors.TEXT_PRIMARY)
+              .margin({ bottom: 12 })
+
+            Text(
+              '为了让 AI 更准确地识别照片画面内容（例如"猫"、"沙发"、"夕阳"），' +
+              '需要把您选择的若干张照片以剥离 GPS / 设备信息后的副本上传至云端 Qwen-VL 模型进行内容识别。' +
+              '\n\n• 上传副本不含 GPS、相机型号等敏感 EXIF；' +
+              '\n• 推理结束后云端立即删除该副本，不进行持久化存储、不写入业务数据库、不记录原始图片内容或文件名；' +
+              '\n• 您可以随时在"我的 → 隐私与安全"中关闭。' +
+              '\n\n如果不同意，本次仍可生成文案，但仅基于元数据（拍摄时间、位置等），不上传任何照片。'
+            )
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.TEXT_SECONDARY)
+              .lineHeight(20)
+              .margin({ bottom: 16 })
+
+            Row({ space: 12 }) {
+              Button('不上传照片')
+                .fontSize(AppDimens.FONT_MD)
+                .layoutWeight(1)
+                .height(44)
+                .backgroundColor(AppColors.BACKGROUND)
+                .fontColor(AppColors.TEXT_PRIMARY)
+                .border({ width: 1, color: AppColors.DIVIDER })
+                .onClick(() => this.handleConsentChoice(false))
+
+              Button('同意上传')
+                .fontSize(AppDimens.FONT_MD)
+                .layoutWeight(1)
+                .height(44)
+                .backgroundColor(AppColors.PRIMARY)
+                .fontColor(Color.White)
+                .onClick(() => this.handleConsentChoice(true))
+            }
+            .width('100%')
+          }
+          .width('100%')
+          .padding({ left: 20, right: 20, top: 24, bottom: 24 })
+          .backgroundColor(AppColors.CARD_BG)
+          .borderRadius({ topLeft: 26, topRight: 26 })
+          .shadow({ radius: 16, color: '#26000000', offsetY: -2 })
+          .alignItems(HorizontalAlign.Start)
+        }
+        .width('100%')
+        .height('100%')
+        .backgroundColor('#66000000')
+        .justifyContent(FlexAlign.End)
+      }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(AppColors.BACKGROUND)
   }
 }

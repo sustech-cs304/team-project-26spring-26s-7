@@ -253,8 +253,14 @@ export struct NodeEditPage {
         nodeId: this.nodeId,
         tripId: this.tripId,
         poiName: safePoiName,
-        defaultPhoto: this.photos.length > 0 ? this.photos[0] : ''
-      }
+        latitude: this.latitude,
+        longitude: this.longitude,
+        photos: this.photos,
+        mood: this.mood,
+        tags: this.tags,
+        defaultPrompt: this.content,
+        defaultTitle: this.title
+      } as RouterParam
     })
   }
 

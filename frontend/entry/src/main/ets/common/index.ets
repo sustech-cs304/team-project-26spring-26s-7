@@ -19,6 +19,8 @@
 export { AppColors, AppDimens, RouterUrls, TravelSpecialValues } from './utils/Constants';
 export { logger } from './utils/Logger';
 export { PhotoPickerUtil } from './utils/PhotoPickerUtil';
+export { ImageSanitizer } from './utils/ImageSanitizer';
+export { ConsentManager, KEY_AI_CLOUD_TAGGING_ENABLED, KEY_AI_CLOUD_TAGGING_PROMPTED } from './utils/ConsentManager';
 
 // Auth 导出
 export { AuthService, CloudStorageService } from './auth';
@@ -67,7 +69,7 @@ export { getDataService } from './ServiceConfig';
 
 // API Layer 导出
 export { HttpClient, HttpResponse } from './api/index';
-export { AiGatewayClient, ImageCopyRequest } from './api/index';
+export { AiGatewayClient, ImageCopyRequest, ImagesCopyRequest } from './api/index';
 export { AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION } from './api/index';
 export { MultipartFormData, VisionLLMClient, VisionLLMRequest, VisionLLMResponse } from './api/index';
 

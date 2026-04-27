@@ -37,6 +37,34 @@ export interface PhotoMetadata {
   emotionTags: string[];
   /** 提取时间戳 */
   extractedAt: number;
+  /** 原始 EXIF：拍摄时间，格式 YYYY:MM:DD HH:MM:SS */
+  dateTimeOriginal?: string;
+  /** 原始 EXIF：GPS 纬度（十进制度，正北/负南） */
+  gpsLatitude?: number;
+  /** 原始 EXIF：GPS 经度（十进制度，正东/负西） */
+  gpsLongitude?: number;
+  /** 原始 EXIF：相机厂商，如 "Apple" */
+  cameraMake?: string;
+  /** 原始 EXIF：相机型号，如 "iPhone 15 Pro" */
+  cameraModel?: string;
+  /** 原始 EXIF：方向（1-8） */
+  orientation?: string;
+  /** 原始 EXIF：曝光时间，如 "1/120" */
+  exposureTime?: string;
+  /** 原始 EXIF：光圈，如 "1.8" */
+  fNumber?: string;
+  /** 原始 EXIF：ISO，如 "100" */
+  isoSpeed?: string;
+  /** 原始 EXIF：焦距 mm */
+  focalLength?: string;
+  /** 图片像素宽 */
+  imageWidth?: number;
+  /** 图片像素高 */
+  imageHeight?: number;
+  /** 端侧 OCR 识别到的文字（招牌 / 菜单 / 路牌等），已截断 */
+  ocrText?: string;
+  /** 端侧主体分割识别到的前景主体数量 */
+  subjectCount?: number;
 }
 
 /**

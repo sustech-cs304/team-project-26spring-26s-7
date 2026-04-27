@@ -18,7 +18,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { logger } from '../utils/Logger';
 import { MultipartFormData, FormField, FileField } from './MultipartFormData';
 import { HttpResponse } from './HttpClient';
-import { VISION_LLM_BASE_URL, HttpTimeout } from './ApiEndpoints';
+import { VISION_LLM_BASE_URL, VISION_LLM_AUTH_TOKEN, HttpTimeout } from './ApiEndpoints';
 
 const TAG = 'VisionLLMClient';
 
@@ -157,7 +157,8 @@ export class VisionLLMClient {
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
         header: {
-          'Content-Type': formData.getContentType()
+          'Content-Type': formData.getContentType(),
+          'Authorization': `Bearer ${VISION_LLM_AUTH_TOKEN}`
         },
         readTimeout: this.timeout,
         connectTimeout: this.timeout,
@@ -236,7 +237,8 @@ export class VisionLLMClient {
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
         header: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${VISION_LLM_AUTH_TOKEN}`
         },
         readTimeout: this.timeout,
         connectTimeout: this.timeout,
