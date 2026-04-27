@@ -56,6 +56,9 @@ export struct NodeDetailPage {
     this.pageVisible = false
   }
 
+  onDisappear(): void {
+  }
+
   private formatDate(timestamp: number): string {
     const date = new Date(timestamp)
     const year = date.getFullYear().toString()
@@ -84,7 +87,7 @@ export struct NodeDetailPage {
 
       this.title = node.title
       this.poiName = node.poiName
-      this.date = this.formatDate(node.createdAt)
+      this.date = this.formatDate(node.visitedAt || node.createdAt)
       this.mood = node.mood
       this.tags = node.tags
       this.content = node.content
@@ -290,13 +293,11 @@ export struct NodeDetailPage {
         .margin({ top: 18 })
       }
 
-      Row() {
-        Text(this.date)
-          .fontSize(AppDimens.FONT_SM)
-          .fontColor(AppColors.TEXT_HINT)
-      }
-      .width('100%')
-      .margin({ top: 18 })
+      Text(this.date)
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(AppColors.TEXT_HINT)
+        .margin({ top: 18 })
+        .width('100%')
 
     }
     .width('100%')
@@ -400,7 +401,7 @@ export struct NodeDetailPage {
     .height('100%')
     .backgroundColor(AppColors.BACKGROUND)
     .bindContentCover(this.showFullPhoto, this.buildFullPhotoViewer(), {
-      modalTransition: ModalTransition.DEFAULT,
+      modalTransition: undefined,
       onDisappear: () => { this.showFullPhoto = false }
     })
   }

@@ -145,6 +145,7 @@ export interface MemoryNode {
   lastSyncedAt?: number
   version?: number
   photoManifest?: string
+  visitedAt?: number
 }
 
 /** 同步状态 */

@@ -186,6 +186,10 @@ const SQL_ADD_MEMORY_NODE_VERSION = `
   ALTER TABLE memory_nodes ADD COLUMN version INTEGER NOT NULL DEFAULT 1
 `;
 
+const SQL_ADD_MEMORY_NODE_VISITED_AT = `
+  ALTER TABLE memory_nodes ADD COLUMN visited_at INTEGER DEFAULT 0
+`;
+
 const SQL_MIGRATE_MEMORY_NODE_ORDER = `
   UPDATE memory_nodes SET node_order = "order" WHERE node_order = 0
 `;
@@ -310,7 +314,8 @@ export class RdbHelper {
       SQL_ADD_MEMORY_NODE_SYNC_STATUS,
       SQL_ADD_MEMORY_NODE_DELETED_AT,
       SQL_ADD_MEMORY_NODE_LAST_SYNCED_AT,
-      SQL_ADD_MEMORY_NODE_VERSION
+      SQL_ADD_MEMORY_NODE_VERSION,
+      SQL_ADD_MEMORY_NODE_VISITED_AT
     ];
 
     for (let i = 0; i < optionalSchemaUpdates.length; i++) {

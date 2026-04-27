@@ -47,6 +47,7 @@ interface NodePayload {
   deletedAt: number
   version: number
   photoManifest: string
+  visitedAt: number
 }
 
 export class CloudSyncService {
@@ -114,7 +115,8 @@ export class CloudSyncService {
       updatedAt: node.updatedAt,
       deletedAt: node.deletedAt ?? 0,
       version: node.version ?? 1,
-      photoManifest: node.photoManifest && node.photoManifest.length > 2 ? node.photoManifest : '[]'
+      photoManifest: node.photoManifest && node.photoManifest.length > 2 ? node.photoManifest : '[]',
+      visitedAt: node.visitedAt ?? 0
     }
     return JSON.stringify(payload)
   }
@@ -184,6 +186,7 @@ export class CloudSyncService {
     node.updatedAt = data.updatedAt
     node.deletedAt = data.deletedAt
     node.version = data.version
+    node.visitedAt = data.visitedAt
     await databaseZone.upsert(node)
     return cloudId
   }
@@ -307,7 +310,8 @@ export class CloudSyncService {
         deletedAt: record.deletedAt ?? 0,
         lastSyncedAt: Date.now(),
         version: record.version ?? 1,
-        photoManifest: record.photoManifest ?? ''
+        photoManifest: record.photoManifest ?? '',
+        visitedAt: record.visitedAt ?? 0
       }
       result.push(node)
     }

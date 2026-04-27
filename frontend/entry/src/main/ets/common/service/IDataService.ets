@@ -56,6 +56,7 @@ export interface CreateNodeInput {
   photos: string[];
   mood: string;
   tags: string[];
+  visitedAt?: number;
 }
 
 /**
@@ -71,6 +72,7 @@ export interface UpdateNodeInput {
   photos?: string[];
   mood?: string;
   tags?: string[];
+  visitedAt?: number;
 }
 
 /**

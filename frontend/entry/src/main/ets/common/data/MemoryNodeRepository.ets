@@ -39,6 +39,7 @@ export interface CreateNodeInput {
   tags?: string[];
   mood?: string;
   sensitivity?: string;
+  visitedAt?: number;
 }
 
 /**
@@ -55,6 +56,7 @@ export interface UpdateNodeInput {
   photos?: string[];
   tags?: string[];
   mood?: string;
+  visitedAt?: number;
 }
 
 export interface SoftDeleteResult {
@@ -146,6 +148,7 @@ export class MemoryNodeRepository {
     const lastSyncedAtIdx = resultSet.getColumnIndex('last_synced_at');
     const versionIdx = resultSet.getColumnIndex('version');
     const photoManifestIdx = resultSet.getColumnIndex('photo_manifest');
+    const visitedAtIdx = resultSet.getColumnIndex('visited_at');
 
     const title = titleIdx >= 0 ? (resultSet.getString(titleIdx) ?? '') : '';
     const poiName = resultSet.getString(poiIdx) ?? '';
@@ -171,7 +174,8 @@ export class MemoryNodeRepository {
       deletedAt: deletedAtIdx >= 0 ? resultSet.getDouble(deletedAtIdx) : 0,
       lastSyncedAt: lastSyncedAtIdx >= 0 ? resultSet.getDouble(lastSyncedAtIdx) : 0,
       version: versionIdx >= 0 ? resultSet.getDouble(versionIdx) : 1,
-      photoManifest: photoManifestIdx >= 0 ? (resultSet.getString(photoManifestIdx) ?? '') : ''
+      photoManifest: photoManifestIdx >= 0 ? (resultSet.getString(photoManifestIdx) ?? '') : '',
+      visitedAt: visitedAtIdx >= 0 ? resultSet.getDouble(visitedAtIdx) : 0
     };
     return node;
   }
@@ -290,6 +294,7 @@ export class MemoryNodeRepository {
         'created_at': now,
         'updated_at': now,
         'sensitivity': node.sensitivity ?? 'S2',
+        'visited_at': node.visitedAt ?? 0,
         'owner_uid': ownerUid,
         'cloud_id': '',
         'sync_status': 'pending_create',
@@ -346,6 +351,9 @@ export class MemoryNodeRepository {
       }
       if (node.mood !== undefined) {
         valueBucket['mood'] = node.mood;
+      }
+      if (node.visitedAt !== undefined) {
+        valueBucket['visited_at'] = node.visitedAt;
       }
       if (node.tags !== undefined) {
         valueBucket['tags'] = JSON.stringify(node.tags);
@@ -495,7 +503,8 @@ export class MemoryNodeRepository {
       deleted_at: node.deletedAt ?? 0,
       last_synced_at: Date.now(),
       version: node.version ?? 1,
-      sensitivity: 'S2'
+      sensitivity: 'S2',
+      visited_at: node.visitedAt ?? 0
     };
 
     try {

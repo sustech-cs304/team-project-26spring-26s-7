@@ -31,6 +31,9 @@ export struct NodeEditPage {
   @State showQuickTripCreator: boolean = false
   @State quickTripName: string = ''
   @State isCreatingQuickTrip: boolean = false
+  @State visitedAt: number = 0
+  @State tempVisitedAt: number = 0
+  @State showDatePicker: boolean = false
 
   private dataService = getDataService()
 
@@ -121,7 +124,7 @@ export struct NodeEditPage {
       return '当前旅行'
     }
     if (this.availableTrips.length === 0) {
-      return '无可选旅行（保存时自动创建）'
+      return '不关联任何旅行'
     }
     return '请选择旅行'
   }
@@ -144,6 +147,7 @@ export struct NodeEditPage {
       this.latitude = node.latitude
       this.longitude = node.longitude
       this.hasPickedLocation = true
+      this.visitedAt = node.visitedAt ?? 0
       await this.loadAvailableTrips()
     } catch (_) {
       promptAction.showToast({ message: '加载节点数据失败' })
@@ -202,7 +206,8 @@ export struct NodeEditPage {
           poiName: resolvedPoiName,
           photos: this.photos,
           mood: this.mood,
-          tags: this.tags
+          tags: this.tags,
+          visitedAt: this.visitedAt
         })
         promptAction.showToast({ message: '记忆已更新' })
       } else {
@@ -215,7 +220,8 @@ export struct NodeEditPage {
           poiName: resolvedPoiName,
           photos: this.photos,
           mood: this.mood,
-          tags: this.tags
+          tags: this.tags,
+          visitedAt: this.visitedAt > 0 ? this.visitedAt : 0
         })
         promptAction.showToast({ message: '记忆已保存' })
       }
@@ -398,6 +404,59 @@ export struct NodeEditPage {
       return '已接近正文上限'
     }
     return '正文会在达到上限后自动停止输入'
+  }
+
+  @Builder
+  private buildDatePickerDialog() {
+    Stack({ alignContent: Alignment.Bottom }) {
+      Column()
+        .width('100%')
+        .height('100%')
+        .backgroundColor('#88000000')
+        .onClick(() => { this.showDatePicker = false })
+
+      Column() {
+        Row() {
+          Text('取消')
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor(AppColors.TEXT_SECONDARY)
+            .onClick(() => { this.showDatePicker = false })
+          Blank()
+          Text('到访日期')
+            .fontSize(AppDimens.FONT_LG)
+            .fontWeight(FontWeight.Medium)
+          Blank()
+          Text('确定')
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor(AppColors.PRIMARY)
+            .onClick(() => {
+              this.showDatePicker = false
+              this.visitedAt = this.tempVisitedAt
+            })
+        }
+        .width('100%')
+        .padding({ left: 20, right: 20, top: 16, bottom: 12 })
+
+        Divider()
+          .color(AppColors.BACKGROUND)
+
+        DatePicker({
+          start: new Date('2000-1-1'),
+          end: new Date(),
+          selected: new Date(this.tempVisitedAt)
+        })
+          .width('100%')
+          .padding({ left: 16, right: 16 })
+          .onDateChange((value: Date) => {
+            this.tempVisitedAt = new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime()
+          })
+      }
+      .width('100%')
+      .backgroundColor(AppColors.CARD_BG)
+      .borderRadius({ topLeft: 20, topRight: 20 })
+    }
+    .width('100%')
+    .height('100%')
   }
 
   build() {
@@ -644,10 +703,41 @@ export struct NodeEditPage {
             }
             .width('100%')
             .padding(AppDimens.PADDING_MD)
-            .margin({ top: 12, bottom: 24 })
+            .margin({ top: 12 })
             .backgroundColor(AppColors.CARD_BG)
             .borderRadius(AppDimens.RADIUS_SM)
             .alignItems(HorizontalAlign.Start)
+
+            // 到访日期
+            Row() {
+              Text('📅')
+                .fontSize(18)
+              Column() {
+                Text('到访日期')
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(AppColors.TEXT_PRIMARY)
+                Text(this.visitedAt > 0 ? this.formatDate(this.visitedAt) : '未设置，默认记录创建时间')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_HINT)
+                  .margin({ top: 4 })
+              }
+              .margin({ left: 8 })
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Start)
+              Text('选择日期 >')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.PRIMARY)
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .margin({ top: 12, bottom: 24 })
+            .backgroundColor(AppColors.CARD_BG)
+            .borderRadius(AppDimens.RADIUS_SM)
+            .onClick(() => {
+              this.tempVisitedAt = this.visitedAt > 0 ? this.visitedAt : Date.now()
+              this.showDatePicker = true
+            })
           }
           .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12 })
         }
@@ -871,5 +961,8 @@ export struct NodeEditPage {
     .width('100%')
     .height('100%')
     .backgroundColor(AppColors.BACKGROUND)
+    .bindContentCover(this.showDatePicker, this.buildDatePickerDialog(), {
+      onDisappear: () => { this.showDatePicker = false }
+    })
   }
 }
