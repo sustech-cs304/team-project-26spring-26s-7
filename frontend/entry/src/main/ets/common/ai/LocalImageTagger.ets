@@ -15,26 +15,24 @@
 
 import { image } from '@kit.ImageKit';
 import { fileIo } from '@kit.CoreFileKit';
-import { textRecognition, subjectSegmentation } from '@kit.CoreVisionKit';
+import { textRecognition } from '@kit.CoreVisionKit';
 import { logger } from '../utils/Logger';
 import { PhotoMetadata, VisualKitResult } from './PhotoMetadata';
 
 const TAG = 'LocalImageTagger';
 const OCR_TEXT_MAX_LENGTH: number = 80;
 
+/**
+ * 实际进入 prompt 的 EXIF 字段集合
+ * 砍掉了 Orientation/ExposureTime/FNumber/ISOSpeedRatings/FocalLength/Make/Model，
+ * 因为 prompt 已经不展示这些字段，再抽就是纯浪费 ~50ms/张
+ */
 const EXIF_PROPERTY_KEYS: string[] = [
   'DateTimeOriginal',
   'GPSLatitude',
   'GPSLongitude',
   'GPSLatitudeRef',
-  'GPSLongitudeRef',
-  'Orientation',
-  'ExposureTime',
-  'FNumber',
-  'ISOSpeedRatings',
-  'FocalLength',
-  'Make',
-  'Model'
+  'GPSLongitudeRef'
 ];
 
 /**
@@ -113,39 +111,8 @@ export class LocalImageTagger {
         result.gpsLongitude = lon;
       }
 
-      // 相机
-      const make = exif.get('Make');
-      const model = exif.get('Model');
-      if (make) {
-        result.cameraMake = make;
-      }
-      if (model) {
-        result.cameraModel = model;
-      }
-
-      // 方向 / 曝光参数
-      const orientation = exif.get('Orientation');
-      if (orientation) {
-        result.orientation = orientation;
-      }
-      const exposureTime = exif.get('ExposureTime');
-      if (exposureTime) {
-        result.exposureTime = exposureTime;
-      }
-      const fNumber = exif.get('FNumber');
-      if (fNumber) {
-        result.fNumber = fNumber;
-      }
-      const iso = exif.get('ISOSpeedRatings');
-      if (iso) {
-        result.isoSpeed = iso;
-      }
-      const focal = exif.get('FocalLength');
-      if (focal) {
-        result.focalLength = focal;
-      }
-
-      // 端侧画面内容识别：OCR + 主体分割
+      // 端侧画面内容识别：OCR（拍到招牌/菜单/路牌时给 prompt 补充语义）
+      // 主体分割暂时停用：分割只能给"主体数量"，对文案生成贡献小，单张额外耗时 ~150ms 不划算
       // 已知宽高时缩到 720 长边再解，未知宽高时按原图解（不传 desiredSize 避免被压成方图）
       let pixelMap: image.PixelMap | undefined;
       try {
@@ -157,7 +124,7 @@ export class LocalImageTagger {
           pixelMap = await imageSource.createPixelMap();
         }
       } catch (decodeErr) {
-        logger.warn(TAG, `createPixelMap failed (skip vision): ${JSON.stringify(decodeErr)}`);
+        logger.warn(TAG, `createPixelMap failed (skip OCR): ${JSON.stringify(decodeErr)}`);
       }
 
       if (pixelMap) {
@@ -171,15 +138,6 @@ export class LocalImageTagger {
         }
 
         try {
-          const subjectCount = await this.runSubjectSegmentation(pixelMap);
-          if (subjectCount !== undefined) {
-            result.subjectCount = subjectCount;
-          }
-        } catch (segErr) {
-          logger.warn(TAG, `subjectSegmentation failed: ${JSON.stringify(segErr)}`);
-        }
-
-        try {
           await pixelMap.release();
         } catch (_) {
           // ignore
@@ -188,11 +146,9 @@ export class LocalImageTagger {
 
       logger.info(
         TAG,
-        `Extracted: scene=[${result.sceneTags.join(',')}], time=[${result.timeTags.join(',')}], ` +
+        `Extracted: time=[${result.timeTags.join(',')}], ` +
           `gps=(${result.gpsLatitude ?? '-'},${result.gpsLongitude ?? '-'}), ` +
-          `camera=${result.cameraMake ?? ''} ${result.cameraModel ?? ''}, ` +
-          `ocr=${result.ocrText ? '(' + result.ocrText.length + 'chars)' : '-'}, ` +
-          `subjects=${result.subjectCount ?? '-'}`
+          `ocr=${result.ocrText ? '(' + result.ocrText.length + 'chars)' : '-'}`
       );
       return result;
     } catch (err) {
@@ -378,30 +334,6 @@ export class LocalImageTagger {
       return compact;
     }
     return compact.substring(0, OCR_TEXT_MAX_LENGTH) + '…';
-  }
-
-  /**
-   * 端侧主体分割：subjectSegmentation.doSegmentation
-   * 不传 config 用默认；只统计主体数量
-   * 通过 Object 中转再转 Record，避开 ArkTS 严格的类型重叠检查
-   */
-  private async runSubjectSegmentation(pixelMap: image.PixelMap): Promise<number | undefined> {
-    const visionInfo: subjectSegmentation.VisionInfo = { pixelMap: pixelMap };
-    const segResult = await subjectSegmentation.doSegmentation(visionInfo);
-    if (!segResult) {
-      return undefined;
-    }
-    const segRecord = segResult as Object as Record<string, Object>;
-    logger.info(TAG, `Segmentation keys=${Object.keys(segRecord).join(',')}`);
-
-    const subjects = segRecord['subjects'];
-    if (Array.isArray(subjects)) {
-      return (subjects as Object[]).length;
-    }
-    if (segRecord['fullSubject']) {
-      return 1;
-    }
-    return undefined;
   }
 
   /** 从 EXIF 时间字符串解析时段（"YYYY:MM:DD HH:MM:SS"） */

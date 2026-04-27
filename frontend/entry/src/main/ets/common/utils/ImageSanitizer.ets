@@ -145,16 +145,26 @@ export class ImageSanitizer {
 
   /** 一次清空 sanitized 目录（建议 App 启动时跑一次兜底） */
   static purgeAll(context: common.UIAbilityContext): void {
+    const dir = `${context.filesDir}/${SANITIZED_DIR_NAME}`;
+    // fs.accessSync 在路径不存在时是 throw 而不是返回 false，所以用 try 守卫
     try {
-      const dir = `${context.filesDir}/${SANITIZED_DIR_NAME}`;
-      if (!fs.accessSync(dir)) {
-        return;
-      }
+      fs.accessSync(dir);
+    } catch (_) {
+      return;  // 目录不存在，无需清理
+    }
+    try {
       const list = fs.listFileSync(dir);
+      let removed = 0;
       for (const name of list) {
         try {
           fs.unlinkSync(`${dir}/${name}`);
-        } catch (_) {}
+          removed += 1;
+        } catch (_) {
+          // 单个文件删除失败继续
+        }
+      }
+      if (removed > 0) {
+        logger.info(TAG, `purgeAll: removed ${removed} stale sanitized copies`);
       }
     } catch (err) {
       logger.warn(TAG, `purgeAll failed: ${JSON.stringify(err)}`);

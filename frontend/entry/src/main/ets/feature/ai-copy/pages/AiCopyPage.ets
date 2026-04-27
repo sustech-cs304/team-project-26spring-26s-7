@@ -200,9 +200,14 @@ export struct AiCopyPage {
     if (index < 0 || index >= this.imagePaths.length) {
       return;
     }
+    const removed = this.imagePaths[index];
     const next = this.imagePaths.slice();
     next.splice(index, 1);
     this.imagePaths = next;
+    // 让被删掉的图释放元数据缓存槽位
+    if (removed) {
+      this.aiClient.invalidateMetadata(removed);
+    }
     await this.refreshMetadataSummary();
   }
 
@@ -225,6 +230,14 @@ export struct AiCopyPage {
     if (!isOnline) {
       promptAction.showToast({ message: '当前无网络连接，请检查网络后重试' });
       return;
+    }
+
+    // 兜底：aboutToAppear 里的 ensureLoaded 是 fire-and-forget，
+    // 如果用户进页面立刻点生成，可能还没加载完。这里 await 一次保证状态正确。
+    const uiContextEarly = this.getUIContext();
+    const ctxEarly = uiContextEarly.getHostContext() as common.UIAbilityContext;
+    if (ctxEarly) {
+      await ConsentManager.ensureLoaded(ctxEarly);
     }
 
     // 云端打标签开关开启 + 用户未明示过 -> 先 JIT 同意
@@ -316,6 +329,12 @@ export struct AiCopyPage {
     }
     if (this.isPreviewingPrompt) {
       return;
+    }
+
+    const uiContextEarly = this.getUIContext();
+    const ctxEarly = uiContextEarly.getHostContext() as common.UIAbilityContext;
+    if (ctxEarly) {
+      await ConsentManager.ensureLoaded(ctxEarly);
     }
 
     if (ConsentManager.isCloudTaggingEnabled() && !ConsentManager.hasPrompted()) {
@@ -547,7 +566,11 @@ export struct AiCopyPage {
               .margin({ top: 12 })
             } else if (this.metadataSummary.length > 0) {
               Column() {
-                Text('已识别元数据（仅文本进入 prompt，照片不出设备）')
+                Text(
+                  this.cloudTaggingEnabled
+                    ? '已识别端侧元数据（点击生成时还会上传剥离 EXIF 后的副本到云端补充识别画面内容）'
+                    : '已识别端侧元数据（仅文本进入 prompt，照片本体不会上传）'
+                )
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.PRIMARY)
                   .margin({ bottom: 6 })

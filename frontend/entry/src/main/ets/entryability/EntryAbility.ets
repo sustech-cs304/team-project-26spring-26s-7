@@ -4,7 +4,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { window } from '@kit.ArkUI';
 import { connection } from '@kit.NetworkKit';
 import { RdbHelper } from '../common/data/RdbHelper';
-import { AuthService, SyncManager } from '../common';
+import { AuthService, SyncManager, ImageSanitizer } from '../common';
 
 const DOMAIN = 0x0000;
 
@@ -122,6 +122,14 @@ export default class EntryAbility extends UIAbility {
     }).catch((err: Error) => {
       hilog.error(DOMAIN, 'testTag', 'Database initialization failed: %{public}s', err.message);
     });
+
+    // 兜底清理：上次会话异常退出可能残留的 sanitize 副本（含像素，无 EXIF），
+    // 启动时一次性扫掉，避免长期堆积
+    try {
+      ImageSanitizer.purgeAll(this.context);
+    } catch (err) {
+      hilog.warn(DOMAIN, 'testTag', 'Sanitizer purge on start failed: %{public}s', JSON.stringify(err));
+    }
   }
 
   onDestroy(): void {

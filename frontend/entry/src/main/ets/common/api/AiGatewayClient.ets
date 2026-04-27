@@ -111,6 +111,13 @@ export class AiGatewayClient {
   private localTagger: LocalImageTagger;
   /** 最近一次构建出的批量 prompt，给 UI 调试用 */
   private lastBatchPrompt: string = '';
+  /**
+   * PhotoMetadata 缓存：以沙箱路径为 key，避免同一张照片在
+   * "UI 预览"和"实际生成"两条路径里被重复抽 EXIF / OCR / 分割。
+   * 用 LRU 风格的简单大小限制，避免长会话堆积。
+   */
+  private metadataCache: Map<string, PhotoMetadata> = new Map();
+  private static readonly METADATA_CACHE_MAX = 32;
 
   constructor() {
     this.httpClient = new HttpClient();
@@ -121,6 +128,37 @@ export class AiGatewayClient {
   /** 取上一次实际发送给 LLM 的 prompt（调用 generateCopyFromImages 或 previewPromptForImages 后填充） */
   getLastBatchPrompt(): string {
     return this.lastBatchPrompt;
+  }
+
+  /**
+   * 拿到一张图的 PhotoMetadata，命中缓存就不重抽
+   * 注意：返回的是缓存对象本身，调用方往 objectTags 写入会被后续命中看到（这正是云端打标的预期）
+   */
+  private async getOrExtractMetadata(photoPath: string): Promise<PhotoMetadata> {
+    const cached = this.metadataCache.get(photoPath);
+    if (cached) {
+      return cached;
+    }
+    const md = await this.localTagger.extractMetadata(photoPath);
+    if (this.metadataCache.size >= AiGatewayClient.METADATA_CACHE_MAX) {
+      // 简单驱逐：删掉最早插入的一条（Map 保留插入顺序）
+      const firstKey: string | undefined = this.metadataCache.keys().next().value;
+      if (firstKey) {
+        this.metadataCache.delete(firstKey);
+      }
+    }
+    this.metadataCache.set(photoPath, md);
+    return md;
+  }
+
+  /** 用户删图或换图时由调用方主动失效缓存，避免缓存永远不释放 */
+  invalidateMetadata(photoPath: string): void {
+    this.metadataCache.delete(photoPath);
+  }
+
+  /** 一次性清掉所有缓存（页面销毁时可调用） */
+  clearMetadataCache(): void {
+    this.metadataCache.clear();
   }
 
   /**
@@ -219,10 +257,10 @@ export class AiGatewayClient {
     }
 
     try {
-      // Step 1: 端侧批量抽 EXIF
+      // Step 1: 端侧批量抽 EXIF（命中缓存就跳过重抽）
       const metadataList: PhotoMetadata[] = [];
       for (const path of request.imagePaths) {
-        const md = await this.localTagger.extractMetadata(path);
+        const md = await this.getOrExtractMetadata(path);
         metadataList.push(md);
       }
 
@@ -240,7 +278,7 @@ export class AiGatewayClient {
       this.lastBatchPrompt = prompt;
       logger.info(TAG, `Built batch prompt (${prompt.length} chars):\n${prompt}`);
 
-      // Step 4: 纯文本 LLM
+      // Step 5: 纯文本 LLM
       const textRequest: TextLLMRequest = {
         prompt: prompt,
         modelName: 'Qwen-VL-Chat-Int4',
@@ -354,7 +392,7 @@ export class AiGatewayClient {
     }
     const metadataList: PhotoMetadata[] = [];
     for (const path of imagePaths) {
-      const md = await this.localTagger.extractMetadata(path);
+      const md = await this.getOrExtractMetadata(path);
       metadataList.push(md);
     }
     return describePhotoBatch(metadataList);
@@ -370,7 +408,7 @@ export class AiGatewayClient {
     }
     const metadataList: PhotoMetadata[] = [];
     for (const path of request.imagePaths) {
-      const md = await this.localTagger.extractMetadata(path);
+      const md = await this.getOrExtractMetadata(path);
       metadataList.push(md);
     }
     if (request.enableCloudTagging === true && request.context) {
