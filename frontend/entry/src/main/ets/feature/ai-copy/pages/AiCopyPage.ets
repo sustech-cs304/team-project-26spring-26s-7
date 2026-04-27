@@ -283,9 +283,20 @@ export struct AiCopyPage {
       if (response.statusCode === 200 && response.data) {
         const aiResponse: AiCopyResponse = response.data;
         if (aiResponse.code === 0 && aiResponse.data) {
-          this.generatedCopy = aiResponse.data.generated_text;
-          this.alternatives = aiResponse.data.alternatives || [];
-          promptAction.showToast({ message: '文案已生成' });
+          const text = aiResponse.data.generated_text || '';
+          // 后端 query 撞敏感词时返回固定文本"抱歉，内容涉及敏感信息……"
+          // 这种情况下不填到生成结果区，避免用户以为是文案
+          if (text.startsWith('抱歉，内容涉及敏感信息')) {
+            promptAction.showToast({
+              message: '您的提示词或元数据可能含敏感内容，服务端拒绝生成。请调整后重试。',
+              duration: 4000
+            });
+            this.generatedCopy = '';
+          } else {
+            this.generatedCopy = text;
+            this.alternatives = aiResponse.data.alternatives || [];
+            promptAction.showToast({ message: '文案已生成' });
+          }
         } else {
           promptAction.showToast({ message: '生成失败，请重试' });
         }
@@ -337,6 +348,15 @@ export struct AiCopyPage {
       await ConsentManager.ensureLoaded(ctxEarly);
     }
 
+    // 开启云端打标时预览也会发请求，离线场景需要拦下，否则一卡 60 秒
+    if (ConsentManager.isCloudTaggingEnabled()) {
+      const isOnline = (AppStorage.get('networkOnline') as boolean) ?? false;
+      if (!isOnline) {
+        promptAction.showToast({ message: '当前无网络，预览将无法获取云端内容标签' });
+        return;
+      }
+    }
+
     if (ConsentManager.isCloudTaggingEnabled() && !ConsentManager.hasPrompted()) {
       this.pendingAfterConsent = 'preview';
       this.showConsentDialog = true;
@@ -375,6 +395,7 @@ export struct AiCopyPage {
 
   /**
    * 用户在 JIT 对话框做选择后调用
+   * agreed=true / false 都视作"明确表态"，会把 prompted 写 true，下次不再弹
    */
   private async handleConsentChoice(agreed: boolean): Promise<void> {
     this.showConsentDialog = false;
@@ -385,9 +406,10 @@ export struct AiCopyPage {
       return;
     }
     await ConsentManager.recordPromptResult(ctx, agreed);
-    if (!agreed) {
+    if (agreed) {
+      promptAction.showToast({ message: '已同意，开始上传识别' });
+    } else {
       promptAction.showToast({ message: '已选择不上传照片，仅使用 EXIF 元数据生成' });
-      // 用户拒绝后也允许继续生成，只不过走 EXIF-only 路径
     }
     const next = this.pendingAfterConsent;
     this.pendingAfterConsent = '';
@@ -396,6 +418,15 @@ export struct AiCopyPage {
     } else if (next === 'preview') {
       await this.handlePreviewPrompt();
     }
+  }
+
+  /**
+   * 用户选择"稍后再说"——不写入 enabled / prompted，仅关闭对话框，
+   * 下次还会再问。被打断的 generate / preview 不再续做。
+   */
+  private handleConsentDismiss(): void {
+    this.showConsentDialog = false;
+    this.pendingAfterConsent = '';
   }
 
   /**
@@ -766,9 +797,13 @@ export struct AiCopyPage {
                 .fontSize(AppDimens.FONT_LG)
                 .height(50)
                 .layoutWeight(2)
-                .backgroundColor(this.imagePaths.length > 0 ? AppColors.PRIMARY : AppColors.TEXT_HINT)
+                .backgroundColor(
+                  this.imagePaths.length > 0 && !this.isPreviewingPrompt
+                    ? AppColors.PRIMARY
+                    : AppColors.TEXT_HINT
+                )
                 .fontColor(Color.White)
-                .enabled(this.imagePaths.length > 0)
+                .enabled(this.imagePaths.length > 0 && !this.isPreviewingPrompt)
                 .onClick(() => this.handleGenerate())
             }
             .width('100%')
@@ -921,11 +956,20 @@ export struct AiCopyPage {
             .layoutWeight(1)
 
           Column() {
-            Text('🛡️ 隐私授权请求')
-              .fontSize(AppDimens.FONT_LG)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(AppColors.TEXT_PRIMARY)
-              .margin({ bottom: 12 })
+            Row() {
+              Text('🛡️ 隐私授权请求')
+                .fontSize(AppDimens.FONT_LG)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(AppColors.TEXT_PRIMARY)
+              Blank()
+              Text('稍后再说')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_HINT)
+                .padding({ left: 12, right: 4, top: 4, bottom: 4 })
+                .onClick(() => this.handleConsentDismiss())
+            }
+            .width('100%')
+            .margin({ bottom: 12 })
 
             Text(
               '为了让 AI 更准确地识别照片画面内容（例如"猫"、"沙发"、"夕阳"），' +
