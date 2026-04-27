@@ -59,6 +59,12 @@ export interface VisionLLMRequest {
   temperature?: number;
   /** top-p（默认：0.8） */
   topP?: number;
+  /**
+   * 最多生成 token 数（后端 clamp 到 [1, 2048]，默认 2048）
+   * 中文一个 token 约 1-2 字符，每 token decode 75-90ms
+   * 不传则按默认 2048 跑，会很慢
+   */
+  maxTokens?: number;
 }
 
 /**
@@ -73,6 +79,8 @@ export interface TextLLMRequest {
   temperature?: number;
   /** top-p（默认：0.85） */
   topP?: number;
+  /** 最多生成 token 数（同上） */
+  maxTokens?: number;
 }
 
 /** OpenAI 兼容请求中的 message 结构 */
@@ -87,6 +95,8 @@ interface ChatCompletionRequest {
   messages: ChatMessage[];
   temperature: number;
   top_p: number;
+  /** 可选上限 token 数；缺省时后端按 2048 跑 */
+  max_tokens?: number;
 }
 
 /**
@@ -143,6 +153,10 @@ export class VisionLLMClient {
       formData.addField('question', request.question);
       formData.addField('temperature', (request.temperature ?? 1.0).toString());
       formData.addField('top_p', (request.topP ?? 0.8).toString());
+      // 上限 token 数：不传则后端按默认 2048 跑，会很慢
+      if (request.maxTokens !== undefined && request.maxTokens > 0) {
+        formData.addField('max_tokens', request.maxTokens.toString());
+      }
 
       // 构建请求体
       const requestBody = await formData.build();
@@ -230,6 +244,9 @@ export class VisionLLMClient {
         temperature: request.temperature ?? 0.9,
         top_p: request.topP ?? 0.85
       };
+      if (request.maxTokens !== undefined && request.maxTokens > 0) {
+        requestBody.max_tokens = request.maxTokens;
+      }
 
       const url = `${this.baseUrl}/v1/chat/completions`;
       logger.info(TAG, `Sending POST request to: ${url}`);

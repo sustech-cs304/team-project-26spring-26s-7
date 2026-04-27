@@ -52,6 +52,23 @@ const LENGTH_PROMPTS: Record<string, string> = {
 };
 
 /**
+ * 长度等级 → max_tokens 上限
+ * 后端每 token decode 约 75-90ms，砍上限直接砍时延：
+ *   short=64  → 比默认 2048 快 ~14s
+ *   medium=160 → 快 ~10s
+ *   long=320  → 快 ~5s
+ * 中文 1 token 约 1-2 字符，留 1.5x 余量给标点和模型啰嗦
+ */
+const LENGTH_MAX_TOKENS: Record<string, number> = {
+  'short': 64,
+  'medium': 160,
+  'long': 320
+};
+
+/** 云端打标的 max_tokens：5-10 个短语，每个 ≤8 字，余量 80 token */
+const TAGGING_MAX_TOKENS: number = 80;
+
+/**
  * 基于图片的 AI 文案生成请求
  */
 export interface ImageCopyRequest {
@@ -117,6 +134,8 @@ export class AiGatewayClient {
    * 用 LRU 风格的简单大小限制，避免长会话堆积。
    */
   private metadataCache: Map<string, PhotoMetadata> = new Map();
+  /** 进行中的提取任务：同一张图被并行触发多次时，第二次起复用已有 Promise */
+  private inflightExtractions: Map<string, Promise<PhotoMetadata>> = new Map();
   private static readonly METADATA_CACHE_MAX = 32;
 
   constructor() {
@@ -131,24 +150,37 @@ export class AiGatewayClient {
   }
 
   /**
-   * 拿到一张图的 PhotoMetadata，命中缓存就不重抽
-   * 注意：返回的是缓存对象本身，调用方往 objectTags 写入会被后续命中看到（这正是云端打标的预期）
+   * 拿到一张图的 PhotoMetadata；命中缓存或 in-flight 直接复用，不重抽。
+   * 注意：返回的是缓存对象本身，调用方往 objectTags 写入会被后续命中看到（这正是云端打标的预期）。
+   * 并发安全：批量调用 Promise.all([this.getOrExtract..., ...]) 触发同一 path 时只跑一次。
    */
   private async getOrExtractMetadata(photoPath: string): Promise<PhotoMetadata> {
     const cached = this.metadataCache.get(photoPath);
     if (cached) {
       return cached;
     }
-    const md = await this.localTagger.extractMetadata(photoPath);
-    if (this.metadataCache.size >= AiGatewayClient.METADATA_CACHE_MAX) {
-      // 简单驱逐：删掉最早插入的一条（Map 保留插入顺序）
-      const firstKey: string | undefined = this.metadataCache.keys().next().value;
-      if (firstKey) {
-        this.metadataCache.delete(firstKey);
-      }
+    const inflight = this.inflightExtractions.get(photoPath);
+    if (inflight) {
+      return inflight;
     }
-    this.metadataCache.set(photoPath, md);
-    return md;
+    const promise: Promise<PhotoMetadata> = this.localTagger.extractMetadata(photoPath)
+      .then((md: PhotoMetadata) => {
+        this.inflightExtractions.delete(photoPath);
+        if (this.metadataCache.size >= AiGatewayClient.METADATA_CACHE_MAX) {
+          const firstKey: string | undefined = this.metadataCache.keys().next().value;
+          if (firstKey) {
+            this.metadataCache.delete(firstKey);
+          }
+        }
+        this.metadataCache.set(photoPath, md);
+        return md;
+      })
+      .catch((err: Object) => {
+        this.inflightExtractions.delete(photoPath);
+        throw err;
+      });
+    this.inflightExtractions.set(photoPath, promise);
+    return promise;
   }
 
   /** 用户删图或换图时由调用方主动失效缓存，避免缓存永远不释放 */
@@ -183,7 +215,8 @@ export class AiGatewayClient {
         prompt: question,
         modelName: 'Qwen-VL-Chat-Int4',
         temperature: 0.9,
-        topP: 0.85
+        topP: 0.85,
+        maxTokens: LENGTH_MAX_TOKENS[request.lengthLevel] || LENGTH_MAX_TOKENS['medium']
       };
 
       const llmResponse = await this.visionClient.askText(textRequest);
@@ -257,12 +290,10 @@ export class AiGatewayClient {
     }
 
     try {
-      // Step 1: 端侧批量抽 EXIF（命中缓存就跳过重抽）
-      const metadataList: PhotoMetadata[] = [];
-      for (const path of request.imagePaths) {
-        const md = await this.getOrExtractMetadata(path);
-        metadataList.push(md);
-      }
+      // Step 1: 端侧批量抽 EXIF + OCR（并行，命中缓存就跳过重抽）
+      const metadataList: PhotoMetadata[] = await Promise.all(
+        request.imagePaths.map((path: string) => this.getOrExtractMetadata(path))
+      );
 
       // Step 2 (可选): 云端打标签 —— 把前 N 张照片送 Qwen-VL 抽内容标签
       // 仅在用户已知情同意 + ProfileView 开关已打开时才走这条
@@ -278,12 +309,13 @@ export class AiGatewayClient {
       this.lastBatchPrompt = prompt;
       logger.info(TAG, `Built batch prompt (${prompt.length} chars):\n${prompt}`);
 
-      // Step 5: 纯文本 LLM
+      // Step 5: 纯文本 LLM —— max_tokens 按 lengthLevel 砍，避免按默认 2048 跑
       const textRequest: TextLLMRequest = {
         prompt: prompt,
         modelName: 'Qwen-VL-Chat-Int4',
         temperature: 0.9,
-        topP: 0.85
+        topP: 0.85,
+        maxTokens: LENGTH_MAX_TOKENS[request.lengthLevel] || LENGTH_MAX_TOKENS['medium']
       };
       const llmResponse = await this.visionClient.askText(textRequest);
 
@@ -361,7 +393,8 @@ export class AiGatewayClient {
         question: TAGGING_QUESTION,
         modelName: 'Qwen-VL-Chat-Int4',
         temperature: 0.7,
-        topP: 0.5
+        topP: 0.5,
+        maxTokens: TAGGING_MAX_TOKENS
       };
       const resp = await this.visionClient.askImage(visionRequest);
       if (resp.statusCode === 200 && resp.data && resp.data.content) {
@@ -390,11 +423,9 @@ export class AiGatewayClient {
     if (imagePaths.length === 0) {
       return '';
     }
-    const metadataList: PhotoMetadata[] = [];
-    for (const path of imagePaths) {
-      const md = await this.getOrExtractMetadata(path);
-      metadataList.push(md);
-    }
+    const metadataList: PhotoMetadata[] = await Promise.all(
+      imagePaths.map((path: string) => this.getOrExtractMetadata(path))
+    );
     return describePhotoBatch(metadataList);
   }
 
@@ -406,11 +437,9 @@ export class AiGatewayClient {
     if (request.imagePaths.length === 0) {
       return '';
     }
-    const metadataList: PhotoMetadata[] = [];
-    for (const path of request.imagePaths) {
-      const md = await this.getOrExtractMetadata(path);
-      metadataList.push(md);
-    }
+    const metadataList: PhotoMetadata[] = await Promise.all(
+      request.imagePaths.map((path: string) => this.getOrExtractMetadata(path))
+    );
     if (request.enableCloudTagging === true && request.context) {
       await this.augmentMetadataWithCloudTags(request.context, metadataList);
     }
