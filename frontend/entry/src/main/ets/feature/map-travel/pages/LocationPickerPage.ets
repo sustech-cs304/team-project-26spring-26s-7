@@ -32,6 +32,7 @@ interface SearchByTextResultLike {
 @Entry
 @Component
 struct LocationPickerPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State selectedLat: number = 0
   @State selectedLng: number = 0
   @State hasSelected: boolean = false
@@ -304,7 +305,10 @@ struct LocationPickerPage {
           TextInput({ placeholder: '搜索地点名称', text: this.searchKeyword })
             .layoutWeight(1)
             .height(40)
-            .backgroundColor(AppColors.CARD_BG)
+            .fontColor(AppColors.INPUT_TEXT)
+            .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+            .caretColor(AppColors.INPUT_CARET)
+            .backgroundColor(AppColors.INPUT_BG)
             .borderRadius(20)
             .padding({ left: 14, right: 14 })
             .onChange((value: string) => this.handleSearchInputChange(value))
@@ -390,7 +394,7 @@ struct LocationPickerPage {
 
           Button('确认选点')
             .fontSize(AppDimens.FONT_MD)
-            .fontColor(AppColors.CARD_BG)
+            .fontColor(AppColors.TEXT_ON_PRIMARY)
             .backgroundColor(AppColors.PRIMARY)
             .borderRadius(AppDimens.RADIUS_SM)
             .height(40)

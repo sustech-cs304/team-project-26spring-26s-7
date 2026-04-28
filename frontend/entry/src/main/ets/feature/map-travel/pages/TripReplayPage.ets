@@ -34,6 +34,7 @@ const PHASE_MOVING = 4
 @Entry
 @Component
 export struct TripReplayPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   // 播放状态
   @State isPlaying: boolean = false
   @State currentNodeIndex: number = 0

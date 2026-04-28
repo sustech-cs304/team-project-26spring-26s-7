@@ -13,6 +13,7 @@ const QUICK_TRIP_NAME_MAX_LENGTH: number = 40
 @Entry
 @Component
 export struct NodeEditPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State title: string = ''
   @State content: string = ''
   @State poiName: string = '点击选择位置'
@@ -562,7 +563,10 @@ export struct NodeEditPage {
                 .onChange((value: string) => { this.updateTitle(value) })
                 .maxLength(NODE_TITLE_MAX_LENGTH)
                 .margin({ top: 8 })
-                .backgroundColor(AppColors.BACKGROUND)
+                .fontColor(AppColors.INPUT_TEXT)
+                .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+                .caretColor(AppColors.INPUT_CARET)
+                .backgroundColor(AppColors.INPUT_BG)
                 .border({
                   width: 1,
                   color: this.getTitleBorderColor()
@@ -598,7 +602,10 @@ export struct NodeEditPage {
                 .maxLength(NODE_CONTENT_MAX_LENGTH)
                 .height(120)
                 .margin({ top: 8 })
-                .backgroundColor(AppColors.BACKGROUND)
+                .fontColor(AppColors.INPUT_TEXT)
+                .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+                .caretColor(AppColors.INPUT_CARET)
+                .backgroundColor(AppColors.INPUT_BG)
                 .border({
                   width: 1,
                   color: this.getContentBorderColor()
@@ -689,7 +696,7 @@ export struct NodeEditPage {
                 ForEach(['旅行', '美食', '风景', '打卡', '日常'], (tag: string) => {
                   Text(`#${tag}`)
                     .fontSize(AppDimens.FONT_SM)
-                    .fontColor(this.tags.includes(tag) ? AppColors.CARD_BG : AppColors.PRIMARY)
+                    .fontColor(this.tags.includes(tag) ? AppColors.TEXT_ON_PRIMARY : AppColors.PRIMARY)
                     .backgroundColor(this.tags.includes(tag) ? AppColors.PRIMARY : AppColors.PRIMARY + '15')
                     .padding({ left: 12, right: 12, top: 6, bottom: 6 })
                     .borderRadius(20)
@@ -801,7 +808,10 @@ export struct NodeEditPage {
                       : value
                   })
                   .maxLength(QUICK_TRIP_NAME_MAX_LENGTH)
-                  .backgroundColor(AppColors.BACKGROUND)
+                  .fontColor(AppColors.INPUT_TEXT)
+                  .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+                  .caretColor(AppColors.INPUT_CARET)
+                  .backgroundColor(AppColors.INPUT_BG)
                   .borderRadius(16)
                 Row() {
                   Text(`${this.quickTripName.length}/${QUICK_TRIP_NAME_MAX_LENGTH}`)
@@ -818,7 +828,7 @@ export struct NodeEditPage {
                   Button(this.isCreatingQuickTrip ? '创建中...' : '创建')
                     .height(34)
                     .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.CARD_BG)
+                    .fontColor(AppColors.TEXT_ON_PRIMARY)
                     .backgroundColor(AppColors.PRIMARY)
                     .borderRadius(17)
                     .margin({ left: 8 })
@@ -849,7 +859,7 @@ export struct NodeEditPage {
                 Button('新建旅行')
                   .height(38)
                   .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.CARD_BG)
+                  .fontColor(AppColors.TEXT_ON_PRIMARY)
                   .backgroundColor(AppColors.PRIMARY)
                   .borderRadius(19)
                   .margin({ top: 14 })

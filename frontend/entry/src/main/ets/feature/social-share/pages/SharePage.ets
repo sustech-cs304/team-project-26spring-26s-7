@@ -9,6 +9,7 @@ import { SharePlatform, RouterParam } from '../../../common'
 @Entry
 @Component
 export struct SharePage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State shareUrl: string = 'https://tp.app/s/xK9mNz'
   @State expireDays: number = 7
   @State copyText: string = ''
@@ -95,7 +96,10 @@ export struct SharePage {
               .onChange((value: string) => { this.copyText = value })
               .height(100)
               .margin({ top: 8 })
-              .backgroundColor(AppColors.BACKGROUND)
+              .fontColor(AppColors.INPUT_TEXT)
+              .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+              .caretColor(AppColors.INPUT_CARET)
+              .backgroundColor(AppColors.INPUT_BG)
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)

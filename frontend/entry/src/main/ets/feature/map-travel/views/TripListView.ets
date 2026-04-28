@@ -9,6 +9,7 @@ import type { Trip } from '../../../common'
  */
 @Component
 export struct TripListView {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State trips: Trip[] = []
   @State isLoading: boolean = false
   @Watch('onTravelDataVersionChange')

@@ -8,6 +8,7 @@ import { AuthService, RouterUrls, AppColors, AppDimens } from '../common'
 @Entry
 @Component
 struct LoginPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State isLoggingIn: boolean = false
 
   private async handleHuaweiLogin(): Promise<void> {

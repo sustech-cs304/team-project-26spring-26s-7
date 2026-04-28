@@ -7,6 +7,7 @@ import { AppColors, AppDimens, AuthService, RouterUrls, RdbDataService, SyncMana
  */
 @Component
 export struct ProfileView {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State displayName: string = 'TravelPin 用户'
   @State avatarUrl: string = ''
   @State avatarLoadFailed: boolean = false

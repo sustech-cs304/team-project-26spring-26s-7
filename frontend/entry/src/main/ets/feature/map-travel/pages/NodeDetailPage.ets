@@ -13,6 +13,7 @@ const TAG = 'NodeDetailPage'
 @Entry
 @Component
 export struct NodeDetailPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State title: string = ''
   @State poiName: string = ''
   @State date: string = ''
@@ -194,7 +195,7 @@ export struct NodeDetailPage {
         Row() {
           Text(`${this.selectedPhotoIndex + 1} / ${this.photos.length}`)
             .fontSize(AppDimens.FONT_SM)
-            .fontColor(AppColors.CARD_BG)
+            .fontColor(AppColors.TEXT_ON_PRIMARY)
             .backgroundColor('#66000000')
             .padding({ left: 10, right: 10, top: 6, bottom: 6 })
             .borderRadius(14)

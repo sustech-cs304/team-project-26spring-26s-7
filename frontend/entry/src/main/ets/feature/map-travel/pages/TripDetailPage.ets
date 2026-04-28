@@ -32,6 +32,7 @@ const DEFAULT_TRIP_CENTER: mapCommon.LatLng = {
 @Entry
 @Component
 export struct TripDetailPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State tripName: string = ''
   @State dateRange: string = ''
   @State nodeCount: number = 0

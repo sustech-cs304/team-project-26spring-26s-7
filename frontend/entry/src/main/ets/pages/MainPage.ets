@@ -11,6 +11,7 @@ import { ProfileView } from '../feature/profile/views/ProfileView'
 @Entry
 @Component
 struct MainPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State currentTabIndex: number = 0
   @Watch('onNetworkDialogTokenChange')
   @StorageLink('networkDialogToken') networkDialogToken: number = 0
