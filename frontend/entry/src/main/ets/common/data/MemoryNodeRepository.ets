@@ -294,7 +294,7 @@ export class MemoryNodeRepository {
         'created_at': now,
         'updated_at': now,
         'sensitivity': node.sensitivity ?? 'S2',
-        'visited_at': node.visitedAt ?? 0,
+        'visited_at': node.visitedAt ?? now,
         'owner_uid': ownerUid,
         'cloud_id': '',
         'sync_status': 'pending_create',

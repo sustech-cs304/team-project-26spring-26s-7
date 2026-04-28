@@ -7,6 +7,7 @@ interface TripNodeItem {
   id: string
   title: string
   poiName: string
+  visitedAt: number
   createdAt: number
   photoCount: number
   contentPreview: string
@@ -60,9 +61,9 @@ export struct TripEditPage {
       return '保存后即可继续向 Track 中添加节点'
     }
 
-    const sortedNodes = [...this.nodes].sort((left: TripNodeItem, right: TripNodeItem) => left.createdAt - right.createdAt)
-    const start = this.formatDate(sortedNodes[0].createdAt)
-    const end = this.formatDate(sortedNodes[sortedNodes.length - 1].createdAt)
+    const sortedNodes = [...this.nodes].sort((left: TripNodeItem, right: TripNodeItem) => left.visitedAt - right.visitedAt)
+    const start = this.formatDate(sortedNodes[0].visitedAt)
+    const end = this.formatDate(sortedNodes[sortedNodes.length - 1].visitedAt)
     return start === end ? start : `${start} ~ ${end}`
   }
 
@@ -71,6 +72,7 @@ export struct TripEditPage {
       id: node.id,
       title: node.title,
       poiName: node.poiName,
+      visitedAt: (node.visitedAt && node.visitedAt > 0) ? node.visitedAt : node.createdAt,
       createdAt: node.createdAt,
       photoCount: node.photos.length,
       contentPreview: node.content.trim().length > 0 ? node.content : '还没有补充正文'
@@ -85,6 +87,8 @@ export struct TripEditPage {
 
     try {
       const nodes = await this.dataService.getNodesByTravelId(this.tripId)
+      // 防御性排序：确保一定按 nodeOrder 顺序展示
+      nodes.sort((a, b) => (a.nodeOrder ?? 0) - (b.nodeOrder ?? 0))
       this.nodes = nodes.map((node: MemoryNode) => this.mapNode(node))
     } catch (_) {
       promptAction.showToast({ message: '加载 Track 节点失败' })
@@ -339,7 +343,7 @@ export struct TripEditPage {
       .width('100%')
 
       Row() {
-        Text(`${this.formatDate(item.createdAt)} · ${item.photoCount} 张图`)
+        Text(`${this.formatDate(item.visitedAt)} · ${item.photoCount} 张图`)
           .fontSize(AppDimens.FONT_SM)
           .fontColor(AppColors.TEXT_HINT)
         Blank()

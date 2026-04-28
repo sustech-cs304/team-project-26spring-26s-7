@@ -92,9 +92,10 @@ export struct TripDetailPage {
 
   private formatShortDate(timestamp: number): string {
     const date = new Date(timestamp)
+    const year = date.getFullYear().toString().slice(-2)
     const month = (date.getMonth() + 1).toString().padStart(2, '0')
     const day = date.getDate().toString().padStart(2, '0')
-    return `${month}.${day}`
+    return `${year}.${month}.${day}`
   }
 
   private formatDateRange(startDate: number, endDate: number): string {
@@ -109,7 +110,7 @@ export struct TripDetailPage {
     const trimmedContent = node.content.trim()
     return {
       id: node.id,
-      date: this.formatShortDate(node.createdAt),
+      date: this.formatShortDate((node.visitedAt && node.visitedAt > 0) ? node.visitedAt : node.createdAt),
       title: trimmedTitle.length > 0 ? trimmedTitle : (trimmedPlace.length > 0 ? trimmedPlace : '未命名节点'),
       place: trimmedPlace.length > 0 ? trimmedPlace : '未命名地点',
       summary: trimmedContent,
@@ -133,6 +134,8 @@ export struct TripDetailPage {
       }
 
       const nodes = await this.dataService.getNodesByTravelId(this.tripId)
+      // 防御性排序：确保一定按 nodeOrder 顺序展示
+      nodes.sort((a, b) => (a.nodeOrder ?? 0) - (b.nodeOrder ?? 0))
       this.tripName = trip.name
       this.dateRange = this.formatDateRange(trip.startDate, trip.endDate)
       this.nodeCount = nodes.length

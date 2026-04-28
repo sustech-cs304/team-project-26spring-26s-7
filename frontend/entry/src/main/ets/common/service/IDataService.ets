@@ -151,4 +151,9 @@ export interface IDataService {
    * 应在 TripEditPage 点击保存时调用
    */
   syncNodeOrdersToCloud(travelId: string): Promise<void>;
+
+  /**
+   * 修改节点的 visitedAt 后，按 visitedAt ASC 重排该路线所有节点的 nodeOrder，并同步到云
+   */
+  sortNodesByVisitedAt(travelId: string): Promise<void>;
 }
