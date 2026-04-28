@@ -258,6 +258,10 @@ export class MockDataService implements IDataService {
     logger.info(TAG, `syncNodeOrdersToCloud() called for travel: ${travelId} (MOCK, no-op)`);
   }
 
+  async sortNodesByVisitedAt(travelId: string): Promise<void> {
+    logger.info(TAG, `sortNodesByVisitedAt() called for travel: ${travelId} (MOCK, no-op)`);
+  }
+
   // ==================== 工具方法 ====================
 
   private generateUUID(): string {

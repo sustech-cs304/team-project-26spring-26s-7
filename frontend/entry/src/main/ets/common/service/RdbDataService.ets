@@ -436,7 +436,15 @@ export class RdbDataService implements IDataService {
       photoManifest: this.buildPhotoManifest(created.travelId, created.id, created.photos),
       visitedAt: created.visitedAt ?? 0
     })
-    await this.enqueueSync('memory_node', created.id, 'upsert', payload);
+    // 新建节点时如果是真实路线，按 visitedAt 重排并通过 sortNodesByVisitedAt 同步到云
+    // （sortNodesByVisitedAt 里的 enqueueSyncSilently 已包含新节点，跳过下方单独的 enqueueSync）
+    const isRealTravel = created.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID;
+    if (isRealTravel) {
+      await this.sortNodesByVisitedAt(created.travelId);
+    } else {
+      // uncategorized 路线：只 enqueue 新节点本身（不排序）
+      await this.enqueueSync('memory_node', created.id, 'upsert', payload);
+    }
     const isOnlineForCreate = (AppStorage.get('networkOnline') as boolean) ?? false;
     if (isOnlineForCreate) {
       this.syncNodePhotosToCloud(created.travelId, created.id, created.photos);
@@ -518,12 +526,21 @@ export class RdbDataService implements IDataService {
       }
     }
 
+    let destinationSortAndSync = false;
     if (data.travelId !== undefined && oldTravelId.length > 0 && oldTravelId !== updated.travelId) {
       // Renormalize node orders in the source travel after the node left
       const remainingNodes = await this.nodeRepo.getNodesByTravelId(oldTravelId);
       const remainingIds = remainingNodes.map((n: MemoryNode) => n.id);
       if (remainingIds.length > 0) {
         await this.nodeRepo.reorderNodes(oldTravelId, remainingIds);
+        // 将源路线重编号后的 nodeOrder 同步到云端（bugfix）
+        await this.syncNodeOrdersToCloud(oldTravelId);
+      }
+
+      // 目标路线是真实路线时，按 visitedAt 重排并同步到云
+      if (updated.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
+        await this.sortNodesByVisitedAt(updated.travelId);
+        destinationSortAndSync = true;
       }
 
       // 照片迁移：直接上传本地文件到新云目录，后台执行
@@ -557,7 +574,10 @@ export class RdbDataService implements IDataService {
       photoManifest: this.buildPhotoManifest(nextTravelId, updated.id, nextPhotos),
       visitedAt: updated.visitedAt ?? 0
     })
-    await this.enqueueSync('memory_node', updated.id, 'upsert', payload);
+    // 如果目标路线是真实路线，sortNodesByVisitedAt 已处理了移动节点的云端同步，跳过此处单独的 enqueueSync
+    if (!destinationSortAndSync) {
+      await this.enqueueSync('memory_node', updated.id, 'upsert', payload);
+    }
 
     return updated;
   }
@@ -599,8 +619,14 @@ export class RdbDataService implements IDataService {
       photoCloudPaths: photoCloudPaths
     })
     if (belongsToTravel) {
+      await this.sortNodesByVisitedAt(travelId);
+      // sortNodesByVisitedAt 里的 pushLocalNow 已处理完剩余节点，
+      // delete item 在其之后才入队，需要单独再触发一次 push（仅在线时）
       await this.enqueueSyncSilently('memory_node', nodeId, 'delete', payload);
-      await this.syncNodeOrdersToCloud(travelId);
+      const isOnline = (AppStorage.get('networkOnline') as boolean) ?? false;
+      if (isOnline) {
+        SyncManager.pushLocalNow();
+      }
     } else {
       await this.enqueueSync('memory_node', nodeId, 'delete', payload);
     }
@@ -608,6 +634,30 @@ export class RdbDataService implements IDataService {
 
   async reorderNodes(travelId: string, nodeIds: string[]): Promise<void> {
     await this.nodeRepo.reorderNodes(travelId, nodeIds);
+  }
+
+  /**
+   * 按 visitedAt ASC 重排路线内所有节点的 nodeOrder，并同步到云。
+   * 仅对已关联旅行的节点生效（空置节点无路线，不处理）。
+   */
+  async sortNodesByVisitedAt(travelId: string): Promise<void> {
+    if (!travelId || travelId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
+      return
+    }
+
+    const siblings = await this.nodeRepo.getNodesByTravelId(travelId)
+    // 按 visitedAt ASC 排序（visitedAt 为 0 则 fallback 到 createdAt）
+    siblings.sort((a, b) => {
+      const aTime = a.visitedAt && a.visitedAt > 0 ? a.visitedAt : a.createdAt
+      const bTime = b.visitedAt && b.visitedAt > 0 ? b.visitedAt : b.createdAt
+      return aTime - bTime
+    })
+
+    // 批量写入新的 nodeOrder（0, 1, 2, ...）
+    await this.nodeRepo.reorderNodes(travelId, siblings.map(n => n.id))
+
+    // 同步到云端
+    await this.syncNodeOrdersToCloud(travelId)
   }
 
   async syncNodeOrdersToCloud(travelId: string): Promise<void> {

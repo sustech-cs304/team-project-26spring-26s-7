@@ -197,7 +197,7 @@ export struct NodeEditPage {
           : poiValue
 
       if (this.isEditMode && this.nodeId.length > 0) {
-        await this.dataService.updateNode(this.nodeId, {
+        const updatedNode = await this.dataService.updateNode(this.nodeId, {
           travelId: targetTripId,
           title: trimmedTitle,
           content: this.content,
@@ -209,6 +209,10 @@ export struct NodeEditPage {
           tags: this.tags,
           visitedAt: this.visitedAt
         })
+        // visitedAt 修改后重排（仅对已关联旅行的节点生效）
+        if (updatedNode && updatedNode.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
+          await this.dataService.sortNodesByVisitedAt(updatedNode.travelId)
+        }
         promptAction.showToast({ message: '记忆已更新' })
       } else {
         await this.dataService.createNode({
@@ -221,7 +225,7 @@ export struct NodeEditPage {
           photos: this.photos,
           mood: this.mood,
           tags: this.tags,
-          visitedAt: this.visitedAt > 0 ? this.visitedAt : 0
+          visitedAt: this.visitedAt > 0 ? this.visitedAt : Date.now()
         })
         promptAction.showToast({ message: '记忆已保存' })
       }
