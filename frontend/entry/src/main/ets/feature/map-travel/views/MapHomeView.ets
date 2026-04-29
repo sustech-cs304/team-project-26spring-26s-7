@@ -3,6 +3,7 @@ import { MapComponent, mapCommon, map, site } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
 import { image } from '@kit.ImageKit'
 import { fileIo } from '@kit.CoreFileKit'
+import { util } from '@kit.ArkTS'
 import { AppColors, AppDimens, RouterUrls, getDataService, logger, TravelSpecialValues } from '../../../common'
 import { MapNodeInfo, RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
@@ -44,17 +45,37 @@ const DEFAULT_MAP_CENTER: mapCommon.LatLng = {
   longitude: 113.96
 }
 
-const MARKER_SIZE = 286
+const MARKER_SIZE = 360
 const SINGLE_INNER_R = 107
 const SINGLE_OUTER_R = 116
 const CLUSTER_INNER_R = 116
 const CLUSTER_OUTER_R = 125
 const TIP_HEIGHT = 50
 
+interface RgbColor {
+  r: number
+  g: number
+  b: number
+}
+
+const MARKER_WHITE: RgbColor = { r: 0xFF, g: 0xFF, b: 0xFF }
+const MARKER_BLUE_DARK: RgbColor = { r: 0x1D, g: 0x63, b: 0xB3 }
+const MARKER_BLUE: RgbColor = { r: 0x4A, g: 0x90, b: 0xD9 }
+const MARKER_BLUE_LIGHT: RgbColor = { r: 0x87, g: 0xC2, b: 0xFF }
+const MARKER_BLUE_SOFT: RgbColor = { r: 0xDB, g: 0xEE, b: 0xFF }
+const MARKER_BLUE_SURFACE: RgbColor = { r: 0xF3, g: 0xF9, b: 0xFF }
+
 interface PhotoData {
   buffer: ArrayBuffer
   width: number
   height: number
+}
+
+interface CountBadgeMetrics {
+  width: number
+  height: number
+  fontSize: number
+  borderWidth: number
 }
 
 /**
@@ -69,6 +90,7 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
 
   private nodeLookup: Map<string, LoadedNodeData[]> = new Map()
   private photoCache: Map<string, PhotoData> = new Map()
+  private badgeCache: Map<string, PhotoData> = new Map()
 
   constructor(
     clusterItems: mapCommon.ClusterItem[],
@@ -83,36 +105,21 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
   }
 
   async getCustomIcon(clusterItems: mapCommon.ClusterItem[]): Promise<image.PixelMap> {
-    const cx = MARKER_SIZE / 2
+    const size = MARKER_SIZE
+    const buffer = new ArrayBuffer(size * size * 4)
+    const view = new Uint8Array(buffer)
 
     if (clusterItems.length === 1) {
       // 水滴形：圆心贴顶，尖角在画布垂直中心 → 对准地图坐标
-      const cy = SINGLE_OUTER_R
-      const tipY = 2 * SINGLE_OUTER_R + TIP_HEIGHT
-      const canvasW = MARKER_SIZE
-      const canvasH = 2 * tipY
-      const buffer = new ArrayBuffer(canvasW * canvasH * 4)
-      const view = new Uint8Array(buffer)
-      this.fillSingleIcon(view, canvasW, cx, cy, clusterItems[0], tipY)
-
-      const pixelMap = await image.createPixelMap(buffer, {
-        size: { width: canvasW, height: canvasH },
-        pixelFormat: image.PixelMapFormat.BGRA_8888
-      })
-      return pixelMap
+      await this.fillSingleIcon(view, size, clusterItems[0])
     } else {
-      const size = MARKER_SIZE
-      const cy = size / 2
-      const buffer = new ArrayBuffer(size * size * 4)
-      const view = new Uint8Array(buffer)
-      this.fillClusterIcon(view, size, cx, cy, clusterItems.length)
-
-      const pixelMap = await image.createPixelMap(buffer, {
-        size: { width: size, height: size },
-        pixelFormat: image.PixelMapFormat.BGRA_8888
-      })
-      return pixelMap
+      await this.fillClusterIcon(view, size, clusterItems)
     }
+
+    return await image.createPixelMap(buffer, {
+      size: { width: size, height: size },
+      pixelFormat: image.PixelMapFormat.BGRA_8888
+    })
   }
 
   // BGRA_8888 layout: view[idx]=B, [idx+1]=G, [idx+2]=R, [idx+3]=A
@@ -124,80 +131,402 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
     view[idx + 3] = a
   }
 
-  private fillSingleIcon(view: Uint8Array, canvasW: number, cx: number, cy: number,
-    item: mapCommon.ClusterItem, tipY: number): void {
-    const key = this.posKey(item.position.latitude, item.position.longitude)
-    const nodes = this.nodeLookup.get(key)
-    const coverPath = nodes && nodes.length > 0 ? nodes[0].coverPhoto : ''
-    const photoData = coverPath.length > 0 ? this.photoCache.get(coverPath) : undefined
+  private fillCircle(view: Uint8Array, canvasW: number, canvasH: number, cx: number, cy: number,
+    radius: number, color: RgbColor, alpha: number = 0xFF): void {
+    const minY = Math.max(0, Math.floor(cy - radius))
+    const maxY = Math.min(canvasH - 1, Math.ceil(cy + radius))
+    const radiusSq = radius * radius
 
-    const R = SINGLE_OUTER_R
-    const d = tipY - cy
-    const tangentY = cy + R * R / d
-    const K = Math.sqrt(d * d - R * R)
-
-    // 白色描边 + 尖角（只遍历内容区域 0 ~ tipY）
-    for (let y = 0; y < tipY; y++) {
-      for (let x = 0; x < canvasW; x++) {
-        const dx = x - cx
-        const dy = y - cy
-        const dist = Math.sqrt(dx * dx + dy * dy)
+    for (let y = minY; y <= maxY; y++) {
+      const dy = y - cy
+      const maxDx = Math.sqrt(Math.max(0, radiusSq - dy * dy))
+      const minX = Math.max(0, Math.floor(cx - maxDx))
+      const maxX = Math.min(canvasW - 1, Math.ceil(cx + maxDx))
+      for (let x = minX; x <= maxX; x++) {
         const idx = (y * canvasW + x) * 4
-
-        if (dist > SINGLE_INNER_R && dist <= SINGLE_OUTER_R) {
-          this.setPixel(view, idx, 0xFF, 0xFF, 0xFF, 0xFF)
-        } else if (y > tangentY && y < tipY) {
-          const halfW = R * (tipY - y) / K
-          if (Math.abs(dx) <= halfW) {
-            this.setPixel(view, idx, 0xFF, 0xFF, 0xFF, 0xFF)
-          }
-        }
+        this.setPixel(view, idx, color.r, color.g, color.b, alpha)
       }
     }
+  }
 
-    if (photoData) {
-      // 中心裁剪映射（cover 模式）：短边铺满圆直径，长边居中裁剪
-      const photoView = new Uint8Array(photoData.buffer)
-      const pw = photoData.width
-      const ph = photoData.height
-      const photoCx = pw / 2
-      const photoCy = ph / 2
+  private fillRoundedRect(view: Uint8Array, canvasW: number, canvasH: number, left: number, top: number,
+    width: number, height: number, radius: number, color: RgbColor, alpha: number = 0xFF): void {
+    const safeLeft = Math.max(0, Math.floor(left))
+    const safeTop = Math.max(0, Math.floor(top))
+    const safeRight = Math.min(canvasW - 1, Math.ceil(left + width - 1))
+    const safeBottom = Math.min(canvasH - 1, Math.ceil(top + height - 1))
+    const safeRadius = Math.max(0, Math.min(radius, width / 2, height / 2))
 
-      for (let y = 0; y < tipY; y++) {
-        for (let x = 0; x < canvasW; x++) {
-          const dx = x - cx
-          const dy = y - cy
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist <= SINGLE_INNER_R) {
-            const photoX = Math.round(photoCx + dx)
-            const photoY = Math.round(photoCy + dy)
-            if (photoX >= 0 && photoX < pw && photoY >= 0 && photoY < ph) {
-              const markerIdx = (y * canvasW + x) * 4
-              const photoIdx = (photoY * pw + photoX) * 4
-              view[markerIdx] = photoView[photoIdx]
-              view[markerIdx + 1] = photoView[photoIdx + 1]
-              view[markerIdx + 2] = photoView[photoIdx + 2]
-              view[markerIdx + 3] = 0xFF
-            }
-          }
-        }
-      }
-    } else {
-      // 无封面照片：蓝色填充
-      for (let y = 0; y < tipY; y++) {
-        for (let x = 0; x < canvasW; x++) {
-          const dist = Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy))
-          if (dist <= SINGLE_INNER_R) {
-            const idx = (y * canvasW + x) * 4
-            this.setPixel(view, idx, 0x6B, 0xB5, 0xE8, 0xFF)
-          }
+    for (let y = safeTop; y <= safeBottom; y++) {
+      for (let x = safeLeft; x <= safeRight; x++) {
+        const nearestX = Math.max(left + safeRadius, Math.min(x, left + width - safeRadius - 1))
+        const nearestY = Math.max(top + safeRadius, Math.min(y, top + height - safeRadius - 1))
+        const dx = x - nearestX
+        const dy = y - nearestY
+        if (dx * dx + dy * dy <= safeRadius * safeRadius) {
+          const idx = (y * canvasW + x) * 4
+          this.setPixel(view, idx, color.r, color.g, color.b, alpha)
         }
       }
     }
   }
 
-  private fillClusterIcon(view: Uint8Array, size: number, cx: number, cy: number,
-    count: number): void {
+  private fillPhotoCircle(view: Uint8Array, canvasW: number, canvasH: number, cx: number, cy: number,
+    radius: number, photoData: PhotoData): void {
+    const photoView = new Uint8Array(photoData.buffer)
+    const photoCx = photoData.width / 2
+    const photoCy = photoData.height / 2
+    const minY = Math.max(0, Math.floor(cy - radius))
+    const maxY = Math.min(canvasH - 1, Math.ceil(cy + radius))
+    const radiusSq = radius * radius
+
+    for (let y = minY; y <= maxY; y++) {
+      const dy = y - cy
+      const maxDx = Math.sqrt(Math.max(0, radiusSq - dy * dy))
+      const minX = Math.max(0, Math.floor(cx - maxDx))
+      const maxX = Math.min(canvasW - 1, Math.ceil(cx + maxDx))
+      for (let x = minX; x <= maxX; x++) {
+        const dx = x - cx
+        const photoX = Math.round(photoCx + dx)
+        const photoY = Math.round(photoCy + dy)
+        if (photoX >= 0 && photoX < photoData.width && photoY >= 0 && photoY < photoData.height) {
+          const markerIdx = (y * canvasW + x) * 4
+          const photoIdx = (photoY * photoData.width + photoX) * 4
+          view[markerIdx] = photoView[photoIdx]
+          view[markerIdx + 1] = photoView[photoIdx + 1]
+          view[markerIdx + 2] = photoView[photoIdx + 2]
+          view[markerIdx + 3] = 0xFF
+        }
+      }
+    }
+  }
+
+  private fillPlaceholderCircle(view: Uint8Array, canvasW: number, canvasH: number, cx: number, cy: number,
+    radius: number): void {
+    this.fillCircle(view, canvasW, canvasH, cx, cy, radius, MARKER_BLUE_SURFACE)
+    this.fillCircle(view, canvasW, canvasH, cx, cy, radius * 0.68, MARKER_BLUE_LIGHT)
+    this.fillCircle(view, canvasW, canvasH, cx, cy, radius * 0.28, MARKER_WHITE)
+    this.fillCircle(view, canvasW, canvasH, cx, cy, radius * 0.12, MARKER_BLUE_DARK)
+    this.fillCircle(view, canvasW, canvasH, cx - radius * 0.36, cy - radius * 0.34, radius * 0.2, MARKER_WHITE)
+  }
+
+  private fillPhotoBubble(view: Uint8Array, canvasW: number, canvasH: number, cx: number, cy: number,
+    radius: number, photoData?: PhotoData): void {
+    this.fillCircle(view, canvasW, canvasH, cx, cy, radius, MARKER_WHITE)
+    if (photoData) {
+      this.fillPhotoCircle(view, canvasW, canvasH, cx, cy, Math.max(1, radius - 6), photoData)
+    } else {
+      this.fillPlaceholderCircle(view, canvasW, canvasH, cx, cy, Math.max(1, radius - 7))
+    }
+  }
+
+  private isInsideRoundedRect(x: number, y: number, left: number, top: number,
+    width: number, height: number, radius: number): boolean {
+    const safeRadius = Math.max(0, Math.min(radius, width / 2, height / 2))
+    const nearestX = Math.max(left + safeRadius, Math.min(x, left + width - safeRadius - 1))
+    const nearestY = Math.max(top + safeRadius, Math.min(y, top + height - safeRadius - 1))
+    const dx = x - nearestX
+    const dy = y - nearestY
+    return dx * dx + dy * dy <= safeRadius * safeRadius
+  }
+
+  private fillPhotoRoundedRect(view: Uint8Array, canvasW: number, canvasH: number, left: number, top: number,
+    width: number, height: number, radius: number, photoData: PhotoData): void {
+    const photoView = new Uint8Array(photoData.buffer)
+    const safeLeft = Math.max(0, Math.floor(left))
+    const safeTop = Math.max(0, Math.floor(top))
+    const safeRight = Math.min(canvasW - 1, Math.ceil(left + width - 1))
+    const safeBottom = Math.min(canvasH - 1, Math.ceil(top + height - 1))
+    const scale = Math.max(width / photoData.width, height / photoData.height)
+    const scaledWidth = photoData.width * scale
+    const scaledHeight = photoData.height * scale
+    const offsetX = (scaledWidth - width) / 2
+    const offsetY = (scaledHeight - height) / 2
+
+    for (let y = safeTop; y <= safeBottom; y++) {
+      for (let x = safeLeft; x <= safeRight; x++) {
+        if (this.isInsideRoundedRect(x, y, left, top, width, height, radius)) {
+          const normalizedX = x - left
+          const normalizedY = y - top
+          const photoX = Math.min(photoData.width - 1, Math.max(0, Math.floor((normalizedX + offsetX) / scale)))
+          const photoY = Math.min(photoData.height - 1, Math.max(0, Math.floor((normalizedY + offsetY) / scale)))
+          const markerIdx = (y * canvasW + x) * 4
+          const photoIdx = (photoY * photoData.width + photoX) * 4
+          view[markerIdx] = photoView[photoIdx]
+          view[markerIdx + 1] = photoView[photoIdx + 1]
+          view[markerIdx + 2] = photoView[photoIdx + 2]
+          view[markerIdx + 3] = 0xFF
+        }
+      }
+    }
+  }
+
+  private drawBitmapPattern(view: Uint8Array, canvasW: number, canvasH: number, left: number, top: number,
+    pattern: string[], scale: number, color: RgbColor): void {
+    const originX = Math.round(left)
+    const originY = Math.round(top)
+    for (let row = 0; row < pattern.length; row++) {
+      for (let column = 0; column < pattern[row].length; column++) {
+        if (pattern[row][column] === '1') {
+          this.fillRoundedRect(view, canvasW, canvasH, originX + column * scale, originY + row * scale,
+            scale, scale, Math.max(1, scale / 3), color)
+        }
+      }
+    }
+  }
+
+  private fillCameraPlaceholder(view: Uint8Array, canvasW: number, canvasH: number, left: number, top: number,
+    width: number, height: number, radius: number): void {
+    const surfaceColor: RgbColor = { r: 0xF4, g: 0xF6, b: 0xF8 }
+    const accentColor: RgbColor = { r: 0x66, g: 0x72, b: 0x7F }
+    const lensRingColor: RgbColor = { r: 0xD5, g: 0xDB, b: 0xE2 }
+
+    this.fillRoundedRect(view, canvasW, canvasH, left, top, width, height, radius, surfaceColor)
+
+    const bodyWidth = width * 0.52
+    const bodyHeight = height * 0.34
+    const bodyLeft = left + (width - bodyWidth) / 2
+    const bodyTop = top + (height - bodyHeight) / 2 + height * 0.03
+    const bodyRadius = Math.max(8, bodyHeight * 0.18)
+    this.fillRoundedRect(view, canvasW, canvasH, bodyLeft, bodyTop, bodyWidth, bodyHeight, bodyRadius, accentColor)
+
+    const bumpWidth = bodyWidth * 0.24
+    const bumpHeight = bodyHeight * 0.18
+    const bumpLeft = bodyLeft + bodyWidth * 0.12
+    const bumpTop = bodyTop - bumpHeight * 0.7
+    this.fillRoundedRect(view, canvasW, canvasH, bumpLeft, bumpTop, bumpWidth, bumpHeight,
+      Math.max(4, bumpHeight / 2), accentColor)
+
+    const lensOuterRadius = Math.max(10, Math.min(bodyWidth, bodyHeight) * 0.24)
+    const lensCx = bodyLeft + bodyWidth / 2
+    const lensCy = bodyTop + bodyHeight / 2
+    this.fillCircle(view, canvasW, canvasH, lensCx, lensCy, lensOuterRadius, lensRingColor)
+    this.fillCircle(view, canvasW, canvasH, lensCx, lensCy, lensOuterRadius * 0.58, accentColor)
+
+    const flashRadius = Math.max(3, bodyHeight * 0.08)
+    this.fillCircle(view, canvasW, canvasH, bodyLeft + bodyWidth * 0.78, bodyTop + bodyHeight * 0.28,
+      flashRadius, surfaceColor)
+  }
+
+  private blendPhotoData(view: Uint8Array, canvasW: number, canvasH: number, left: number, top: number,
+    photoData: PhotoData): void {
+    const photoView = new Uint8Array(photoData.buffer)
+    const startX = Math.max(0, Math.floor(left))
+    const startY = Math.max(0, Math.floor(top))
+    const endX = Math.min(canvasW, Math.ceil(left + photoData.width))
+    const endY = Math.min(canvasH, Math.ceil(top + photoData.height))
+
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
+        const srcX = x - startX
+        const srcY = y - startY
+        const srcIdx = (srcY * photoData.width + srcX) * 4
+        const alpha = photoView[srcIdx + 3]
+        if (alpha <= 0) {
+          continue
+        }
+
+        const alphaRatio = alpha / 255
+        const invAlpha = 1 - alphaRatio
+        const destIdx = (y * canvasW + x) * 4
+        view[destIdx] = Math.round(photoView[srcIdx] * alphaRatio + view[destIdx] * invAlpha)
+        view[destIdx + 1] = Math.round(photoView[srcIdx + 1] * alphaRatio + view[destIdx + 1] * invAlpha)
+        view[destIdx + 2] = Math.round(photoView[srcIdx + 2] * alphaRatio + view[destIdx + 2] * invAlpha)
+        view[destIdx + 3] = Math.min(255, Math.round(alpha + view[destIdx + 3] * invAlpha))
+      }
+    }
+  }
+
+  private async createCountLabelPhotoData(label: string): Promise<PhotoData | undefined> {
+    const cached = this.badgeCache.get(label)
+    if (cached) {
+      return cached
+    }
+
+    try {
+      const metrics = this.getCountBadgeMetrics(label)
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${metrics.width}" height="${metrics.height}" viewBox="0 0 ${metrics.width} ${metrics.height}">
+  <defs>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#104b89" flood-opacity="0.22" />
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="${metrics.width}" height="${metrics.height}" rx="${metrics.height / 2}" ry="${metrics.height / 2}"
+    fill="#FFFFFF" filter="url(#shadow)" />
+  <rect x="${metrics.borderWidth}" y="${metrics.borderWidth}" width="${metrics.width - metrics.borderWidth * 2}"
+    height="${metrics.height - metrics.borderWidth * 2}" rx="${(metrics.height - metrics.borderWidth * 2) / 2}"
+    ry="${(metrics.height - metrics.borderWidth * 2) / 2}" fill="#1D63B3" />
+  <text x="50%" y="52%" font-family="sans-serif" font-size="${metrics.fontSize}" font-weight="900"
+    fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">${label}</text>
+  <text x="49.2%" y="52%" font-family="sans-serif" font-size="${metrics.fontSize}" font-weight="900"
+    fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">${label}</text>
+  <text x="50.8%" y="52%" font-family="sans-serif" font-size="${metrics.fontSize}" font-weight="900"
+    fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">${label}</text>
+</svg>`
+      const encoder = new util.TextEncoder()
+      const source = image.createImageSource(encoder.encodeInto(svg).buffer)
+      const pixelMap = await source.createPixelMap({ desiredSize: { width: metrics.width, height: metrics.height } })
+      const pixelBuffer = new ArrayBuffer(pixelMap.getPixelBytesNumber())
+      await pixelMap.readPixelsToBuffer(pixelBuffer)
+      pixelMap.release()
+      if (!this.hasVisiblePixels(pixelBuffer)) {
+        return undefined
+      }
+      const labelData: PhotoData = { buffer: pixelBuffer, width: metrics.width, height: metrics.height }
+      this.badgeCache.set(label, labelData)
+      return labelData
+    } catch (_) {
+      logger.warn('MapHomeView', `create count label failed: ${label}`)
+      return undefined
+    }
+  }
+
+  private hasVisiblePixels(buffer: ArrayBuffer): boolean {
+    const view = new Uint8Array(buffer)
+    for (let index = 3; index < view.length; index += 4) {
+      if (view[index] > 0) {
+        return true
+      }
+    }
+    return false
+  }
+
+  private getCountBadgeMetrics(label: string): CountBadgeMetrics {
+    const borderWidth = 7
+    const height = label.length >= 4 ? 78 : 74
+    const fontSize = label.length >= 4 ? 24 : label.length >= 3 ? 28 : 34
+    const estimatedTextWidth = Math.max(Math.round(fontSize * 0.72), Math.round(label.length * fontSize * 0.62))
+    const horizontalPadding = label.length >= 4 ? 20 : label.length >= 3 ? 18 : 16
+    const width = Math.max(height, estimatedTextWidth + horizontalPadding * 2 + borderWidth * 2)
+    const metrics: CountBadgeMetrics = {
+      width: width,
+      height: height,
+      fontSize: fontSize,
+      borderWidth: borderWidth
+    }
+    return metrics
+  }
+
+  private async drawCountOverlay(view: Uint8Array, canvasSize: number, cardLeft: number, cardTop: number,
+    cardSize: number, label: string): Promise<void> {
+    if (label.length <= 0) {
+      return
+    }
+
+    const labelData = await this.createCountLabelPhotoData(label)
+    if (!labelData) {
+      this.drawFallbackCountOverlay(view, canvasSize, cardLeft, cardTop, cardSize, label)
+      return
+    }
+
+    const cornerX = cardLeft + cardSize
+    const cornerY = cardTop
+    const labelLeft = cornerX - labelData.width / 2
+    const labelTop = Math.max(0, cornerY - labelData.height / 2)
+    this.blendPhotoData(view, canvasSize, canvasSize, labelLeft, labelTop, labelData)
+  }
+
+  private drawFallbackCountOverlay(view: Uint8Array, canvasSize: number, cardLeft: number, cardTop: number,
+    cardSize: number, label: string): void {
+    const metrics = this.getCountBadgeMetrics(label)
+    let scale = label.length >= 4 ? 4 : label.length >= 3 ? 5 : 6
+    const spacing = Math.max(1, Math.floor(scale / 2))
+    while (scale > 3 && this.measureBitmapText(label, scale, spacing) > metrics.width - metrics.borderWidth * 2 - 22) {
+      scale -= 1
+    }
+
+    const textWidth = this.measureBitmapText(label, scale, spacing)
+    const cornerX = cardLeft + cardSize
+    const cornerY = cardTop
+    const badgeLeft = cornerX - metrics.width / 2
+    const badgeTop = Math.max(0, cornerY - metrics.height / 2)
+    const textLeft = badgeLeft + (metrics.width - textWidth) / 2
+    const textTop = badgeTop + (metrics.height - 7 * scale) / 2
+
+    this.fillRoundedRect(view, canvasSize, canvasSize, badgeLeft, badgeTop, metrics.width, metrics.height,
+      metrics.height / 2, MARKER_WHITE)
+    this.fillRoundedRect(view, canvasSize, canvasSize, badgeLeft + metrics.borderWidth, badgeTop + metrics.borderWidth,
+      metrics.width - metrics.borderWidth * 2, metrics.height - metrics.borderWidth * 2,
+      (metrics.height - metrics.borderWidth * 2) / 2, MARKER_BLUE_DARK)
+    this.drawBitmapText(view, canvasSize, canvasSize, textLeft, textTop, label, scale, spacing, MARKER_WHITE)
+    this.drawBitmapText(view, canvasSize, canvasSize, textLeft + 1, textTop, label, scale, spacing, MARKER_WHITE)
+  }
+
+  private async drawMarkerCard(view: Uint8Array, canvasSize: number, photoData: PhotoData | undefined,
+    countLabel: string): Promise<void> {
+    const cardSize = 240
+    const borderWidth = 6
+    const radius = 35
+    const cardLeft = Math.round((canvasSize - cardSize) / 2)
+    const cardTop = Math.round((canvasSize - cardSize) / 2)
+    const innerLeft = cardLeft + borderWidth
+    const innerTop = cardTop + borderWidth
+    const innerSize = cardSize - borderWidth * 2
+
+    this.fillRoundedRect(view, canvasSize, canvasSize, cardLeft + 4, cardTop + 8, cardSize, cardSize, radius,
+      { r: 0x00, g: 0x00, b: 0x00 }, 0x24)
+    this.fillRoundedRect(view, canvasSize, canvasSize, cardLeft, cardTop, cardSize, cardSize, radius, MARKER_WHITE)
+
+    if (photoData) {
+      this.fillPhotoRoundedRect(view, canvasSize, canvasSize, innerLeft, innerTop, innerSize, innerSize, radius - 4, photoData)
+    } else {
+      this.fillCameraPlaceholder(view, canvasSize, canvasSize, innerLeft, innerTop, innerSize, innerSize, radius - 4)
+    }
+
+    await this.drawCountOverlay(view, canvasSize, cardLeft, cardTop, cardSize, countLabel)
+  }
+
+  private async fillSingleIcon(view: Uint8Array, canvasSize: number, item: mapCommon.ClusterItem): Promise<void> {
+    const key = this.posKey(item.position.latitude, item.position.longitude)
+    const nodes = this.nodeLookup.get(key)
+    const targetNode = nodes && nodes.length > 0 ? nodes[0] : undefined
+    const photoData = targetNode && targetNode.coverPhoto.length > 0 ? this.photoCache.get(targetNode.coverPhoto) : undefined
+
+    await this.drawMarkerCard(view, canvasSize, photoData, '')
+    return
+
+    // 白色描边 + 尖角（只遍历内容区域 0 ~ tipY）
+
+    if (photoData) {
+      // 中心裁剪映射（cover 模式）：短边铺满圆直径，长边居中裁剪
+    } else {
+      // 无封面照片：蓝色填充
+    }
+  }
+
+  private async fillClusterIcon(view: Uint8Array, canvasSize: number,
+    clusterItems: mapCommon.ClusterItem[]): Promise<void> {
+    const clusterNodes = this.resolveClusterNodes(clusterItems)
+    const photoData = this.resolvePrimaryPhoto(clusterNodes)
+    const count = clusterNodes.length
+    await this.drawMarkerCard(view, canvasSize, photoData, count > 99 ? '99+' : `${count}`)
+    return
+    const size = canvasSize
+    const cx = canvasSize / 2
+    const cy = canvasSize / 2
+    const photoEntries = this.resolveClusterPhotos(clusterNodes)
+
+    this.fillCircle(view, size, size, cx, cy, CLUSTER_OUTER_R, MARKER_WHITE)
+    this.fillCircle(view, size, size, cx, cy, CLUSTER_INNER_R, MARKER_BLUE_SOFT)
+    this.fillCircle(view, size, size, cx, cy, CLUSTER_INNER_R - 12, MARKER_BLUE_SURFACE)
+
+    if (photoEntries.length >= 3) {
+      this.fillPhotoBubble(view, size, size, cx, cy - 26, 48, photoEntries[0])
+      this.fillPhotoBubble(view, size, size, cx - 44, cy + 40, 42, photoEntries[1])
+      this.fillPhotoBubble(view, size, size, cx + 44, cy + 40, 42, photoEntries[2])
+    } else if (photoEntries.length === 2) {
+      this.fillPhotoBubble(view, size, size, cx - 44, cy, 54, photoEntries[0])
+      this.fillPhotoBubble(view, size, size, cx + 44, cy, 54, photoEntries[1])
+    } else if (photoEntries.length === 1) {
+      this.fillPhotoBubble(view, size, size, cx, cy, 74, photoEntries[0])
+    } else {
+      this.fillPhotoBubble(view, size, size, cx, cy - 26, 44)
+      this.fillPhotoBubble(view, size, size, cx - 42, cy + 34, 38)
+      this.fillPhotoBubble(view, size, size, cx + 42, cy + 34, 38)
+    }
+
+    this.drawClusterCountBadge(view, size, count)
+    return
     // 目标色值按 R,G,B 定义，传给 setPixel(r,g,b,a) 内部自动转 BGRA
     let r: number = 0x4A; let g: number = 0x90; let b: number = 0xD9 // #4A90D9 蓝
     if (count >= 10) {
@@ -216,6 +545,152 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
           this.setPixel(view, idx, 0xFF, 0xFF, 0xFF, 0xFF)
         }
       }
+    }
+  }
+
+  private resolveClusterNodes(clusterItems: mapCommon.ClusterItem[]): LoadedNodeData[] {
+    const nodesById: Map<string, LoadedNodeData> = new Map()
+    const visitedKeys: Set<string> = new Set()
+    for (const item of clusterItems) {
+      const key = this.posKey(item.position.latitude, item.position.longitude)
+      if (visitedKeys.has(key)) {
+        continue
+      }
+      visitedKeys.add(key)
+      const bucket = this.nodeLookup.get(key)
+      if (bucket) {
+        for (const node of bucket) {
+          nodesById.set(node.id, node)
+        }
+      }
+    }
+    return Array.from(nodesById.values()).sort((a: LoadedNodeData, b: LoadedNodeData) => b.createdAt - a.createdAt)
+  }
+
+  private resolvePrimaryPhoto(nodes: LoadedNodeData[]): PhotoData | undefined {
+    for (const node of nodes) {
+      if (node.coverPhoto.length <= 0) {
+        continue
+      }
+      const photoData = this.photoCache.get(node.coverPhoto)
+      if (photoData) {
+        return photoData
+      }
+    }
+    return undefined
+  }
+
+  private resolveClusterPhotos(nodes: LoadedNodeData[]): PhotoData[] {
+    const photos: PhotoData[] = []
+    for (const node of nodes) {
+      if (node.coverPhoto.length <= 0) {
+        continue
+      }
+      const photoData = this.photoCache.get(node.coverPhoto)
+      if (photoData) {
+        photos.push(photoData)
+      }
+      if (photos.length >= 3) {
+        break
+      }
+    }
+    return photos
+  }
+
+  private drawClusterCountBadge(view: Uint8Array, canvasSize: number, count: number): void {
+    const label = count > 99 ? '99+' : `${count}`
+    const scale = label.length >= 3 ? 5 : 6
+    const spacing = scale
+    const textWidth = this.measureBitmapText(label, scale, spacing)
+    const badgeHeight = 58
+    const badgeWidth = Math.max(66, textWidth + 28)
+    const left = canvasSize - badgeWidth - 26
+    const top = 28
+
+    this.fillRoundedRect(view, canvasSize, canvasSize, left, top, badgeWidth, badgeHeight, badgeHeight / 2, MARKER_WHITE)
+    this.fillRoundedRect(view, canvasSize, canvasSize, left + 5, top + 5, badgeWidth - 10, badgeHeight - 10,
+      (badgeHeight - 10) / 2, MARKER_BLUE_DARK)
+    this.drawBitmapText(view, canvasSize, canvasSize, left + (badgeWidth - textWidth) / 2,
+      top + (badgeHeight - 7 * scale) / 2, label, scale, spacing, MARKER_WHITE)
+  }
+
+  private measureBitmapText(label: string, scale: number, spacing: number): number {
+    let width = 0
+    for (let index = 0; index < label.length; index++) {
+      width += this.getGlyphPattern(label[index])[0].length * scale
+      if (index < label.length - 1) {
+        width += spacing
+      }
+    }
+    return width
+  }
+
+  private drawBitmapText(view: Uint8Array, canvasW: number, canvasH: number, left: number, top: number,
+    label: string, scale: number, spacing: number, color: RgbColor): void {
+    let cursorX = Math.round(left)
+    const originY = Math.round(top)
+
+    for (let index = 0; index < label.length; index++) {
+      const glyph = this.getGlyphPattern(label[index])
+      for (let row = 0; row < glyph.length; row++) {
+        for (let column = 0; column < glyph[row].length; column++) {
+          if (glyph[row][column] === '1') {
+            this.fillRoundedRect(view, canvasW, canvasH, cursorX + column * scale, originY + row * scale,
+              scale, scale, Math.max(1, scale / 3), color)
+          }
+        }
+      }
+      cursorX += glyph[0].length * scale + spacing
+    }
+  }
+
+  private getCameraGlyphPattern(): string[] {
+    return [
+      '000000111111000000',
+      '000011111111110000',
+      '000111111111111000',
+      '001111000000011100',
+      '011100111111100110',
+      '011001111111110011',
+      '111011110000111011',
+      '111011100000011011',
+      '111011100000011011',
+      '111011110000111011',
+      '011001111111110011',
+      '011100111111100110',
+      '001111000000011100',
+      '000111111111111000',
+      '000011111111110000',
+      '000000111111000000'
+    ]
+  }
+
+  private getGlyphPattern(char: string): string[] {
+    switch (char) {
+      case '0':
+        return ['11111', '10001', '10001', '10001', '10001', '10001', '11111']
+      case '1':
+        return ['00100', '01100', '00100', '00100', '00100', '00100', '01110']
+      case '2':
+        return ['11111', '00001', '00001', '11111', '10000', '10000', '11111']
+      case '3':
+        return ['11111', '00001', '00001', '01111', '00001', '00001', '11111']
+      case '4':
+        return ['10001', '10001', '10001', '11111', '00001', '00001', '00001']
+      case '5':
+        return ['11111', '10000', '10000', '11111', '00001', '00001', '11111']
+      case '6':
+        return ['11111', '10000', '10000', '11111', '10001', '10001', '11111']
+      case '7':
+        return ['11111', '00001', '00010', '00100', '01000', '01000', '01000']
+      case '8':
+        return ['11111', '10001', '10001', '11111', '10001', '10001', '11111']
+      case '9':
+        return ['11111', '10001', '10001', '11111', '00001', '00001', '11111']
+      case '+':
+        return ['00000', '00100', '00100', '11111', '00100', '00100', '00000']
+      default:
+        return ['00000', '00000', '00000', '00000', '00000', '00000', '00000']
     }
   }
 
@@ -270,6 +745,7 @@ export struct MapHomeView {
   // 聚合图层
   private clusterOverlay?: map.ClusterOverlay
   private nodeLookup: Map<string, LoadedNodeData[]> = new Map()
+  private syncMarkersRunId: number = 0
   private photoCache: Map<string, PhotoData> = new Map()
 
   // 节点预览卡片状态
@@ -685,6 +1161,7 @@ export struct MapHomeView {
     if (!this.mapController) {
       return
     }
+    const runId = ++this.syncMarkersRunId
 
     // === 清理阶段：移除所有旧图层 ===
 
@@ -718,12 +1195,17 @@ export struct MapHomeView {
 
     // === 构建阶段：创建新图层 ===
     await this.preloadPhotos(this.loadedNodes)
+    if (runId !== this.syncMarkersRunId) {
+      return
+    }
 
     // 构建 ClusterItem 数组 + 填充 nodeLookup
-    const clusterItems: mapCommon.ClusterItem[] = []
+    const positionCounts: Map<string, number> = new Map()
+    const loadedNodeById: Map<string, LoadedNodeData> = new Map()
     for (const node of this.mapNodes) {
       const loadedNode = this.findLoadedNodeById(node.id)
       if (loadedNode) {
+        loadedNodeById.set(node.id, loadedNode)
         const key = this.positionKey(node.latitude, node.longitude)
         const existing = this.nodeLookup.get(key)
         if (existing) {
@@ -731,7 +1213,23 @@ export struct MapHomeView {
         } else {
           this.nodeLookup.set(key, [loadedNode])
         }
+        positionCounts.set(key, (positionCounts.get(key) ?? 0) + 1)
       }
+    }
+
+    const sortedNodes = this.mapNodes.slice().sort((a: MapNodeInfo, b: MapNodeInfo) => {
+      const aCount = positionCounts.get(this.positionKey(a.latitude, a.longitude)) ?? 1
+      const bCount = positionCounts.get(this.positionKey(b.latitude, b.longitude)) ?? 1
+      if (aCount !== bCount) {
+        return aCount - bCount
+      }
+      const aCreatedAt = loadedNodeById.get(a.id)?.createdAt ?? 0
+      const bCreatedAt = loadedNodeById.get(b.id)?.createdAt ?? 0
+      return aCreatedAt - bCreatedAt
+    })
+
+    const clusterItems: mapCommon.ClusterItem[] = []
+    for (const node of sortedNodes) {
       clusterItems.push({
         position: { latitude: node.latitude, longitude: node.longitude }
       })
@@ -740,7 +1238,14 @@ export struct MapHomeView {
     // 创建聚合图层
     if (clusterItems.length > 0) {
       const params = new NodeClusterOverlayParams(clusterItems, 50, this.nodeLookup, this.photoCache)
-      this.clusterOverlay = await this.mapController.addClusterOverlay(params)
+      const overlay = await this.mapController.addClusterOverlay(params)
+      if (runId !== this.syncMarkersRunId) {
+        try {
+          await overlay.remove()
+        } catch (_) {}
+        return
+      }
+      this.clusterOverlay = overlay
       this.setupClusterEventListeners()
     }
 
@@ -794,14 +1299,7 @@ export struct MapHomeView {
         const centerLng = sumLng / items.length
 
         // 收集该聚合内的所有节点
-        const clusterNodes: LoadedNodeData[] = []
-        for (const item of items) {
-          const key = this.positionKey(item.position.latitude, item.position.longitude)
-          const nodes = this.nodeLookup.get(key)
-          if (nodes) {
-            clusterNodes.push(...nodes)
-          }
-        }
+        const clusterNodes = this.resolveClusterPreviewNodes(items)
 
         // 显示聚合预览列表
         this.previewVisible = false
@@ -823,6 +1321,28 @@ export struct MapHomeView {
   }
 
   /** 监听地图长按，快捷创建节点并自动填入坐标 */
+  private resolveClusterPreviewNodes(items: mapCommon.ClusterItem[]): LoadedNodeData[] {
+    const nodesById: Map<string, LoadedNodeData> = new Map()
+    const visitedKeys: Set<string> = new Set()
+
+    for (const item of items) {
+      const key = this.positionKey(item.position.latitude, item.position.longitude)
+      if (visitedKeys.has(key)) {
+        continue
+      }
+      visitedKeys.add(key)
+      const nodes = this.nodeLookup.get(key)
+      if (!nodes) {
+        continue
+      }
+      for (const node of nodes) {
+        nodesById.set(node.id, node)
+      }
+    }
+
+    return Array.from(nodesById.values()).sort((a: LoadedNodeData, b: LoadedNodeData) => b.createdAt - a.createdAt)
+  }
+
   private setupMapLongClickListener(): void {
     if (!this.mapController) {
       return
@@ -1095,7 +1615,7 @@ export struct MapHomeView {
                 .width('100%')
                 .height('100%')
                 .justifyContent(FlexAlign.Center)
-                .backgroundColor('#6BB5E8')
+                .backgroundColor('#5C646E')
               }
               // 照片数量徽章
               if (this.previewPhotoCount > 1) {
@@ -1201,7 +1721,7 @@ export struct MapHomeView {
                         }
                         .width(60)
                         .height(60)
-                        .backgroundColor(AppColors.BACKGROUND)
+                        .backgroundColor('#5C646E')
                         .borderRadius(AppDimens.RADIUS_SM)
                         .justifyContent(FlexAlign.Center)
                       }
