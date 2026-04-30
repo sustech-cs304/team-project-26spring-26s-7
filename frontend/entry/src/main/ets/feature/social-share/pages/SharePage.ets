@@ -2,26 +2,26 @@ import { router } from '@kit.ArkUI'
 import { common } from '@kit.AbilityKit'
 import { pasteboard } from '@kit.BasicServicesKit'
 import { promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens } from '../../../common'
+import { AppColors, AppDimens, getDataService } from '../../../common'
 import { SharePlatform, RouterParam } from '../../../common'
+import type { Trip, MemoryNode } from '../../../common'
 import { ShareService, SharePhoto } from '../services/ShareService'
 import { SharePhotoHelper } from '../services/SharePhotoHelper'
 import { SharePublishRequest, SharePublishNode } from '../types/ShareTypes'
 
 /**
- * P08 分享页 — 真机联调版（v2）
+ * P08 分享页 — 真机联调版（v0.2，接通 RDB 真实数据）
  *
  * 行为：
- *   - 进入页面后自动调后端 POST /api/v1/share/publish 发布分享，
- *     成功后 shareUrl 显示真实链接；失败显示状态。
- *   - tripId 来自路由参数（从其它页面跳转过来时带上）。
- *   - 当前 demo：用打包在 resources/base/media 里的 photo_1/photo_2.jpg
- *     作为示例照片；trip 元数据是固定 demo trip。
- *     等数据层稳定后把 buildDemoTrip + stageBundledMedia 替换为
- *     从 RdbDataService 读取真实 trip + 真实照片路径即可（详见
- *     references/documents/social-share/前端接入实现说明.md）。
+ *   1. 解析 tripId：优先用路由参数；没传就取 RDB 里 createdAt 最新的那条 trip
+ *   2. 用 RdbDataService 拉真 trip + nodes，按 nodeOrder 排序
+ *   3. 把 MemoryNode.photos[] 里的本地沙箱路径过滤成可上传的文件列表
+ *      （SharePhotoHelper.toSharePhotos 自动剥 file://、跳过云端引用、校验存在）
+ *   4. 按"幸存"照片数重新对齐每个节点的 photoCount，确保后端 §4.3 校验通过
+ *   5. 调 ShareService.publish 拿到签名 URL → 显示给用户复制 / 分享
+ *   6. 如果 RDB 里完全没有 trip，回落到 demo 模式（用 resources/base/media/photo_*.jpg）
  *
- * 路由参数：{ tripId?: string }
+ * 路由参数：{ tripId?: string } —— 不传也能跑（自动选最新 trip 或 demo）
  */
 @Entry
 @Component
@@ -32,6 +32,7 @@ export struct SharePage {
   @State copyText: string = ''
   @State isLoading: boolean = true
   @State errorMsg: string = ''
+  @State currentTripName: string = ''
 
   private shareService: ShareService = new ShareService()
   private currentTripId: string = ''
@@ -44,46 +45,67 @@ export struct SharePage {
 
   aboutToAppear(): void {
     const params = router.getParams() as RouterParam
-    this.currentTripId = (params && params.tripId) ? params.tripId : 'trip_demo_001'
+    if (params && params.tripId) {
+      this.currentTripId = params.tripId
+    }
     this.publishShare()
   }
 
   /**
-   * 主流程：组装请求 → 调后端 → 更新 UI
+   * 主流程：选 trip → 组请求 → 调后端 → 更新 UI
    */
   private async publishShare(): Promise<void> {
     this.isLoading = true
     this.errorMsg = ''
+    this.shareUrl = ''
 
     try {
       const ctx = getContext(this) as common.UIAbilityContext
 
-      // 1. 组装 trip 元数据 — demo 阶段用固定结构；接 RDB 后从 RdbDataService 取
-      const trip = this.buildDemoTrip(this.currentTripId)
-
-      // 2. 准备照片 — demo 阶段用打包资源；接 RDB 后用 SharePhotoHelper.toSharePhotos(node.photos)
-      const photos: SharePhoto[] = await SharePhotoHelper.stageBundledMedia(
-        ctx,
-        [$r('app.media.photo_1'), $r('app.media.photo_2')],
-        ['demo_photo_1.jpg', 'demo_photo_2.jpg']
-      )
-      // photoCount 必须等于实际照片数 — 没拿到照片就把 photoCount 清零，避免 40001
-      if (photos.length === 0) {
-        for (let i = 0; i < trip.nodes.length; i++) {
-          trip.nodes[i].photoCount = 0
-        }
+      // ---- step 1: 选定要分享的 trip ----
+      const resolved = await this.resolveTrip()
+      if (resolved.kind === KIND_ERROR) {
+        this.errorMsg = resolved.message ? resolved.message : '加载失败'
+        this.isLoading = false
+        return
       }
 
-      // 3. 调后端
-      const result = await this.shareService.publish(trip, photos, this.expireDays * 24)
+      let req: SharePublishRequest
+      let photos: SharePhoto[]
+
+      if (resolved.kind === KIND_RDB && resolved.trip && resolved.nodes) {
+        // ---- step 2a: 真实 RDB 数据路径 ----
+        req = this.buildRequestFromRdb(resolved.trip, resolved.nodes)
+        photos = this.collectPhotosAlignCount(req, resolved.nodes)
+        this.currentTripName = resolved.trip.name
+      } else {
+        // ---- step 2b: 回落到 demo（RDB 里完全没有数据时）----
+        req = this.buildDemoTrip()
+        photos = await SharePhotoHelper.stageBundledMedia(
+          ctx,
+          [$r('app.media.photo_1'), $r('app.media.photo_2')],
+          ['demo_photo_1.jpg', 'demo_photo_2.jpg']
+        )
+        // 没拿到照片就把 photoCount 全部清零，避免后端 §4.3 校验失败
+        if (photos.length === 0) {
+          for (let i = 0; i < req.nodes.length; i++) {
+            req.nodes[i].photoCount = 0
+          }
+        }
+        this.currentTripName = req.tripName
+      }
+
+      // ---- step 3: 调后端 ----
+      const result = await this.shareService.publish(req, photos, this.expireDays * 24)
 
       if (result.ok && result.data) {
         this.shareUrl = result.data.url
-        this.copyText = `我刚分享了一段旅行：${trip.tripName}\n${result.data.url}`
+        this.copyText = `我刚分享了一段旅行：${req.tripName}\n${result.data.url}`
         this.isLoading = false
-        promptAction.showToast({ message: '分享链接已生成' })
+        promptAction.showToast({ message: `分享链接已生成（${photos.length} 张照片）` })
       } else {
-        this.errorMsg = `${result.errorMessage || '生成失败'}${result.errorDetail ? '\n' + result.errorDetail : ''}`
+        this.errorMsg = (result.errorMessage || '生成失败') +
+          (result.errorDetail ? '\n' + result.errorDetail : '')
         this.isLoading = false
       }
     } catch (e) {
@@ -93,10 +115,112 @@ export struct SharePage {
   }
 
   /**
-   * Demo trip 元数据 — 后续替换为 RdbDataService.getTravelById(tripId)
-   * + getNodesByTravelId(tripId) 的真实数据。
+   * 决定要分享哪个 trip：
+   *   - 路由参数有 tripId  → 必须能在 RDB 中查到，否则 error
+   *   - 路由参数没有 tripId → 取 RDB 里 createdAt 最新的那条
+   *   - RDB 是空的           → 走 demo
    */
-  private buildDemoTrip(tripId: string): SharePublishRequest {
+  private async resolveTrip(): Promise<TripResolution> {
+    const ds = getDataService()
+
+    if (this.currentTripId) {
+      const trip = await ds.getTravelById(this.currentTripId)
+      if (!trip) {
+        return {
+          kind: KIND_ERROR,
+          message: `路线 ${this.currentTripId} 不存在`,
+        }
+      }
+      const nodes = await this.loadAndSortNodes(this.currentTripId)
+      return { kind: KIND_RDB, trip: trip, nodes: nodes }
+    }
+
+    // 没传 tripId：拉所有 trip 取最新
+    const allTrips = await ds.getAllTravels()
+    if (allTrips.length === 0) {
+      return { kind: KIND_DEMO }
+    }
+    let latest: Trip = allTrips[0]
+    for (let i = 1; i < allTrips.length; i++) {
+      if (allTrips[i].createdAt > latest.createdAt) {
+        latest = allTrips[i]
+      }
+    }
+    this.currentTripId = latest.id
+    const nodes = await this.loadAndSortNodes(latest.id)
+    return { kind: KIND_RDB, trip: latest, nodes: nodes }
+  }
+
+  private async loadAndSortNodes(tripId: string): Promise<MemoryNode[]> {
+    const ds = getDataService()
+    const nodes = await ds.getNodesByTravelId(tripId)
+    nodes.sort((a: MemoryNode, b: MemoryNode) => {
+      const ao = a.nodeOrder !== undefined ? a.nodeOrder : 0
+      const bo = b.nodeOrder !== undefined ? b.nodeOrder : 0
+      return ao - bo
+    })
+    return nodes
+  }
+
+  /**
+   * 把 RDB 的 Trip + MemoryNode[] 转成 P08 API 规范 §4.2 的 SharePublishRequest。
+   * photoCount 这里先填实际数组长度，下一步 collectPhotosAlignCount 会按"幸存"
+   * 文件数把它修正到准确值。
+   */
+  private buildRequestFromRdb(trip: Trip, nodes: MemoryNode[]): SharePublishRequest {
+    const reqNodes: SharePublishNode[] = []
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i]
+      const reqNode: SharePublishNode = {
+        id: n.id,
+        title: n.title,
+        content: n.content,
+        poiName: n.poiName,
+        photoCount: n.photos.length,
+        mood: n.mood,
+        tags: n.tags,
+        visitedAt: n.visitedAt !== undefined ? n.visitedAt : n.createdAt,
+        nodeOrder: n.nodeOrder !== undefined ? n.nodeOrder : i,
+        latitude: n.latitude,
+        longitude: n.longitude,
+      }
+      reqNodes.push(reqNode)
+    }
+    return {
+      tripId: trip.id,
+      tripName: trip.name,
+      totalDistance: trip.totalDistance,
+      coverIndex: 0,
+      createdAt: trip.createdAt,
+      nodes: reqNodes,
+    }
+  }
+
+  /**
+   * 扫一遍所有节点的 photos[]，把可上传文件挑出来，并把 req.nodes[i].photoCount
+   * 改成"幸存"数（云端引用 / 不存在文件会被剔除）。这样 sum(photoCount) 一定等于
+   * 实际上传的 photo_N 数量，后端不会报 INVALID_PHOTO_COUNT。
+   */
+  private collectPhotosAlignCount(
+    req: SharePublishRequest,
+    nodes: MemoryNode[]
+  ): SharePhoto[] {
+    const out: SharePhoto[] = []
+    for (let i = 0; i < nodes.length; i++) {
+      const survived = SharePhotoHelper.toSharePhotos(nodes[i].photos)
+      req.nodes[i].photoCount = survived.length
+      for (let j = 0; j < survived.length; j++) {
+        out.push(survived[j])
+      }
+    }
+    return out
+  }
+
+  /**
+   * Demo trip — RDB 是空的时候用，配合 SharePhotoHelper.stageBundledMedia
+   * 把 resources/base/media/photo_1.jpg / photo_2.jpg 拷到沙箱再上传。
+   */
+  private buildDemoTrip(): SharePublishRequest {
     const node0: SharePublishNode = {
       id: 'node_demo_001',
       title: '红树林公园',
@@ -124,7 +248,7 @@ export struct SharePage {
       longitude: 113.9322,
     }
     return {
-      tripId: tripId,
+      tripId: 'trip_demo_001',
       tripName: '深圳湾周末骑行 · Demo',
       totalDistance: 12.5,
       coverIndex: 0,
@@ -220,6 +344,12 @@ export struct SharePage {
                 .margin({ top: 6 })
                 .onClick(() => this.retry())
             } else {
+              if (this.currentTripName) {
+                Text(this.currentTripName)
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_SECONDARY)
+                  .margin({ top: 4 })
+              }
               Row() {
                 Text(this.shareUrl)
                   .fontSize(AppDimens.FONT_SM)
@@ -306,4 +436,17 @@ export struct SharePage {
     .height('100%')
     .backgroundColor(AppColors.BACKGROUND)
   }
+}
+
+// ---- TripResolution: 单 interface 加 kind 字段，避开 ArkTS 严格模式
+// 对联合类型 / 字面量类型的限制 ----
+const KIND_RDB: string = 'rdb'
+const KIND_DEMO: string = 'demo'
+const KIND_ERROR: string = 'error'
+
+interface TripResolution {
+  kind: string                 // KIND_RDB / KIND_DEMO / KIND_ERROR
+  trip?: Trip
+  nodes?: MemoryNode[]
+  message?: string
 }
