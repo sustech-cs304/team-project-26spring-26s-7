@@ -18,8 +18,16 @@
  * TODO: 后端开发同事需配置实际服务器地址
  */
 
-/** API 基础地址 - TODO: 替换为实际服务器地址 */
-export const API_BASE_URL: string = 'https://api.example.com'
+/**
+ * API 基础地址 — 自建分享服务（FastAPI + cloudflared 临时隧道）
+ *
+ * 隧道说明：trycloudflare 免费域名，进程不死域名稳定，重启进程会换域名。
+ * 上线后替换为正式 https 域名（如 https://share.travelpin.app）。
+ *
+ * 后端实现路径：/data2/cse12310817/backend/share_service/
+ * 后端契约文档：references/documents/social-share/分享系统 API 规范.md
+ */
+export const API_BASE_URL: string = 'https://halloween-folder-unique-destination.trycloudflare.com'
 
 /** VisionLLM 服务地址 */
 export const VISION_LLM_BASE_URL: string = 'http://172.18.35.215:8000'
@@ -36,9 +44,15 @@ export class AiEndpoints {
   static readonly MODERATE: string = `/api/${API_VERSION}/ai/moderate`
 }
 
-/** 分享服务端点 */
+/** 分享服务端点（P08 API 规范 §3） */
 export class ShareEndpoints {
-  /** 分享链接验证: GET /api/v1/share/{travel_id} */
+  /** 发布分享: POST /api/v1/share/publish (multipart/form-data) */
+  static readonly PUBLISH: string = `/api/${API_VERSION}/share/publish`
+
+  /** 状态查询: GET /api/v1/share/{shortCode}/status */
+  static readonly STATUS_PREFIX: string = `/api/${API_VERSION}/share`
+
+  /** 旧字段名（保留以避免破坏其他引用） */
   static readonly VERIFY: string = `/api/${API_VERSION}/share`
 }
 
