@@ -16,10 +16,22 @@
 // Common Layer 统一导出入口
 
 // Utils 导出
-export { AppColors, AppDimens, AppTheme, RouterUrls, TravelSpecialValues } from './utils/Constants';
+export { AppColors, AppDimens, AppTheme, RouterUrls, TravelSpecialValues, DEFAULT_MAP_LATITUDE, DEFAULT_MAP_LONGITUDE } from './utils/Constants';
 export type { ThemePalette } from './utils/Constants';
 export { logger } from './utils/Logger';
 export { PhotoPickerUtil } from './utils/PhotoPickerUtil';
+export {
+  getDefaultMapCenter,
+  getStoredPreferredMapCenter,
+  hasStoredPreferredMapCenter,
+  isValidMapCenter,
+  requestCurrentLocation,
+  resolveMapCenterFromNodes,
+  savePreferredMapCenter,
+  setMapCurrentLocationError,
+  setMapCurrentLocationPending
+} from './utils/MapLocationPreference';
+export type { MapCenter, MapPreferenceSource, MapPreferenceState } from './utils/MapLocationPreference';
 
 // Auth 导出
 export { AuthService, CloudStorageService } from './auth';

@@ -4,7 +4,20 @@ import { AsyncCallback } from '@kit.BasicServicesKit'
 import { image } from '@kit.ImageKit'
 import { fileIo } from '@kit.CoreFileKit'
 import { util } from '@kit.ArkTS'
-import { AppColors, AppDimens, RouterUrls, getDataService, logger, TravelSpecialValues } from '../../../common'
+import {
+  AppColors,
+  AppDimens,
+  RouterUrls,
+  getDataService,
+  getDefaultMapCenter,
+  getStoredPreferredMapCenter,
+  hasStoredPreferredMapCenter,
+  logger,
+  requestCurrentLocation,
+  resolveMapCenterFromNodes,
+  savePreferredMapCenter,
+  TravelSpecialValues
+} from '../../../common'
 import { MapNodeInfo, RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
 
@@ -40,10 +53,16 @@ interface SearchByTextResultLike {
   sites?: SiteLike[]
 }
 
-const DEFAULT_MAP_CENTER: mapCommon.LatLng = {
-  latitude: 22.55,
-  longitude: 113.96
+interface ReverseGeocodePoiLike {
+  name?: string
 }
+
+interface ReverseGeocodeResultLike {
+  addressDescription?: string
+  pois?: ReverseGeocodePoiLike[]
+}
+
+const DEFAULT_MAP_CENTER: mapCommon.LatLng = getDefaultMapCenter()
 
 const MARKER_SIZE = 360
 const SINGLE_INNER_R = 107
@@ -720,6 +739,7 @@ export struct MapHomeView {
   @State selectedSearchSubtitle: string = ''
   @State selectedSearchLatitude: number = 0
   @State selectedSearchLongitude: number = 0
+  @State isLocating: boolean = false
   @Watch('onTravelDataVersionChange')
   @StorageLink('travelDataVersion') travelDataVersion: number = 0
   @Watch('onTabRefresh')
@@ -729,7 +749,7 @@ export struct MapHomeView {
   // 地图配置：默认中心为深圳
   private mapOptions: mapCommon.MapOptions = {
     position: {
-      target: DEFAULT_MAP_CENTER,
+      target: this.getInitialMapCenter(),
       zoom: 12
     }
   }
@@ -766,7 +786,28 @@ export struct MapHomeView {
       this.mapController = controller
       await this.syncMarkers()
       this.setupMapLongClickListener()
+      this.applyPreferredCenter()
     }
+  }
+
+  private getInitialMapCenter(): mapCommon.LatLng {
+    const preferred = getStoredPreferredMapCenter()
+    return {
+      latitude: preferred.latitude,
+      longitude: preferred.longitude
+    }
+  }
+
+  private applyPreferredCenter(): void {
+    if (!this.mapController) {
+      return
+    }
+    const preferred = getStoredPreferredMapCenter()
+    const cameraUpdate = map.newCameraPosition({
+      target: { latitude: preferred.latitude, longitude: preferred.longitude },
+      zoom: 12
+    })
+    this.mapController.animateCamera(cameraUpdate, 300)
   }
 
   aboutToAppear(): void {
@@ -801,6 +842,13 @@ export struct MapHomeView {
       }
 
       this.loadedNodes = nodes
+      if (!hasStoredPreferredMapCenter()) {
+        const nodeCenter = resolveMapCenterFromNodes(nodes)
+        if (nodeCenter) {
+          savePreferredMapCenter(nodeCenter.latitude, nodeCenter.longitude, '已有记忆', 'history')
+          this.applyPreferredCenter()
+        }
+      }
       this.applyFilters()
       await this.syncMarkers()
     } catch (err) {
@@ -866,17 +914,65 @@ export struct MapHomeView {
   }
 
   private getSearchCenter(): mapCommon.LatLng {
-    if (this.mapNodes.length > 0) {
+    if (this.hasSelectedSearchResult) {
       return {
-        latitude: this.mapNodes[0].latitude,
-        longitude: this.mapNodes[0].longitude
+        latitude: this.selectedSearchLatitude,
+        longitude: this.selectedSearchLongitude
       }
+    }
+    const preferred = getStoredPreferredMapCenter()
+    if (hasStoredPreferredMapCenter()) {
+      return {
+        latitude: preferred.latitude,
+        longitude: preferred.longitude
+      }
+    }
+    const nodeCenter = resolveMapCenterFromNodes(this.loadedNodes)
+    if (nodeCenter) {
+      return nodeCenter
     }
     return DEFAULT_MAP_CENTER
   }
 
   private normalizeText(value: string): string {
     return value.trim().toLowerCase()
+  }
+
+  private formatLocationLabel(name: string, address: string): string {
+    const trimmedName = name.trim()
+    const trimmedAddress = address.trim()
+    if (trimmedName.length === 0) {
+      return trimmedAddress
+    }
+    if (trimmedAddress.length === 0) {
+      return trimmedName
+    }
+    return `${trimmedName} · ${trimmedAddress}`
+  }
+
+  private getReverseGeocodeLabel(result: ReverseGeocodeResultLike, latitude: number, longitude: number): string {
+    const firstPoi = result.pois && result.pois.length > 0 ? result.pois[0] : undefined
+    if (firstPoi?.name) {
+      return this.formatLocationLabel(firstPoi.name, result.addressDescription ?? '')
+    }
+    if (result.addressDescription && result.addressDescription.trim().length > 0) {
+      return result.addressDescription
+    }
+    return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+  }
+
+  private async reverseGeocodeLocation(latitude: number, longitude: number): Promise<string> {
+    try {
+      const result = await site.reverseGeocode(this.getUIContext().getHostContext(), {
+        location: { latitude, longitude },
+        language: 'zh-CN',
+        radius: 200
+      }) as ReverseGeocodeResultLike
+      return this.getReverseGeocodeLabel(result, latitude, longitude)
+    } catch (error) {
+      logger.warn('MapHomeView', `reverseGeocode failed: ${JSON.stringify(error)}`)
+      return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+    }
   }
 
   private formatSearchSubtitle(primary: string, secondary: string): string {
@@ -1347,34 +1443,45 @@ export struct MapHomeView {
     if (!this.mapController) {
       return
     }
-    const navigateToNodeEdit = (position: mapCommon.LatLng): void => {
+    const navigateToNodeEdit = async (position: mapCommon.LatLng): Promise<void> => {
+      const poiName = await this.reverseGeocodeLocation(position.latitude, position.longitude)
       router.pushUrl({
         url: RouterUrls.NODE_EDIT,
         params: {
           latitude: position.latitude,
-          longitude: position.longitude
+          longitude: position.longitude,
+          poiName
         } as RouterParam
       })
     }
     this.mapController.on('mapLongClick', navigateToNodeEdit)
   }
 
-  /** 飞回到所有节点的中心视野 */
-  private flyToCenter(): void {
-    if (!this.mapController) {
+  private async recenterToCurrentLocation(): Promise<void> {
+    if (!this.mapController || this.isLocating) {
       return
     }
-
-    const target: mapCommon.LatLng = this.mapNodes.length > 0 ? {
-      latitude: this.mapNodes[0].latitude,
-      longitude: this.mapNodes[0].longitude
-    } : DEFAULT_MAP_CENTER
-
-    const cameraUpdate = map.newCameraPosition({
-      target: target,
-      zoom: 12
-    })
-    this.mapController.animateCamera(cameraUpdate, 500)
+    const hostContext = this.getUIContext().getHostContext()
+    if (!hostContext) {
+      promptAction.showToast({ message: '当前无法获取页面上下文' })
+      return
+    }
+    this.isLocating = true
+    try {
+      const current = await requestCurrentLocation(hostContext)
+      if (!current) {
+        promptAction.showToast({ message: '定位失败，已保留当前地图位置' })
+        return
+      }
+      savePreferredMapCenter(current.latitude, current.longitude, '当前位置', 'device')
+      const cameraUpdate = map.newCameraPosition({
+        target: { latitude: current.latitude, longitude: current.longitude },
+        zoom: 14
+      })
+      this.mapController.animateCamera(cameraUpdate, 500)
+    } finally {
+      this.isLocating = false
+    }
   }
 
   private updateFilters(timeLabel?: string, tagLabel?: string): void {
@@ -1557,11 +1664,11 @@ export struct MapHomeView {
         .alignItems(HorizontalAlign.Start)
       }
 
-      // 右下角操作按钮（回到地图原点）
+      // 右下角操作按钮（回到当前位置）
       Column({ space: 12 }) {
         Button() {
           Stack() {
-            Text('⌖')
+            Text(this.isLocating ? '…' : '⌖')
               .fontSize(32)
               .fontWeight(FontWeight.Bold)
               .fontColor(AppColors.PRIMARY)
@@ -1575,8 +1682,9 @@ export struct MapHomeView {
         .backgroundColor(AppColors.CARD_BG)
         .borderRadius(24)
         .padding(0)
+        .enabled(!this.isLocating)
         .shadow({ radius: 4, color: '#0000001A', offsetY: 2 })
-        .onClick(() => this.flyToCenter())
+        .onClick(() => this.recenterToCurrentLocation())
 
         Button('+')
           .width(52)

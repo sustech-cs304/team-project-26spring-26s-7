@@ -4,7 +4,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { window } from '@kit.ArkUI';
 import { connection } from '@kit.NetworkKit';
 import { RdbHelper } from '../common/data/RdbHelper';
-import { AppTheme, AuthService } from '../common';
+import { AppTheme, AuthService, DEFAULT_MAP_LATITUDE, DEFAULT_MAP_LONGITUDE } from '../common';
 
 const DOMAIN = 0x0000;
 
@@ -105,6 +105,16 @@ export default class EntryAbility extends UIAbility {
     AppStorage.setOrCreate('networkDialogTitle', '');
     AppStorage.setOrCreate('networkDialogMessage', '');
     AppStorage.setOrCreate('networkDialogToken', 0);
+    AppStorage.setOrCreate('mapPreferredLatitude', DEFAULT_MAP_LATITUDE);
+    AppStorage.setOrCreate('mapPreferredLongitude', DEFAULT_MAP_LONGITUDE);
+    AppStorage.setOrCreate('mapPreferredLabel', '');
+    AppStorage.setOrCreate('mapPreferredSource', 'fallback');
+    AppStorage.setOrCreate('mapPreferredTimestamp', 0);
+    AppStorage.setOrCreate('mapCurrentLatitude', 0);
+    AppStorage.setOrCreate('mapCurrentLongitude', 0);
+    AppStorage.setOrCreate('mapCurrentLocationPending', false);
+    AppStorage.setOrCreate('mapCurrentLocationError', '');
+    AppStorage.setOrCreate('mapCurrentLocationTimestamp', 0);
     this.isOnline = this.getCurrentNetworkStatus();
     hilog.info(DOMAIN, 'testTag', 'Initial network status: %{public}s', this.isOnline ? 'true' : 'false');
     AppStorage.setOrCreate('networkOnline', this.isOnline);

@@ -195,6 +195,9 @@ export class TravelSpecialValues {
   static readonly UNCATEGORIZED_TRAVEL_NAME: string = '未分类节点'
 }
 
+export const DEFAULT_MAP_LATITUDE: number = 22.55
+export const DEFAULT_MAP_LONGITUDE: number = 113.96
+
 export class RouterUrls {
   static readonly INDEX: string = 'pages/Index'
   static readonly LOGIN: string = 'pages/LoginPage'
