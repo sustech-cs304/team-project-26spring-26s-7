@@ -23,12 +23,12 @@ export const API_BASE_URL: string = 'https://api.example.com'
 
 /**
  * VisionLLM 服务地址
- * 演示阶段：LAN 直连最稳，时延最低（同校园网时）
- * 备选：cloudflared quick tunnel（域名临时，进程重启就变，演示当天再确认）
- *   - https://arrested-martin-thanksgiving-jpeg.trycloudflare.com
+ * 演示阶段优先用公网 cloudflared 隧道（同校园网外也能跑）；
+ * 域名是 quick tunnel，后端重启会换，每次演示前向后端 cc 再确认一次。
+ * LAN 直连地址：http://172.18.35.215:8000（同校园网时延最低，可作备选）
  * 上架前：换成正式 HTTPS 域名 + CA 证书
  */
-export const VISION_LLM_BASE_URL: string = 'http://172.18.35.215:8000'
+export const VISION_LLM_BASE_URL: string = 'https://auction-mild-shut-instrumental.trycloudflare.com'
 
 /**
  * VisionLLM Bearer token

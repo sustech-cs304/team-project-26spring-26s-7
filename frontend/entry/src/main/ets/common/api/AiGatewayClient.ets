@@ -175,9 +175,13 @@ export class AiGatewayClient {
         this.metadataCache.set(photoPath, md);
         return md;
       })
-      .catch((err: Object) => {
+      .catch((err: Object): never => {
         this.inflightExtractions.delete(photoPath);
-        throw err;
+        // ArkTS arkts-limited-throw 要求 throw 必须是 Error 实例
+        if (err instanceof Error) {
+          throw err;
+        }
+        throw new Error(`extractMetadata failed: ${JSON.stringify(err)}`);
       });
     this.inflightExtractions.set(photoPath, promise);
     return promise;
