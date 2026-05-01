@@ -20,3 +20,18 @@ export { SharePage } from './pages/SharePage';
 
 // Components 导出
 export { QRCodeShare } from './components/QRCodeShare';
+
+// Services 导出
+export { ShareService, SharePhoto, ShareCallResult } from './services/ShareService';
+export { SharePhotoHelper } from './services/SharePhotoHelper';
+
+// Types 导出（与后端契约严格对齐）
+export {
+  SharePublishRequest,
+  SharePublishNode,
+  SharePublishOk,
+  SharePublishResponse,
+  ShareStatusResponse,
+  ShareStatusOk,
+  ShareErrorCode,
+} from './types/ShareTypes';
