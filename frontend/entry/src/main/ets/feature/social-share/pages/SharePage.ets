@@ -28,14 +28,32 @@ import { SharePublishRequest, SharePublishNode } from '../types/ShareTypes'
 export struct SharePage {
   @StorageLink('appThemeVersion') themeVersion: number = 0
   @State shareUrl: string = ''
-  @State expireDays: number = 7
   @State copyText: string = ''
   @State isLoading: boolean = true
   @State errorMsg: string = ''
   @State currentTripName: string = ''
+  // 默认选第 2 项 = "7 天"，与 v0.3 默认行为一致
+  @State selectedExpiryIdx: number = 2
 
   private shareService: ShareService = new ShareService()
   private currentTripId: string = ''
+
+  /**
+   * 过期时长选项 — 第一档刻意做得很短，方便联调时 5 分钟内观察
+   * 链接到期 + 后端 lazy delete 触发的整个生命周期。
+   * 后端 (核心约束)：MIN=60s, MAX=720h。改这里前确认后端能接住。
+   */
+  private expiryOptions: ExpiryOption[] = [
+    new ExpiryOption('5 分钟（测试）', 0, 5),
+    new ExpiryOption('1 天',          24, 0),
+    new ExpiryOption('7 天',         168, 0),
+    new ExpiryOption('30 天',        720, 0),
+  ]
+
+  // ---- 缓存：第一次 publish 解析出的真数据复用给"换档重传" ----
+  // ArkTS 不允许 @State 持有泛型/可空类型；用 private + 配 hasCachedTrip flag。
+  private cachedReq: SharePublishRequest | null = null
+  private cachedPhotos: SharePhoto[] = []
 
   private sharePlatforms: SharePlatform[] = [
     new SharePlatform('💬', '微信'),
@@ -51,6 +69,14 @@ export struct SharePage {
     this.publishShare()
   }
 
+  /** 用户切换有效期档 — 立即用新档位重新生成（同一份 trip + 同一组照片） */
+  private onPickExpiry(idx: number): void {
+    if (this.isLoading) return
+    if (idx === this.selectedExpiryIdx) return
+    this.selectedExpiryIdx = idx
+    this.publishShare()
+  }
+
   /**
    * 主流程：选 trip → 组请求 → 调后端 → 更新 UI
    */
@@ -62,47 +88,62 @@ export struct SharePage {
     try {
       const ctx = getContext(this) as common.UIAbilityContext
 
-      // ---- step 1: 选定要分享的 trip ----
-      const resolved = await this.resolveTrip()
-      if (resolved.kind === KIND_ERROR) {
-        this.errorMsg = resolved.message ? resolved.message : '加载失败'
-        this.isLoading = false
-        return
-      }
-
-      let req: SharePublishRequest
-      let photos: SharePhoto[]
-
-      if (resolved.kind === KIND_RDB && resolved.trip && resolved.nodes) {
-        // ---- step 2a: 真实 RDB 数据路径 ----
-        req = this.buildRequestFromRdb(resolved.trip, resolved.nodes)
-        photos = this.collectPhotosAlignCount(req, resolved.nodes)
-        this.currentTripName = resolved.trip.name
-      } else {
-        // ---- step 2b: 回落到 demo（RDB 里完全没有数据时）----
-        req = this.buildDemoTrip()
-        photos = await SharePhotoHelper.stageBundledMedia(
-          ctx,
-          [$r('app.media.photo_1'), $r('app.media.photo_2')],
-          ['demo_photo_1.jpg', 'demo_photo_2.jpg']
-        )
-        // 没拿到照片就把 photoCount 全部清零，避免后端 §4.3 校验失败
-        if (photos.length === 0) {
-          for (let i = 0; i < req.nodes.length; i++) {
-            req.nodes[i].photoCount = 0
-          }
+      // ---- step 1: 解析 trip 数据 + 准备照片（首次：从 RDB 取；后续：复用缓存） ----
+      // 切换有效期档不需要重新读 RDB / 重新 stage demo 照片，只是换 expiry
+      // 重发 publish 而已。这能让 5 分钟测试模式下的"切档 → 看新链接"快很多。
+      if (!this.cachedReq) {
+        const resolved = await this.resolveTrip()
+        if (resolved.kind === KIND_ERROR) {
+          this.errorMsg = resolved.message ? resolved.message : '加载失败'
+          this.isLoading = false
+          return
         }
-        this.currentTripName = req.tripName
+
+        let req: SharePublishRequest
+        let photos: SharePhoto[]
+
+        if (resolved.kind === KIND_RDB && resolved.trip && resolved.nodes) {
+          // 真实 RDB 数据
+          req = this.buildRequestFromRdb(resolved.trip, resolved.nodes)
+          photos = this.collectPhotosAlignCount(req, resolved.nodes)
+          this.currentTripName = resolved.trip.name
+        } else {
+          // RDB 空 → demo
+          req = this.buildDemoTrip()
+          photos = await SharePhotoHelper.stageBundledMedia(
+            ctx,
+            [$r('app.media.photo_1'), $r('app.media.photo_2')],
+            ['demo_photo_1.jpg', 'demo_photo_2.jpg']
+          )
+          // 没拿到照片就把 photoCount 全部清零，避免后端 §4.3 校验失败
+          if (photos.length === 0) {
+            for (let i = 0; i < req.nodes.length; i++) {
+              req.nodes[i].photoCount = 0
+            }
+          }
+          this.currentTripName = req.tripName
+        }
+
+        this.cachedReq = req
+        this.cachedPhotos = photos
       }
 
-      // ---- step 3: 调后端 ----
-      const result = await this.shareService.publish(req, photos, this.expireDays * 24)
+      // ---- step 2: 用当前选中的有效期档调后端 ----
+      const opt = this.expiryOptions[this.selectedExpiryIdx]
+      const hours = opt.hours > 0 ? opt.hours : 168
+      const minutes = opt.minutes > 0 ? opt.minutes : undefined
+
+      const result = await this.shareService.publish(
+        this.cachedReq, this.cachedPhotos, hours, minutes
+      )
 
       if (result.ok && result.data) {
         this.shareUrl = result.data.url
-        this.copyText = `我刚分享了一段旅行：${req.tripName}\n${result.data.url}`
+        this.copyText = `我刚分享了一段旅行：${this.cachedReq.tripName}\n${result.data.url}`
         this.isLoading = false
-        promptAction.showToast({ message: `分享链接已生成（${photos.length} 张照片）` })
+        promptAction.showToast({
+          message: `分享链接已生成（有效期：${opt.label}）`
+        })
       } else {
         this.errorMsg = (result.errorMessage || '生成失败') +
           (result.errorDetail ? '\n' + result.errorDetail : '')
@@ -324,6 +365,29 @@ export struct SharePage {
               .fontWeight(FontWeight.Medium)
               .fontColor(AppColors.TEXT_PRIMARY)
 
+            // —— 有效期选择器（4 档，第一档为短测试档） ——
+            Text('有效期')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.TEXT_HINT)
+              .margin({ top: 12 })
+            Row({ space: 8 }) {
+              ForEach(this.expiryOptions, (opt: ExpiryOption, idx: number) => {
+                Text(opt.label)
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(idx === this.selectedExpiryIdx
+                             ? Color.White
+                             : AppColors.TEXT_SECONDARY)
+                  .backgroundColor(idx === this.selectedExpiryIdx
+                                   ? AppColors.PRIMARY
+                                   : AppColors.INPUT_BG)
+                  .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+                  .borderRadius(16)
+                  .opacity(this.isLoading ? 0.5 : 1.0)
+                  .onClick(() => this.onPickExpiry(idx))
+              })
+            }
+            .margin({ top: 6 })
+
             if (this.isLoading) {
               Row() {
                 LoadingProgress().width(20).height(20)
@@ -348,7 +412,7 @@ export struct SharePage {
                 Text(this.currentTripName)
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.TEXT_SECONDARY)
-                  .margin({ top: 4 })
+                  .margin({ top: 12 })
               }
               Row() {
                 Text(this.shareUrl)
@@ -364,7 +428,7 @@ export struct SharePage {
                   .onClick(() => this.handleCopyLink())
               }
               .margin({ top: 8 })
-              Text('有效期：' + this.expireDays + ' 天')
+              Text('当前有效期：' + this.expiryOptions[this.selectedExpiryIdx].label)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_HINT)
                 .margin({ top: 4 })
@@ -449,4 +513,20 @@ interface TripResolution {
   trip?: Trip
   nodes?: MemoryNode[]
   message?: string
+}
+
+/**
+ * 有效期选项 — minutes 优先于 hours：哪个 > 0 就用哪个发往后端。
+ * （hours, minutes 都 > 0 是非法配置；这里依靠选项数组的人工填写保证不会出现。）
+ */
+class ExpiryOption {
+  label: string = ''
+  hours: number = 0
+  minutes: number = 0
+
+  constructor(label: string, hours: number, minutes: number) {
+    this.label = label
+    this.hours = hours
+    this.minutes = minutes
+  }
 }
