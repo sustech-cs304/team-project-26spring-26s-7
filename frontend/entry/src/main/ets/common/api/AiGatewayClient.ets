@@ -16,7 +16,7 @@
 import { common } from '@kit.AbilityKit';
 import { HttpClient, HttpResponse } from './HttpClient';
 import { AiEndpoints, HttpTimeout } from './ApiEndpoints';
-import { VisionLLMClient, TextLLMRequest, VisionLLMRequest } from './VisionLLMClient';
+import { VisionLLMClient, TextLLMRequest, VisionLLMRequest, VisionLLMResponse } from './VisionLLMClient';
 import { logger } from '../utils/Logger';
 import { ImageSanitizer } from '../utils/ImageSanitizer';
 import { AiCopyRequest, AiCopyResponse, AiCopyResponseData, VisualKitResult } from '../ai/PhotoMetadata';
@@ -24,17 +24,6 @@ import { LocalImageTagger } from '../ai/LocalImageTagger';
 import { PhotoMetadata } from '../ai/PhotoMetadata';
 
 const TAG = 'AiGatewayClient';
-/**
- * 控制云端打标签时最多送多少张照片
- * 后端 GPU 入口当前是 asyncio.Semaphore(1) 严格串行，N>1 也会排队 → 只放大端到端时延
- * 等后端上 batching / 多卡再放开
- */
-const MAX_CLOUD_TAGGING_IMAGES = 1;
-/** 给 Qwen-VL 的打标签 prompt */
-const TAGGING_QUESTION =
-  '请用 5-10 个简短中文短语描述这张图片中的主要物体、场景和氛围，每个短语不超过 8 个汉字，' +
-  '使用中文顿号「、」分隔，只输出短语列表本身，不要任何前缀、解释或编号。' +
-  '示例：橘猫、布艺沙发、客厅、午后阳光、慵懒。';
 
 /** 风格名称映射（英文→中文描述，用于构建 prompt） */
 const STYLE_PROMPTS: Record<string, string> = {
@@ -52,21 +41,26 @@ const LENGTH_PROMPTS: Record<string, string> = {
 };
 
 /**
- * 长度等级 → max_tokens 上限
- * 后端每 token decode 约 75-90ms，砍上限直接砍时延：
- *   short=64  → 比默认 2048 快 ~14s
- *   medium=160 → 快 ~10s
- *   long=320  → 快 ~5s
- * 中文 1 token 约 1-2 字符，留 1.5x 余量给标点和模型啰嗦
+ * 长度等级 → 目标字数（与 LENGTH_PROMPTS 文案保持一致）
+ * 实际 max_tokens 由公式 charLimitToMaxTokens 派生，不要手写硬编码值
  */
-const LENGTH_MAX_TOKENS: Record<string, number> = {
-  'short': 64,
-  'medium': 160,
-  'long': 320
+const LENGTH_TARGET_CHARS: Record<string, number> = {
+  'short': 30,    // "1-2 句话不超过 30 字"
+  'medium': 80,   // "约 50-80 字"，取上限
+  'long': 200     // "约 120-200 字"，取上限
 };
 
-/** 云端打标的 max_tokens：5-10 个短语，每个 ≤8 字，余量 80 token */
-const TAGGING_MAX_TOKENS: number = 80;
+/**
+ * 中文目标字数 → max_tokens
+ * 公式来自后端实测：1.3 token/字 + 16 给标点和 stop token
+ * 实测耗时档位：
+ *   30 字  →  55 tok →  8-13s
+ *   80 字  → 120 tok → 18-23s
+ *   200 字 → 276 tok → 30-35s（接近模型自然 stop 上限）
+ */
+function charLimitToMaxTokens(targetChars: number): number {
+  return Math.ceil(targetChars * 1.3) + 16;
+}
 
 /**
  * 基于图片的 AI 文案生成请求
@@ -220,7 +214,7 @@ export class AiGatewayClient {
         modelName: 'Qwen-VL-Chat-Int4',
         temperature: 0.9,
         topP: 0.85,
-        maxTokens: LENGTH_MAX_TOKENS[request.lengthLevel] || LENGTH_MAX_TOKENS['medium']
+        maxTokens: charLimitToMaxTokens(LENGTH_TARGET_CHARS[request.lengthLevel] || LENGTH_TARGET_CHARS['medium'])
       };
 
       const llmResponse = await this.visionClient.askText(textRequest);
@@ -261,26 +255,31 @@ export class AiGatewayClient {
   }
 
   /**
-   * 根据端侧分析结果和用户输入构建纯文本 prompt
+   * 单图入口的纯文本 prompt（legacy 路径）
+   * 与 buildBatchPrompt 同款风格：直接给写作任务，不角色扮演，不塞坐标
    */
   private buildPrompt(request: ImageCopyRequest, metadata: PhotoMetadata): string {
     const styleDesc = STYLE_PROMPTS[request.style] || request.style;
     const lengthDesc = LENGTH_PROMPTS[request.lengthLevel] || LENGTH_PROMPTS['medium'];
-    const poiHint = request.poiName ? `拍摄地点是「${request.poiName}」。` : '';
-    const userHint = request.userPrompt ? `用户补充说明：${request.userPrompt}。` : '';
+    const poiHint = request.poiName ? `地点：${request.poiName}。` : '';
+    const userHint = request.userPrompt ? `用户补充：${request.userPrompt}。` : '';
     const metaDesc = describeSinglePhoto(metadata);
 
-    return `请你作为一名旅行博主，` +
+    return `根据以下元数据，用${styleDesc}的风格写一段中文旅行短文。` +
       `${metaDesc}` +
       `${poiHint}${userHint}` +
-      `用${styleDesc}的风格，写一段旅行文案。` +
-      `长度要求：${lengthDesc}。` +
-      `要求：生动描绘旅行场景和氛围，富有感染力，严格遵守长度要求。`;
+      `长度：${lengthDesc}。` +
+      `要求：生动描绘场景和氛围。`;
   }
 
   /**
    * 多图入口：批量提取 EXIF -> 聚合 -> 单次 LLM 调用
-   * 照片仍然不出设备
+   *
+   * 两条路径：
+   *  - cloud off：纯文本 prompt → askText
+   *  - cloud on：把首张照片（剥 EXIF 副本）+ 完整写作 prompt 一次性发给 askImage，
+   *              让模型边看图边写文案。
+   *              不再走"先打标再 askText 写文案"的两段流程，省一次推理往返。
    */
   async generateCopyFromImages(request: ImagesCopyRequest): Promise<HttpResponse<AiCopyResponse>> {
     logger.info(TAG, `Generating copy from ${request.imagePaths.length} images`);
@@ -299,29 +298,34 @@ export class AiGatewayClient {
         request.imagePaths.map((path: string) => this.getOrExtractMetadata(path))
       );
 
-      // Step 2 (可选): 云端打标签 —— 把前 N 张照片送 Qwen-VL 抽内容标签
-      // 仅在用户已知情同意 + ProfileView 开关已打开时才走这条
-      if (request.enableCloudTagging === true && request.context) {
-        await this.augmentMetadataWithCloudTags(request.context, metadataList);
-      }
-
-      // Step 3: 聚合 -> 文本描述
+      // Step 2: 聚合元数据描述
       const aggregateDesc = describePhotoBatch(metadataList);
 
-      // Step 4: 拼 prompt
+      // Step 3: 拼 prompt
       const prompt = buildBatchPrompt(request, aggregateDesc);
       this.lastBatchPrompt = prompt;
       logger.info(TAG, `Built batch prompt (${prompt.length} chars):\n${prompt}`);
 
-      // Step 5: 纯文本 LLM —— max_tokens 按 lengthLevel 砍，避免按默认 2048 跑
-      const textRequest: TextLLMRequest = {
-        prompt: prompt,
-        modelName: 'Qwen-VL-Chat-Int4',
-        temperature: 0.9,
-        topP: 0.85,
-        maxTokens: LENGTH_MAX_TOKENS[request.lengthLevel] || LENGTH_MAX_TOKENS['medium']
-      };
-      const llmResponse = await this.visionClient.askText(textRequest);
+      const maxTokens = charLimitToMaxTokens(
+        LENGTH_TARGET_CHARS[request.lengthLevel] || LENGTH_TARGET_CHARS['medium']
+      );
+
+      // Step 4: 单次推理 —— 走 askImage（cloud on）或 askText（cloud off）
+      const cloudOn = request.enableCloudTagging === true && request.context !== undefined;
+      const llmResponse = cloudOn
+        ? await this.callImageWithPrompt(
+            request.context as common.UIAbilityContext,
+            request.imagePaths[0],
+            prompt,
+            maxTokens
+          )
+        : await this.visionClient.askText({
+            prompt: prompt,
+            modelName: 'Qwen-VL-Chat-Int4',
+            temperature: 0.9,
+            topP: 0.85,
+            maxTokens: maxTokens
+          });
 
       if (llmResponse.statusCode === 200 && llmResponse.data) {
         const responseData: AiCopyResponseData = {
@@ -353,69 +357,37 @@ export class AiGatewayClient {
   }
 
   /**
-   * 仅做端侧 EXIF 提取并返回聚合后的"可读文本描述"
-   * 给 UI 预览用，不调 LLM
+   * 把首张照片 sanitize 后连同完整写作 prompt 一次发给 askImage。
+   * 失败时回退到 askText（仅文本），避免阻断生成。
    */
-  /**
-   * 云端打标签：对前 MAX_CLOUD_TAGGING_IMAGES 张图调 Qwen-VL askImage，
-   * 把返回的中文短语列表写回 PhotoMetadata.objectTags。
-   *
-   * 关键约束：
-   *   - 上传前先 sanitize 副本（剥 EXIF），原图不动；
-   *   - 失败/超时单张静默回退到空标签，不阻断生成；
-   *   - 推理后立即删除 sanitize 副本。
-   */
-  private async augmentMetadataWithCloudTags(
+  private async callImageWithPrompt(
     context: common.UIAbilityContext,
-    metadataList: PhotoMetadata[]
-  ): Promise<void> {
-    const targets = metadataList.slice(0, MAX_CLOUD_TAGGING_IMAGES);
-    logger.info(TAG, `Cloud tagging: requesting ${targets.length}/${metadataList.length} images`);
-
-    const tasks: Promise<void>[] = [];
-    for (const md of targets) {
-      tasks.push(this.tagOnePhoto(context, md));
-    }
-    await Promise.all(tasks);
-  }
-
-  private async tagOnePhoto(
-    context: common.UIAbilityContext,
-    md: PhotoMetadata
-  ): Promise<void> {
+    imagePath: string,
+    prompt: string,
+    maxTokens: number
+  ): Promise<HttpResponse<VisionLLMResponse>> {
     let sanitizedPath = '';
     try {
-      sanitizedPath = await ImageSanitizer.sanitizeForUpload(context, md.photoPath);
+      sanitizedPath = await ImageSanitizer.sanitizeForUpload(context, imagePath);
       if (sanitizedPath.length === 0) {
-        logger.warn(TAG, `Sanitize failed, skip cloud tag for: ${md.photoPath}`);
-        return;
+        logger.warn(TAG, 'Sanitize failed, falling back to text-only generation');
+        return await this.visionClient.askText({
+          prompt: prompt,
+          modelName: 'Qwen-VL-Chat-Int4',
+          temperature: 0.9,
+          topP: 0.85,
+          maxTokens: maxTokens
+        });
       }
-      // 后端会把 temperature<0.7 静默上调到 0.7（Int4 量化模型的 softmax NaN 防护）
-      // 所以直接传 0.7 + top_p 0.5 让候选更聚焦，避免标签发散
       const visionRequest: VisionLLMRequest = {
         imagePath: sanitizedPath,
-        question: TAGGING_QUESTION,
+        question: prompt,
         modelName: 'Qwen-VL-Chat-Int4',
-        temperature: 0.7,
-        topP: 0.5,
-        maxTokens: TAGGING_MAX_TOKENS
+        temperature: 0.9,
+        topP: 0.85,
+        maxTokens: maxTokens
       };
-      const resp = await this.visionClient.askImage(visionRequest);
-      if (resp.statusCode === 200 && resp.data && resp.data.content) {
-        const tags = parseTagList(resp.data.content);
-        if (tags.length > 0) {
-          md.objectTags = mergeUnique(md.objectTags, tags);
-          logger.info(TAG, `Cloud tags for ${md.photoPath}: ${tags.join(',')}`);
-        }
-      } else if (resp.statusCode === 401) {
-        logger.error(TAG, `Cloud tag 401: token 缺失或失效，停止本次打标`);
-      } else if (resp.statusCode === 429) {
-        logger.warn(TAG, `Cloud tag 429: 触发限流（30 次/分钟），降级到纯 EXIF`);
-      } else {
-        logger.warn(TAG, `Cloud tag call failed: status=${resp.statusCode}, err=${resp.error}`);
-      }
-    } catch (err) {
-      logger.error(TAG, `tagOnePhoto error: ${JSON.stringify(err)}`);
+      return await this.visionClient.askImage(visionRequest);
     } finally {
       if (sanitizedPath.length > 0) {
         ImageSanitizer.deleteSanitized(sanitizedPath);
@@ -423,6 +395,10 @@ export class AiGatewayClient {
     }
   }
 
+  /**
+   * 仅做端侧 EXIF 提取并返回聚合后的"可读文本描述"
+   * 给 UI 预览用，不调 LLM
+   */
   async describeImages(imagePaths: string[]): Promise<string> {
     if (imagePaths.length === 0) {
       return '';
@@ -436,6 +412,10 @@ export class AiGatewayClient {
   /**
    * 预览 prompt：完整跑一遍提取 + 聚合 + 拼 prompt，但不发给 LLM
    * 用于 UI 上"生成前预览"功能
+   *
+   * 注意：cloud on 时，真正的生成会把首张照片连同这段 prompt 一起发给 askImage，
+   * 模型会同时看到图片本身。预览 UI 只能展示 prompt 文本部分，需要在调用方
+   * 给出"将连同首张照片一起发送"的提示。
    */
   async previewPromptForImages(request: ImagesCopyRequest): Promise<string> {
     if (request.imagePaths.length === 0) {
@@ -444,9 +424,6 @@ export class AiGatewayClient {
     const metadataList: PhotoMetadata[] = await Promise.all(
       request.imagePaths.map((path: string) => this.getOrExtractMetadata(path))
     );
-    if (request.enableCloudTagging === true && request.context) {
-      await this.augmentMetadataWithCloudTags(request.context, metadataList);
-    }
     const aggregateDesc = describePhotoBatch(metadataList);
     const prompt = buildBatchPrompt(request, aggregateDesc);
     this.lastBatchPrompt = prompt;
@@ -528,7 +505,29 @@ interface ModerateResponse {
   data: ModerateResponseData;
 }
 
-/** 把单张照片的元数据描述成一段中文（精简，只保留对文案生成有用的信号） */
+/**
+ * 把 EXIF 时间字符串 "YYYY:MM:DD HH:MM:SS" 简化成 "YYYY-MM-DD"
+ * 只保留日期，丢弃秒级精度和原始的奇怪冒号分隔
+ */
+function formatExifDate(raw: string): string | undefined {
+  const datePart = raw.split(' ')[0];
+  const parts = datePart.split(':');
+  if (parts.length !== 3) {
+    return undefined;
+  }
+  const yyyy = parts[0];
+  const mm = parts[1];
+  const dd = parts[2];
+  if (!yyyy || !mm || !dd) {
+    return undefined;
+  }
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/**
+ * 把单张照片的元数据描述成一段中文
+ * 不再输出 GPS 数字（对模型无意义）和拍摄设备/曝光等技术参数
+ */
 function describeSinglePhoto(md: PhotoMetadata): string {
   const parts: string[] = [];
   if (md.objectTags.length > 0) {
@@ -538,18 +537,21 @@ function describeSinglePhoto(md: PhotoMetadata): string {
     parts.push(`画面中文字：「${md.ocrText}」`);
   }
   if (md.timeTags.length > 0) {
-    parts.push(`拍摄时段：${md.timeTags.join('、')}`);
+    parts.push(`时段：${md.timeTags.join('、')}`);
   }
   if (md.dateTimeOriginal) {
-    parts.push(`拍摄时间：${md.dateTimeOriginal}`);
-  }
-  if (md.gpsLatitude !== undefined && md.gpsLongitude !== undefined) {
-    parts.push(`GPS：${md.gpsLatitude.toFixed(4)}, ${md.gpsLongitude.toFixed(4)}`);
+    const date = formatExifDate(md.dateTimeOriginal);
+    if (date) {
+      parts.push(`日期：${date}`);
+    }
   }
   return parts.length > 0 ? parts.join('。') + '。' : '';
 }
 
-/** 多张照片的元数据聚合成一段中文（去重 + 范围归并） */
+/**
+ * 多张照片的元数据聚合成一段中文（去重 + 范围归并）
+ * 同样不再写 GPS 数字
+ */
 function describePhotoBatch(list: PhotoMetadata[]): string {
   if (list.length === 0) {
     return '';
@@ -560,9 +562,6 @@ function describePhotoBatch(list: PhotoMetadata[]): string {
   const timeSet: Set<string> = new Set();
   let earliest: string | undefined;
   let latest: string | undefined;
-  let latSum = 0;
-  let lonSum = 0;
-  let gpsCount = 0;
   let withDateTime = 0;
 
   for (const md of list) {
@@ -572,24 +571,23 @@ function describePhotoBatch(list: PhotoMetadata[]): string {
       ocrSet.add(md.ocrText);
     }
     if (md.dateTimeOriginal) {
-      withDateTime += 1;
-      if (!earliest || md.dateTimeOriginal < earliest) {
-        earliest = md.dateTimeOriginal;
+      const formatted = formatExifDate(md.dateTimeOriginal);
+      if (formatted) {
+        withDateTime += 1;
+        if (!earliest || formatted < earliest) {
+          earliest = formatted;
+        }
+        if (!latest || formatted > latest) {
+          latest = formatted;
+        }
       }
-      if (!latest || md.dateTimeOriginal > latest) {
-        latest = md.dateTimeOriginal;
-      }
-    }
-    if (md.gpsLatitude !== undefined && md.gpsLongitude !== undefined) {
-      latSum += md.gpsLatitude;
-      lonSum += md.gpsLongitude;
-      gpsCount += 1;
     }
   }
 
   const parts: string[] = [];
-  parts.push(`共 ${list.length} 张照片`);
-
+  if (list.length > 1) {
+    parts.push(`共 ${list.length} 张照片`);
+  }
   if (objectSet.size > 0) {
     parts.push(`画面内容：${Array.from(objectSet).join('、')}`);
   }
@@ -605,84 +603,53 @@ function describePhotoBatch(list: PhotoMetadata[]): string {
   }
   if (withDateTime > 0 && earliest && latest) {
     if (earliest === latest) {
-      parts.push(`拍摄时间：${earliest}`);
+      parts.push(`日期：${earliest}`);
     } else {
-      parts.push(`拍摄时间区间：${earliest} ~ ${latest}`);
+      parts.push(`日期区间：${earliest} ~ ${latest}`);
     }
   }
-  if (gpsCount > 0) {
-    const avgLat = latSum / gpsCount;
-    const avgLon = lonSum / gpsCount;
-    parts.push(`GPS 中心点：${avgLat.toFixed(4)}, ${avgLon.toFixed(4)}`);
-  }
 
-  return parts.join('；') + '。';
-}
-
-/** 多图 prompt 模板 */
-function buildBatchPrompt(request: ImagesCopyRequest, exifDesc: string): string {
-  const styleDesc = STYLE_PROMPTS[request.style] || request.style;
-  const lengthDesc = LENGTH_PROMPTS[request.lengthLevel] || LENGTH_PROMPTS['medium'];
-  const poiHint = request.poiName ? `拍摄地点是「${request.poiName}」。` : '';
-  const moodHint = request.mood && request.mood.length > 0 ? `当前心情：${request.mood}。` : '';
-  const tagsHint = request.tags && request.tags.length > 0 ? `标签：${request.tags.join('、')}。` : '';
-  const userHint = request.userPrompt && request.userPrompt.length > 0
-    ? `用户补充说明：${request.userPrompt}。`
-    : '';
-
-  // 节点上的 GPS 兜底（EXIF 缺失时仍能给出位置）
-  const fallbackGps =
-    request.latitude !== undefined &&
-    request.longitude !== undefined &&
-    request.latitude !== 0 &&
-    request.longitude !== 0
-      ? `节点定位：${request.latitude.toFixed(4)}, ${request.longitude.toFixed(4)}。`
-      : '';
-
-  return `请你作为一名旅行博主，根据以下元数据写一段旅行文案。` +
-    `${exifDesc}` +
-    `${poiHint}${fallbackGps}${moodHint}${tagsHint}${userHint}` +
-    `风格：${styleDesc}。长度：${lengthDesc}。` +
-    `要求：生动描绘场景和氛围，不要复述 GPS 数字，` +
-    `如果"画面中文字"是地名/招牌/菜名，可自然融入。`;
+  return parts.length > 0 ? parts.join('；') + '。' : '';
 }
 
 /**
- * 把 Qwen-VL 返回的"短语1、短语2、短语3"形式的字符串解析成数组
- * 兼容中英文逗号 / 顿号 / 换行 / 回车混用
- *
- * 后端"敏感词命中只把命中片段替换成 ***"的策略意味着可能出现整段为 *
- * 的短语，需要显式丢弃；单 token 命中（标签里夹杂 *）保持原样上行
+ * 多图 prompt 模板
+ * - 直接给写作任务，不用"旅行博主"角色扮演（套路过气）
+ * - 不塞 GPS 数字 / 节点定位坐标（对模型无信息量，且容易让模型机械地复述坐标）
+ * - cloud-on 时加"请仔细观察这张照片"前缀 + "必须基于照片中实际看到"约束：
+ *   Qwen-VL 是 prompt-sensitive 的，没有这两条，模型可能把图片当 optional context
+ *   略过，落到只看文本的模式（实测会瞎编画面里没有的细节，比如把温和海滩说成
+ *   "波涛汹涌"），这是后端跑对账实验定位出来的。
  */
-function parseTagList(raw: string): string[] {
-  if (!raw || raw.length === 0) {
-    return [];
-  }
-  // 去掉常见前缀（"标签：" / "短语：" / 数字编号 等）
-  const cleaned = raw
-    .replace(/^[\s\S]*?[：:]/, (m: string) => (m.length > 30 ? m : ''))  // 仅短前缀去除
-    .replace(/[\d]+[\.、)]\s*/g, '');
-  const pieces = cleaned.split(/[、，,；;\n\r\/]+/);
-  const out: string[] = [];
-  for (const p of pieces) {
-    const trimmed = p.trim().replace(/^[「『"']+/, '').replace(/[」』"']+$/, '');
-    if (trimmed.length === 0 || trimmed.length > 16) {
-      continue;
-    }
-    // 整段全是 * 是后端打码的产物，直接丢
-    if (/^\*+$/.test(trimmed)) {
-      continue;
-    }
-    out.push(trimmed);
-  }
-  // 最多 10 个，避免污染 prompt
-  return out.slice(0, 10);
+function buildBatchPrompt(request: ImagesCopyRequest, exifDesc: string): string {
+  const styleDesc = STYLE_PROMPTS[request.style] || request.style;
+  const lengthDesc = LENGTH_PROMPTS[request.lengthLevel] || LENGTH_PROMPTS['medium'];
+  const poiHint = request.poiName && request.poiName.length > 0
+    ? `地点：${request.poiName}。`
+    : '';
+  const moodHint = request.mood && request.mood.length > 0
+    ? `心情：${request.mood}。`
+    : '';
+  const tagsHint = request.tags && request.tags.length > 0
+    ? `标签：${request.tags.join('、')}。`
+    : '';
+  const userHint = request.userPrompt && request.userPrompt.length > 0
+    ? `用户补充：${request.userPrompt}。`
+    : '';
+
+  // cloud-on（首张图随 prompt 一起发）→ 必须明确指示"看图"，否则模型可能略过图片
+  const cloudOn = request.enableCloudTagging === true && request.context !== undefined;
+  const intro = cloudOn
+    ? `请仔细观察这张照片的画面内容。然后根据照片内容和以下记忆节点的元数据，用${styleDesc}的风格写一段中文旅行短文。`
+    : `根据以下记忆节点的元数据，用${styleDesc}的风格写一段中文旅行短文。`;
+  const groundingNote = cloudOn
+    ? `必须基于照片中实际看到的人物、场景、物品来描绘，不要编造画面里没有的内容；`
+    : '';
+
+  return intro +
+    `${exifDesc}` +
+    `${poiHint}${moodHint}${tagsHint}${userHint}` +
+    `长度：${lengthDesc}。` +
+    `要求：${groundingNote}生动描绘场景和氛围；如果"画面中文字"是地名、招牌或菜名，可自然融入文中。`;
 }
 
-function mergeUnique(existing: string[], incoming: string[]): string[] {
-  const set: Set<string> = new Set(existing);
-  for (const t of incoming) {
-    set.add(t);
-  }
-  return Array.from(set);
-}

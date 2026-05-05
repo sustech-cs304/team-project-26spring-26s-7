@@ -599,7 +599,7 @@ export struct AiCopyPage {
               Column() {
                 Text(
                   this.cloudTaggingEnabled
-                    ? '已识别端侧元数据（点击生成时还会上传剥离 EXIF 后的副本到云端补充识别画面内容）'
+                    ? '已识别端侧元数据（点击生成时还会把首张照片的剥离 EXIF 副本一并发送，让模型直接看图写文案）'
                     : '已识别端侧元数据（仅文本进入 prompt，照片本体不会上传）'
                 )
                   .fontSize(AppDimens.FONT_SM)
@@ -848,7 +848,11 @@ export struct AiCopyPage {
                 .backgroundColor('#0F000000')
                 .borderRadius(AppDimens.RADIUS_SM)
 
-                Text(`长度：${this.debugPrompt.length} 字符`)
+                Text(
+                  this.cloudTaggingEnabled
+                    ? `长度：${this.debugPrompt.length} 字符（生成时还会把首张照片一并发送给模型）`
+                    : `长度：${this.debugPrompt.length} 字符`
+                )
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.TEXT_HINT)
                   .margin({ top: 6 })
@@ -972,12 +976,11 @@ export struct AiCopyPage {
             .margin({ bottom: 12 })
 
             Text(
-              '为了让 AI 更准确地识别照片画面内容（例如"猫"、"沙发"、"夕阳"），' +
-              '需要把您选择的若干张照片以剥离 GPS / 设备信息后的副本上传至云端 Qwen-VL 模型进行内容识别。' +
+              '为了让 AI 看到画面后再写文案，需要把您选择的首张照片以剥离 EXIF 后的副本上传至云端 Qwen-VL 模型，模型会边看图边生成文案。' +
               '\n\n• 上传副本不含 GPS、相机型号等敏感 EXIF；' +
               '\n• 推理结束后云端立即删除该副本，不进行持久化存储、不写入业务数据库、不记录原始图片内容或文件名；' +
               '\n• 您可以随时在"我的 → 隐私与安全"中关闭。' +
-              '\n\n如果不同意，本次仍可生成文案，但仅基于元数据（拍摄时间、位置等），不上传任何照片。'
+              '\n\n如果不同意，本次仍可生成文案，但仅基于端侧抽出的元数据（拍摄时间、地点、画面中识别到的文字等），不上传任何照片。'
             )
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.TEXT_SECONDARY)

@@ -23,6 +23,14 @@ import { VISION_LLM_BASE_URL, VISION_LLM_AUTH_TOKEN, HttpTimeout } from './ApiEn
 const TAG = 'VisionLLMClient';
 
 /**
+ * 兜底 max_tokens：调用方没显式传时用这个。
+ * 取 128 是一个相对保守的"中等长度"值——不会让用户等过 30s。
+ * 如果你看到日志里某请求最终走了这个默认，多半是某条调用路径
+ * 漏传了 maxTokens，应该去修调用方而不是改这个值。
+ */
+const DEFAULT_MAX_TOKENS = 128;
+
+/**
  * Qwen-VL API 响应中的 message 结构
  */
 interface QwenMessage {
@@ -153,10 +161,12 @@ export class VisionLLMClient {
       formData.addField('question', request.question);
       formData.addField('temperature', (request.temperature ?? 1.0).toString());
       formData.addField('top_p', (request.topP ?? 0.8).toString());
-      // 上限 token 数：不传则后端按默认 2048 跑，会很慢
-      if (request.maxTokens !== undefined && request.maxTokens > 0) {
-        formData.addField('max_tokens', request.maxTokens.toString());
-      }
+      // 上限 token 数：永远显式传，不让后端走默认值（哪怕后端默认是 256
+      // 也比我们显式传 48 慢）。调用方未传时用 DEFAULT_MAX_TOKENS 兜底。
+      const effectiveMaxTokens = (request.maxTokens !== undefined && request.maxTokens > 0)
+        ? request.maxTokens
+        : DEFAULT_MAX_TOKENS;
+      formData.addField('max_tokens', effectiveMaxTokens.toString());
 
       // 构建请求体
       const requestBody = await formData.build();
@@ -244,9 +254,10 @@ export class VisionLLMClient {
         temperature: request.temperature ?? 0.9,
         top_p: request.topP ?? 0.85
       };
-      if (request.maxTokens !== undefined && request.maxTokens > 0) {
-        requestBody.max_tokens = request.maxTokens;
-      }
+      // 同 askImage：永远显式传 max_tokens，不留漏洞
+      requestBody.max_tokens = (request.maxTokens !== undefined && request.maxTokens > 0)
+        ? request.maxTokens
+        : DEFAULT_MAX_TOKENS;
 
       const url = `${this.baseUrl}/v1/chat/completions`;
       logger.info(TAG, `Sending POST request to: ${url}`);
