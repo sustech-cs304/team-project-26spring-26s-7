@@ -48,7 +48,7 @@ export interface SharePublishNode {
   longitude?: number
 }
 
-/** POST /api/v1/share/publish 成功响应 data 字段（§4.4） */
+/** POST /api/v1/share/publish 成功响应 data 字段（§4.4 + v0.6 sig） */
 export interface SharePublishOk {
   /** 完整分享链接，可直接复制 / 分享 / 生成二维码 */
   url: string
@@ -56,6 +56,16 @@ export interface SharePublishOk {
   shortCode: string
   /** 过期时间 — Unix timestamp，秒级 */
   expiresAt: number
+  /** 64 字符 hex 签名（与 url 里 &s= 之后的部分一致），
+   *  v0.6 起从后端直接返回，避免前端再解析 URL */
+  sig: string
+}
+
+/** 切档时撤销旧链接所需的三件套（v0.6） */
+export interface ReplaceLink {
+  shortCode: string
+  expirySec: number
+  sig: string
 }
 
 /** POST /api/v1/share/publish 完整响应（§4.4 / §4.5） */

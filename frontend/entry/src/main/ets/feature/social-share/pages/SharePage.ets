@@ -7,7 +7,7 @@ import { SharePlatform, RouterParam } from '../../../common'
 import type { Trip, MemoryNode } from '../../../common'
 import { ShareService, SharePhoto } from '../services/ShareService'
 import { SharePhotoHelper } from '../services/SharePhotoHelper'
-import { SharePublishRequest, SharePublishNode } from '../types/ShareTypes'
+import { ReplaceLink, SharePublishRequest, SharePublishNode } from '../types/ShareTypes'
 
 /**
  * P08 分享页 — 真机联调版（v0.2，接通 RDB 真实数据）
@@ -34,6 +34,9 @@ export struct SharePage {
   @State currentTripName: string = ''
   // 默认选第 2 项 = "7 天"，与 v0.3 默认行为一致
   @State selectedExpiryIdx: number = 2
+  // 反应 UI 用的 flag：已经发出去过一条链接吗？
+  // （和 private lastLink 一一对应，但 lastLink 是接口对象不能直接 @State）
+  @State hasLastLink: boolean = false
 
   private shareService: ShareService = new ShareService()
   private currentTripId: string = ''
@@ -54,6 +57,10 @@ export struct SharePage {
   // ArkTS 不允许 @State 持有泛型/可空类型；用 private + 配 hasCachedTrip flag。
   private cachedReq: SharePublishRequest | null = null
   private cachedPhotos: SharePhoto[] = []
+
+  // ---- v0.4：上一条已发出去的链接（用来在切档时让后端把它撤销） ----
+  // 第一次 publish 之前是 null，之后每次成功都更新成"刚发出的那条"。
+  private lastLink: ReplaceLink | null = null
 
   private sharePlatforms: SharePlatform[] = [
     new SharePlatform('💬', '微信'),
@@ -129,25 +136,38 @@ export struct SharePage {
       }
 
       // ---- step 2: 用当前选中的有效期档调后端 ----
+      // 如果已经发过一条（lastLink 存在），把它作为 replace 一起发，让
+      // 后端在新发布**成功之后**自动撤销那条旧的，避免冗余链接堆积。
       const opt = this.expiryOptions[this.selectedExpiryIdx]
       const hours = opt.hours > 0 ? opt.hours : 168
       const minutes = opt.minutes > 0 ? opt.minutes : undefined
+      const isReplacing = this.lastLink !== null
+      const replace = this.lastLink !== null ? this.lastLink : undefined
 
       const result = await this.shareService.publish(
-        this.cachedReq, this.cachedPhotos, hours, minutes
+        this.cachedReq, this.cachedPhotos, hours, minutes, replace
       )
 
       if (result.ok && result.data) {
         this.shareUrl = result.data.url
         this.copyText = `我刚分享了一段旅行：${this.cachedReq.tripName}\n${result.data.url}`
+        // 记录这一条，下次切档时会作为 replace 三件套发回去
+        this.lastLink = {
+          shortCode: result.data.shortCode,
+          expirySec: result.data.expiresAt,
+          sig: result.data.sig,
+        }
+        this.hasLastLink = true
         this.isLoading = false
-        promptAction.showToast({
-          message: `分享链接已生成（有效期：${opt.label}）`
-        })
+        const toast = isReplacing
+          ? `已替换为新链接（原链接已失效，有效期：${opt.label}）`
+          : `分享链接已生成（有效期：${opt.label}）`
+        promptAction.showToast({ message: toast })
       } else {
         this.errorMsg = (result.errorMessage || '生成失败') +
           (result.errorDetail ? '\n' + result.errorDetail : '')
         this.isLoading = false
+        // 失败时不动 lastLink —— 后端保证新失败时旧的还在
       }
     } catch (e) {
       this.errorMsg = `异常：${JSON.stringify(e)}`
@@ -387,6 +407,14 @@ export struct SharePage {
               })
             }
             .margin({ top: 6 })
+
+            // 已经发过一条后，提示用户：切换将让旧链接失效
+            if (this.hasLastLink) {
+              Text('切换其它有效期会自动撤销当前链接')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_HINT)
+                .margin({ top: 6 })
+            }
 
             if (this.isLoading) {
               Row() {
