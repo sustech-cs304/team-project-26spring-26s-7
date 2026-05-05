@@ -48,7 +48,7 @@ export interface SharePublishNode {
   longitude?: number
 }
 
-/** POST /api/v1/share/publish 成功响应 data 字段（§4.4 + v0.6 sig） */
+/** POST /api/v1/share/publish 成功响应 data 字段（§4.4 + v0.6 sig + v0.7.1 cover） */
 export interface SharePublishOk {
   /** 完整分享链接，可直接复制 / 分享 / 生成二维码 */
   url: string
@@ -59,6 +59,10 @@ export interface SharePublishOk {
   /** 64 字符 hex 签名（与 url 里 &s= 之后的部分一致），
    *  v0.6 起从后端直接返回，避免前端再解析 URL */
   sig: string
+  /** 公网可访问的封面图 URL（指向 /cache/.../0_375w.webp）。
+   *  v0.7.1 新增 — 供 systemShare 把它 fetch 成 ArrayBuffer 作为 thumbnail
+   *  传给 QQ / 微博等不主动抓 OG meta 的接收方。0 张照片时为 null。 */
+  coverPhotoUrl?: string
 }
 
 /** 切档时撤销旧链接所需的三件套（v0.6） */

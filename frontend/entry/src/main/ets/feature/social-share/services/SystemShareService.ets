@@ -22,14 +22,19 @@ const TAG = 'SystemShareService'
 
 /**
  * 调起系统分享面板时给到 ShareKit 的载荷。
- * url     —— 限时分享 URL（必填，会作为 hyperlink 主体）
- * title   —— 在分享卡片头部显示的标题，如 "深圳湾骑行 - TravelPin"
+ * url        —— 限时分享 URL（必填，会作为 hyperlink 主体）
+ * title      —— 在分享卡片头部显示的标题，如 "深圳湾骑行 - TravelPin"
  * description —— 摘要，如 "4 个节点 · 12.5km · 始于红树林"
+ * thumbnail  —— 可选，封面图字节（推荐 ≤ 200KB 的 JPEG/WebP）。
+ *               QQ / 微博等不会主动 fetch URL 的 OG meta，必须靠
+ *               这个 ArrayBuffer 才能在卡片里渲染封面图。微信会自己
+ *               抓 OG meta，但有 thumbnail 也无妨（即时显示 + 减一次抓取）。
  */
 export interface SystemSharePayload {
   url: string
   title: string
   description: string
+  thumbnail?: ArrayBuffer
 }
 
 /**
@@ -58,7 +63,8 @@ export class SystemShareService {
     ctx: common.UIAbilityContext,
     payload: SystemSharePayload
   ): Promise<boolean> {
-    logger.info(TAG, `share() url=${payload.url} title="${payload.title}"`)
+    const hasThumb = payload.thumbnail !== undefined && payload.thumbnail.byteLength > 0
+    logger.info(TAG, `share() url=${payload.url} title="${payload.title}" thumb=${hasThumb ? payload.thumbnail!.byteLength + 'B' : 'no'}`)
     try {
       // utd 选择对哪些 app 出现在分享面板里影响很大：
       //   - 'general.hyperlink' 是 URL+描述文字 的标准 UTD，QQ/微信/微博/
@@ -72,6 +78,7 @@ export class SystemShareService {
         content: payload.url,
         title: payload.title,
         description: payload.description,
+        thumbnail: payload.thumbnail,    // QQ 卡片预览的关键
       })
       // 文本副本：标题 + 摘要 + URL，纯文本接收方就这一份
       const textBlob = `${payload.title}\n${payload.description}\n${payload.url}`

@@ -1,5 +1,6 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { common } from '@kit.AbilityKit'
+import { http } from '@kit.NetworkKit'
 import { pasteboard } from '@kit.BasicServicesKit'
 import { AppColors, AppDimens, getDataService, RouterParam, SharePlatform } from '../../../common'
 import type { MemoryNode, Trip } from '../../../common'
@@ -57,6 +58,10 @@ export struct SharePage {
   private cachedNodes: MemoryNode[] = []
   private useDemoPhotos: boolean = false
   private lastLink: ReplaceLink | null = null
+  // v0.5.2: 后端 v0.7.1 起返回 coverPhotoUrl，客户端做系统分享时把它
+  // fetch 成 ArrayBuffer 当作 thumbnail 塞进 SharedData，让 QQ 这类不会
+  // 主动抓 OG meta 的接收方也能渲染卡片。
+  private coverPhotoUrl: string = ''
 
   private expiryOptions: ExpiryOption[] = [
     new ExpiryOption('5 分钟（测试）', 0, 5),
@@ -153,6 +158,7 @@ export struct SharePage {
           expirySec: result.data.expiresAt,
           sig: result.data.sig,
         }
+        this.coverPhotoUrl = result.data.coverPhotoUrl ? result.data.coverPhotoUrl : ''
         this.hasLastLink = true
         this.isLoading = false
         const toast = isReplacing
@@ -360,16 +366,18 @@ export struct SharePage {
       await this.handleCopyLink()
       return
     }
-    // 微信 / 微博 / 其它：先尝试系统分享面板（让 OS 把 URL + 标题 + 摘要
-    // 投递给目标 app；目标 app 接到后会按自己的卡片渲染逻辑展示，结合
-    // 后端 v0.7 的 OG meta 标签即可在多数环境下出卡片预览）。
+    // 微信 / QQ / 其它：先尝试系统分享面板（让 OS 把 URL + 标题 + 摘要 +
+    // 缩略图字节投递给目标 app）。微信会主动 fetch 后端 v0.7 的 OG meta 渲染
+    // 卡片，QQ 不会主动抓 — 必须靠 thumbnail 字节才能出卡片预览。
     const ctx = getContext(this) as common.UIAbilityContext
+    const thumbnail = await this.fetchCoverThumbnail()
     const payload: SystemSharePayload = {
       url: this.shareUrl,
       title: this.currentTripName
         ? `${this.currentTripName} - TravelPin`
         : 'TravelPin 分享',
       description: this.copyText,
+      thumbnail,
     }
     const ok = await SystemShareService.share(ctx, payload)
     if (ok) {
@@ -392,6 +400,35 @@ export struct SharePage {
 
   private retry(): void {
     void this.publishShare()
+  }
+
+  /**
+   * 把后端返回的 coverPhotoUrl fetch 成 ArrayBuffer，给 systemShare 当
+   * thumbnail 用。任何失败（无封面 URL / 网络挂 / 超时）都返 undefined，
+   * 调用方 share 时直接不带缩略图，不让分享按钮卡住。
+   */
+  private async fetchCoverThumbnail(): Promise<ArrayBuffer | undefined> {
+    if (!this.coverPhotoUrl) {
+      return undefined
+    }
+    const httpReq = http.createHttp()
+    try {
+      const resp = await httpReq.request(this.coverPhotoUrl, {
+        method: http.RequestMethod.GET,
+        readTimeout: 3000,
+        connectTimeout: 3000,
+        expectDataType: http.HttpDataType.ARRAY_BUFFER,
+      })
+      if (resp.responseCode === 200 && resp.result instanceof ArrayBuffer) {
+        return resp.result as ArrayBuffer
+      }
+      return undefined
+    } catch (e) {
+      // 网络抖动 / 超时 / DNS 等任何错误 — 不带缩略图也能分享
+      return undefined
+    } finally {
+      httpReq.destroy()
+    }
   }
 
   build() {
