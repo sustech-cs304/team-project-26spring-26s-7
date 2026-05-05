@@ -1,34 +1,35 @@
-import { router } from '@kit.ArkUI'
+import { router, promptAction } from '@kit.ArkUI'
 import { common } from '@kit.AbilityKit'
 import { pasteboard } from '@kit.BasicServicesKit'
-import { promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, getDataService } from '../../../common'
-import { SharePlatform, RouterParam } from '../../../common'
-import type { Trip, MemoryNode } from '../../../common'
-import { ShareService, SharePhoto } from '../services/ShareService'
-import { SharePhotoHelper } from '../services/SharePhotoHelper'
-import { SharePublishRequest, SharePublishNode } from '../types/ShareTypes'
+import { AppColors, AppDimens, getDataService, RouterParam, SharePlatform } from '../../../common'
+import type { MemoryNode, Trip } from '../../../common'
+import { ShareErrorMapper } from '../services/ShareErrorMapper'
+import { SharePhoto, ShareService } from '../services/ShareService'
+import { SharePhotoBatchResult, SharePhotoHelper } from '../services/SharePhotoHelper'
+import { SharePreflight } from '../services/SharePreflight'
+import {
+  SharePhotoIssue,
+  SharePublishNode,
+  SharePublishRequest,
+} from '../types/ShareTypes'
 
-/**
- * P08 分享页 — 真机联调版（v0.2，接通 RDB 真实数据）
- *
- * 行为：
- *   1. 解析 tripId：优先用路由参数；没传就取 RDB 里 createdAt 最新的那条 trip
- *   2. 用 RdbDataService 拉真 trip + nodes，按 nodeOrder 排序
- *   3. 把 MemoryNode.photos[] 里的本地沙箱路径过滤成可上传的文件列表
- *      （SharePhotoHelper.toSharePhotos 自动剥 file://、跳过云端引用、校验存在）
- *   4. 按"幸存"照片数重新对齐每个节点的 photoCount，确保后端 §4.3 校验通过
- *   5. 调 ShareService.publish 拿到签名 URL → 显示给用户复制 / 分享
- *   6. 如果 RDB 里完全没有 trip，回落到 demo 模式（用 resources/base/media/photo_*.jpg）
- *
- * 路由参数：{ tripId?: string } —— 不传也能跑（自动选最新 trip 或 demo）
- */
+const KIND_RDB: string = 'rdb'
+const KIND_DEMO: string = 'demo'
+const KIND_ERROR: string = 'error'
+
+interface TripResolution {
+  kind: string
+  trip?: Trip
+  nodes?: MemoryNode[]
+  message?: string
+}
+
 @Entry
 @Component
 export struct SharePage {
   @StorageLink('appThemeVersion') themeVersion: number = 0
+  @StorageLink('shareLinkExpiryDays') expireDays: number = 7
   @State shareUrl: string = ''
-  @State expireDays: number = 7
   @State copyText: string = ''
   @State isLoading: boolean = true
   @State errorMsg: string = ''
@@ -36,11 +37,10 @@ export struct SharePage {
 
   private shareService: ShareService = new ShareService()
   private currentTripId: string = ''
-
   private sharePlatforms: SharePlatform[] = [
-    new SharePlatform('💬', '微信'),
-    new SharePlatform('🔴', '微博'),
-    new SharePlatform('📋', '复制链接'),
+    new SharePlatform('W', '微信'),
+    new SharePlatform('B', '微博'),
+    new SharePlatform('C', '复制链接'),
   ]
 
   aboutToAppear(): void {
@@ -48,45 +48,39 @@ export struct SharePage {
     if (params && params.tripId) {
       this.currentTripId = params.tripId
     }
-    this.publishShare()
+    void this.publishShare()
   }
 
-  /**
-   * 主流程：选 trip → 组请求 → 调后端 → 更新 UI
-   */
   private async publishShare(): Promise<void> {
     this.isLoading = true
     this.errorMsg = ''
     this.shareUrl = ''
+    let photos: SharePhoto[] = []
+    let preflightIssues: SharePhotoIssue[] = []
 
     try {
       const ctx = getContext(this) as common.UIAbilityContext
-
-      // ---- step 1: 选定要分享的 trip ----
       const resolved = await this.resolveTrip()
       if (resolved.kind === KIND_ERROR) {
-        this.errorMsg = resolved.message ? resolved.message : '加载失败'
+        this.errorMsg = resolved.message ?? '加载失败'
         this.isLoading = false
         return
       }
 
       let req: SharePublishRequest
-      let photos: SharePhoto[]
-
       if (resolved.kind === KIND_RDB && resolved.trip && resolved.nodes) {
-        // ---- step 2a: 真实 RDB 数据路径 ----
         req = this.buildRequestFromRdb(resolved.trip, resolved.nodes)
-        photos = this.collectPhotosAlignCount(req, resolved.nodes)
+        const prepared = await this.collectPhotosAlignCount(ctx, req, resolved.nodes)
+        photos = prepared.photos
+        preflightIssues = prepared.issues
         this.currentTripName = resolved.trip.name
       } else {
-        // ---- step 2b: 回落到 demo（RDB 里完全没有数据时）----
         req = this.buildDemoTrip()
         photos = await SharePhotoHelper.stageBundledMedia(
           ctx,
           [$r('app.media.photo_1'), $r('app.media.photo_2')],
           ['demo_photo_1.jpg', 'demo_photo_2.jpg']
         )
-        // 没拿到照片就把 photoCount 全部清零，避免后端 §4.3 校验失败
         if (photos.length === 0) {
           for (let i = 0; i < req.nodes.length; i++) {
             req.nodes[i].photoCount = 0
@@ -95,31 +89,36 @@ export struct SharePage {
         this.currentTripName = req.tripName
       }
 
-      // ---- step 3: 调后端 ----
-      const result = await this.shareService.publish(req, photos, this.expireDays * 24)
+      const preflight = SharePreflight.validatePublish(
+        req,
+        photos,
+        this.expireDays * 24,
+        preflightIssues
+      )
+      if (!preflight.ok) {
+        this.errorMsg = ShareErrorMapper.formatPreflight(preflight)
+        this.isLoading = false
+        return
+      }
 
+      const result = await this.shareService.publish(req, photos, this.expireDays * 24)
       if (result.ok && result.data) {
         this.shareUrl = result.data.url
         this.copyText = `我刚分享了一段旅行：${req.tripName}\n${result.data.url}`
         this.isLoading = false
         promptAction.showToast({ message: `分享链接已生成（${photos.length} 张照片）` })
       } else {
-        this.errorMsg = (result.errorMessage || '生成失败') +
-          (result.errorDetail ? '\n' + result.errorDetail : '')
+        this.errorMsg = ShareErrorMapper.formatPublishResult(result)
         this.isLoading = false
       }
     } catch (e) {
       this.errorMsg = `异常：${JSON.stringify(e)}`
       this.isLoading = false
+    } finally {
+      SharePhotoHelper.cleanupTemporaryPhotos(photos)
     }
   }
 
-  /**
-   * 决定要分享哪个 trip：
-   *   - 路由参数有 tripId  → 必须能在 RDB 中查到，否则 error
-   *   - 路由参数没有 tripId → 取 RDB 里 createdAt 最新的那条
-   *   - RDB 是空的           → 走 demo
-   */
   private async resolveTrip(): Promise<TripResolution> {
     const ds = getDataService()
 
@@ -132,14 +131,14 @@ export struct SharePage {
         }
       }
       const nodes = await this.loadAndSortNodes(this.currentTripId)
-      return { kind: KIND_RDB, trip: trip, nodes: nodes }
+      return { kind: KIND_RDB, trip, nodes }
     }
 
-    // 没传 tripId：拉所有 trip 取最新
     const allTrips = await ds.getAllTravels()
     if (allTrips.length === 0) {
       return { kind: KIND_DEMO }
     }
+
     let latest: Trip = allTrips[0]
     for (let i = 1; i < allTrips.length; i++) {
       if (allTrips[i].createdAt > latest.createdAt) {
@@ -148,7 +147,7 @@ export struct SharePage {
     }
     this.currentTripId = latest.id
     const nodes = await this.loadAndSortNodes(latest.id)
-    return { kind: KIND_RDB, trip: latest, nodes: nodes }
+    return { kind: KIND_RDB, trip: latest, nodes }
   }
 
   private async loadAndSortNodes(tripId: string): Promise<MemoryNode[]> {
@@ -162,29 +161,23 @@ export struct SharePage {
     return nodes
   }
 
-  /**
-   * 把 RDB 的 Trip + MemoryNode[] 转成 P08 API 规范 §4.2 的 SharePublishRequest。
-   * photoCount 这里先填实际数组长度，下一步 collectPhotosAlignCount 会按"幸存"
-   * 文件数把它修正到准确值。
-   */
   private buildRequestFromRdb(trip: Trip, nodes: MemoryNode[]): SharePublishRequest {
     const reqNodes: SharePublishNode[] = []
     for (let i = 0; i < nodes.length; i++) {
-      const n = nodes[i]
-      const reqNode: SharePublishNode = {
-        id: n.id,
-        title: n.title,
-        content: n.content,
-        poiName: n.poiName,
-        photoCount: n.photos.length,
-        mood: n.mood,
-        tags: n.tags,
-        visitedAt: n.visitedAt !== undefined ? n.visitedAt : n.createdAt,
-        nodeOrder: n.nodeOrder !== undefined ? n.nodeOrder : i,
-        latitude: n.latitude,
-        longitude: n.longitude,
-      }
-      reqNodes.push(reqNode)
+      const node = nodes[i]
+      reqNodes.push({
+        id: node.id,
+        title: node.title,
+        content: node.content,
+        poiName: node.poiName,
+        photoCount: node.photos.length,
+        mood: node.mood,
+        tags: node.tags,
+        visitedAt: node.visitedAt !== undefined ? node.visitedAt : node.createdAt,
+        nodeOrder: node.nodeOrder !== undefined ? node.nodeOrder : i,
+        latitude: node.latitude,
+        longitude: node.longitude,
+      })
     }
     return {
       tripId: trip.id,
@@ -196,35 +189,31 @@ export struct SharePage {
     }
   }
 
-  /**
-   * 扫一遍所有节点的 photos[]，把可上传文件挑出来，并把 req.nodes[i].photoCount
-   * 改成"幸存"数（云端引用 / 不存在文件会被剔除）。这样 sum(photoCount) 一定等于
-   * 实际上传的 photo_N 数量，后端不会报 INVALID_PHOTO_COUNT。
-   */
-  private collectPhotosAlignCount(
+  private async collectPhotosAlignCount(
+    ctx: common.UIAbilityContext,
     req: SharePublishRequest,
     nodes: MemoryNode[]
-  ): SharePhoto[] {
+  ): Promise<SharePhotoBatchResult> {
     const out: SharePhoto[] = []
+    const issues: SharePhotoIssue[] = []
     for (let i = 0; i < nodes.length; i++) {
-      const survived = SharePhotoHelper.toSharePhotos(nodes[i].photos)
-      req.nodes[i].photoCount = survived.length
-      for (let j = 0; j < survived.length; j++) {
-        out.push(survived[j])
+      const prepared = await SharePhotoHelper.prepareSharePhotos(ctx, nodes[i].id, nodes[i].photos)
+      req.nodes[i].photoCount = prepared.photos.length
+      for (let j = 0; j < prepared.photos.length; j++) {
+        out.push(prepared.photos[j])
+      }
+      for (let j = 0; j < prepared.issues.length; j++) {
+        issues.push(prepared.issues[j])
       }
     }
-    return out
+    return { photos: out, issues }
   }
 
-  /**
-   * Demo trip — RDB 是空的时候用，配合 SharePhotoHelper.stageBundledMedia
-   * 把 resources/base/media/photo_1.jpg / photo_2.jpg 拷到沙箱再上传。
-   */
   private buildDemoTrip(): SharePublishRequest {
     const node0: SharePublishNode = {
       id: 'node_demo_001',
       title: '红树林公园',
-      content: '下午三点到达，阳光正好，远远看见白鹭栖息。',
+      content: '下午到达海边步道，天气很清爽，适合散步和拍照。',
       poiName: '深圳湾红树林',
       photoCount: 1,
       mood: '惬意',
@@ -237,10 +226,10 @@ export struct SharePage {
     const node1: SharePublishNode = {
       id: 'node_demo_002',
       title: '人才公园',
-      content: '傍晚的灯光很美，市民在草坪上放风筝。',
+      content: '傍晚灯光亮起后，湖边和草坪都很适合停留。',
       poiName: '深圳人才公园',
       photoCount: 1,
-      mood: '感动',
+      mood: '放松',
       tags: ['夜景', 'demo'],
       visitedAt: 1714300000000,
       nodeOrder: 1,
@@ -249,7 +238,7 @@ export struct SharePage {
     }
     return {
       tripId: 'trip_demo_001',
-      tripName: '深圳湾周末骑行 · Demo',
+      tripName: '深圳周末骑行 Demo',
       totalDistance: 12.5,
       coverIndex: 0,
       createdAt: Date.now(),
@@ -259,7 +248,7 @@ export struct SharePage {
 
   private async handleCopyLink(): Promise<void> {
     if (!this.shareUrl) {
-      promptAction.showToast({ message: '链接还没生成好' })
+      promptAction.showToast({ message: '链接还没有生成' })
       return
     }
     try {
@@ -274,34 +263,32 @@ export struct SharePage {
 
   private async handleShare(platform: string): Promise<void> {
     if (!this.shareUrl) {
-      promptAction.showToast({ message: '链接还没生成好' })
+      promptAction.showToast({ message: '链接还没有生成' })
       return
     }
     if (platform === '复制链接') {
       await this.handleCopyLink()
       return
     }
-    // 微信 / 微博：暂时也走复制 + 文案，到端口能接 systemShare 后再换
     try {
       const text = `${this.copyText}\n${this.shareUrl}`
       const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text)
       const board = pasteboard.getSystemPasteboard()
       await board.setData(data)
-      promptAction.showToast({ message: `已复制，前往${platform}粘贴` })
+      promptAction.showToast({ message: `已复制内容，请前往${platform}粘贴` })
     } catch (e) {
       promptAction.showToast({ message: `分享失败：${JSON.stringify(e)}` })
     }
   }
 
   private retry(): void {
-    this.publishShare()
+    void this.publishShare()
   }
 
   build() {
     Column() {
-      // 顶部导航栏
       Row() {
-        Text('←')
+        Text('<')
           .fontSize(AppDimens.FONT_XL)
           .fontColor(AppColors.TEXT_PRIMARY)
           .onClick(() => router.back())
@@ -317,9 +304,8 @@ export struct SharePage {
 
       Scroll() {
         Column() {
-          // 分享链接区域
           Column() {
-            Text('🔗 分享链接')
+            Text('分享链接')
               .fontSize(AppDimens.FONT_MD)
               .fontWeight(FontWeight.Medium)
               .fontColor(AppColors.TEXT_PRIMARY)
@@ -327,7 +313,7 @@ export struct SharePage {
             if (this.isLoading) {
               Row() {
                 LoadingProgress().width(20).height(20)
-                Text('正在生成签名链接…')
+                Text('正在生成分享链接...')
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.TEXT_HINT)
                   .margin({ left: 8 })
@@ -361,10 +347,10 @@ export struct SharePage {
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.PRIMARY)
                   .padding({ left: 12 })
-                  .onClick(() => this.handleCopyLink())
+                  .onClick(() => { void this.handleCopyLink() })
               }
               .margin({ top: 8 })
-              Text('有效期：' + this.expireDays + ' 天')
+              Text(`有效期：${this.expireDays} 天`)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_HINT)
                 .margin({ top: 4 })
@@ -376,9 +362,8 @@ export struct SharePage {
           .borderRadius(AppDimens.RADIUS_MD)
           .alignItems(HorizontalAlign.Start)
 
-          // 文案编辑区
           Column() {
-            Text('✏️ 分享文案')
+            Text('分享文案')
               .fontSize(AppDimens.FONT_MD)
               .fontWeight(FontWeight.Medium)
               .fontColor(AppColors.TEXT_PRIMARY)
@@ -398,7 +383,6 @@ export struct SharePage {
           .borderRadius(AppDimens.RADIUS_MD)
           .alignItems(HorizontalAlign.Start)
 
-          // 分享平台
           Column() {
             Text('分享到')
               .fontSize(AppDimens.FONT_MD)
@@ -414,7 +398,7 @@ export struct SharePage {
                     .fontColor(AppColors.TEXT_SECONDARY)
                     .margin({ top: 4 })
                 }
-                .onClick(() => this.handleShare(platform.name))
+                .onClick(() => { void this.handleShare(platform.name) })
               })
             }
             .margin({ top: 12 })
@@ -436,17 +420,4 @@ export struct SharePage {
     .height('100%')
     .backgroundColor(AppColors.BACKGROUND)
   }
-}
-
-// ---- TripResolution: 单 interface 加 kind 字段，避开 ArkTS 严格模式
-// 对联合类型 / 字面量类型的限制 ----
-const KIND_RDB: string = 'rdb'
-const KIND_DEMO: string = 'demo'
-const KIND_ERROR: string = 'error'
-
-interface TripResolution {
-  kind: string                 // KIND_RDB / KIND_DEMO / KIND_ERROR
-  trip?: Trip
-  nodes?: MemoryNode[]
-  message?: string
 }

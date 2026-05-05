@@ -16,9 +16,19 @@
 import { fileIo as fs } from '@kit.CoreFileKit'
 import { common } from '@kit.AbilityKit'
 import { logger } from '../../../common/utils/Logger'
+import { ImageSanitizer } from '../../../common/utils/ImageSanitizer'
 import { SharePhoto } from './ShareService'
+import {
+  SharePhotoIssue,
+  SharePreflightErrorCode,
+} from '../types/ShareTypes'
 
 const TAG = 'SharePhotoHelper'
+
+export interface SharePhotoBatchResult {
+  photos: SharePhoto[]
+  issues: SharePhotoIssue[]
+}
 
 /**
  * 把 MemoryNode.photos 里那些"可能带 file:// 前缀 / 可能不存在 / 可能是
@@ -58,6 +68,84 @@ export class SharePhotoHelper {
     return out
   }
 
+  static async toSanitizedSharePhotos(
+    ctx: common.UIAbilityContext,
+    rawPaths: string[]
+  ): Promise<SharePhoto[]> {
+    const localPhotos = SharePhotoHelper.toSharePhotos(rawPaths)
+    const out: SharePhoto[] = []
+    for (let i = 0; i < localPhotos.length; i++) {
+      const sanitizedPath = await ImageSanitizer.sanitizeForUpload(ctx, localPhotos[i].filePath)
+      if (!sanitizedPath) {
+        logger.warn(TAG, `skip unsanitized file: ${localPhotos[i].filePath}`)
+        continue
+      }
+      out.push({
+        filePath: sanitizedPath,
+        filename: SharePhotoHelper.basename(sanitizedPath),
+        contentType: 'image/jpeg',
+        cleanupPath: sanitizedPath,
+      })
+    }
+    return out
+  }
+
+  static async prepareSharePhotos(
+    ctx: common.UIAbilityContext,
+    nodeId: string,
+    rawPaths: string[]
+  ): Promise<SharePhotoBatchResult> {
+    const photos: SharePhoto[] = []
+    const issues: SharePhotoIssue[] = []
+
+    for (let i = 0; i < rawPaths.length; i++) {
+      const raw = rawPaths[i]
+      if (!raw) {
+        continue
+      }
+      if (SharePhotoHelper.isCloudOnlyPath(raw)) {
+        issues.push({
+          nodeId,
+          rawPath: raw,
+          reason: SharePreflightErrorCode.CLOUD_ONLY_PHOTO,
+          message: '该照片只有云端引用，当前设备没有可直接上传的本地副本',
+        })
+        continue
+      }
+
+      const realPath = raw.startsWith('file://') ? raw.substring(7) : raw
+      if (!fs.accessSync(realPath)) {
+        issues.push({
+          nodeId,
+          rawPath: raw,
+          reason: SharePreflightErrorCode.LOCAL_PHOTO_MISSING,
+          message: '该照片在当前设备上找不到本地文件',
+        })
+        continue
+      }
+
+      const sanitizedPath = await ImageSanitizer.sanitizeForUpload(ctx, realPath)
+      if (!sanitizedPath) {
+        issues.push({
+          nodeId,
+          rawPath: raw,
+          reason: SharePreflightErrorCode.PHOTO_SANITIZE_FAILED,
+          message: '该照片在分享前 EXIF 清洗失败',
+        })
+        continue
+      }
+
+      photos.push({
+        filePath: sanitizedPath,
+        filename: SharePhotoHelper.basename(sanitizedPath),
+        contentType: 'image/jpeg',
+        cleanupPath: sanitizedPath,
+      })
+    }
+
+    return { photos, issues }
+  }
+
   /**
    * Demo helper —— 把 resources/base/media/ 里打包的 photo_N.jpg 复制到沙箱
    * 缓存目录，返回可以喂给 multipart 上传的 SharePhoto 列表。
@@ -92,6 +180,7 @@ export class SharePhotoHelper {
           filePath: targetPath,
           filename,
           contentType: SharePhotoHelper.guessMime(filename),
+          cleanupPath: targetPath,
         })
         logger.info(TAG, `staged ${filename} -> ${targetPath} (${buf.byteLength} bytes)`)
       } catch (e) {
@@ -101,9 +190,23 @@ export class SharePhotoHelper {
     return out
   }
 
+  static cleanupTemporaryPhotos(photos: SharePhoto[]): void {
+    for (let i = 0; i < photos.length; i++) {
+      const cleanupPath = photos[i].cleanupPath
+      if (!cleanupPath) {
+        continue
+      }
+      ImageSanitizer.deleteSanitized(cleanupPath)
+    }
+  }
+
   private static basename(p: string): string {
     const i = p.lastIndexOf('/')
     return i >= 0 ? p.substring(i + 1) : p
+  }
+
+  private static isCloudOnlyPath(raw: string): boolean {
+    return raw.startsWith('users/') || raw.startsWith('cloud://')
   }
 
   private static guessMime(filename: string): string {

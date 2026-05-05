@@ -4,7 +4,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { window } from '@kit.ArkUI';
 import { connection } from '@kit.NetworkKit';
 import { RdbHelper } from '../common/data/RdbHelper';
-import { AppTheme, AuthService } from '../common';
+import { AppTheme, AuthService, ImageSanitizer } from '../common';
 
 const DOMAIN = 0x0000;
 
@@ -105,6 +105,7 @@ export default class EntryAbility extends UIAbility {
     AppStorage.setOrCreate('networkDialogTitle', '');
     AppStorage.setOrCreate('networkDialogMessage', '');
     AppStorage.setOrCreate('networkDialogToken', 0);
+    AppStorage.setOrCreate('shareLinkExpiryDays', 7);
     this.isOnline = this.getCurrentNetworkStatus();
     hilog.info(DOMAIN, 'testTag', 'Initial network status: %{public}s', this.isOnline ? 'true' : 'false');
     AppStorage.setOrCreate('networkOnline', this.isOnline);
@@ -130,6 +131,12 @@ export default class EntryAbility extends UIAbility {
     }).catch((err: Error) => {
       hilog.error(DOMAIN, 'testTag', 'Database initialization failed: %{public}s', err.message);
     });
+
+    try {
+      ImageSanitizer.purgeAll(this.context)
+    } catch (err) {
+      hilog.warn(DOMAIN, 'testTag', 'Sanitizer purge on start failed: %{public}s', JSON.stringify(err))
+    }
   }
 
   onDestroy(): void {

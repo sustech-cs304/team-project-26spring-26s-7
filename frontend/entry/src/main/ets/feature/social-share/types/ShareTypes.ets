@@ -81,6 +81,29 @@ export interface ShareStatusOk {
 }
 
 /** 错误码（§4.5） */
+export interface SharePhotoIssue {
+  nodeId?: string
+  rawPath?: string
+  reason: string
+  message: string
+}
+
+export interface SharePreflightResult {
+  ok: boolean
+  errorCode?: string
+  message?: string
+  detail?: string
+  totalPhotoCount: number
+  totalBytes: number
+  issues?: SharePhotoIssue[]
+}
+
+export class SharePreflightErrorCode {
+  static readonly CLOUD_ONLY_PHOTO: string = 'CLOUD_ONLY_PHOTO'
+  static readonly LOCAL_PHOTO_MISSING: string = 'LOCAL_PHOTO_MISSING'
+  static readonly PHOTO_SANITIZE_FAILED: string = 'PHOTO_SANITIZE_FAILED'
+}
+
 export class ShareErrorCode {
   static readonly OK: number = 0
   static readonly INVALID_PHOTO_COUNT: number = 40001

@@ -20,6 +20,7 @@ export { AppColors, AppDimens, AppTheme, RouterUrls, TravelSpecialValues } from 
 export type { ThemePalette } from './utils/Constants';
 export { logger } from './utils/Logger';
 export { PhotoPickerUtil } from './utils/PhotoPickerUtil';
+export { ImageSanitizer } from './utils/ImageSanitizer';
 
 // Auth 导出
 export { AuthService, CloudStorageService } from './auth';

@@ -43,6 +43,7 @@ export interface SharePhoto {
   filename: string
   /** MIME 类型；JPEG/PNG/HEIC 等 */
   contentType: string
+  cleanupPath?: string
 }
 
 /**
