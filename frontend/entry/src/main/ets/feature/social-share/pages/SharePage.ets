@@ -67,7 +67,7 @@ export struct SharePage {
 
   private sharePlatforms: SharePlatform[] = [
     new SharePlatform('W', '微信'),
-    new SharePlatform('B', '微博'),
+    new SharePlatform('Q', 'QQ'),
     new SharePlatform('C', '复制链接'),
   ]
 

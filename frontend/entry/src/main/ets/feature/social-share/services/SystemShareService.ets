@@ -58,19 +58,39 @@ export class SystemShareService {
     ctx: common.UIAbilityContext,
     payload: SystemSharePayload
   ): Promise<boolean> {
+    logger.info(TAG, `share() url=${payload.url} title="${payload.title}"`)
     try {
-      // 'general.url' 是 Uniform Data Type 标准类型描述符，让接收方
-      // （微信 / QQ / 微博 / 浏览器）按 hyperlink 处理 + 抓取 OG meta。
+      // utd 选择对哪些 app 出现在分享面板里影响很大：
+      //   - 'general.hyperlink' 是 URL+描述文字 的标准 UTD，QQ/微信/微博/
+      //     浏览器/邮件等多数应用都注册了这个类型作为分享接收意图
+      //   - 'general.url' 是裸 URL，部分接收方（包括早期 HMOS 微信）不会
+      //     在面板里出现 — 改成 hyperlink 提升兼容性
+      //   - 同时附加一份 'general.text' 副本：那些只声明了"接收文本"的 app
+      //     也能看见这次分享（兜底）
       const data = new systemShare.SharedData({
-        utd: 'general.url',
+        utd: 'general.hyperlink',
         content: payload.url,
         title: payload.title,
         description: payload.description,
       })
+      // 文本副本：标题 + 摘要 + URL，纯文本接收方就这一份
+      const textBlob = `${payload.title}\n${payload.description}\n${payload.url}`
+      try {
+        data.addRecord({
+          utd: 'general.text',
+          content: textBlob,
+          title: payload.title,
+          description: payload.description,
+        })
+      } catch (recordErr) {
+        // addRecord 在某些 SDK 版本可能不存在；不致命，主 record 已可用
+        logger.warn(TAG, `addRecord(general.text) failed: ${JSON.stringify(recordErr)}`)
+      }
+
       const controller = new systemShare.ShareController(data)
 
       // SharePreviewMode.DETAIL 让面板顶部显示标题 + 摘要 + URL，
-      // 视觉效果接近一张卡片。SelectionMode.SINGLE 表示用户选一个目标即结束。
+      // 视觉效果接近一张卡片。SelectionMode.SINGLE = 用户选一个目标即结束。
       await controller.show(ctx, {
         previewMode: systemShare.SharePreviewMode.DETAIL,
         selectionMode: systemShare.SelectionMode.SINGLE,
@@ -80,8 +100,9 @@ export class SystemShareService {
       return true
     } catch (e) {
       const be = e as BusinessError
+      const code = be && be.code !== undefined ? be.code : 'n/a'
       const msg = be && be.message ? be.message : JSON.stringify(e)
-      logger.warn(TAG, `systemShare failed: ${msg}`)
+      logger.error(TAG, `systemShare failed: code=${code} message=${msg}`)
       return false
     }
   }
