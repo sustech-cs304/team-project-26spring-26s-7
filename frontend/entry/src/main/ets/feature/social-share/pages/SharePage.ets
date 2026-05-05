@@ -403,11 +403,12 @@ export struct SharePage {
   }
 
   /**
-   * 把后端返回的 coverPhotoUrl fetch 成 ArrayBuffer，给 systemShare 当
-   * thumbnail 用。任何失败（无封面 URL / 网络挂 / 超时）都返 undefined，
-   * 调用方 share 时直接不带缩略图，不让分享按钮卡住。
+   * 把后端返回的 coverPhotoUrl fetch 成 Uint8Array，给 systemShare 当
+   * thumbnail 用（HMOS SharedRecord.thumbnail 类型是 Uint8Array，不是
+   * ArrayBuffer，所以这里包一层）。任何失败都返 undefined，调用方 share
+   * 时直接不带缩略图，不让分享按钮卡住。
    */
-  private async fetchCoverThumbnail(): Promise<ArrayBuffer | undefined> {
+  private async fetchCoverThumbnail(): Promise<Uint8Array | undefined> {
     if (!this.coverPhotoUrl) {
       return undefined
     }
@@ -420,7 +421,7 @@ export struct SharePage {
         expectDataType: http.HttpDataType.ARRAY_BUFFER,
       })
       if (resp.responseCode === 200 && resp.result instanceof ArrayBuffer) {
-        return resp.result as ArrayBuffer
+        return new Uint8Array(resp.result as ArrayBuffer)
       }
       return undefined
     } catch (e) {

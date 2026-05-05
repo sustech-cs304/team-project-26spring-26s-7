@@ -26,15 +26,17 @@ const TAG = 'SystemShareService'
  * title      —— 在分享卡片头部显示的标题，如 "深圳湾骑行 - TravelPin"
  * description —— 摘要，如 "4 个节点 · 12.5km · 始于红树林"
  * thumbnail  —— 可选，封面图字节（推荐 ≤ 200KB 的 JPEG/WebP）。
- *               QQ / 微博等不会主动 fetch URL 的 OG meta，必须靠
- *               这个 ArrayBuffer 才能在卡片里渲染封面图。微信会自己
- *               抓 OG meta，但有 thumbnail 也无妨（即时显示 + 减一次抓取）。
+ *               注意：HMOS SharedRecord.thumbnail 类型是 Uint8Array，
+ *               不是 ArrayBuffer；从 http 返回的 ArrayBuffer 要 new Uint8Array(buf) 包一层。
+ *               QQ 等不会主动 fetch URL 的 OG meta，必须靠这个字节
+ *               才能在卡片里渲染封面图。微信会自己抓 OG meta，但有
+ *               thumbnail 也无妨（即时显示 + 减一次抓取）。
  */
 export interface SystemSharePayload {
   url: string
   title: string
   description: string
-  thumbnail?: ArrayBuffer
+  thumbnail?: Uint8Array
 }
 
 /**
