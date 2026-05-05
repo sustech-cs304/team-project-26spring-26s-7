@@ -34,4 +34,5 @@ export {
   ShareStatusResponse,
   ShareStatusOk,
   ShareErrorCode,
+  ReplaceLink,
 } from './types/ShareTypes';

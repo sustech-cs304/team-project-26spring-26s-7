@@ -16,7 +16,7 @@ export class ShareErrorMapper {
     return ShareErrorMapper.join(mapped)
   }
 
-  static formatPublishResult(result: ShareCallResult<Object>): string {
+  static formatPublishResult<T>(result: ShareCallResult<T>): string {
     const mapped = ShareErrorMapper.mapPublishResult(result)
     return ShareErrorMapper.join(mapped)
   }
@@ -76,9 +76,10 @@ export class ShareErrorMapper {
     }
   }
 
-  private static mapPublishResult(result: ShareCallResult<Object>): ShareMappedError {
+  private static mapPublishResult<T>(result: ShareCallResult<T>): ShareMappedError {
     const code = result.errorCode ?? 0
     const messageKey = (result.errorMessage ?? '').toUpperCase()
+    const detailKey = (result.errorDetail ?? '').toUpperCase()
 
     if (code === ShareErrorCode.INVALID_PHOTO_COUNT || messageKey === 'INVALID_PHOTO_COUNT') {
       return {
@@ -110,6 +111,12 @@ export class ShareErrorMapper {
       }
     }
     if (code === ShareErrorCode.INVALID_JSON || messageKey === 'INVALID_JSON') {
+      if (detailKey.indexOf('REPLACE') >= 0) {
+        return {
+          message: '旧链接替换校验失败，新链接未生成。',
+          detail: '请重新生成分享链接后，再切换有效期。',
+        }
+      }
       return {
         message: '分享数据格式异常，当前无法生成分享链接。',
         detail: '请重试分享；如果问题持续出现，请检查路线内容。',

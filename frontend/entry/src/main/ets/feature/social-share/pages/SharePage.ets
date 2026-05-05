@@ -8,6 +8,7 @@ import { SharePhoto, ShareService } from '../services/ShareService'
 import { SharePhotoBatchResult, SharePhotoHelper } from '../services/SharePhotoHelper'
 import { SharePreflight } from '../services/SharePreflight'
 import {
+  ReplaceLink,
   SharePhotoIssue,
   SharePublishNode,
   SharePublishRequest,
@@ -24,6 +25,18 @@ interface TripResolution {
   message?: string
 }
 
+class ExpiryOption {
+  label: string = ''
+  hours: number = 0
+  minutes: number = 0
+
+  constructor(label: string, hours: number, minutes: number) {
+    this.label = label
+    this.hours = hours
+    this.minutes = minutes
+  }
+}
+
 @Entry
 @Component
 export struct SharePage {
@@ -34,9 +47,23 @@ export struct SharePage {
   @State isLoading: boolean = true
   @State errorMsg: string = ''
   @State currentTripName: string = ''
+  @State selectedExpiryIdx: number = 2
+  @State hasLastLink: boolean = false
 
   private shareService: ShareService = new ShareService()
   private currentTripId: string = ''
+  private cachedReq: SharePublishRequest | null = null
+  private cachedNodes: MemoryNode[] = []
+  private useDemoPhotos: boolean = false
+  private lastLink: ReplaceLink | null = null
+
+  private expiryOptions: ExpiryOption[] = [
+    new ExpiryOption('5 分钟（测试）', 0, 5),
+    new ExpiryOption('1 天', 24, 0),
+    new ExpiryOption('7 天', 168, 0),
+    new ExpiryOption('30 天', 720, 0),
+  ]
+
   private sharePlatforms: SharePlatform[] = [
     new SharePlatform('W', '微信'),
     new SharePlatform('B', '微博'),
@@ -48,6 +75,25 @@ export struct SharePage {
     if (params && params.tripId) {
       this.currentTripId = params.tripId
     }
+    this.syncSelectedExpiryFromStorage()
+    void this.publishShare()
+  }
+
+  private syncSelectedExpiryFromStorage(): void {
+    if (this.expireDays === 1) {
+      this.selectedExpiryIdx = 1
+    } else if (this.expireDays === 30) {
+      this.selectedExpiryIdx = 3
+    } else {
+      this.selectedExpiryIdx = 2
+    }
+  }
+
+  private onPickExpiry(idx: number): void {
+    if (this.isLoading || idx === this.selectedExpiryIdx) {
+      return
+    }
+    this.selectedExpiryIdx = idx
     void this.publishShare()
   }
 
@@ -60,39 +106,35 @@ export struct SharePage {
 
     try {
       const ctx = getContext(this) as common.UIAbilityContext
-      const resolved = await this.resolveTrip()
-      if (resolved.kind === KIND_ERROR) {
-        this.errorMsg = resolved.message ?? '加载失败'
+      const req = await this.ensureCachedRequest()
+      if (!req) {
         this.isLoading = false
         return
       }
 
-      let req: SharePublishRequest
-      if (resolved.kind === KIND_RDB && resolved.trip && resolved.nodes) {
-        req = this.buildRequestFromRdb(resolved.trip, resolved.nodes)
-        const prepared = await this.collectPhotosAlignCount(ctx, req, resolved.nodes)
-        photos = prepared.photos
-        preflightIssues = prepared.issues
-        this.currentTripName = resolved.trip.name
-      } else {
-        req = this.buildDemoTrip()
+      if (this.useDemoPhotos) {
         photos = await SharePhotoHelper.stageBundledMedia(
           ctx,
           [$r('app.media.photo_1'), $r('app.media.photo_2')],
           ['demo_photo_1.jpg', 'demo_photo_2.jpg']
         )
-        if (photos.length === 0) {
-          for (let i = 0; i < req.nodes.length; i++) {
-            req.nodes[i].photoCount = 0
-          }
-        }
-        this.currentTripName = req.tripName
+        this.alignDemoPhotoCounts(req, photos.length)
+      } else {
+        const prepared = await this.collectPhotosAlignCount(ctx, req, this.cachedNodes)
+        photos = prepared.photos
+        preflightIssues = prepared.issues
       }
+
+      const opt = this.expiryOptions[this.selectedExpiryIdx]
+      const hours = opt.hours > 0 ? opt.hours : 168
+      const minutes = opt.minutes > 0 ? opt.minutes : undefined
+      const replace = this.lastLink !== null ? this.lastLink : undefined
+      const isReplacing = replace !== undefined
 
       const preflight = SharePreflight.validatePublish(
         req,
         photos,
-        this.expireDays * 24,
+        hours,
         preflightIssues
       )
       if (!preflight.ok) {
@@ -101,12 +143,21 @@ export struct SharePage {
         return
       }
 
-      const result = await this.shareService.publish(req, photos, this.expireDays * 24)
+      const result = await this.shareService.publish(req, photos, hours, minutes, replace)
       if (result.ok && result.data) {
         this.shareUrl = result.data.url
         this.copyText = `我刚分享了一段旅行：${req.tripName}\n${result.data.url}`
+        this.lastLink = {
+          shortCode: result.data.shortCode,
+          expirySec: result.data.expiresAt,
+          sig: result.data.sig,
+        }
+        this.hasLastLink = true
         this.isLoading = false
-        promptAction.showToast({ message: `分享链接已生成（${photos.length} 张照片）` })
+        const toast = isReplacing
+          ? `已替换为新链接（原链接已失效，有效期：${opt.label}）`
+          : `分享链接已生成（有效期：${opt.label}）`
+        promptAction.showToast({ message: toast })
       } else {
         this.errorMsg = ShareErrorMapper.formatPublishResult(result)
         this.isLoading = false
@@ -117,6 +168,32 @@ export struct SharePage {
     } finally {
       SharePhotoHelper.cleanupTemporaryPhotos(photos)
     }
+  }
+
+  private async ensureCachedRequest(): Promise<SharePublishRequest | null> {
+    if (this.cachedReq !== null) {
+      return this.cachedReq
+    }
+
+    const resolved = await this.resolveTrip()
+    if (resolved.kind === KIND_ERROR) {
+      this.errorMsg = resolved.message ?? '加载失败'
+      return null
+    }
+
+    if (resolved.kind === KIND_RDB && resolved.trip && resolved.nodes) {
+      this.cachedReq = this.buildRequestFromRdb(resolved.trip, resolved.nodes)
+      this.cachedNodes = resolved.nodes
+      this.useDemoPhotos = false
+      this.currentTripName = resolved.trip.name
+      return this.cachedReq
+    }
+
+    this.cachedReq = this.buildDemoTrip()
+    this.cachedNodes = []
+    this.useDemoPhotos = true
+    this.currentTripName = this.cachedReq.tripName
+    return this.cachedReq
   }
 
   private async resolveTrip(): Promise<TripResolution> {
@@ -207,6 +284,18 @@ export struct SharePage {
       }
     }
     return { photos: out, issues }
+  }
+
+  private alignDemoPhotoCounts(req: SharePublishRequest, photoTotal: number): void {
+    let remaining = photoTotal
+    for (let i = 0; i < req.nodes.length; i++) {
+      if (remaining > 0) {
+        req.nodes[i].photoCount = 1
+        remaining--
+      } else {
+        req.nodes[i].photoCount = 0
+      }
+    }
   }
 
   private buildDemoTrip(): SharePublishRequest {
@@ -310,6 +399,31 @@ export struct SharePage {
               .fontWeight(FontWeight.Medium)
               .fontColor(AppColors.TEXT_PRIMARY)
 
+            Text('有效期')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.TEXT_HINT)
+              .margin({ top: 12 })
+            Row({ space: 8 }) {
+              ForEach(this.expiryOptions, (opt: ExpiryOption, idx: number) => {
+                Text(opt.label)
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(idx === this.selectedExpiryIdx ? Color.White : AppColors.TEXT_SECONDARY)
+                  .backgroundColor(idx === this.selectedExpiryIdx ? AppColors.PRIMARY : AppColors.INPUT_BG)
+                  .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+                  .borderRadius(16)
+                  .opacity(this.isLoading ? 0.5 : 1.0)
+                  .onClick(() => this.onPickExpiry(idx))
+              })
+            }
+            .margin({ top: 6 })
+
+            if (this.hasLastLink) {
+              Text('切换其它有效期会自动撤销当前链接')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_HINT)
+                .margin({ top: 6 })
+            }
+
             if (this.isLoading) {
               Row() {
                 LoadingProgress().width(20).height(20)
@@ -334,7 +448,7 @@ export struct SharePage {
                 Text(this.currentTripName)
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.TEXT_SECONDARY)
-                  .margin({ top: 4 })
+                  .margin({ top: 12 })
               }
               Row() {
                 Text(this.shareUrl)
@@ -350,7 +464,7 @@ export struct SharePage {
                   .onClick(() => { void this.handleCopyLink() })
               }
               .margin({ top: 8 })
-              Text(`有效期：${this.expireDays} 天`)
+              Text('当前有效期：' + this.expiryOptions[this.selectedExpiryIdx].label)
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_HINT)
                 .margin({ top: 4 })

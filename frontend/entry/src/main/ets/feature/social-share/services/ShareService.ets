@@ -23,6 +23,7 @@ import {
 } from '../../../common/api'
 import { logger } from '../../../common/utils/Logger'
 import {
+  ReplaceLink,
   SharePublishOk,
   SharePublishRequest,
   SharePublishResponse,
@@ -72,15 +73,22 @@ export class ShareService {
   /**
    * 发布分享 — 调用 POST /api/v1/share/publish
    *
-   * @param trip       trip 元数据 + 节点数组（含每节点 photoCount）
-   * @param photos     按 nodeOrder 升序、每节点内按 photoIdx 顺序整理好的扁平照片列表
-   *                   总数必须等于 sum(nodes[].photoCount)，否则后端返回 40001
-   * @param expiryHours  过期小时数；默认 168 (7 天)，范围 1–720
+   * @param trip            trip 元数据 + 节点数组（含每节点 photoCount）
+   * @param photos          按 nodeOrder 升序、每节点内按 photoIdx 顺序整理好的扁平照片列表
+   *                        总数必须等于 sum(nodes[].photoCount)，否则后端返回 40001
+   * @param expiryHours     过期小时数；默认 168 (7 天)，范围 1–720
+   * @param expiryMinutes   可选，过期分钟数；当传入且 > 0 时**优先级高于** expiryHours
+   *                        （供 SharePage 的"5 分钟测试"选项使用，最低 1 分钟）
+   * @param replace         可选，要随本次发布**自动撤销**的旧链接三件套
+   *                        (shortCode + expirySec + sig)。后端会校验 sig 后
+   *                        在新发布**成功之后**才删除旧的；新失败旧保留。
    */
   async publish(
     trip: SharePublishRequest,
     photos: SharePhoto[],
-    expiryHours: number = 168
+    expiryHours: number = 168,
+    expiryMinutes?: number,
+    replace?: ReplaceLink
   ): Promise<ShareCallResult<SharePublishOk>> {
     // 客户端先做一遍 photoCount 校验，避免无谓的上传
     let expectedTotal = 0
@@ -97,8 +105,18 @@ export class ShareService {
     const form = new MultipartFormData()
     // §4.2 — tripData 作为文本字段（JSON 字符串）
     form.addField('tripData', JSON.stringify(trip))
-    // §4.1 — expiryHours 作为文本字段
-    form.addField('expiryHours', expiryHours.toString())
+    // §4.1 — 过期时长。expiryMinutes 优先于 expiryHours（与后端约定一致）
+    if (expiryMinutes !== undefined && expiryMinutes > 0) {
+      form.addField('expiryMinutes', expiryMinutes.toString())
+    } else {
+      form.addField('expiryHours', expiryHours.toString())
+    }
+    // v0.6 — 替换上一条链接（"切档自动撤销旧链接"）
+    if (replace !== undefined && replace.shortCode) {
+      form.addField('replaceShortCode', replace.shortCode)
+      form.addField('replaceExpiry',    replace.expirySec.toString())
+      form.addField('replaceSig',       replace.sig)
+    }
     // §4.1 + §4.3 — photo_N 作为文件字段，按 N 从 0 起连续
     for (let i = 0; i < photos.length; i++) {
       const p = photos[i]
