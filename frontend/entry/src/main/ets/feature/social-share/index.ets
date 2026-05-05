@@ -24,6 +24,7 @@ export { QRCodeShare } from './components/QRCodeShare';
 // Services 导出
 export { ShareService, SharePhoto, ShareCallResult } from './services/ShareService';
 export { SharePhotoHelper } from './services/SharePhotoHelper';
+export { SystemShareService, SystemSharePayload } from './services/SystemShareService';
 
 // Types 导出（与后端契约严格对齐）
 export {

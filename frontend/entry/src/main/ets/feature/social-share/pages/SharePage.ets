@@ -7,6 +7,7 @@ import { ShareErrorMapper } from '../services/ShareErrorMapper'
 import { SharePhoto, ShareService } from '../services/ShareService'
 import { SharePhotoBatchResult, SharePhotoHelper } from '../services/SharePhotoHelper'
 import { SharePreflight } from '../services/SharePreflight'
+import { SystemShareService, SystemSharePayload } from '../services/SystemShareService'
 import {
   ReplaceLink,
   SharePhotoIssue,
@@ -359,12 +360,31 @@ export struct SharePage {
       await this.handleCopyLink()
       return
     }
+    // 微信 / 微博 / 其它：先尝试系统分享面板（让 OS 把 URL + 标题 + 摘要
+    // 投递给目标 app；目标 app 接到后会按自己的卡片渲染逻辑展示，结合
+    // 后端 v0.7 的 OG meta 标签即可在多数环境下出卡片预览）。
+    const ctx = getContext(this) as common.UIAbilityContext
+    const payload: SystemSharePayload = {
+      url: this.shareUrl,
+      title: this.currentTripName
+        ? `${this.currentTripName} - TravelPin`
+        : 'TravelPin 分享',
+      description: this.copyText,
+    }
+    const ok = await SystemShareService.share(ctx, payload)
+    if (ok) {
+      // 面板已打开，后面用户怎么选 / 是否取消由系统决定 —— UI 不再 toast
+      return
+    }
+    // 系统分享不可用 → 走老的剪贴板回退路径，告诉用户去 app 里粘贴
     try {
       const text = `${this.copyText}\n${this.shareUrl}`
       const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text)
       const board = pasteboard.getSystemPasteboard()
       await board.setData(data)
-      promptAction.showToast({ message: `已复制内容，请前往${platform}粘贴` })
+      promptAction.showToast({
+        message: `系统分享不可用，已复制内容，请前往${platform}粘贴`
+      })
     } catch (e) {
       promptAction.showToast({ message: `分享失败：${JSON.stringify(e)}` })
     }
