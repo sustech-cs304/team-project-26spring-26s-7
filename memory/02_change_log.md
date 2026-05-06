@@ -1,6 +1,13 @@
 # Change Log
 
-**Last Updated**: 2026-04-16
+**Last Updated**: 2026-05-06
+
+---
+
+## 2026-05-06
+
+- [2026-05-06] - FIX - `feature/map-travel/pages/TripDetailPage.ets` - 私密路线分享入口改为灰态可点，点击后弹窗确认转公开；确认后先更新 `isPublic` 再跳转分享页
+- [2026-05-06] - FIX - `feature/social-share/pages/SharePage.ets` - 增加私密路线前端兜底，阻止直接进入分享页时绕过公开限制
 
 ---
 
