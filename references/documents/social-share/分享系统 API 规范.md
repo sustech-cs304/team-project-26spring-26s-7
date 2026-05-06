@@ -183,6 +183,8 @@ Content-Type: image/jpeg
 | `nodes[].title` | string | 是 | 节点标题 |
 | `nodes[].content` | string | 否 | 用户笔记全文 |
 | `nodes[].poiName` | string | 否 | 地点名称 |
+| `nodes[].latitude` | number | 否 | 节点纬度。Phase 1 可不消费，Phase 2 地图回放使用 |
+| `nodes[].longitude` | number | 否 | 节点经度。Phase 1 可不消费，Phase 2 地图回放使用 |
 | `nodes[].photoCount` | number | 是 | 该节点的照片数量（可为 0） |
 | `nodes[].mood` | string | 否 | 心情标签 |
 | `nodes[].tags` | string[] | 否 | 自定义标签列表 |
@@ -344,7 +346,7 @@ Content-Type: text/html; charset=utf-8
 | 场景 | HTTP | 页面文案 |
 |------|------|---------|
 | 签名不匹配 | 403 | "此链接无效或已过期" |
-| 已过期 | 410 Gone | "此链接已过期（有效期 7 天）" |
+| 已过期 | 410 Gone | "此链接已过期" |
 | shortCode 不存在 | 404 | "页面不存在" |
 
 ---

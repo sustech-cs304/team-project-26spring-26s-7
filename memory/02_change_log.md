@@ -422,3 +422,13 @@
 - [2026-04-09-14-30-00] - CREATE - memory/04_test_checklist.md - 测试清单文件初始化
 - [2026-04-09-14-50-00] - UPDATE - memory/04_test_checklist.md - 重构测试清单，增加 P0/P1/P2 优先级体系，聚焦 Feature 集成测试（29 个测试用例：P0=13, P1=10, P2=6）
 - [2026-04-09-14-50-30] - UPDATE - CLAUDE.md - 添加测试监督机制章节（测试通过标记规则、AI 监督责任、通过率追踪）
+
+---
+
+## 2026-05-06 (Codex 适配与 social-share 状态同步)
+
+- [2026-05-06-00-27-58] - CREATE - AGENTS.md - 新增 Codex 主入口，记录当前项目结构、social-share 上传流程、构建验证和 memory 维护规则
+- [2026-05-06-00-27-58] - UPDATE - CLAUDE.md - 改为 Claude 兼容入口，指向 AGENTS.md，保留 ArkTS MCP 提醒
+- [2026-05-06-00-27-58] - UPDATE - memory/01_project_state.md - 更新当前分支为 feature/social-share，记录 merge commit def52e1、social-share 模块 1 状态和 backend 契约
+- [2026-05-06-00-27-58] - UPDATE - memory/03_task_backlog.md - 增加 Codex 适配与 social-share 模块 1 合并记录，更新后续任务
+- [2026-05-06-00-27-58] - UPDATE - memory/04_test_checklist.md - 增加 social-share 图片打包发布流程 P0 测试项

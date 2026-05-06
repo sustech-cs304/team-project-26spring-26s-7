@@ -115,6 +115,7 @@ export default class EntryAbility extends UIAbility {
     AppStorage.setOrCreate('mapCurrentLocationPending', false);
     AppStorage.setOrCreate('mapCurrentLocationError', '');
     AppStorage.setOrCreate('mapCurrentLocationTimestamp', 0);
+    AppStorage.setOrCreate('shareLinkExpiryDays', 7);
     this.isOnline = this.getCurrentNetworkStatus();
     hilog.info(DOMAIN, 'testTag', 'Initial network status: %{public}s', this.isOnline ? 'true' : 'false');
     AppStorage.setOrCreate('networkOnline', this.isOnline);

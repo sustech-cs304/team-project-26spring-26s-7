@@ -12,7 +12,6 @@ import {
 
 /**
  * 个人中心 Tab 内容视图
- * 用户信息、同步状态、设置入口
  */
 @Component
 export struct ProfileView {
@@ -32,6 +31,8 @@ export struct ProfileView {
   /** AI 云端打标签开关，绑定 ConsentManager 持久化的同意状态 */
   @StorageLink('aiCloudTaggingEnabled') aiCloudTaggingEnabled: boolean = false
   @State wifiOnlySync: boolean = true
+  @Watch('onShareLinkExpiryChanged')
+  @StorageLink('shareLinkExpiryDays') shareLinkExpiryDays: number = 7
   @State shareLinkExpiry: string = '7 天'
   @StorageLink('networkJustReconnected') networkJustReconnected: boolean = false
   @Watch('onTabRefresh')
@@ -39,7 +40,8 @@ export struct ProfileView {
   @StorageLink('activeTabIndex') activeTabIndex: number = 0
 
   aboutToAppear(): void {
-    this.loadAuthStatus()
+    this.syncShareLinkExpiryFromStorage()
+    void this.loadAuthStatus()
     const uiContext = this.getUIContext()
     const ctx = uiContext.getHostContext() as common.UIAbilityContext
     if (ctx) {
@@ -48,14 +50,24 @@ export struct ProfileView {
   }
 
   onPageShow(): void {
-    // 从编辑页返回后，刷新用户资料
-    this.loadAuthStatus()
+    this.syncShareLinkExpiryFromStorage()
+    void this.loadAuthStatus()
   }
 
   private onTabRefresh(): void {
     if (this.activeTabIndex === 3) {
-      this.loadAuthStatus()
+      this.syncShareLinkExpiryFromStorage()
+      void this.loadAuthStatus()
     }
+  }
+
+  private syncShareLinkExpiryFromStorage(): void {
+    const days = AppStorage.get<number>('shareLinkExpiryDays') ?? 7
+    this.shareLinkExpiry = `${days} 天`
+  }
+
+  private onShareLinkExpiryChanged(): void {
+    this.shareLinkExpiry = `${this.shareLinkExpiryDays} 天`
   }
 
   private formatSyncTime(timestamp: number): string {
@@ -128,11 +140,11 @@ export struct ProfileView {
       const partialFailure = AppStorage.get('syncPartialFailure') as boolean
       const failedCount = AppStorage.get('syncFailedNodeCount') as number
       if (partialFailure && failedCount > 0) {
-        promptAction.showToast({ message: `下载完成，${failedCount} 个节点图片下载失败` })
+        promptAction.showToast({ message: `下载完成，但有 ${failedCount} 个节点图片下载失败` })
       } else {
         promptAction.showToast({ message: '云端数据下载完成' })
       }
-    } catch (err) {
+    } catch (_) {
       promptAction.showToast({ message: '云端数据下载失败，请重试' })
     } finally {
       this.isSyncing = false
@@ -142,7 +154,7 @@ export struct ProfileView {
   private handleLogout(): void {
     AlertDialog.show({
       title: '退出登录',
-      message: '退出后本地数据不会丢失，但需要重新登录才能同步。',
+      message: '退出后本地数据不会丢失，但需要重新登录后才能继续同步。',
       primaryButton: {
         value: '取消',
         action: () => {}
@@ -204,7 +216,9 @@ export struct ProfileView {
   private showStorageSettings(): void {
     AlertDialog.show({
       title: '流量与存储',
-      message: `仅 Wi-Fi 同步：${this.wifiOnlySync ? '已开启' : '已关闭'}\n\n开启后，蜂窝网络下仅加载缩略图，照片原图和批量同步将延迟到 Wi-Fi 环境下进行。`,
+      message:
+        `仅 Wi-Fi 同步：${this.wifiOnlySync ? '已开启' : '已关闭'}\n\n` +
+        '开启后，蜂窝网络下仅加载缩略图，原图和批量同步会延后到 Wi-Fi 环境执行。',
       confirm: {
         value: '关闭',
         action: () => {}
@@ -215,11 +229,11 @@ export struct ProfileView {
   private showExpirySettings(): void {
     ActionSheet.show({
       title: '分享链接默认有效期',
-      message: '选择通过链接分享旅行时的默认有效期',
+      message: '选择通过链接分享路线时的默认有效期。',
       sheets: [
-        { title: '1 天', action: () => { this.shareLinkExpiry = '1 天' } },
-        { title: '7 天', action: () => { this.shareLinkExpiry = '7 天' } },
-        { title: '30 天', action: () => { this.shareLinkExpiry = '30 天' } },
+        { title: '1 天', action: () => { this.shareLinkExpiryDays = 1 } },
+        { title: '7 天', action: () => { this.shareLinkExpiryDays = 7 } },
+        { title: '30 天', action: () => { this.shareLinkExpiryDays = 30 } },
       ]
     })
   }
@@ -227,7 +241,10 @@ export struct ProfileView {
   private showAbout(): void {
     AlertDialog.show({
       title: '关于 TravelPin',
-      message: 'TravelPin v1.0.0\n\n基于 HarmonyOS 的地理位置旅行日记应用\n\n南方科技大学 · 软件工程 · 第 7 组',
+      message:
+        'TravelPin v1.0.0\n\n' +
+        '基于 HarmonyOS 的地理位置旅行日记应用。\n\n' +
+        '南方科技大学 软件工程课程 第 7 组',
       confirm: {
         value: '关闭',
         action: () => {}
@@ -266,7 +283,6 @@ export struct ProfileView {
   build() {
     Scroll() {
       Column() {
-        // 用户信息卡片
         Row() {
           Column() {
             if (this.avatarUrl.length > 0 && !this.avatarLoadFailed) {
@@ -302,7 +318,6 @@ export struct ProfileView {
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
 
-          // 编辑按钮
           Text('编辑')
             .fontSize(AppDimens.FONT_SM)
             .fontColor(AppColors.PRIMARY)
@@ -315,10 +330,9 @@ export struct ProfileView {
         .padding(AppDimens.PADDING_LG)
         .backgroundColor(AppColors.CARD_BG)
 
-        // 同步状态卡片
         Column() {
           Row() {
-            Text('☁️ 同步状态')
+            Text('同步状态')
               .fontSize(AppDimens.FONT_MD)
               .fontWeight(FontWeight.Medium)
               .fontColor(AppColors.TEXT_PRIMARY)
@@ -334,7 +348,7 @@ export struct ProfileView {
 
           if (this.networkJustReconnected) {
             Row() {
-              Text('网络已恢复，离线期间的更改不会自动同步，请手动点击同步按钮上传到云端')
+              Text('网络已恢复，离线期间的更改不会自动同步，请手动点击同步按钮上传到云端。')
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_PRIMARY)
                 .layoutWeight(1)
@@ -378,23 +392,23 @@ export struct ProfileView {
             .alignItems(HorizontalAlign.Start)
             .layoutWeight(1)
 
-          Row() {
-            Button(this.isSyncing ? '上传中...' : '上传本地')
-              .height(32)
-              .fontSize(AppDimens.FONT_SM)
-              .backgroundColor(AppColors.PRIMARY)
-              .enabled(!this.isSyncing)
-              .onClick(() => { void this.runPushSync() })
+            Row() {
+              Button(this.isSyncing ? '上传中...' : '上传本地')
+                .height(32)
+                .fontSize(AppDimens.FONT_SM)
+                .backgroundColor(AppColors.PRIMARY)
+                .enabled(!this.isSyncing)
+                .onClick(() => { void this.runPushSync() })
 
-            Button(this.isSyncing ? '下载中...' : '下载云端')
-              .height(32)
-              .fontSize(AppDimens.FONT_SM)
-              .backgroundColor(AppColors.SUCCESS)
-              .enabled(!this.isSyncing)
-              .margin({ left: 8 })
-              .onClick(() => { void this.runPullSync() })
-          }
-          .margin({ top: 12 })
+              Button(this.isSyncing ? '下载中...' : '下载云端')
+                .height(32)
+                .fontSize(AppDimens.FONT_SM)
+                .backgroundColor(AppColors.SUCCESS)
+                .enabled(!this.isSyncing)
+                .margin({ left: 8 })
+                .onClick(() => { void this.runPullSync() })
+            }
+            .margin({ top: 12 })
           }
           .width('100%')
           .margin({ top: 12 })
@@ -405,9 +419,8 @@ export struct ProfileView {
         .backgroundColor(AppColors.CARD_BG)
         .borderRadius(AppDimens.RADIUS_MD)
 
-        // 设置列表
         Column() {
-          Text('⚙️ 设置')
+          Text('设置')
             .fontSize(AppDimens.FONT_MD)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppColors.TEXT_PRIMARY)
@@ -430,7 +443,6 @@ export struct ProfileView {
         .backgroundColor(AppColors.CARD_BG)
         .borderRadius(AppDimens.RADIUS_MD)
 
-        // 退出登录
         Text('退出登录')
           .fontSize(AppDimens.FONT_MD)
           .fontColor(AppColors.DANGER)

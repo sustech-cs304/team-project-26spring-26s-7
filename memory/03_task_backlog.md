@@ -1,10 +1,10 @@
 # Task Backlog
 
-**Last Updated**: 2026-04-16 (云同步 + UI 页面更新合并)
-**Total Tasks**: 28 (来自 base 项目)
-**Completed**: 18 (含三层架构重构 + 动态旅程回放 + 地点搜索替换 + 首页地图搜索 + 云同步认证 + UI 页面更新)
-**In Progress**: 0
-**Pending**: 10
+**Last Updated**: 2026-05-06 (Codex 适配 + social-share 模块 1)
+**Total Tasks**: 按模块滚动维护
+**Completed**: 三层架构、动态旅程回放、地点搜索替换、首页地图搜索、云同步认证、UI 页面更新、social-share 模块 1 主链路
+**In Progress**: social-share 图片分享完善
+**Pending**: cloud-only 自动回源、分享链路测试补充、发布阶段提示优化
 
 ---
 
@@ -13,6 +13,37 @@
 - 🔄 In Progress
 - ⏳ Pending
 - 🔴 Blocked
+
+---
+
+## 2026-05-06 Update: Codex 适配与 Social Share Module 1 合并
+
+### 🔄 已完成工作 (2026-05-06)
+
+**Codex 辅助文件适配**:
+- 新增 `AGENTS.md` 作为 Codex 主入口，整理当前分支、架构、social-share 契约、构建命令和 memory 维护规则。
+- 将 `CLAUDE.md` 调整为 Claude 兼容入口，指向 `AGENTS.md`，避免两套代理规则分叉。
+- 更新 memory 文件，使其反映 `feature/social-share` 当前状态，而不是 4 月份 `incremental-dev-20260329` 状态。
+
+**Social Share Module 1 主链路**:
+- 合并远端多档有效期与自动撤销旧链接方案，merge commit: `def52e1`。
+- 保留 EXIF 清洗、图片预检、错误码映射和显式阻止静默丢图。
+- 缓存策略确定为 `cachedReq + cachedNodes`，不缓存清洗后的临时照片。
+- 每次发布或切换有效期重新生成清洗临时图片，发布结束后清理。
+
+**后端同步复用**:
+- 用户级 Codex skill `team-project-backend-sync` 已创建，用于复用从 `172.18.35.215:~/backend` 拉取 backend 到当前 `frontendv1` 工作区的流程。
+
+**验证状态**:
+- `git diff --check` 已在 merge 阶段通过。
+- `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 已通过。
+
+### ⏳ 后续任务
+
+- 增加分享发布阶段提示。
+- 实现 `cloud-only` 自动下载回源。
+- 为 `SharePhotoHelper`、`SharePreflight`、`ShareService` 补测试。
+- 按新 `AGENTS.md` 规则持续维护 memory。
 
 ---
 
