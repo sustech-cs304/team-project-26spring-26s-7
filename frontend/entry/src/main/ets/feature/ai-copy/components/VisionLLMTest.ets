@@ -99,7 +99,9 @@ export struct VisionLLMTest {
         question: this.question,
         modelName: 'Qwen-VL-Chat-Int4',
         temperature: 1.0,
-        topP: 0.8
+        topP: 0.8,
+        // 调试组件：限到 128 token，避免日志里出现 max_tokens=2048 的满载请求
+        maxTokens: 128
       };
 
       const response = await this.client.askImage(request);

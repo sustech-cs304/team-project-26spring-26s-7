@@ -18,9 +18,17 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { logger } from '../utils/Logger';
 import { MultipartFormData, FormField, FileField } from './MultipartFormData';
 import { HttpResponse } from './HttpClient';
-import { VISION_LLM_BASE_URL, HttpTimeout } from './ApiEndpoints';
+import { VISION_LLM_BASE_URL, VISION_LLM_AUTH_TOKEN, HttpTimeout } from './ApiEndpoints';
 
 const TAG = 'VisionLLMClient';
+
+/**
+ * 兜底 max_tokens：调用方没显式传时用这个。
+ * 取 128 是一个相对保守的"中等长度"值——不会让用户等过 30s。
+ * 如果你看到日志里某请求最终走了这个默认，多半是某条调用路径
+ * 漏传了 maxTokens，应该去修调用方而不是改这个值。
+ */
+const DEFAULT_MAX_TOKENS = 128;
 
 /**
  * Qwen-VL API 响应中的 message 结构
@@ -59,6 +67,12 @@ export interface VisionLLMRequest {
   temperature?: number;
   /** top-p（默认：0.8） */
   topP?: number;
+  /**
+   * 最多生成 token 数（后端 clamp 到 [1, 2048]，默认 2048）
+   * 中文一个 token 约 1-2 字符，每 token decode 75-90ms
+   * 不传则按默认 2048 跑，会很慢
+   */
+  maxTokens?: number;
 }
 
 /**
@@ -73,6 +87,8 @@ export interface TextLLMRequest {
   temperature?: number;
   /** top-p（默认：0.85） */
   topP?: number;
+  /** 最多生成 token 数（同上） */
+  maxTokens?: number;
 }
 
 /** OpenAI 兼容请求中的 message 结构 */
@@ -87,6 +103,8 @@ interface ChatCompletionRequest {
   messages: ChatMessage[];
   temperature: number;
   top_p: number;
+  /** 可选上限 token 数；缺省时后端按 2048 跑 */
+  max_tokens?: number;
 }
 
 /**
@@ -143,6 +161,12 @@ export class VisionLLMClient {
       formData.addField('question', request.question);
       formData.addField('temperature', (request.temperature ?? 1.0).toString());
       formData.addField('top_p', (request.topP ?? 0.8).toString());
+      // 上限 token 数：永远显式传，不让后端走默认值（哪怕后端默认是 256
+      // 也比我们显式传 48 慢）。调用方未传时用 DEFAULT_MAX_TOKENS 兜底。
+      const effectiveMaxTokens = (request.maxTokens !== undefined && request.maxTokens > 0)
+        ? request.maxTokens
+        : DEFAULT_MAX_TOKENS;
+      formData.addField('max_tokens', effectiveMaxTokens.toString());
 
       // 构建请求体
       const requestBody = await formData.build();
@@ -157,7 +181,8 @@ export class VisionLLMClient {
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
         header: {
-          'Content-Type': formData.getContentType()
+          'Content-Type': formData.getContentType(),
+          'Authorization': `Bearer ${VISION_LLM_AUTH_TOKEN}`
         },
         readTimeout: this.timeout,
         connectTimeout: this.timeout,
@@ -229,6 +254,10 @@ export class VisionLLMClient {
         temperature: request.temperature ?? 0.9,
         top_p: request.topP ?? 0.85
       };
+      // 同 askImage：永远显式传 max_tokens，不留漏洞
+      requestBody.max_tokens = (request.maxTokens !== undefined && request.maxTokens > 0)
+        ? request.maxTokens
+        : DEFAULT_MAX_TOKENS;
 
       const url = `${this.baseUrl}/v1/chat/completions`;
       logger.info(TAG, `Sending POST request to: ${url}`);
@@ -236,7 +265,8 @@ export class VisionLLMClient {
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
         header: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${VISION_LLM_AUTH_TOKEN}`
         },
         readTimeout: this.timeout,
         connectTimeout: this.timeout,

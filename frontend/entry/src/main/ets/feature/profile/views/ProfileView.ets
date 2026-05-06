@@ -1,5 +1,14 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, AuthService, RouterUrls, RdbDataService, SyncManager } from '../../../common'
+import { common } from '@kit.AbilityKit'
+import {
+  AppColors,
+  AppDimens,
+  AuthService,
+  RouterUrls,
+  RdbDataService,
+  SyncManager,
+  ConsentManager
+} from '../../../common'
 
 /**
  * 个人中心 Tab 内容视图
@@ -18,7 +27,10 @@ export struct ProfileView {
   @State lastPullTime: string = '未下载'
   @State pendingCount: number = 0
   @State isSyncing: boolean = false
-  @State exifStrip: boolean = true
+  /** 上传 AI 云端打标签前自动剥 EXIF：当前实现已在 ImageSanitizer 中强制开启，UI 仅展示状态 */
+  @State exifStripAlwaysOn: boolean = true
+  /** AI 云端打标签开关，绑定 ConsentManager 持久化的同意状态 */
+  @StorageLink('aiCloudTaggingEnabled') aiCloudTaggingEnabled: boolean = false
   @State wifiOnlySync: boolean = true
   @State shareLinkExpiry: string = '7 天'
   @StorageLink('networkJustReconnected') networkJustReconnected: boolean = false
@@ -28,6 +40,11 @@ export struct ProfileView {
 
   aboutToAppear(): void {
     this.loadAuthStatus()
+    const uiContext = this.getUIContext()
+    const ctx = uiContext.getHostContext() as common.UIAbilityContext
+    if (ctx) {
+      ConsentManager.ensureLoaded(ctx)
+    }
   }
 
   onPageShow(): void {
@@ -147,13 +164,40 @@ export struct ProfileView {
   }
 
   private showPrivacySettings(): void {
+    const cloudOn = this.aiCloudTaggingEnabled
+    const message =
+      `📷 EXIF 自动剥离：始终开启\n` +
+      `任何离开本设备的照片副本都会先去掉 GPS、相机型号等敏感字段，原图保留在本机。\n\n` +
+      `🤖 AI 云端识别画面内容：${cloudOn ? '已开启' : '已关闭'}\n` +
+      (cloudOn
+        ? '生成文案时，会把首张照片以剥离 EXIF 后的副本上传至 Qwen-VL 模型，让模型直接看图写文案，推理结束云端立即删除。\n首次上传前会单独询问。'
+        : '当前仅使用端侧 EXIF / OCR 元数据生成文案，照片本体不会上传。\n开启后第一次生成时会再次确认是否同意上传。') +
+      `\n\n点击下方按钮可切换 AI 云端识别开关。`
     AlertDialog.show({
       title: '隐私与安全',
-      message: `EXIF 元数据自动剥离：${this.exifStrip ? '已开启' : '已关闭'}\n\n所有照片在上传或分享前会自动移除位置、设备等敏感信息。\n\nAI 文案仅使用文本元数据，不会上传照片到云端。`,
-      confirm: {
+      message: message,
+      primaryButton: {
+        value: cloudOn ? '关闭云端识别' : '开启云端识别',
+        action: () => this.toggleCloudTagging()
+      },
+      secondaryButton: {
         value: '关闭',
         action: () => {}
       }
+    })
+  }
+
+  private async toggleCloudTagging(): Promise<void> {
+    const uiContext = this.getUIContext()
+    const ctx = uiContext.getHostContext() as common.UIAbilityContext
+    if (!ctx) {
+      promptAction.showToast({ message: '无法获取应用上下文' })
+      return
+    }
+    const next = !this.aiCloudTaggingEnabled
+    await ConsentManager.setCloudTaggingEnabled(ctx, next)
+    promptAction.showToast({
+      message: next ? '已开启 AI 云端识别' : '已关闭 AI 云端识别'
     })
   }
 
@@ -370,7 +414,11 @@ export struct ProfileView {
             .padding({ left: AppDimens.PADDING_MD, top: AppDimens.PADDING_MD, bottom: 8 })
             .width('100%')
 
-          this.settingItem('隐私与安全', this.exifStrip ? 'EXIF 剥离已开启' : '', () => this.showPrivacySettings())
+          this.settingItem(
+            '隐私与安全',
+            this.aiCloudTaggingEnabled ? '云端识别 已开启 · EXIF 自动剥离' : 'EXIF 自动剥离 · 云端识别 已关闭',
+            () => this.showPrivacySettings()
+          )
           Divider().color(AppColors.DIVIDER)
           this.settingItem('流量与存储', this.wifiOnlySync ? '仅 Wi-Fi' : '', () => this.showStorageSettings())
           Divider().color(AppColors.DIVIDER)

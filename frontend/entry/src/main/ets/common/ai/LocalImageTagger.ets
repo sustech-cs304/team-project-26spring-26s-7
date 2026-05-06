@@ -15,27 +15,42 @@
 
 import { image } from '@kit.ImageKit';
 import { fileIo } from '@kit.CoreFileKit';
+import { textRecognition } from '@kit.CoreVisionKit';
 import { logger } from '../utils/Logger';
 import { PhotoMetadata, VisualKitResult } from './PhotoMetadata';
 
 const TAG = 'LocalImageTagger';
+const OCR_TEXT_MAX_LENGTH: number = 80;
+
+/**
+ * 实际进入 prompt 的 EXIF 字段集合
+ * 砍掉了 Orientation/ExposureTime/FNumber/ISOSpeedRatings/FocalLength/Make/Model，
+ * 因为 prompt 已经不展示这些字段，再抽就是纯浪费 ~50ms/张
+ */
+const EXIF_PROPERTY_KEYS: string[] = [
+  'DateTimeOriginal',
+  'GPSLatitude',
+  'GPSLongitude',
+  'GPSLatitudeRef',
+  'GPSLongitudeRef'
+];
 
 /**
  * 本地图片元数据提取器
- * 通过 EXIF 和图片属性在端侧提取照片信息，照片不出设备
- * 提取的文字描述将发送给 LLM 生成文案（而非上传照片）
+ *
+ * 使用 @kit.ImageKit 在端侧读取 EXIF/像素信息，照片不出设备。
+ * 提取出的字段（拍摄时间、GPS、相机、曝光参数等）会被聚合成纯文本描述
+ * 喂给 LLM，从而保留"图片信息进入 prompt"的能力但不上传图片本体。
  */
 export class LocalImageTagger {
   /**
    * 提取单张照片的元数据
-   * 通过 EXIF 信息提取时间、方向等特征，转化为文字标签
    * @param photoPath 照片沙箱路径（file:// 或绝对路径）
-   * @returns 照片元数据结构
    */
   async extractMetadata(photoPath: string): Promise<PhotoMetadata> {
     logger.info(TAG, `Extracting metadata for: ${photoPath}`);
 
-    const emptyResult: PhotoMetadata = {
+    const result: PhotoMetadata = {
       photoPath: photoPath,
       sceneTags: [],
       objectTags: [],
@@ -47,77 +62,120 @@ export class LocalImageTagger {
 
     const realPath = photoPath.startsWith('file://') ? photoPath.substring(7) : photoPath;
     let file: fileIo.File | undefined;
+    let imageSource: image.ImageSource | undefined;
 
     try {
       file = fileIo.openSync(realPath, fileIo.OpenMode.READ_ONLY);
-      const imageSource = image.createImageSource(file.fd);
+      imageSource = image.createImageSource(file.fd);
 
-      const sceneTags: string[] = [];
-      const timeTags: string[] = [];
-
-      // 提取图片尺寸信息
+      // 像素尺寸 -> 构图标签
       try {
         const imageInfo = await imageSource.getImageInfo();
         if (imageInfo && imageInfo.size) {
           const w = imageInfo.size.width;
           const h = imageInfo.size.height;
+          result.imageWidth = w;
+          result.imageHeight = h;
           if (w > h * 1.3) {
-            sceneTags.push('横幅构图');
+            result.sceneTags.push('横幅构图');
           } else if (h > w * 1.3) {
-            sceneTags.push('竖幅构图');
+            result.sceneTags.push('竖幅构图');
           } else {
-            sceneTags.push('方形构图');
+            result.sceneTags.push('方形构图');
           }
         }
       } catch (infoErr) {
-        logger.warn(TAG, `getImageInfo failed: ${infoErr}`);
+        logger.warn(TAG, `getImageInfo failed: ${JSON.stringify(infoErr)}`);
       }
 
-      // 提取 EXIF 时间信息
-      try {
-        const dateTime: string = await imageSource.getImageProperty('DateTimeOriginal');
-        if (dateTime.length > 0 && dateTime !== 'default_exif_value') {
-          const timeTag = this.parseTimeOfDay(dateTime);
-          if (timeTag.length > 0) {
-            timeTags.push(timeTag);
-          }
+      // 批量读取 EXIF 字段
+      const exif = await this.readExifBatch(imageSource);
+
+      // 拍摄时间
+      const dateTimeOriginal = exif.get('DateTimeOriginal');
+      if (dateTimeOriginal) {
+        result.dateTimeOriginal = dateTimeOriginal;
+        const timeTag = this.parseTimeOfDay(dateTimeOriginal);
+        if (timeTag.length > 0) {
+          result.timeTags.push(timeTag);
         }
-      } catch (exifErr) {
-        logger.debug(TAG, `EXIF DateTimeOriginal not available: ${exifErr}`);
       }
 
-      imageSource.release();
+      // GPS：DMS + ref 转十进制
+      const lat = this.parseGps(exif.get('GPSLatitude'), exif.get('GPSLatitudeRef'));
+      const lon = this.parseGps(exif.get('GPSLongitude'), exif.get('GPSLongitudeRef'));
+      if (lat !== undefined) {
+        result.gpsLatitude = lat;
+      }
+      if (lon !== undefined) {
+        result.gpsLongitude = lon;
+      }
 
-      const metadata: PhotoMetadata = {
-        photoPath: photoPath,
-        sceneTags: sceneTags,
-        objectTags: [],
-        colorTags: [],
-        timeTags: timeTags,
-        emotionTags: [],
-        extractedAt: Date.now()
-      };
+      // 端侧画面内容识别：OCR（拍到招牌/菜单/路牌时给 prompt 补充语义）
+      // 主体分割暂时停用：分割只能给"主体数量"，对文案生成贡献小，单张额外耗时 ~150ms 不划算
+      // 已知宽高时缩到 720 长边再解，未知宽高时按原图解（不传 desiredSize 避免被压成方图）
+      let pixelMap: image.PixelMap | undefined;
+      try {
+        const desired = this.computeDecodeSize(result.imageWidth, result.imageHeight, 720);
+        if (desired) {
+          const decodingOptions: image.DecodingOptions = { desiredSize: desired };
+          pixelMap = await imageSource.createPixelMap(decodingOptions);
+        } else {
+          pixelMap = await imageSource.createPixelMap();
+        }
+      } catch (decodeErr) {
+        logger.warn(TAG, `createPixelMap failed (skip OCR): ${JSON.stringify(decodeErr)}`);
+      }
 
-      logger.info(TAG, `Extracted: scene=[${sceneTags.join(',')}], time=[${timeTags.join(',')}]`);
-      return metadata;
+      if (pixelMap) {
+        try {
+          const ocrText = await this.runOcr(pixelMap);
+          if (ocrText.length > 0) {
+            result.ocrText = ocrText;
+          }
+        } catch (ocrErr) {
+          logger.warn(TAG, `OCR failed: ${JSON.stringify(ocrErr)}`);
+        }
+
+        try {
+          await pixelMap.release();
+        } catch (_) {
+          // ignore
+        }
+      }
+
+      logger.info(
+        TAG,
+        `Extracted: time=[${result.timeTags.join(',')}], ` +
+          `gps=(${result.gpsLatitude ?? '-'},${result.gpsLongitude ?? '-'}), ` +
+          `ocr=${result.ocrText ? '(' + result.ocrText.length + 'chars)' : '-'}`
+      );
+      return result;
     } catch (err) {
       logger.error(TAG, `extractMetadata failed: ${JSON.stringify(err)}`);
-      return emptyResult;
+      return result;
     } finally {
+      if (imageSource) {
+        try {
+          imageSource.release();
+        } catch (_) {
+          // ignore
+        }
+      }
       if (file) {
-        fileIo.closeSync(file);
+        try {
+          fileIo.closeSync(file);
+        } catch (_) {
+          // ignore
+        }
       }
     }
   }
 
-  /**
-   * 批量提取多张照片的元数据
-   */
+  /** 批量提取 */
   async extractBatch(photoPaths: string[]): Promise<VisualKitResult[]> {
     logger.info(TAG, `Batch extracting ${photoPaths.length} photos`);
-
     const results: VisualKitResult[] = [];
-
     for (const path of photoPaths) {
       try {
         const metadata = await this.extractMetadata(path);
@@ -125,6 +183,7 @@ export class LocalImageTagger {
           photoPath: path,
           tags: [
             ...metadata.sceneTags,
+            ...metadata.timeTags,
             ...metadata.objectTags,
             ...metadata.colorTags
           ],
@@ -133,30 +192,151 @@ export class LocalImageTagger {
       } catch (err) {
         const errorMsg = `Failed to extract ${path}: ${JSON.stringify(err)}`;
         logger.error(TAG, errorMsg);
-        results.push({
-          photoPath: path,
-          tags: [],
-          success: false,
-          error: errorMsg
-        });
+        results.push({ photoPath: path, tags: [], success: false, error: errorMsg });
       }
     }
-
     return results;
   }
 
-  /**
-   * 检查图片分析能力是否可用
-   * 当前基于 EXIF 提取，始终可用
-   */
   async isKitAvailable(): Promise<boolean> {
     return true;
   }
 
   /**
-   * 从 EXIF 日期时间字符串解析时段
-   * EXIF 格式: "YYYY:MM:DD HH:MM:SS"
+   * 逐键调用 getImageProperty，吞掉 "属性不存在" 错误。
+   * 不少手机 / 截图照片只有少数 EXIF 字段。
    */
+  private async readExifBatch(source: image.ImageSource): Promise<Map<string, string>> {
+    const out: Map<string, string> = new Map();
+    for (const key of EXIF_PROPERTY_KEYS) {
+      try {
+        const value = await source.getImageProperty(key);
+        if (value && value.length > 0 && value !== 'default_exif_value') {
+          out.set(key, value);
+        }
+      } catch (err) {
+        logger.debug(TAG, `EXIF ${key} not available: ${JSON.stringify(err)}`);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * 解析 EXIF GPS：HarmonyOS 返回 "deg, min, sec" 或纯小数字符串
+   */
+  private parseGps(raw: string | undefined, ref: string | undefined): number | undefined {
+    if (!raw || raw.length === 0) {
+      return undefined;
+    }
+    const trimmed = raw.trim();
+    let decimal: number = NaN;
+
+    if (trimmed.indexOf(',') >= 0) {
+      const parts = trimmed.split(',').map((p: string) => Number(p.trim()));
+      if (parts.length >= 3 && parts.every((n: number) => !isNaN(n))) {
+        decimal = parts[0] + parts[1] / 60 + parts[2] / 3600;
+      }
+    } else {
+      const single = Number(trimmed);
+      if (!isNaN(single)) {
+        decimal = single;
+      }
+    }
+
+    if (isNaN(decimal)) {
+      return undefined;
+    }
+
+    const refUpper = (ref || '').trim().toUpperCase();
+    if (refUpper === 'S' || refUpper === 'W') {
+      decimal = -decimal;
+    }
+    // 保留 6 位小数（≈10cm 量级）
+    return Math.round(decimal * 1000000) / 1000000;
+  }
+
+  /**
+   * 等比缩放出一个不超过 maxEdge 的解码尺寸；
+   * 宽高未知时返回 undefined，调用方应改用原图解码
+   */
+  private computeDecodeSize(
+    width: number | undefined,
+    height: number | undefined,
+    maxEdge: number
+  ): image.Size | undefined {
+    if (!width || !height || width <= 0 || height <= 0) {
+      return undefined;
+    }
+    const longer = Math.max(width, height);
+    if (longer <= maxEdge) {
+      return { width: width, height: height };
+    }
+    const ratio = maxEdge / longer;
+    return {
+      width: Math.max(1, Math.round(width * ratio)),
+      height: Math.max(1, Math.round(height * ratio))
+    };
+  }
+
+  /**
+   * 端侧 OCR：textRecognition.recognizeText
+   * 返回截断后的整段识别文本，没识别到时返回空串
+   * 不同 SDK 版本返回结构略有差异，按 .value -> .text -> .blocks[].value 顺序兜底
+   */
+  private async runOcr(pixelMap: image.PixelMap): Promise<string> {
+    const visionInfo: textRecognition.VisionInfo = { pixelMap: pixelMap };
+    const recognitionResult = await textRecognition.recognizeText(visionInfo);
+    const record = recognitionResult as Object as Record<string, Object>;
+
+    let raw = '';
+
+    const valueField = record['value'];
+    if (typeof valueField === 'string' && valueField.length > 0) {
+      raw = valueField as string;
+    }
+
+    if (raw.length === 0) {
+      const textField = record['text'];
+      if (typeof textField === 'string' && textField.length > 0) {
+        raw = textField as string;
+      }
+    }
+
+    if (raw.length === 0) {
+      const blocksField = record['blocks'];
+      if (Array.isArray(blocksField)) {
+        const pieces: string[] = [];
+        for (const b of (blocksField as Object[])) {
+          const blockRec = b as Object as Record<string, Object>;
+          const bv = blockRec['value'];
+          const bt = blockRec['text'];
+          if (typeof bv === 'string' && bv.length > 0) {
+            pieces.push(bv as string);
+          } else if (typeof bt === 'string' && bt.length > 0) {
+            pieces.push(bt as string);
+          }
+        }
+        if (pieces.length > 0) {
+          raw = pieces.join('\n');
+        }
+      }
+    }
+
+    logger.info(TAG, `OCR raw length=${raw.length}, available keys=${Object.keys(record).join(',')}`);
+
+    if (raw.length === 0) {
+      return '';
+    }
+
+    // 多行合并成一行，去掉重复空白
+    const compact = raw.replace(/\s+/g, ' ').trim();
+    if (compact.length <= OCR_TEXT_MAX_LENGTH) {
+      return compact;
+    }
+    return compact.substring(0, OCR_TEXT_MAX_LENGTH) + '…';
+  }
+
+  /** 从 EXIF 时间字符串解析时段（"YYYY:MM:DD HH:MM:SS"） */
   private parseTimeOfDay(dateTimeStr: string): string {
     try {
       const parts = dateTimeStr.split(' ');
@@ -171,22 +351,25 @@ export class LocalImageTagger {
       if (isNaN(hour)) {
         return '';
       }
-
       if (hour >= 5 && hour < 8) {
         return '清晨';
-      } else if (hour >= 8 && hour < 11) {
-        return '上午';
-      } else if (hour >= 11 && hour < 14) {
-        return '中午';
-      } else if (hour >= 14 && hour < 17) {
-        return '下午';
-      } else if (hour >= 17 && hour < 19) {
-        return '傍晚';
-      } else if (hour >= 19 && hour < 22) {
-        return '夜晚';
-      } else {
-        return '深夜';
       }
+      if (hour >= 8 && hour < 11) {
+        return '上午';
+      }
+      if (hour >= 11 && hour < 14) {
+        return '中午';
+      }
+      if (hour >= 14 && hour < 17) {
+        return '下午';
+      }
+      if (hour >= 17 && hour < 19) {
+        return '傍晚';
+      }
+      if (hour >= 19 && hour < 22) {
+        return '夜晚';
+      }
+      return '深夜';
     } catch (_) {
       return '';
     }

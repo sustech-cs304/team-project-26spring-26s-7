@@ -100,6 +100,9 @@ export interface RouterParam {
   poiName?: string
   defaultPrompt?: string
   defaultTitle?: string
+  photos?: string[]
+  mood?: string
+  tags?: string[]
 }
 
 /** 旅行路线 - 完整数据模型 */
