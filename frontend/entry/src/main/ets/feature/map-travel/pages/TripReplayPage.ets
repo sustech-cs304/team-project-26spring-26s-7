@@ -100,7 +100,9 @@ export struct TripReplayPage {
   private mapController?: map.MapComponentController
   private routeRendered: boolean = false
   private dataService = getDataService()
-  private pauseAfterReload: boolean = false
+  private musicGeneration: number = 0
+  private shouldAudioPlay: boolean = false
+  private isPageActive: boolean = false
 
   private mapCallback: AsyncCallback<map.MapComponentController> = async (err, controller) => {
     if (!err && controller) {
@@ -112,53 +114,81 @@ export struct TripReplayPage {
   private avPlayer: media.AVPlayer | undefined = undefined
   @State private isAudioPlaying: boolean = false
 
-  private async initAndPlayMusic(): Promise<void> {
+  private isCurrentMusicPlayer(avPlayer: media.AVPlayer, generation: number): boolean {
+    return this.isPageActive && this.avPlayer === avPlayer && this.musicGeneration === generation
+  }
+
+  private async initMusic(shouldPlay: boolean): Promise<void> {
+    const generation = this.musicGeneration
     try {
       const uiContext = this.getUIContext()
       const context = uiContext.getHostContext() as common.UIAbilityContext
-      if (!context) {
+      if (!context || !this.isPageActive) {
         return
       }
 
       const avPlayer: media.AVPlayer = await media.createAVPlayer()
-      this.regAVPlayerCallback(avPlayer)
+      if (generation !== this.musicGeneration || !this.isPageActive) {
+        avPlayer.release()
+        return
+      }
+
+      this.regAVPlayerCallback(avPlayer, generation)
       this.avPlayer = avPlayer
+      this.shouldAudioPlay = shouldPlay
 
       const selectedTrack = ReplayMusicCatalog.getById(this.selectedBgmId)
       const fileDescriptor = await context.resourceManager.getRawFd(selectedTrack.filename)
+      if (!this.isCurrentMusicPlayer(avPlayer, generation)) {
+        avPlayer.release()
+        return
+      }
+
       avPlayer.fdSrc = {
         fd: fileDescriptor.fd,
         offset: fileDescriptor.offset,
         length: fileDescriptor.length
       }
     } catch (err) {
-      console.error('TripReplayPage: initAndPlayMusic failed', JSON.stringify(err))
+      console.error('TripReplayPage: initMusic failed', JSON.stringify(err))
     }
   }
 
   private async reloadMusic(): Promise<void> {
-    this.pauseAfterReload = !this.isAudioPlaying
+    const shouldPlay = this.isAudioPlaying
     await this.stopMusic()
-    await this.initAndPlayMusic()
+    if (this.isPageActive) {
+      this.musicGeneration += 1
+      await this.initMusic(shouldPlay)
+    }
   }
 
-  private regAVPlayerCallback(avPlayer: media.AVPlayer): void {
+  private regAVPlayerCallback(avPlayer: media.AVPlayer, generation: number): void {
     avPlayer.on('error', () => {
-      avPlayer.reset()
+      if (this.isCurrentMusicPlayer(avPlayer, generation)) {
+        avPlayer.reset()
+        this.isAudioPlaying = false
+      }
     })
 
     avPlayer.on('stateChange', (state: media.AVPlayerState) => {
+      if (!this.isCurrentMusicPlayer(avPlayer, generation)) {
+        return
+      }
+
       switch (state) {
         case 'initialized':
           void avPlayer.prepare()
           break
         case 'prepared':
-          void avPlayer.play()
+          if (this.shouldAudioPlay) {
+            void avPlayer.play()
+          }
           break
         case 'playing':
-          this.isAudioPlaying = true
-          if (this.pauseAfterReload) {
-            this.pauseAfterReload = false
+          if (this.shouldAudioPlay) {
+            this.isAudioPlaying = true
+          } else {
             avPlayer.pause()
           }
           break
@@ -167,14 +197,17 @@ export struct TripReplayPage {
           break
         case 'completed':
           avPlayer.seek(0)
-          void avPlayer.play()
+          if (this.shouldAudioPlay) {
+            void avPlayer.play()
+          }
           break
         case 'stopped':
-          avPlayer.reset()
+          this.isAudioPlaying = false
           break
         case 'released':
           this.avPlayer = undefined
           this.isAudioPlaying = false
+          this.shouldAudioPlay = false
           break
       }
     })
@@ -186,30 +219,39 @@ export struct TripReplayPage {
 
   private toggleMusic(): void {
     if (!this.avPlayer) {
+      this.shouldAudioPlay = true
+      void this.initMusic(true)
       return
     }
     if (this.isAudioPlaying) {
+      this.shouldAudioPlay = false
       this.avPlayer.pause()
     } else {
+      this.shouldAudioPlay = true
       void this.avPlayer.play()
     }
   }
 
   private async stopMusic(): Promise<void> {
-    if (this.avPlayer) {
+    this.musicGeneration += 1
+    this.shouldAudioPlay = false
+    const avPlayer = this.avPlayer
+    this.avPlayer = undefined
+    this.isAudioPlaying = false
+
+    if (avPlayer) {
       try {
-        await this.avPlayer.stop()
-        this.avPlayer.release()
+        await avPlayer.stop()
       } catch (err) {
         console.error('TripReplayPage: stopMusic failed', JSON.stringify(err))
       } finally {
-        this.avPlayer = undefined
-        this.isAudioPlaying = false
+        avPlayer.release()
       }
     }
   }
 
   aboutToAppear(): void {
+    this.isPageActive = true
     ReplayPreferences.initializeDefaults()
     const params = router.getParams() as RouterParam
     if (params?.tripId) {
@@ -221,6 +263,7 @@ export struct TripReplayPage {
   }
 
   aboutToDisappear(): void {
+    this.isPageActive = false
     this.stopPlay()
     void this.stopMusic()
   }
