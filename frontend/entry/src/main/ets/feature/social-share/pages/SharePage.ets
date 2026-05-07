@@ -214,6 +214,12 @@ export struct SharePage {
           message: `路线 ${this.currentTripId} 不存在`,
         }
       }
+      if (!trip.isPublic) {
+        return {
+          kind: KIND_ERROR,
+          message: '当前路线仍为私密，请先设为公开后再分享',
+        }
+      }
       const nodes = await this.loadAndSortNodes(this.currentTripId)
       return { kind: KIND_RDB, trip, nodes }
     }
@@ -227,6 +233,12 @@ export struct SharePage {
     for (let i = 1; i < allTrips.length; i++) {
       if (allTrips[i].createdAt > latest.createdAt) {
         latest = allTrips[i]
+      }
+    }
+    if (!latest.isPublic) {
+      return {
+        kind: KIND_ERROR,
+        message: '当前路线仍为私密，请先设为公开后再分享',
       }
     }
     this.currentTripId = latest.id

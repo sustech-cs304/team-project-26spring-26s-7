@@ -1,10 +1,14 @@
 # Project State
 
-**Last Updated**: 2026-05-06 (Codex 适配 + social-share 合并)
+**Last Updated**: 2026-05-06 (share privacy gate)
 **Project**: TravelPin - HarmonyOS Travel Journal App
 **Repository**: D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7
 **Current Branch**: feature/social-share
 **Main Branch**: main
+
+**2026-05-06 Durable Notes**:
+- Trip sharing now requires `Trip.isPublic === true`. Private trips show a greyed share button on `TripDetailPage`; tapping it prompts the user to switch the trip to public before routing to `SharePage`.
+- `SharePage` now blocks direct entry for private trips as a frontend guardrail.
 
 ---
 

@@ -244,6 +244,50 @@ export struct TripDetailPage {
     })
   }
 
+  private async makeTripPublicAndShare(): Promise<void> {
+    if (!this.tripId) {
+      return
+    }
+
+    try {
+      await this.dataService.updateTravel(this.tripId, { isPublic: true })
+      this.isPublic = true
+      this.bumpTravelDataVersion()
+      router.pushUrl({
+        url: RouterUrls.SHARE,
+        params: { tripId: this.tripId } as RouterParam
+      })
+    } catch (err) {
+      promptAction.showToast({ message: '设置为公开失败' })
+    }
+  }
+
+  private handleShareTrip(): void {
+    if (this.isPublic) {
+      router.pushUrl({
+        url: RouterUrls.SHARE,
+        params: { tripId: this.tripId } as RouterParam
+      })
+      return
+    }
+
+    AlertDialog.show({
+      title: '允许分享',
+      message: '是否设置当前旅行路线为“公开”以允许分享？',
+      primaryButton: {
+        value: '是',
+        action: () => {
+          void this.makeTripPublicAndShare()
+        }
+      },
+      secondaryButton: {
+        value: '否',
+        fontColor: AppColors.DANGER,
+        action: () => {}
+      }
+    })
+  }
+
   @Builder
   private buildRouteHero() {
     Stack() {
@@ -508,13 +552,11 @@ export struct TripDetailPage {
                   .layoutWeight(1)
                   .height(46)
                   .fontSize(AppDimens.FONT_MD)
-                  .backgroundColor('#FF8C00')
+                  .backgroundColor(this.isPublic ? '#FF8C00' : '#D8D8D8')
+                  .fontColor(this.isPublic ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
                   .borderRadius(16)
                   .onClick(() => {
-                    router.pushUrl({
-                      url: RouterUrls.SHARE,
-                      params: { tripId: this.tripId } as RouterParam
-                    })
+                    this.handleShareTrip()
                   })
               }
               .width('100%')

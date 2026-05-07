@@ -1,6 +1,6 @@
 # Task Backlog
 
-**Last Updated**: 2026-05-06 (Codex 适配 + social-share 模块 1)
+**Last Updated**: 2026-05-06 (share privacy gate)
 **Total Tasks**: 按模块滚动维护
 **Completed**: 三层架构、动态旅程回放、地点搜索替换、首页地图搜索、云同步认证、UI 页面更新、social-share 模块 1 主链路
 **In Progress**: social-share 图片分享完善
@@ -19,6 +19,11 @@
 ## 2026-05-06 Update: Codex 适配与 Social Share Module 1 合并
 
 ### 🔄 已完成工作 (2026-05-06)
+
+**分享公开性约束补齐**:
+- `TripDetailPage` 的私密路线分享入口已改为灰态可点，点击后弹窗确认是否转为公开。
+- 用户确认后先持久化 `isPublic=true`，再跳转 `SharePage`。
+- `SharePage` 已增加私密路线前端兜底，避免直接路由绕过限制。
 
 **Codex 辅助文件适配**:
 - 新增 `AGENTS.md` 作为 Codex 主入口，整理当前分支、架构、social-share 契约、构建命令和 memory 维护规则。
