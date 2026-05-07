@@ -44,7 +44,16 @@ struct ProfileEditPage {
     }
   }
 
+  private isNetworkOnline(): boolean {
+    return (AppStorage.get('networkOnline') as boolean) ?? false
+  }
+
   private async handlePickAvatar(): Promise<void> {
+    if (!this.isNetworkOnline()) {
+      promptAction.showToast({ message: '当前无网络，无法更换头像' })
+      return
+    }
+
     try {
       const photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
       photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
@@ -98,6 +107,11 @@ struct ProfileEditPage {
   }
 
   private async handleSave(): Promise<void> {
+    if (!this.isNetworkOnline()) {
+      promptAction.showToast({ message: '当前无网络，请在联网后保存资料' })
+      return
+    }
+
     if (this.nickname.trim().length === 0) {
       promptAction.showToast({ message: '昵称不能为空' })
       return

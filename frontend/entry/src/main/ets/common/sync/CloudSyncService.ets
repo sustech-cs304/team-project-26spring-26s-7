@@ -6,6 +6,7 @@ import type { Trip, MemoryNode } from '../service/types'
 import { TravelSpecialValues } from '../utils/Constants'
 import { CloudTravel } from './CloudTravel'
 import { CloudMemoryNode } from './CloudMemoryNode'
+import { CloudProfile } from './CloudProfile'
 
 const DOMAIN = 0x0000
 const TAG = 'CloudSyncService'
@@ -50,6 +51,16 @@ interface NodePayload {
   visitedAt: number
 }
 
+interface ProfilePayload {
+  ownerUid: string
+  cloudId: string
+  nickname: string
+  bio: string
+  avatarCloudPath: string
+  version: number
+  updatedAt: number
+}
+
 export class CloudSyncService {
   static async ensureReady(): Promise<boolean> {
     if (initialized && databaseZone !== null) {
@@ -59,7 +70,8 @@ export class CloudSyncService {
     try {
       cloudCommon.init({
         region: cloudCommon.CloudRegion.CHINA,
-        authProvider: auth.getAuthProvider()
+        authProvider: auth.getAuthProvider(),
+        databaseOptions: { schema: 'schema.json' }
       })
       databaseZone = cloudDatabase.zone(ZONE_NAME)
       initialized = true
@@ -316,5 +328,70 @@ export class CloudSyncService {
       result.push(node)
     }
     return result
+  }
+
+  // ========== Profile ==========
+
+  static async upsertProfile(payload: string): Promise<string> {
+    const ready = await CloudSyncService.ensureReady()
+    if (!ready || databaseZone === null) {
+      throw new Error('云数据库未初始化')
+    }
+
+    const data = JSON.parse(payload) as ProfilePayload
+    const cloudId = data.cloudId || `profile_${data.ownerUid}`
+    hilog.info(DOMAIN, TAG, `upsertProfile: creating CloudProfile, cloudId=${cloudId}, className=${new CloudProfile().naturalbase_ClassName()}`)
+    const profile = new CloudProfile()
+    profile.cloudId = cloudId
+    profile.ownerUid = data.ownerUid
+    profile.nickname = data.nickname ?? undefined
+    profile.bio = data.bio ?? undefined
+    profile.avatarCloudPath = data.avatarCloudPath ?? undefined
+    profile.version = data.version ?? undefined
+    profile.updatedAt = data.updatedAt ?? undefined
+    hilog.info(DOMAIN, TAG, `upsertProfile: fields assigned, bio="${profile.bio}", nickname="${profile.nickname}"`)
+    try {
+      await databaseZone.upsert(profile)
+      hilog.info(DOMAIN, TAG, `upsertProfile done: cloudId=${cloudId}`)
+    } catch (err) {
+      const error = err as BusinessError
+      hilog.error(DOMAIN, TAG, `upsertProfile upsert FAILED: code=${error.code}, message=${error.message}, name=${error.name}`)
+      throw new Error(`个人资料保存失败(${error.code})，请重试`)
+    }
+    return cloudId
+  }
+
+  static async fetchProfile(ownerUid: string): Promise<CloudProfile | null> {
+    const ready = await CloudSyncService.ensureReady()
+    if (!ready || databaseZone === null) {
+      return null
+    }
+
+    const condition = new cloudDatabase.DatabaseQuery(CloudProfile)
+    condition.equalTo('ownerUid', ownerUid)
+    const records = await databaseZone.query(condition)
+    if (records.length <= 0) {
+      hilog.info(DOMAIN, TAG, `fetchProfile: no record for ownerUid=${ownerUid}`)
+      return null
+    }
+    hilog.info(DOMAIN, TAG, `fetchProfile: found record for ownerUid=${ownerUid}`)
+    return records[0] as CloudProfile
+  }
+
+  static async hardDeleteProfileByOwnerUid(ownerUid: string): Promise<void> {
+    const ready = await CloudSyncService.ensureReady()
+    if (!ready || databaseZone === null || !ownerUid) {
+      return
+    }
+
+    const condition = new cloudDatabase.DatabaseQuery(CloudProfile)
+    condition.equalTo('ownerUid', ownerUid)
+    const records = await databaseZone.query(condition)
+    hilog.info(DOMAIN, TAG, `hardDeleteProfile: count=${records.length}, ownerUid=${ownerUid}`)
+    if (records.length <= 0) {
+      return
+    }
+    await databaseZone.delete(records)
+    hilog.info(DOMAIN, TAG, `hardDeleteProfile: deleted count=${records.length}`)
   }
 }

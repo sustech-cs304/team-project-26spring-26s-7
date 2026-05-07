@@ -6,12 +6,12 @@
         "type": "HarmonyOS",
         "material": {
           "storeFile": "../certificates/1.p12",
-          "storePassword": "0000001DDE322C24BEACD8CCEE2EABE202FA9CF88CE4AD2C40212A713D84B8C94710291F9E8B3D7C25E4B70E19",
+          "storePassword": "0000001D18E0024750AC7AFA5B8A6524E84586208AA243DA2D56CDE0E7A7243EC2A164E549CD1764CC85B778CB",
           "keyAlias": "test",
-          "keyPassword": "0000001D0CEA156ECF4F60C74DA614F776371BBFDB61A638C0225E4824AD9FD9422B7002670E486E3766F3A12D",
+          "keyPassword": "0000001DB0807E9F83FB8B8755511009B44A9C94482BB4286621BFAEF2526C54C17632F5628D728493A82EFBA6",
           "signAlg": "SHA256withECDSA",
-          "profile": "../certificates/testDebug.p7b",
-          "certpath": "../certificates/test.cer"
+          "profile": "D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/certificates/testDebug.p7b",
+          "certpath": "D:/study/SUSTech/course/SoftwareEngineering/team-project-26spring-26s-7/certificates/test.cer"
         }
       }
     ],

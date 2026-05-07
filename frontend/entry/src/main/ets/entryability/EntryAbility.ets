@@ -121,23 +121,19 @@ export default class EntryAbility extends UIAbility {
     AppStorage.setOrCreate('networkOnline', this.isOnline);
     this.registerNetworkListener();
 
-    try {
-      AuthService.init(this.context);
-      hilog.info(DOMAIN, 'testTag', 'Auth initialized successfully');
-      AuthService.restoreSession().then((cloudReady: boolean) => {
-        AppStorage.setOrCreate('cloudStatusText', cloudReady ? '云存储已连接' : '云存储暂不可用');
-      }).catch((err: Error) => {
-        hilog.error(DOMAIN, 'testTag', 'Cloud restore failed: %{public}s', err.message);
-        AppStorage.setOrCreate('cloudStatusText', '云存储暂不可用');
-      });
-    } catch (err) {
-      const error = err as BusinessError;
-      hilog.error(DOMAIN, 'testTag', 'Auth initialization failed: %{public}s', error.message);
-    }
-
-    // 初始化 RDB 数据库
-    RdbHelper.getInstance().initDatabase(this.context).then(() => {
+    // 初始化 RDB 数据库（必须先完成，再恢复 profile）
+    RdbHelper.getInstance().initDatabase(this.context).then(async () => {
       hilog.info(DOMAIN, 'testTag', 'Database initialized successfully');
+      // 数据库就绪后再恢复 profile（加载本地缓存 + 云端同步）
+      try {
+        AuthService.init(this.context);
+        hilog.info(DOMAIN, 'testTag', 'Auth initialized successfully');
+      } catch (err) {
+        const error = err as BusinessError;
+        hilog.error(DOMAIN, 'testTag', 'Auth init failed: %{public}s', error.message);
+      }
+      const cloudReady = await AuthService.restoreSession();
+      AppStorage.setOrCreate('cloudStatusText', cloudReady ? '云存储已连接' : '云存储暂不可用');
     }).catch((err: Error) => {
       hilog.error(DOMAIN, 'testTag', 'Database initialization failed: %{public}s', err.message);
     });
