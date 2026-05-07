@@ -27,8 +27,14 @@ export struct ReplayPhotoCard {
     this.node = null
   }
 
-  private get filterOption() {
+  private getFilterImageOpacity(): number {
     return ReplayFilterCatalog.getById(this.filterId)
+      .imageOpacity
+  }
+
+  private getFilterOverlayColor(): string {
+    return ReplayFilterCatalog.getById(this.filterId)
+      .overlayColor
   }
 
   @Builder
@@ -38,12 +44,12 @@ export struct ReplayPhotoCard {
         .width('100%')
         .height('100%')
         .objectFit(ImageFit.Contain)
-        .opacity(this.filterOption.imageOpacity)
+        .opacity(this.getFilterImageOpacity())
 
       Column()
         .width('100%')
         .height('100%')
-        .backgroundColor(this.filterOption.overlayColor)
+        .backgroundColor(this.getFilterOverlayColor())
     }
     .width(280)
     .height(180)

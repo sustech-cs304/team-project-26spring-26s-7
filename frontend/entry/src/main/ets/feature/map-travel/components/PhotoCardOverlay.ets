@@ -18,8 +18,14 @@ export struct PhotoCardOverlay {
 
   onClose?: () => void
 
-  private get filterOption() {
+  private getFilterImageOpacity(): number {
     return ReplayFilterCatalog.getById(this.filterId)
+      .imageOpacity
+  }
+
+  private getFilterOverlayColor(): string {
+    return ReplayFilterCatalog.getById(this.filterId)
+      .overlayColor
   }
 
   show(node: ReplayNode): void {
@@ -50,12 +56,12 @@ export struct PhotoCardOverlay {
               .width('100%')
               .height('100%')
               .objectFit(ImageFit.Contain)
-              .opacity(this.filterOption.imageOpacity)
+              .opacity(this.getFilterImageOpacity())
 
             Column()
               .width('100%')
               .height('100%')
-              .backgroundColor(this.filterOption.overlayColor)
+              .backgroundColor(this.getFilterOverlayColor())
           }
           .width('100%')
           .height(250)
