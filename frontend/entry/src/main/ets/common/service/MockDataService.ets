@@ -15,7 +15,7 @@
 
 import { logger } from '../utils/Logger';
 import { IDataService, CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput } from './IDataService';
-import { Trip, MemoryNode } from './types';
+import { Trip, MemoryNode, ReplayTripPreferences } from './types';
 
 const TAG = 'MockDataService';
 
@@ -51,6 +51,10 @@ export class MockDataService implements IDataService {
         isPublic: false,
         startDate: now - dayMs * 7,
         endDate: now - dayMs * 5,
+        replayStyleKitId: '',
+        replayBgmId: '',
+        replayFilterId: '',
+        replayTransitionType: '',
         nodeIds: ['node-001', 'node-002', 'node-003'],
         totalDistance: 128,
         createdAt: now - dayMs * 10,
@@ -64,6 +68,10 @@ export class MockDataService implements IDataService {
         isPublic: true,
         startDate: now - dayMs * 30,
         endDate: now - dayMs * 29,
+        replayStyleKitId: '',
+        replayBgmId: '',
+        replayFilterId: '',
+        replayTransitionType: '',
         nodeIds: ['node-004', 'node-005'],
         totalDistance: 45,
         createdAt: now - dayMs * 35,
@@ -97,6 +105,10 @@ export class MockDataService implements IDataService {
       isPublic: travel.isPublic ?? false,
       startDate: travel.startDate,
       endDate: travel.endDate,
+      replayStyleKitId: travel.replayStyleKitId,
+      replayBgmId: travel.replayBgmId,
+      replayFilterId: travel.replayFilterId,
+      replayTransitionType: travel.replayTransitionType,
       nodeIds: travel.nodeIds,
       totalDistance: travel.totalDistance,
       createdAt: now,
@@ -122,6 +134,10 @@ export class MockDataService implements IDataService {
     if (data.endDate !== undefined) current.endDate = data.endDate;
     if (data.nodeIds !== undefined) current.nodeIds = data.nodeIds;
     if (data.totalDistance !== undefined) current.totalDistance = data.totalDistance;
+    if (data.replayStyleKitId !== undefined) current.replayStyleKitId = data.replayStyleKitId;
+    if (data.replayBgmId !== undefined) current.replayBgmId = data.replayBgmId;
+    if (data.replayFilterId !== undefined) current.replayFilterId = data.replayFilterId;
+    if (data.replayTransitionType !== undefined) current.replayTransitionType = data.replayTransitionType;
     current.updatedAt = Date.now();
 
     logger.info(TAG, `Travel updated: ${travelId}`);
@@ -136,6 +152,37 @@ export class MockDataService implements IDataService {
 
     this.travels.splice(index, 1);
     logger.info(TAG, `Travel deleted: ${travelId}`);
+  }
+
+  async getTripReplayPreferences(travelId: string): Promise<ReplayTripPreferences> {
+    const travel = this.travels.find(t => t.id === travelId);
+    if (!travel) {
+      return {};
+    }
+    return {
+      replayStyleKitId: travel.replayStyleKitId,
+      replayBgmId: travel.replayBgmId,
+      replayFilterId: travel.replayFilterId,
+      replayTransitionType: travel.replayTransitionType
+    };
+  }
+
+  async updateTripReplayPreferences(travelId: string, data: ReplayTripPreferences): Promise<ReplayTripPreferences> {
+    const travel = this.travels.find(t => t.id === travelId);
+    if (!travel) {
+      throw new Error(`Travel not found: ${travelId}`);
+    }
+    if (data.replayStyleKitId !== undefined) travel.replayStyleKitId = data.replayStyleKitId;
+    if (data.replayBgmId !== undefined) travel.replayBgmId = data.replayBgmId;
+    if (data.replayFilterId !== undefined) travel.replayFilterId = data.replayFilterId;
+    if (data.replayTransitionType !== undefined) travel.replayTransitionType = data.replayTransitionType;
+    travel.updatedAt = Date.now();
+    return {
+      replayStyleKitId: travel.replayStyleKitId,
+      replayBgmId: travel.replayBgmId,
+      replayFilterId: travel.replayFilterId,
+      replayTransitionType: travel.replayTransitionType
+    };
   }
 
   // ==================== MemoryNode CRUD ====================

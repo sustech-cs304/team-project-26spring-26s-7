@@ -33,6 +33,10 @@ export interface CreateTravelInput {
   startDate: number;
   endDate: number;
   sensitivity?: string;
+  replayStyleKitId?: string;
+  replayBgmId?: string;
+  replayFilterId?: string;
+  replayTransitionType?: string;
 }
 
 /**
@@ -45,6 +49,10 @@ export interface UpdateTravelInput {
   startDate?: number;
   endDate?: number;
   sensitivity?: string;
+  replayStyleKitId?: string;
+  replayBgmId?: string;
+  replayFilterId?: string;
+  replayTransitionType?: string;
 }
 
 interface NodePhotoData {
@@ -107,6 +115,10 @@ export class TravelRepository {
     const deletedAtIdx = resultSet.getColumnIndex('deleted_at');
     const lastSyncedAtIdx = resultSet.getColumnIndex('last_synced_at');
     const versionIdx = resultSet.getColumnIndex('version');
+    const replayStyleKitIdIdx = resultSet.getColumnIndex('replay_style_kit_id');
+    const replayBgmIdIdx = resultSet.getColumnIndex('replay_bgm_id');
+    const replayFilterIdIdx = resultSet.getColumnIndex('replay_filter_id');
+    const replayTransitionTypeIdx = resultSet.getColumnIndex('replay_transition_type');
 
     const trip: Trip = {
       id: resultSet.getDouble(idIdx).toString(),
@@ -125,7 +137,11 @@ export class TravelRepository {
       syncStatus: syncStatusIdx >= 0 ? (resultSet.getString(syncStatusIdx) ?? 'local_only') : 'local_only',
       deletedAt: deletedAtIdx >= 0 ? resultSet.getDouble(deletedAtIdx) : 0,
       lastSyncedAt: lastSyncedAtIdx >= 0 ? resultSet.getDouble(lastSyncedAtIdx) : 0,
-      version: versionIdx >= 0 ? resultSet.getDouble(versionIdx) : 1
+      version: versionIdx >= 0 ? resultSet.getDouble(versionIdx) : 1,
+      replayStyleKitId: replayStyleKitIdIdx >= 0 ? (resultSet.getString(replayStyleKitIdIdx) ?? '') : '',
+      replayBgmId: replayBgmIdIdx >= 0 ? (resultSet.getString(replayBgmIdIdx) ?? '') : '',
+      replayFilterId: replayFilterIdIdx >= 0 ? (resultSet.getString(replayFilterIdIdx) ?? '') : '',
+      replayTransitionType: replayTransitionTypeIdx >= 0 ? (resultSet.getString(replayTransitionTypeIdx) ?? '') : ''
     };
     return trip;
   }
@@ -221,7 +237,11 @@ export class TravelRepository {
         'sync_status': 'pending_create',
         'deleted_at': 0,
         'last_synced_at': 0,
-        'version': 1
+        'version': 1,
+        'replay_style_kit_id': travel.replayStyleKitId ?? '',
+        'replay_bgm_id': travel.replayBgmId ?? '',
+        'replay_filter_id': travel.replayFilterId ?? '',
+        'replay_transition_type': travel.replayTransitionType ?? ''
       };
       const rowId = await store.insert(TABLE_NAME, valueBucket);
       logger.info(TAG, `Created travel: ${travel.name}, id=${rowId}`);
@@ -261,6 +281,18 @@ export class TravelRepository {
       }
       if (travel.sensitivity !== undefined) {
         valueBucket['sensitivity'] = travel.sensitivity;
+      }
+      if (travel.replayStyleKitId !== undefined) {
+        valueBucket['replay_style_kit_id'] = travel.replayStyleKitId;
+      }
+      if (travel.replayBgmId !== undefined) {
+        valueBucket['replay_bgm_id'] = travel.replayBgmId;
+      }
+      if (travel.replayFilterId !== undefined) {
+        valueBucket['replay_filter_id'] = travel.replayFilterId;
+      }
+      if (travel.replayTransitionType !== undefined) {
+        valueBucket['replay_transition_type'] = travel.replayTransitionType;
       }
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'travel id'));
@@ -395,7 +427,11 @@ export class TravelRepository {
       deleted_at: travel.deletedAt ?? 0,
       last_synced_at: Date.now(),
       version: travel.version ?? 1,
-      sensitivity: 'S1'
+      sensitivity: 'S1',
+      replay_style_kit_id: travel.replayStyleKitId ?? '',
+      replay_bgm_id: travel.replayBgmId ?? '',
+      replay_filter_id: travel.replayFilterId ?? '',
+      replay_transition_type: travel.replayTransitionType ?? ''
     };
 
     try {

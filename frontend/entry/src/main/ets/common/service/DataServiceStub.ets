@@ -15,7 +15,7 @@
 
 import { logger } from '../utils/Logger';
 import { IDataService, CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput } from './IDataService';
-import { Trip, MemoryNode } from './types';
+import { Trip, MemoryNode, ReplayTripPreferences } from './types';
 
 const TAG = 'DataServiceStub';
 
@@ -66,6 +66,10 @@ export class DataServiceStub implements IDataService {
       isPublic: travel.isPublic ?? false,
       startDate: Date.now(),
       endDate: Date.now(),
+      replayStyleKitId: travel.replayStyleKitId,
+      replayBgmId: travel.replayBgmId,
+      replayFilterId: travel.replayFilterId,
+      replayTransitionType: travel.replayTransitionType,
       nodeIds: [],
       totalDistance: 0,
       createdAt: Date.now(),
@@ -84,6 +88,10 @@ export class DataServiceStub implements IDataService {
       isPublic: data.isPublic ?? false,
       startDate: 0,
       endDate: 0,
+      replayStyleKitId: data.replayStyleKitId,
+      replayBgmId: data.replayBgmId,
+      replayFilterId: data.replayFilterId,
+      replayTransitionType: data.replayTransitionType,
       nodeIds: [],
       totalDistance: 0,
       createdAt: Date.now(),
@@ -94,6 +102,16 @@ export class DataServiceStub implements IDataService {
   async deleteTravel(travelId: string): Promise<void> {
     logger.warn(TAG, `deleteTravel(${travelId}) called but not implemented (STUB)`);
     // 不执行任何操作，假装成功
+  }
+
+  async getTripReplayPreferences(travelId: string): Promise<ReplayTripPreferences> {
+    logger.warn(TAG, `getTripReplayPreferences(${travelId}) called but not implemented (STUB)`);
+    return {};
+  }
+
+  async updateTripReplayPreferences(travelId: string, data: ReplayTripPreferences): Promise<ReplayTripPreferences> {
+    logger.warn(TAG, `updateTripReplayPreferences(${travelId}) called but not implemented (STUB)`);
+    return data;
   }
 
   // ==================== MemoryNode 相关 ====================

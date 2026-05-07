@@ -22,7 +22,7 @@ import { RdbHelper } from '../data/RdbHelper';
 import { TravelRepository } from '../data/TravelRepository';
 import { MemoryNodeRepository } from '../data/MemoryNodeRepository';
 import type { IDataService, CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput } from './IDataService';
-import type { Trip, MemoryNode, SyncStatus } from './types';
+import type { Trip, MemoryNode, ReplayTripPreferences, SyncStatus } from './types';
 import type { CreateTravelInput as RepoCreateTravelInput, UpdateTravelInput as RepoUpdateTravelInput } from '../data/TravelRepository';
 import type { CreateNodeInput as RepoCreateNodeInput, UpdateNodeInput as RepoUpdateNodeInput, SoftDeleteResult } from '../data/MemoryNodeRepository';
 
@@ -212,11 +212,15 @@ export class RdbDataService implements IDataService {
           updatedAt: trips[i].updatedAt,
           ownerUid: trips[i].ownerUid,
           cloudId: trips[i].cloudId,
-          syncStatus: trips[i].syncStatus,
-          deletedAt: trips[i].deletedAt,
-          lastSyncedAt: trips[i].lastSyncedAt,
-          version: trips[i].version
-        };
+        syncStatus: trips[i].syncStatus,
+        deletedAt: trips[i].deletedAt,
+        lastSyncedAt: trips[i].lastSyncedAt,
+        version: trips[i].version,
+        replayStyleKitId: trips[i].replayStyleKitId,
+        replayBgmId: trips[i].replayBgmId,
+        replayFilterId: trips[i].replayFilterId,
+        replayTransitionType: trips[i].replayTransitionType
+      };
       }
       return trips;
     } catch (err) {
@@ -253,7 +257,11 @@ export class RdbDataService implements IDataService {
         syncStatus: trip.syncStatus,
         deletedAt: trip.deletedAt,
         lastSyncedAt: trip.lastSyncedAt,
-        version: trip.version
+        version: trip.version,
+        replayStyleKitId: trip.replayStyleKitId,
+        replayBgmId: trip.replayBgmId,
+        replayFilterId: trip.replayFilterId,
+        replayTransitionType: trip.replayTransitionType
       };
       return result;
     } catch (err) {
@@ -268,7 +276,11 @@ export class RdbDataService implements IDataService {
       coverImageUri: travel.coverPhoto,
       isPublic: travel.isPublic ?? false,
       startDate: travel.startDate,
-      endDate: travel.endDate
+      endDate: travel.endDate,
+      replayStyleKitId: travel.replayStyleKitId,
+      replayBgmId: travel.replayBgmId,
+      replayFilterId: travel.replayFilterId,
+      replayTransitionType: travel.replayTransitionType
     };
     const id = await this.travelRepo.createTravel(repoInput);
     const created = await this.getTravelById(id);
@@ -308,6 +320,18 @@ export class RdbDataService implements IDataService {
     if (data.endDate !== undefined) {
       repoInput.endDate = data.endDate;
     }
+    if (data.replayStyleKitId !== undefined) {
+      repoInput.replayStyleKitId = data.replayStyleKitId;
+    }
+    if (data.replayBgmId !== undefined) {
+      repoInput.replayBgmId = data.replayBgmId;
+    }
+    if (data.replayFilterId !== undefined) {
+      repoInput.replayFilterId = data.replayFilterId;
+    }
+    if (data.replayTransitionType !== undefined) {
+      repoInput.replayTransitionType = data.replayTransitionType;
+    }
     const updatedOk = await this.travelRepo.updateTravel(travelId, repoInput);
     if (!updatedOk) {
       throw new Error(`Failed to update travel: ${travelId}`);
@@ -330,6 +354,32 @@ export class RdbDataService implements IDataService {
     })
     await this.enqueueSync('travel', updated.id, 'upsert', payload);
     return updated;
+  }
+
+  async getTripReplayPreferences(travelId: string): Promise<ReplayTripPreferences> {
+    const trip = await this.travelRepo.getTravelById(travelId);
+    if (!trip) {
+      return {};
+    }
+    return {
+      replayStyleKitId: trip.replayStyleKitId ?? '',
+      replayBgmId: trip.replayBgmId ?? '',
+      replayFilterId: trip.replayFilterId ?? '',
+      replayTransitionType: trip.replayTransitionType ?? ''
+    };
+  }
+
+  async updateTripReplayPreferences(travelId: string, data: ReplayTripPreferences): Promise<ReplayTripPreferences> {
+    const updatedOk = await this.travelRepo.updateTravel(travelId, {
+      replayStyleKitId: data.replayStyleKitId,
+      replayBgmId: data.replayBgmId,
+      replayFilterId: data.replayFilterId,
+      replayTransitionType: data.replayTransitionType
+    });
+    if (!updatedOk) {
+      throw new Error(`Failed to update replay preferences for travel: ${travelId}`);
+    }
+    return await this.getTripReplayPreferences(travelId);
   }
 
   async deleteTravel(travelId: string): Promise<void> {

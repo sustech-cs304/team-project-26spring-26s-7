@@ -13,6 +13,7 @@ import {
   ReplayStyleKitId,
   getDataService
 } from '../../../common'
+import type { ReplayTripPreferences } from '../../../common'
 import { RouterParam, ReplayNode, ReplayRoute, Position } from '../../../common'
 import type { MemoryNode } from '../../../common'
 import { ReplayPhotoCard } from '../components/ReplayPhotoCard'
@@ -58,6 +59,7 @@ export struct TripReplayPage {
   // 路线数据
   @State routeName: string = '旅程回放'
   @State replayRoute: ReplayRoute | null = null
+  @State currentTripId: string = ''
 
   // UI 状态
   @State showOverlay: boolean = false
@@ -155,6 +157,15 @@ export struct TripReplayPage {
       console.info('TripReplayPage: 背景音乐初始化完成')
     } catch (err) {
       console.error('TripReplayPage: 播放音乐失败', JSON.stringify(err))
+    }
+  }
+
+  private async reloadMusic(): Promise<void> {
+    const shouldStayPaused = !this.isAudioPlaying
+    await this.stopMusic()
+    await this.initAndPlayMusic()
+    if (shouldStayPaused && this.avPlayer && this.isAudioPlaying) {
+      this.avPlayer.pause()
     }
   }
 
@@ -263,13 +274,10 @@ export struct TripReplayPage {
 
   aboutToAppear(): void {
     ReplayPreferences.initializeDefaults()
-    this.syncReplayPreferences()
-
-    // 进入页面即播放背景音乐
-    this.initAndPlayMusic()
 
     const params = router.getParams() as RouterParam
     if (params?.tripId) {
+      this.currentTripId = params.tripId
       this.loadReplayData(params.tripId)
     } else {
       // 无 tripId 时显示提示
@@ -285,6 +293,12 @@ export struct TripReplayPage {
   private syncReplayPreferences(): void {
     this.selectedStyleKitId = ReplayPreferences.getStyleKitId()
     this.selectedBgmId = ReplayPreferences.getBgmId()
+  }
+
+  private applyReplayPreferences(preferences: ReplayTripPreferences): void {
+    const fallback = ReplayPreferences.getState()
+    this.selectedStyleKitId = (preferences.replayStyleKitId as ReplayStyleKitId) || fallback.styleKitId
+    this.selectedBgmId = (preferences.replayBgmId as ReplayBgmId) || fallback.bgmId
   }
 
   /**
@@ -303,6 +317,9 @@ export struct TripReplayPage {
   private async loadReplayData(tripId: string): Promise<void> {
     this.isLoading = true
     try {
+      const replayPreferences = await this.dataService.getTripReplayPreferences(tripId)
+      this.applyReplayPreferences(replayPreferences)
+
       const nodes = await this.dataService.getNodesByTravelId(tripId)
       if (nodes.length === 0) {
         promptAction.showToast({ message: '当前旅行还没有可回放的节点' })
@@ -330,6 +347,7 @@ export struct TripReplayPage {
       }
 
       await this.drawRouteAndMarkers()
+      await this.reloadMusic()
     } catch (err) {
       promptAction.showToast({ message: '加载回放数据失败' })
       console.error('loadReplayData failed:', JSON.stringify(err))
@@ -872,7 +890,6 @@ export struct TripReplayPage {
   }
 
   private openSettingsSheet(): void {
-    this.syncReplayPreferences()
     this.showSettingsSheet = true
   }
 
@@ -1095,9 +1112,22 @@ export struct TripReplayPage {
           },
           onStyleChange: (styleKitId: ReplayStyleKitId) => {
             this.selectedStyleKitId = styleKitId
+            ReplayPreferences.setStyleKitId(styleKitId)
+            if (this.currentTripId.length > 0) {
+              void this.dataService.updateTripReplayPreferences(this.currentTripId, {
+                replayStyleKitId: styleKitId
+              })
+            }
           },
           onBgmChange: (bgmId: ReplayBgmId) => {
             this.selectedBgmId = bgmId
+            ReplayPreferences.setBgmId(bgmId)
+            if (this.currentTripId.length > 0) {
+              void this.dataService.updateTripReplayPreferences(this.currentTripId, {
+                replayBgmId: bgmId
+              })
+            }
+            void this.reloadMusic()
           }
         })
       }

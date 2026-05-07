@@ -114,7 +114,7 @@ export struct ReplaySettingsSheet {
   @Builder
   private buildMusicTab() {
     Column({ space: 12 }) {
-      Text('当前阶段先完成音乐选择与保存，实际切歌与播放器重载将在 Phase 1 接入。')
+      Text('当前阶段已接入本地曲库与即时切歌，路线级持久化会写入本地数据库。')
         .fontSize(AppDimens.FONT_SM)
         .fontColor(AppColors.TEXT_HINT)
         .width('100%')

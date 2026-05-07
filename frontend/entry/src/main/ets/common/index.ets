@@ -51,6 +51,7 @@ export { PhotoMetadataRepository } from './data/index';
 export type {
   MemoryNode,
   Trip,
+  ReplayTripPreferences,
   SyncStatus,
   CopywritingRequest,
   ShareInfo,

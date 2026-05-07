@@ -72,6 +72,35 @@
 - Phase 1: 将真实曲库接入 `ReplayMusicCatalog`，支持多首 BGM 切换和播放器重载。
 - Phase 2: 让 `ReplayStyleKit` 真正驱动照片卡片、进度条、控制栏和路线样式。
 - 补齐素材合规记录 `references/documents/replay/assets/music-attribution.md`，在提交或分发前完成。
+
+---
+
+## 2026-05-07 Update: Replay Enhancement Phase 1
+
+### ✅ 已完成工作 (2026-05-07)
+
+**路线级本地 Replay 持久化**:
+- `travels` 表新增本地 Replay 配置列：`replay_style_kit_id`、`replay_bgm_id`、`replay_filter_id`、`replay_transition_type`。
+- `Trip` 模型和 `IDataService` 已支持读取与更新单条路线的 Replay 配置。
+- 当前实现仅适配本地 RDB，不进入专门的云同步逻辑。
+
+**多 BGM 接入**:
+- `ReplayMusicCatalog` 已接入 5 首本地音乐素材，并映射中文名称和说明。
+- `TripReplayPage` 中切换音乐后会即时重载播放器，不再只是 UI 选择。
+
+**页面行为**:
+- 进入某条路线的 Replay 页面时，会优先读取该路线的本地 Replay 配置。
+- 在 Replay 设置面板中切换风格或音乐后，会写回当前路线本地配置。
+
+**验证状态**:
+- `git diff --check` 已通过。
+- `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 已通过。
+
+### ⏳ 后续任务
+
+- Phase 2: 将 `ReplayStyleKit` 真正应用到卡片、进度条、控制栏和地图样式。
+- Phase 3: 低成本视觉增强（滤镜、玻璃覆盖层、波纹等）。
+- 后续再按需要设计华为云数据库字段与同步映射，不在当前 Phase 1 范围内。
 ### ⏳ 后续任务
 
 - 增加分享发布阶段提示。

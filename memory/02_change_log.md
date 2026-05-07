@@ -453,3 +453,18 @@
 - [2026-05-07-15-35-00] - UPDATE - feature/map-travel/index.ets - 导出 ReplaySettingsSheet 组件
 - [2026-05-07-15-35-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 接入 Replay 偏好初始化、右上角设置入口和设置面板显示；默认播放行为保持不变
 - [2026-05-07-15-35-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 通过（存在既有 ArkTS warnings，无新增阻塞错误）
+
+---
+
+## 2026-05-07 (Replay 增广 Phase 1 - 本地 RDB 持久化 + 多 BGM)
+
+- [2026-05-07-17-10-00] - UPDATE - common/service/types.ets - 新增 `ReplayTripPreferences`，并将路线级 Replay 配置字段并入 `Trip`
+- [2026-05-07-17-10-00] - UPDATE - common/service/IDataService.ets - 扩展 `CreateTravelInput` / `UpdateTravelInput` 的 Replay 字段，新增 `getTripReplayPreferences` 与 `updateTripReplayPreferences`
+- [2026-05-07-17-10-00] - UPDATE - common/data/RdbHelper.ets - 为 `travels` 表新增本地 Replay 配置列及迁移 SQL
+- [2026-05-07-17-10-00] - UPDATE - common/data/TravelRepository.ets - 读写 `replay_style_kit_id / replay_bgm_id / replay_filter_id / replay_transition_type`
+- [2026-05-07-17-10-00] - UPDATE - common/service/RdbDataService.ets - 新增本地路线级 Replay 配置查询与更新逻辑，跳过专门的云同步适配
+- [2026-05-07-17-10-00] - UPDATE - common/service/MockDataService.ets, DataServiceStub.ets - 对齐新的 Replay 路线配置接口
+- [2026-05-07-17-10-00] - UPDATE - common/replay/ReplayMusicCatalog.ets - 接入 5 首本地音乐素材并映射中文名称
+- [2026-05-07-17-10-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 进入页面时从当前路线读取本地 Replay 配置；切换音乐时即时重载播放器；切换风格/音乐时写回当前路线
+- [2026-05-07-17-10-00] - UPDATE - feature/map-travel/components/ReplaySettingsSheet.ets - 更新音乐页说明文案为“已接入即时切歌 + 本地数据库持久化”
+- [2026-05-07-17-10-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 通过（存在既有 ArkTS warnings，无新增阻塞错误）
