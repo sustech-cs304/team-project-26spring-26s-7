@@ -712,39 +712,56 @@ export struct TripReplayPage {
     if (!this.replayRoute || index < 0 || index >= this.replayRoute.nodes.length) {
       return
     }
+    this.performManualJump(index)
+  }
 
-    this.isCardVisible = false
-    this.currentNodeIndex = index
-    const lastIndex = this.replayRoute.nodes.length - 1
-    this.progress = lastIndex === 0 ? 100 : (index / lastIndex) * 100
-    this.currentPhase = PHASE_IDLE
+  private performManualJump(index: number): void {
+    const moveToTarget = () => {
+      if (!this.replayRoute) {
+        return
+      }
+      this.isCardVisible = false
+      this.currentNodeIndex = index
+      const lastIndex = this.replayRoute.nodes.length - 1
+      this.progress = lastIndex === 0 ? 100 : (index / lastIndex) * 100
+      this.currentPhase = PHASE_IDLE
 
-    const targetNode = this.replayRoute.nodes[index]
-    if (this.mapController) {
-      const cameraUpdate = map.newCameraPosition({
-        target: {
-          latitude: targetNode.position.latitude,
-          longitude: targetNode.position.longitude
-        },
-        zoom: 15,
-        tilt: 45
-      })
-      this.mapController.animateCamera(cameraUpdate, 500)
+      const targetNode = this.replayRoute.nodes[index]
+      if (this.mapController) {
+        const cameraUpdate = map.newCameraPosition({
+          target: {
+            latitude: targetNode.position.latitude,
+            longitude: targetNode.position.longitude
+          },
+          zoom: 15,
+          tilt: 45
+        })
+        this.mapController.animateCamera(cameraUpdate, 420)
+      }
+
+      setTimeout(() => {
+        this.prepareCardEnterState()
+        this.isCardVisible = true
+        this.triggerRippleIfNeeded()
+        animateTo({
+          duration: 320,
+          curve: Curve.EaseOut
+        }, () => {
+          this.cardOpacity = 1
+          this.cardScale = 1
+          this.cardTranslateX = 0
+        })
+      }, 420)
     }
 
-    setTimeout(() => {
-      this.prepareCardEnterState()
-      this.isCardVisible = true
-      this.triggerRippleIfNeeded()
-      animateTo({
-        duration: 320,
-        curve: Curve.EaseOut
-      }, () => {
-        this.cardOpacity = 1
-        this.cardScale = 1
-        this.cardTranslateX = 0
+    if (this.isCardVisible) {
+      this.animateCardExit(() => {
+        moveToTarget()
       })
-    }, 500)
+      return
+    }
+
+    moveToTarget()
   }
 
   private goToPrevNode(): void {
@@ -785,6 +802,7 @@ export struct TripReplayPage {
 
   private getEffectSummaryChips(): string[] {
     const chips: string[] = []
+    chips.push(`转场 ${this.selectedTransitionType}`)
     chips.push(`滤镜 ${this.selectedFilterId === ReplayFilterId.NONE ? '原片' : '已启用'}`)
     if (this.enableRipple) {
       chips.push('节点波纹')

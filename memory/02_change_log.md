@@ -483,3 +483,8 @@
 - [2026-05-07-21-45-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 鏂板褰撳墠婊ら暅 / 娉㈢汗 / 鐜荤拑璇︽儏灞傜殑灞忓箷鍐呯姸鎬佹爣绛撅紝姣忔璁剧疆鏇存敼鍚庡彲鐩存帴鍙嶉
 - [2026-05-07-21-45-00] - UPDATE - feature/map-travel/pages/TripDetailPage.ets - 鈥滃洖鏀鹃璁锯€濆崱鐗囨柊澧炵壒鏁堟憳瑕侊紝鍙湪杩涘叆 Replay 鍓嶇湅鍒版槸鍚﹀紑鍚妭鐐规尝绾规垨鐜荤拑璇︽儏灞?
 - [2026-05-07-21-45-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 閫氳繃锛堝瓨鍦ㄦ棦鏈?ArkTS warnings锛屾棤鏂板闃诲閿欒锛?
+## 2026-05-07 (Replay 澧炲箍 Phase 4 - 鎵嬪姩璺宠浆杞満瀵归綈)
+
+- [2026-05-07-22-05-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 灏嗕笂涓€鑺傜偣 / 涓嬩竴鑺傜偣 / 杩涘害鏉¤烦杞殑鍗＄墖鍒囨崲绾冲叆鍚岀竴濂?fade/slide/scale 杞満锛岄伩鍏嶆墜鍔ㄥ垏鎹㈡椂鐨勭獊鍏?
+- [2026-05-07-22-05-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 鍦ㄥ洖鏀鹃〉鍙充笂瑙掔姸鎬佹爣绛句腑澧炲姞褰撳墠杞満妯″紡锛屼究浜庢墜鍔ㄥ洖褰掑拰鐗规晥鑱斿姩楠岃瘉
+- [2026-05-07-22-05-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 閫氳繃锛堝瓨鍦ㄦ棦鏈?ArkTS warnings锛屾棤鏂板闃诲閿欒锛?
