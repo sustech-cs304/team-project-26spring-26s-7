@@ -783,6 +783,18 @@ export struct TripReplayPage {
     this.showSettingsSheet = false
   }
 
+  private getEffectSummaryChips(): string[] {
+    const chips: string[] = []
+    chips.push(`滤镜 ${this.selectedFilterId === ReplayFilterId.NONE ? '原片' : '已启用'}`)
+    if (this.enableRipple) {
+      chips.push('节点波纹')
+    }
+    if (this.enableBlurOverlay) {
+      chips.push('玻璃详情层')
+    }
+    return chips
+  }
+
   @Builder
   private buildRipple() {
     if (this.rippleVisible) {
@@ -808,6 +820,29 @@ export struct TripReplayPage {
       .position({ x: this.rippleCenterX - 42, y: this.rippleCenterY - 42 })
       .zIndex(40)
     }
+  }
+
+  @Builder
+  private buildEffectChips() {
+    Column() {
+      Row() {
+        ForEach(this.getEffectSummaryChips(), (chip: string) => {
+          Text(chip)
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor('#FFFFFF')
+            .backgroundColor('rgba(0, 0, 0, 0.42)')
+            .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+            .borderRadius(14)
+            .margin({ left: 8 })
+        })
+      }
+      .justifyContent(FlexAlign.End)
+      .width('100%')
+    }
+    .width('100%')
+    .position({ x: 0, y: 96 })
+    .padding({ right: 16 })
+    .zIndex(100)
   }
 
   build() {
@@ -997,6 +1032,8 @@ export struct TripReplayPage {
       .position({ x: '100%', y: 48 })
       .translate({ x: -104 })
       .zIndex(100)
+
+      this.buildEffectChips()
 
       if (this.showOverlay && this.overlayNode) {
         PhotoCardOverlay({

@@ -478,3 +478,8 @@
 - [2026-05-07-21-25-00] - UPDATE - feature/map-travel/components/ReplaySettingsSheet.ets - Style Tab 绔嬪嵆鐢熸晥锛屽苟鎵╁睍涓哄悗缁?Effects / Transition 鍏ュ彛
 - [2026-05-07-21-25-00] - UPDATE - feature/map-travel/pages/TripDetailPage.ets - 鏂板鈥滃洖鏀鹃璁锯€濇憳瑕佸崱鐗囷紝杩涘叆 Replay 鍓嶅彲鏌ョ湅椋庢牸銆侀煶涔愩€佹护闀溿€佽浆鍦?
 - [2026-05-07-21-25-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 閫氳繃锛堝瓨鍦ㄦ棦鏈?ArkTS warnings锛屾棤鏂板闃诲閿欒锛?
+## 2026-05-07 (Replay 澧炲箍 Phase 3 - Effects 鍙鍖栧弽棣?)
+
+- [2026-05-07-21-45-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 鏂板褰撳墠婊ら暅 / 娉㈢汗 / 鐜荤拑璇︽儏灞傜殑灞忓箷鍐呯姸鎬佹爣绛撅紝姣忔璁剧疆鏇存敼鍚庡彲鐩存帴鍙嶉
+- [2026-05-07-21-45-00] - UPDATE - feature/map-travel/pages/TripDetailPage.ets - 鈥滃洖鏀鹃璁锯€濆崱鐗囨柊澧炵壒鏁堟憳瑕侊紝鍙湪杩涘叆 Replay 鍓嶇湅鍒版槸鍚﹀紑鍚妭鐐规尝绾规垨鐜荤拑璇︽儏灞?
+- [2026-05-07-21-45-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 閫氳繃锛堝瓨鍦ㄦ棦鏈?ArkTS warnings锛屾棤鏂板闃诲閿欒锛?

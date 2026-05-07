@@ -541,3 +541,10 @@ base/common/
 - [~] R2.5 鍦板浘 polyline 鏍峰紡鍏堟帴鍏?width锛涢鑹插洜 MapKit overlay 娓呯悊鑳藉姏闄愬埗锛屼繚鐣欎负涓嬩竴娆¤繘鍏ョ敓鏁堢殑娓愯繘澧炲己
 - [x] R2.6 `ReplaySettingsSheet` 鎵╁睍涓虹粺涓€璁剧疆鍏ュ彛锛孲tyle 閫夋嫨绔嬪嵆鐢熸晥
 - [x] R2.7 `TripDetailPage` 鏂板鈥滃洖鏀鹃璁锯€濇憳瑕佸崱鐗囷紝鍏ュ彛鍓嶅彲鏌ョ湅褰撳墠椋庢牸/闊充箰/婊ら暅/杞満
+## 2026-05-07 Replay 澧炲箍 Phase 3
+
+- [x] R3.1 `ReplayEffectOptions` 鎵╁睍涓?none / film / warm / cool / mono 婊ら暅鐩綍锛岃矾绾跨骇鏈湴鎸佷箙鍖栧凡鎺ラ€?
+- [x] R3.2 鐓х墖鍖哄煙婊ら暅浣跨敤鍥捐薄鍙犲姞灞傚疄鐜版垚鏈彲鎺х殑棰滆壊鍊惧悜
+- [x] R3.3 璇︽儏灞傛敮鎸佲€滅幓鐠冣€濋鏍兼ā寮忥紙鍗婇€忔槑闈㈡澘闄嶇骇锛屼笉寮曞叆楂橀闄╃殑 blur API锛?
+- [x] R3.4 鑺傜偣鍒拌揪鏃跺彲閫夋尝绾规晥鏋滃凡鍦?TripReplayPage 鎺ュ叆
+- [x] R3.5 Replay 鍐呴〉鍜?TripDetailPage 鍧囨柊澧炵壒鏁堟憳瑕佸弽棣堬紝涓嶅啀鏄粯榛樼殑榛戠寮€鍏?

@@ -58,6 +58,7 @@ export struct TripDetailPage {
   @State replayMusicSummary: string = '城市微光'
   @State replayFilterSummary: string = '原片'
   @State replayTransitionSummary: string = '淡入淡出'
+  @State replayEffectsSummary: string = '保守模式'
 
   @State timelineNodes: TimelineNodeCard[] = []
 
@@ -170,6 +171,10 @@ export struct TripDetailPage {
       this.replayTransitionSummary = ReplayTransitionCatalog.getById(
         (trip.replayTransitionType as ReplayTransitionType) || ReplayTransitionType.FADE
       ).title
+      this.replayEffectsSummary = this.buildReplayEffectsSummary(
+        trip.replayEnableRipple ?? false,
+        trip.replayEnableBlurOverlay ?? false
+      )
       this.timelineNodes = nodes.map((node: MemoryNode) => this.mapNodeToTimelineNode(node))
       this.routePoints = nodes.map((node: MemoryNode): mapCommon.LatLng => ({
         latitude: node.latitude,
@@ -453,6 +458,8 @@ export struct TripDetailPage {
         this.buildReplayMetaPill('转场', this.replayTransitionSummary)
       }
       .width('100%')
+
+      this.buildReplayMetaPill('特效', this.replayEffectsSummary)
     }
     .width('100%')
     .padding(AppDimens.PADDING_LG)
@@ -483,6 +490,17 @@ export struct TripDetailPage {
     .backgroundColor(AppColors.BACKGROUND)
     .borderRadius(16)
     .alignItems(HorizontalAlign.Start)
+  }
+
+  private buildReplayEffectsSummary(enableRipple: boolean, enableBlurOverlay: boolean): string {
+    const enabledLabels: string[] = []
+    if (enableRipple) {
+      enabledLabels.push('节点波纹')
+    }
+    if (enableBlurOverlay) {
+      enabledLabels.push('玻璃详情层')
+    }
+    return enabledLabels.length > 0 ? enabledLabels.join(' / ') : '保守模式'
   }
 
   @Builder
