@@ -283,3 +283,18 @@ describe('RdbHelperTest', () => {
 - **@ohos.UiTest API**: https://developer.huawei.com/consumer/cn/doc/harmonyos-references/js-apis-uitest
 - **单元测试框架**: https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/unittest-guidelines
 - **关系型数据库测试**: https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-data-persistence-by-rdb-store
+
+---
+
+## 2026-05-07 Replay 增广 Phase 0 手动验证
+
+### P0 - 设置面板骨架与默认行为回归
+
+- [x] `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 已执行并通过（2026-05-07）
+- [ ] T-RP0-001: 进入 `TripReplayPage` 后，右上角除音乐按钮外新增齿轮设置按钮
+- [ ] T-RP0-002: 点击齿轮按钮后，底部弹出 `Replay Settings` 面板
+- [ ] T-RP0-003: 设置面板包含 `Style` 和 `Music` 两个 Tab，且默认进入 `Style`
+- [ ] T-RP0-004: 在 `Style` Tab 中可切换 `Minimal White / Dark Night / Vintage Film`，选中项会显示 `Current`
+- [ ] T-RP0-005: 在 `Music` Tab 中能看到当前内置曲目 `South-East Traveling`
+- [ ] T-RP0-006: 关闭设置面板后，Replay 页面原有播放、进度条、上一节点、下一节点、照片展开行为不回归
+- [ ] T-RP0-007: 退出 Replay 页面再重新进入，先前选择的 Style / Music 项仍然保留

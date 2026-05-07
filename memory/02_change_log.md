@@ -439,3 +439,17 @@
 - [2026-05-06-00-27-58] - UPDATE - memory/01_project_state.md - 更新当前分支为 feature/social-share，记录 merge commit def52e1、social-share 模块 1 状态和 backend 契约
 - [2026-05-06-00-27-58] - UPDATE - memory/03_task_backlog.md - 增加 Codex 适配与 social-share 模块 1 合并记录，更新后续任务
 - [2026-05-06-00-27-58] - UPDATE - memory/04_test_checklist.md - 增加 social-share 图片打包发布流程 P0 测试项
+
+---
+
+## 2026-05-07 (Replay 增广 Phase 0)
+
+- [2026-05-07-15-35-00] - CREATE - common/replay/ReplayPreferences.ets - 新增 Replay 偏好 key、默认值和版本刷新封装
+- [2026-05-07-15-35-00] - CREATE - common/replay/ReplayStyleKit.ets - 新增 Replay 风格套件枚举与基础目录（Minimal White / Dark Night / Vintage Film）
+- [2026-05-07-15-35-00] - CREATE - common/replay/ReplayMusicCatalog.ets - 新增 Replay BGM 目录，先接入当前内置单曲 `South-East-Traveling.mp3`
+- [2026-05-07-15-35-00] - CREATE - common/replay/ReplayEffectOptions.ets - 新增滤镜、转场和特效默认配置骨架
+- [2026-05-07-15-35-00] - CREATE - feature/map-travel/components/ReplaySettingsSheet.ets - 新增 Replay 设置面板骨架，支持 Style / Music 两个 Tab
+- [2026-05-07-15-35-00] - UPDATE - common/index.ets - 导出 Replay 配置模型与目录
+- [2026-05-07-15-35-00] - UPDATE - feature/map-travel/index.ets - 导出 ReplaySettingsSheet 组件
+- [2026-05-07-15-35-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 接入 Replay 偏好初始化、右上角设置入口和设置面板显示；默认播放行为保持不变
+- [2026-05-07-15-35-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 通过（存在既有 ArkTS warnings，无新增阻塞错误）

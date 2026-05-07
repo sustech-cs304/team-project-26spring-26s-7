@@ -43,6 +43,35 @@
 - `git diff --check` 已在 merge 阶段通过。
 - `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 已通过。
 
+---
+
+## 2026-05-07 Update: Replay Enhancement Phase 0
+
+### ✅ 已完成工作 (2026-05-07)
+
+**Replay 配置骨架**:
+- 新增 `common/replay/` 目录，抽离 Replay 偏好、风格套件、BGM 目录和特效配置枚举。
+- 新增 `ReplayPreferences`，统一管理 `replayStyleKitId`、`replayBgmId`、`replayFilterId`、`replayTransitionType` 和 `replayPreferencesVersion`。
+
+**Replay 设置面板骨架**:
+- 新增 `ReplaySettingsSheet` 组件，先提供 `Style` 和 `Music` 两个 Tab。
+- 当前 Phase 0 仅实现选择与持久化，不改变现有默认视觉和实际音轨切换行为。
+
+**TripReplayPage 接入**:
+- 右上角新增齿轮设置入口，点击可打开 Replay 设置面板。
+- 页面进入时初始化 Replay 默认偏好并同步当前选择状态。
+- 背景音乐加载路径改为从 `ReplayMusicCatalog` 读取，当前仍指向现有单曲 `South-East-Traveling.mp3`。
+
+**验证状态**:
+- `git diff --check` 已通过。
+- `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 已通过。
+- 构建输出包含仓库既有 ArkTS warnings，但无新增阻塞编译错误。
+
+### ⏳ 后续任务
+
+- Phase 1: 将真实曲库接入 `ReplayMusicCatalog`，支持多首 BGM 切换和播放器重载。
+- Phase 2: 让 `ReplayStyleKit` 真正驱动照片卡片、进度条、控制栏和路线样式。
+- 补齐素材合规记录 `references/documents/replay/assets/music-attribution.md`，在提交或分发前完成。
 ### ⏳ 后续任务
 
 - 增加分享发布阶段提示。

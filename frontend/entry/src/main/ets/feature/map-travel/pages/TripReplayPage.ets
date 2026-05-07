@@ -3,12 +3,22 @@ import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
 import { common } from '@kit.AbilityKit'
 import { media } from '@kit.MediaKit'
-import { AppColors, AppDimens, getDataService } from '../../../common'
+import {
+  AppColors,
+  AppDimens,
+  ReplayBgmId,
+  ReplayMusicCatalog,
+  ReplayPreferences,
+  ReplayStyleKitCatalog,
+  ReplayStyleKitId,
+  getDataService
+} from '../../../common'
 import { RouterParam, ReplayNode, ReplayRoute, Position } from '../../../common'
 import type { MemoryNode } from '../../../common'
 import { ReplayPhotoCard } from '../components/ReplayPhotoCard'
 import { ReplayProgressBar } from '../components/ReplayProgressBar'
 import { PhotoCardOverlay } from '../components/PhotoCardOverlay'
+import { ReplaySettingsSheet } from '../components/ReplaySettingsSheet'
 
 const DEFAULT_REPLAY_CENTER: mapCommon.LatLng = {
   latitude: 22.55,
@@ -35,6 +45,7 @@ const PHASE_MOVING = 4
 @Component
 export struct TripReplayPage {
   @StorageLink('appThemeVersion') themeVersion: number = 0
+  @StorageLink('replayPreferencesVersion') replayPreferencesVersion: number = 0
   // 播放状态
   @State isPlaying: boolean = false
   @State currentNodeIndex: number = 0
@@ -51,6 +62,9 @@ export struct TripReplayPage {
   // UI 状态
   @State showOverlay: boolean = false
   @State overlayNode: ReplayNode | null = null
+  @State showSettingsSheet: boolean = false
+  @State selectedStyleKitId: ReplayStyleKitId = ReplayStyleKitCatalog.DEFAULT_ID
+  @State selectedBgmId: ReplayBgmId = ReplayMusicCatalog.DEFAULT_ID
 
   // 移动图标状态
   @State movingIconVisible: boolean = false
@@ -128,7 +142,8 @@ export struct TripReplayPage {
       this.avPlayer = avPlayer
 
       // 获取 rawfile 的文件描述符
-      const fileDescriptor = await context.resourceManager.getRawFd('South-East-Traveling.mp3')
+      const selectedTrack = ReplayMusicCatalog.getById(this.selectedBgmId)
+      const fileDescriptor = await context.resourceManager.getRawFd(selectedTrack.filename)
 
       // 设置播放源（触发 initialized 状态）
       avPlayer.fdSrc = {
@@ -247,6 +262,9 @@ export struct TripReplayPage {
   }
 
   aboutToAppear(): void {
+    ReplayPreferences.initializeDefaults()
+    this.syncReplayPreferences()
+
     // 进入页面即播放背景音乐
     this.initAndPlayMusic()
 
@@ -262,6 +280,11 @@ export struct TripReplayPage {
   aboutToDisappear(): void {
     this.stopPlay()
     this.stopMusic()
+  }
+
+  private syncReplayPreferences(): void {
+    this.selectedStyleKitId = ReplayPreferences.getStyleKitId()
+    this.selectedBgmId = ReplayPreferences.getBgmId()
   }
 
   /**
@@ -848,6 +871,15 @@ export struct TripReplayPage {
     this.overlayNode = null
   }
 
+  private openSettingsSheet(): void {
+    this.syncReplayPreferences()
+    this.showSettingsSheet = true
+  }
+
+  private closeSettingsSheet(): void {
+    this.showSettingsSheet = false
+  }
+
   build() {
     Stack() {
       // 全屏地图
@@ -1027,6 +1059,21 @@ export struct TripReplayPage {
       .translate({ x: -56 })
       .zIndex(100)
 
+      // Replay 设置按钮 (右上角，位于音乐按钮左侧)
+      Stack() {
+        SymbolGlyph($r('sys.symbol.gearshape'))
+          .fontSize(20)
+          .fontColor([Color.White])
+      }
+      .width(40)
+      .height(40)
+      .backgroundColor('rgba(0, 0, 0, 0.7)')
+      .borderRadius(20)
+      .onClick(() => this.openSettingsSheet())
+      .position({ x: '100%', y: 48 })
+      .translate({ x: -104 })
+      .zIndex(100)
+
       // 照片卡片展开覆盖层
       if (this.showOverlay && this.overlayNode) {
         PhotoCardOverlay({
@@ -1034,6 +1081,23 @@ export struct TripReplayPage {
           currentNode: this.overlayNode,
           onClose: () => {
             this.hideOverlayCard()
+          }
+        })
+      }
+
+      if (this.showSettingsSheet) {
+        ReplaySettingsSheet({
+          isVisible: this.showSettingsSheet,
+          selectedStyleKitId: this.selectedStyleKitId,
+          selectedBgmId: this.selectedBgmId,
+          onClose: () => {
+            this.closeSettingsSheet()
+          },
+          onStyleChange: (styleKitId: ReplayStyleKitId) => {
+            this.selectedStyleKitId = styleKitId
+          },
+          onBgmChange: (bgmId: ReplayBgmId) => {
+            this.selectedBgmId = bgmId
           }
         })
       }
