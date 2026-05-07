@@ -103,6 +103,7 @@ export struct TripReplayPage {
   private musicGeneration: number = 0
   private shouldAudioPlay: boolean = false
   private isPageActive: boolean = false
+  private manualJumpGeneration: number = 0
 
   private mapCallback: AsyncCallback<map.MapComponentController> = async (err, controller) => {
     if (!err && controller) {
@@ -759,52 +760,56 @@ export struct TripReplayPage {
   }
 
   private performManualJump(index: number): void {
-    const moveToTarget = () => {
-      if (!this.replayRoute) {
-        return
-      }
-      this.isCardVisible = false
-      this.currentNodeIndex = index
-      const lastIndex = this.replayRoute.nodes.length - 1
-      this.progress = lastIndex === 0 ? 100 : (index / lastIndex) * 100
-      this.currentPhase = PHASE_IDLE
-
-      const targetNode = this.replayRoute.nodes[index]
-      if (this.mapController) {
-        const cameraUpdate = map.newCameraPosition({
-          target: {
-            latitude: targetNode.position.latitude,
-            longitude: targetNode.position.longitude
-          },
-          zoom: 15,
-          tilt: 45
-        })
-        this.mapController.animateCamera(cameraUpdate, 420)
-      }
-
-      setTimeout(() => {
-        this.prepareCardEnterState()
-        this.isCardVisible = true
-        this.triggerRippleIfNeeded()
-        animateTo({
-          duration: 320,
-          curve: Curve.EaseOut
-        }, () => {
-          this.cardOpacity = 1
-          this.cardScale = 1
-          this.cardTranslateX = 0
-        })
-      }, 420)
-    }
-
-    if (this.isCardVisible) {
-      this.animateCardExit(() => {
-        moveToTarget()
-      })
+    if (!this.replayRoute) {
       return
     }
 
-    moveToTarget()
+    this.manualJumpGeneration += 1
+    const generation = this.manualJumpGeneration
+    this.isCardVisible = false
+    this.cardOpacity = 1
+    this.cardScale = 1
+    this.cardTranslateX = 0
+    this.currentNodeIndex = index
+    const lastIndex = this.replayRoute.nodes.length - 1
+    this.progress = lastIndex === 0 ? 100 : (index / lastIndex) * 100
+    this.currentPhase = PHASE_IDLE
+
+    const targetNode = this.replayRoute.nodes[index]
+    if (this.mapController) {
+      const cameraUpdate = map.newCameraPosition({
+        target: {
+          latitude: targetNode.position.latitude,
+          longitude: targetNode.position.longitude
+        },
+        zoom: 15,
+        tilt: 45
+      })
+      this.mapController.animateCamera(cameraUpdate, 420)
+    }
+
+    setTimeout(() => {
+      if (generation !== this.manualJumpGeneration || !this.replayRoute || this.currentNodeIndex !== index) {
+        return
+      }
+      this.showManualJumpCard()
+    }, 420)
+  }
+
+  private showManualJumpCard(): void {
+    this.cardOpacity = 0
+    this.cardScale = 1
+    this.cardTranslateX = 0
+    this.isCardVisible = true
+    this.triggerRippleIfNeeded()
+    animateTo({
+      duration: 220,
+      curve: Curve.EaseOut
+    }, () => {
+      this.cardOpacity = 1
+      this.cardScale = 1
+      this.cardTranslateX = 0
+    })
   }
 
   private goToPrevNode(): void {
