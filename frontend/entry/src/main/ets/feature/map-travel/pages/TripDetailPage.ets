@@ -1,7 +1,20 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
+import {
+  AppColors,
+  AppDimens,
+  ReplayBgmId,
+  ReplayFilterCatalog,
+  ReplayFilterId,
+  ReplayMusicCatalog,
+  ReplayStyleKitCatalog,
+  ReplayStyleKitId,
+  ReplayTransitionCatalog,
+  ReplayTransitionType,
+  RouterUrls,
+  getDataService
+} from '../../../common'
 import { RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
 
@@ -41,6 +54,10 @@ export struct TripDetailPage {
   @State tripId: string = ''
   @State showMenu: boolean = false
   @State isLoading: boolean = false
+  @State replayStyleSummary: string = '极简白'
+  @State replayMusicSummary: string = '城市微光'
+  @State replayFilterSummary: string = '原片'
+  @State replayTransitionSummary: string = '淡入淡出'
 
   @State timelineNodes: TimelineNodeCard[] = []
 
@@ -141,6 +158,18 @@ export struct TripDetailPage {
       this.nodeCount = nodes.length
       this.totalDistance = trip.totalDistance
       this.isPublic = trip.isPublic
+      this.replayStyleSummary = ReplayStyleKitCatalog.getById(
+        (trip.replayStyleKitId as ReplayStyleKitId) || ReplayStyleKitCatalog.DEFAULT_ID
+      ).title
+      this.replayMusicSummary = ReplayMusicCatalog.getById(
+        (trip.replayBgmId as ReplayBgmId) || ReplayMusicCatalog.DEFAULT_ID
+      ).title
+      this.replayFilterSummary = ReplayFilterCatalog.getById(
+        (trip.replayFilterId as ReplayFilterId) || ReplayFilterId.NONE
+      ).title
+      this.replayTransitionSummary = ReplayTransitionCatalog.getById(
+        (trip.replayTransitionType as ReplayTransitionType) || ReplayTransitionType.FADE
+      ).title
       this.timelineNodes = nodes.map((node: MemoryNode) => this.mapNodeToTimelineNode(node))
       this.routePoints = nodes.map((node: MemoryNode): mapCommon.LatLng => ({
         latitude: node.latitude,
@@ -391,6 +420,72 @@ export struct TripDetailPage {
   }
 
   @Builder
+  private buildReplayPresetCard() {
+    Column({ space: 12 }) {
+      Row() {
+        Column() {
+          Text('回放预设')
+            .fontSize(AppDimens.FONT_LG)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(AppColors.TEXT_PRIMARY)
+          Text('进入回放前先确认这条路线的视觉和音乐配置')
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_HINT)
+            .margin({ top: 6 })
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+        Text('进入回放可修改')
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.PRIMARY)
+      }
+      .width('100%')
+
+      Row({ space: 10 }) {
+        this.buildReplayMetaPill('风格', this.replayStyleSummary)
+        this.buildReplayMetaPill('音乐', this.replayMusicSummary)
+      }
+      .width('100%')
+
+      Row({ space: 10 }) {
+        this.buildReplayMetaPill('滤镜', this.replayFilterSummary)
+        this.buildReplayMetaPill('转场', this.replayTransitionSummary)
+      }
+      .width('100%')
+    }
+    .width('100%')
+    .padding(AppDimens.PADDING_LG)
+    .margin({ top: 14 })
+    .backgroundColor(AppColors.CARD_BG)
+    .borderRadius(20)
+    .shadow({ radius: 10, color: '#00000012', offsetY: 4 })
+  }
+
+  @Builder
+  private buildReplayMetaPill(label: string, value: string) {
+    Column() {
+      Text(label)
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(AppColors.TEXT_HINT)
+        .width('100%')
+      Text(value)
+        .fontSize(AppDimens.FONT_MD)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(AppColors.TEXT_PRIMARY)
+        .width('100%')
+        .margin({ top: 6 })
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+    }
+    .layoutWeight(1)
+    .padding({ left: 12, right: 12, top: 12, bottom: 12 })
+    .backgroundColor(AppColors.BACKGROUND)
+    .borderRadius(16)
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
   private buildTimelineItem(node: TimelineNodeCard, index: number) {
     Column() {
       Row() {
@@ -532,6 +627,10 @@ export struct TripDetailPage {
 
             if (!this.isLoading) {
               this.buildTripSummary()
+            }
+
+            if (!this.isLoading) {
+              this.buildReplayPresetCard()
             }
 
             if (!this.isLoading) {

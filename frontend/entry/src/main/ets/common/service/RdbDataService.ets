@@ -219,7 +219,9 @@ export class RdbDataService implements IDataService {
         replayStyleKitId: trips[i].replayStyleKitId,
         replayBgmId: trips[i].replayBgmId,
         replayFilterId: trips[i].replayFilterId,
-        replayTransitionType: trips[i].replayTransitionType
+        replayTransitionType: trips[i].replayTransitionType,
+        replayEnableRipple: trips[i].replayEnableRipple,
+        replayEnableBlurOverlay: trips[i].replayEnableBlurOverlay
       };
       }
       return trips;
@@ -261,7 +263,9 @@ export class RdbDataService implements IDataService {
         replayStyleKitId: trip.replayStyleKitId,
         replayBgmId: trip.replayBgmId,
         replayFilterId: trip.replayFilterId,
-        replayTransitionType: trip.replayTransitionType
+        replayTransitionType: trip.replayTransitionType,
+        replayEnableRipple: trip.replayEnableRipple,
+        replayEnableBlurOverlay: trip.replayEnableBlurOverlay
       };
       return result;
     } catch (err) {
@@ -280,7 +284,9 @@ export class RdbDataService implements IDataService {
       replayStyleKitId: travel.replayStyleKitId,
       replayBgmId: travel.replayBgmId,
       replayFilterId: travel.replayFilterId,
-      replayTransitionType: travel.replayTransitionType
+      replayTransitionType: travel.replayTransitionType,
+      replayEnableRipple: travel.replayEnableRipple,
+      replayEnableBlurOverlay: travel.replayEnableBlurOverlay
     };
     const id = await this.travelRepo.createTravel(repoInput);
     const created = await this.getTravelById(id);
@@ -332,6 +338,12 @@ export class RdbDataService implements IDataService {
     if (data.replayTransitionType !== undefined) {
       repoInput.replayTransitionType = data.replayTransitionType;
     }
+    if (data.replayEnableRipple !== undefined) {
+      repoInput.replayEnableRipple = data.replayEnableRipple;
+    }
+    if (data.replayEnableBlurOverlay !== undefined) {
+      repoInput.replayEnableBlurOverlay = data.replayEnableBlurOverlay;
+    }
     const updatedOk = await this.travelRepo.updateTravel(travelId, repoInput);
     if (!updatedOk) {
       throw new Error(`Failed to update travel: ${travelId}`);
@@ -365,7 +377,9 @@ export class RdbDataService implements IDataService {
       replayStyleKitId: trip.replayStyleKitId ?? '',
       replayBgmId: trip.replayBgmId ?? '',
       replayFilterId: trip.replayFilterId ?? '',
-      replayTransitionType: trip.replayTransitionType ?? ''
+      replayTransitionType: trip.replayTransitionType ?? '',
+      replayEnableRipple: trip.replayEnableRipple ?? false,
+      replayEnableBlurOverlay: trip.replayEnableBlurOverlay ?? false
     };
   }
 
@@ -374,7 +388,9 @@ export class RdbDataService implements IDataService {
       replayStyleKitId: data.replayStyleKitId,
       replayBgmId: data.replayBgmId,
       replayFilterId: data.replayFilterId,
-      replayTransitionType: data.replayTransitionType
+      replayTransitionType: data.replayTransitionType,
+      replayEnableRipple: data.replayEnableRipple,
+      replayEnableBlurOverlay: data.replayEnableBlurOverlay
     });
     if (!updatedOk) {
       throw new Error(`Failed to update replay preferences for travel: ${travelId}`);

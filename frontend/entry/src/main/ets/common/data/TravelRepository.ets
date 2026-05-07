@@ -37,6 +37,8 @@ export interface CreateTravelInput {
   replayBgmId?: string;
   replayFilterId?: string;
   replayTransitionType?: string;
+  replayEnableRipple?: boolean;
+  replayEnableBlurOverlay?: boolean;
 }
 
 /**
@@ -53,6 +55,8 @@ export interface UpdateTravelInput {
   replayBgmId?: string;
   replayFilterId?: string;
   replayTransitionType?: string;
+  replayEnableRipple?: boolean;
+  replayEnableBlurOverlay?: boolean;
 }
 
 interface NodePhotoData {
@@ -119,6 +123,8 @@ export class TravelRepository {
     const replayBgmIdIdx = resultSet.getColumnIndex('replay_bgm_id');
     const replayFilterIdIdx = resultSet.getColumnIndex('replay_filter_id');
     const replayTransitionTypeIdx = resultSet.getColumnIndex('replay_transition_type');
+    const replayEnableRippleIdx = resultSet.getColumnIndex('replay_enable_ripple');
+    const replayEnableBlurOverlayIdx = resultSet.getColumnIndex('replay_enable_blur_overlay');
 
     const trip: Trip = {
       id: resultSet.getDouble(idIdx).toString(),
@@ -141,7 +147,9 @@ export class TravelRepository {
       replayStyleKitId: replayStyleKitIdIdx >= 0 ? (resultSet.getString(replayStyleKitIdIdx) ?? '') : '',
       replayBgmId: replayBgmIdIdx >= 0 ? (resultSet.getString(replayBgmIdIdx) ?? '') : '',
       replayFilterId: replayFilterIdIdx >= 0 ? (resultSet.getString(replayFilterIdIdx) ?? '') : '',
-      replayTransitionType: replayTransitionTypeIdx >= 0 ? (resultSet.getString(replayTransitionTypeIdx) ?? '') : ''
+      replayTransitionType: replayTransitionTypeIdx >= 0 ? (resultSet.getString(replayTransitionTypeIdx) ?? '') : '',
+      replayEnableRipple: replayEnableRippleIdx >= 0 ? resultSet.getDouble(replayEnableRippleIdx) === 1 : false,
+      replayEnableBlurOverlay: replayEnableBlurOverlayIdx >= 0 ? resultSet.getDouble(replayEnableBlurOverlayIdx) === 1 : false
     };
     return trip;
   }
@@ -241,7 +249,9 @@ export class TravelRepository {
         'replay_style_kit_id': travel.replayStyleKitId ?? '',
         'replay_bgm_id': travel.replayBgmId ?? '',
         'replay_filter_id': travel.replayFilterId ?? '',
-        'replay_transition_type': travel.replayTransitionType ?? ''
+        'replay_transition_type': travel.replayTransitionType ?? '',
+        'replay_enable_ripple': travel.replayEnableRipple ? 1 : 0,
+        'replay_enable_blur_overlay': travel.replayEnableBlurOverlay ? 1 : 0
       };
       const rowId = await store.insert(TABLE_NAME, valueBucket);
       logger.info(TAG, `Created travel: ${travel.name}, id=${rowId}`);
@@ -293,6 +303,12 @@ export class TravelRepository {
       }
       if (travel.replayTransitionType !== undefined) {
         valueBucket['replay_transition_type'] = travel.replayTransitionType;
+      }
+      if (travel.replayEnableRipple !== undefined) {
+        valueBucket['replay_enable_ripple'] = travel.replayEnableRipple ? 1 : 0;
+      }
+      if (travel.replayEnableBlurOverlay !== undefined) {
+        valueBucket['replay_enable_blur_overlay'] = travel.replayEnableBlurOverlay ? 1 : 0;
       }
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'travel id'));
@@ -431,7 +447,9 @@ export class TravelRepository {
       replay_style_kit_id: travel.replayStyleKitId ?? '',
       replay_bgm_id: travel.replayBgmId ?? '',
       replay_filter_id: travel.replayFilterId ?? '',
-      replay_transition_type: travel.replayTransitionType ?? ''
+      replay_transition_type: travel.replayTransitionType ?? '',
+      replay_enable_ripple: travel.replayEnableRipple ? 1 : 0,
+      replay_enable_blur_overlay: travel.replayEnableBlurOverlay ? 1 : 0
     };
 
     try {

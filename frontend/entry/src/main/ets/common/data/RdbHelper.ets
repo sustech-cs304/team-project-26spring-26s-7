@@ -66,7 +66,9 @@ const SQL_CREATE_TRAVELS = `
     replay_style_kit_id TEXT DEFAULT '',
     replay_bgm_id TEXT DEFAULT '',
     replay_filter_id TEXT DEFAULT '',
-    replay_transition_type TEXT DEFAULT ''
+    replay_transition_type TEXT DEFAULT '',
+    replay_enable_ripple INTEGER DEFAULT 0,
+    replay_enable_blur_overlay INTEGER DEFAULT 0
   )
 `;
 
@@ -136,6 +138,14 @@ const SQL_ADD_TRAVEL_REPLAY_FILTER_ID = `
 
 const SQL_ADD_TRAVEL_REPLAY_TRANSITION_TYPE = `
   ALTER TABLE travels ADD COLUMN replay_transition_type TEXT DEFAULT ''
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_ENABLE_RIPPLE = `
+  ALTER TABLE travels ADD COLUMN replay_enable_ripple INTEGER DEFAULT 0
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_ENABLE_BLUR_OVERLAY = `
+  ALTER TABLE travels ADD COLUMN replay_enable_blur_overlay INTEGER DEFAULT 0
 `;
 
 const SQL_ADD_MEMORY_NODE_TITLE = `
@@ -323,6 +333,8 @@ export class RdbHelper {
       SQL_ADD_TRAVEL_REPLAY_BGM_ID,
       SQL_ADD_TRAVEL_REPLAY_FILTER_ID,
       SQL_ADD_TRAVEL_REPLAY_TRANSITION_TYPE,
+      SQL_ADD_TRAVEL_REPLAY_ENABLE_RIPPLE,
+      SQL_ADD_TRAVEL_REPLAY_ENABLE_BLUR_OVERLAY,
       SQL_ADD_MEMORY_NODE_TITLE,
       SQL_ADD_MEMORY_NODE_POI_NAME,
       SQL_ADD_MEMORY_NODE_DESCRIPTION,

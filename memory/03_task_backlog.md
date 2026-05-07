@@ -532,3 +532,12 @@ base/common/
 2. **选择第一个整合目标** - 建议从 P1.1 (common/utils) 开始
 3. **验证 DevEco Studio 配置** - 确保能够正常编译当前 frontend
 4. **设置模块化导入** - 配置 oh-package.json5 支持包名导入
+## 2026-05-07 Replay 澧炲箍 Phase 2
+
+- [x] R2.1 `ReplayStyleKit` 宸ュ巶鍗囩骇涓虹湡瀹?style token锛屾敮鎸佸崱鐗囥€佹帶鍒舵爮銆佽鎯呭眰銆佽繘搴︽潯閰嶈壊
+- [x] R2.2 `ReplayPhotoCard` 鎺ユ敹 style/filter 鍙傛暟锛岄殢 style kit 鏀瑰彉鍗＄墖鑳屾櫙銆佹枃瀛楀拰 tag
+- [x] R2.3 `ReplayProgressBar` 鎺ユ敹 style 鍙傛暟锛岃繘搴︽潯鍜屾爣绛鹃厤鑹插彲閰嶇疆
+- [x] R2.4 `TripReplayPage` 搴曢儴鎺у埗鏍忋€佸睆钂欍€佸崱鐗囨敼涓鸿鍙?style kit
+- [~] R2.5 鍦板浘 polyline 鏍峰紡鍏堟帴鍏?width锛涢鑹插洜 MapKit overlay 娓呯悊鑳藉姏闄愬埗锛屼繚鐣欎负涓嬩竴娆¤繘鍏ョ敓鏁堢殑娓愯繘澧炲己
+- [x] R2.6 `ReplaySettingsSheet` 鎵╁睍涓虹粺涓€璁剧疆鍏ュ彛锛孲tyle 閫夋嫨绔嬪嵆鐢熸晥
+- [x] R2.7 `TripDetailPage` 鏂板鈥滃洖鏀鹃璁锯€濇憳瑕佸崱鐗囷紝鍏ュ彛鍓嶅彲鏌ョ湅褰撳墠椋庢牸/闊充箰/婊ら暅/杞満

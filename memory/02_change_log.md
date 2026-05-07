@@ -468,3 +468,13 @@
 - [2026-05-07-17-10-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 进入页面时从当前路线读取本地 Replay 配置；切换音乐时即时重载播放器；切换风格/音乐时写回当前路线
 - [2026-05-07-17-10-00] - UPDATE - feature/map-travel/components/ReplaySettingsSheet.ets - 更新音乐页说明文案为“已接入即时切歌 + 本地数据库持久化”
 - [2026-05-07-17-10-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 通过（存在既有 ArkTS warnings，无新增阻塞错误）
+---
+
+## 2026-05-07 (Replay 澧炲箍 Phase 2 - Style Kit 鍙傛暟鍖?+ 璺嚎棰勮鎽樿)
+
+- [2026-05-07-21-25-00] - UPDATE - common/replay/ReplayStyleKit.ets - 灏?3 濂?Replay 椋庢牸浠庨€夐」鐩綍鎵╁睍涓哄彲鐩存帴渚涚粍浠朵娇鐢ㄧ殑瑙嗚 token
+- [2026-05-07-21-25-00] - UPDATE - feature/map-travel/components/ReplayPhotoCard.ets, ReplayProgressBar.ets, PhotoCardOverlay.ets - 鍗＄墖銆佽繘搴︽潯鍜岃鎯呭眰鏀逛负璇诲彇 style kit锛屽幓鎺夌‖缂栫爜鐧藉簳钃濊壊
+- [2026-05-07-21-25-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 鎺ュ叆褰撳墠 style kit 鐘舵€侊紝搴曢儴鎺у埗鏍忋€佸崱鐗囥€佸睆钂欑粺涓€璇诲彇 Replay 椋庢牸
+- [2026-05-07-21-25-00] - UPDATE - feature/map-travel/components/ReplaySettingsSheet.ets - Style Tab 绔嬪嵆鐢熸晥锛屽苟鎵╁睍涓哄悗缁?Effects / Transition 鍏ュ彛
+- [2026-05-07-21-25-00] - UPDATE - feature/map-travel/pages/TripDetailPage.ets - 鏂板鈥滃洖鏀鹃璁锯€濇憳瑕佸崱鐗囷紝杩涘叆 Replay 鍓嶅彲鏌ョ湅椋庢牸銆侀煶涔愩€佹护闀溿€佽浆鍦?
+- [2026-05-07-21-25-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 閫氳繃锛堝瓨鍦ㄦ棦鏈?ArkTS warnings锛屾棤鏂板闃诲閿欒锛?

@@ -111,6 +111,8 @@ export interface ReplayTripPreferences {
   replayBgmId?: string
   replayFilterId?: string
   replayTransitionType?: string
+  replayEnableRipple?: boolean
+  replayEnableBlurOverlay?: boolean
 }
 
 /** 旅行路线 - 完整数据模型 */

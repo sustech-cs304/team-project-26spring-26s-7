@@ -7,6 +7,8 @@ export interface ReplayPreferencesState {
   bgmId: ReplayBgmId
   filterId: ReplayFilterId
   transitionType: ReplayTransitionType
+  enableRipple: boolean
+  enableBlurOverlay: boolean
 }
 
 export class ReplayPreferences {
@@ -14,6 +16,8 @@ export class ReplayPreferences {
   static readonly BGM_KEY: string = 'replayBgmId'
   static readonly FILTER_KEY: string = 'replayFilterId'
   static readonly TRANSITION_KEY: string = 'replayTransitionType'
+  static readonly ENABLE_RIPPLE_KEY: string = 'replayEnableRipple'
+  static readonly ENABLE_BLUR_OVERLAY_KEY: string = 'replayEnableBlurOverlay'
   static readonly VERSION_KEY: string = 'replayPreferencesVersion'
 
   static initializeDefaults(): void {
@@ -33,6 +37,8 @@ export class ReplayPreferences {
       ReplayPreferences.TRANSITION_KEY,
       ReplayTransitionType.FADE
     )
+    ReplayPreferences.ensureDefault<boolean>(ReplayPreferences.ENABLE_RIPPLE_KEY, false)
+    ReplayPreferences.ensureDefault<boolean>(ReplayPreferences.ENABLE_BLUR_OVERLAY_KEY, false)
     ReplayPreferences.ensureDefault<number>(ReplayPreferences.VERSION_KEY, 0)
   }
 
@@ -42,7 +48,9 @@ export class ReplayPreferences {
       styleKitId: ReplayPreferences.getStyleKitId(),
       bgmId: ReplayPreferences.getBgmId(),
       filterId: ReplayPreferences.getFilterId(),
-      transitionType: ReplayPreferences.getTransitionType()
+      transitionType: ReplayPreferences.getTransitionType(),
+      enableRipple: ReplayPreferences.getEnableRipple(),
+      enableBlurOverlay: ReplayPreferences.getEnableBlurOverlay()
     }
   }
 
@@ -74,10 +82,40 @@ export class ReplayPreferences {
       ReplayFilterId.NONE
   }
 
+  static setFilterId(value: ReplayFilterId): void {
+    AppStorage.setOrCreate(ReplayPreferences.FILTER_KEY, value)
+    ReplayPreferences.bumpVersion()
+  }
+
   static getTransitionType(): ReplayTransitionType {
     ReplayPreferences.initializeDefaults()
     return AppStorage.get<ReplayTransitionType>(ReplayPreferences.TRANSITION_KEY) ??
       ReplayTransitionType.FADE
+  }
+
+  static setTransitionType(value: ReplayTransitionType): void {
+    AppStorage.setOrCreate(ReplayPreferences.TRANSITION_KEY, value)
+    ReplayPreferences.bumpVersion()
+  }
+
+  static getEnableRipple(): boolean {
+    ReplayPreferences.initializeDefaults()
+    return AppStorage.get<boolean>(ReplayPreferences.ENABLE_RIPPLE_KEY) ?? false
+  }
+
+  static setEnableRipple(value: boolean): void {
+    AppStorage.setOrCreate(ReplayPreferences.ENABLE_RIPPLE_KEY, value)
+    ReplayPreferences.bumpVersion()
+  }
+
+  static getEnableBlurOverlay(): boolean {
+    ReplayPreferences.initializeDefaults()
+    return AppStorage.get<boolean>(ReplayPreferences.ENABLE_BLUR_OVERLAY_KEY) ?? false
+  }
+
+  static setEnableBlurOverlay(value: boolean): void {
+    AppStorage.setOrCreate(ReplayPreferences.ENABLE_BLUR_OVERLAY_KEY, value)
+    ReplayPreferences.bumpVersion()
   }
 
   private static bumpVersion(): void {

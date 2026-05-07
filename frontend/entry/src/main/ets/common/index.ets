@@ -103,8 +103,8 @@ export {
 export { ReplayPreferences } from './replay/ReplayPreferences';
 export type { ReplayPreferencesState } from './replay/ReplayPreferences';
 export { ReplayStyleKitCatalog, ReplayStyleKitId } from './replay/ReplayStyleKit';
-export type { ReplayStyleKitOption } from './replay/ReplayStyleKit';
+export type { ReplayStyleKit, ReplayStyleKitOption } from './replay/ReplayStyleKit';
 export { ReplayMusicCatalog, ReplayBgmId } from './replay/ReplayMusicCatalog';
 export type { ReplayMusicOption } from './replay/ReplayMusicCatalog';
-export { ReplayFilterId, ReplayTransitionType, ReplayEffectsDefaults } from './replay/ReplayEffectOptions';
-export type { ReplayEffectsState } from './replay/ReplayEffectOptions';
+export { ReplayFilterId, ReplayFilterCatalog, ReplayTransitionType, ReplayTransitionCatalog, ReplayEffectsDefaults } from './replay/ReplayEffectOptions';
+export type { ReplayFilterOption, ReplayTransitionOption, ReplayEffectsState } from './replay/ReplayEffectOptions';
