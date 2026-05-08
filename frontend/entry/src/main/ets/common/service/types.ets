@@ -112,6 +112,7 @@ export interface ReplayTripPreferences {
   replayFilterId?: string
   replayTransitionType?: string
   replayEnableRipple?: boolean
+  replayEnableRouteAnimation?: boolean
   replayEnableBlurOverlay?: boolean
 }
 

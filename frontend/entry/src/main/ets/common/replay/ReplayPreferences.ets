@@ -8,6 +8,7 @@ export interface ReplayPreferencesState {
   filterId: ReplayFilterId
   transitionType: ReplayTransitionType
   enableRipple: boolean
+  enableRouteAnimation: boolean
   enableBlurOverlay: boolean
 }
 
@@ -17,6 +18,7 @@ export class ReplayPreferences {
   static readonly FILTER_KEY: string = 'replayFilterId'
   static readonly TRANSITION_KEY: string = 'replayTransitionType'
   static readonly ENABLE_RIPPLE_KEY: string = 'replayEnableRipple'
+  static readonly ENABLE_ROUTE_ANIMATION_KEY: string = 'replayEnableRouteAnimation'
   static readonly ENABLE_BLUR_OVERLAY_KEY: string = 'replayEnableBlurOverlay'
   static readonly VERSION_KEY: string = 'replayPreferencesVersion'
 
@@ -38,6 +40,7 @@ export class ReplayPreferences {
       ReplayTransitionType.FADE
     )
     ReplayPreferences.ensureDefault<boolean>(ReplayPreferences.ENABLE_RIPPLE_KEY, false)
+    ReplayPreferences.ensureDefault<boolean>(ReplayPreferences.ENABLE_ROUTE_ANIMATION_KEY, false)
     ReplayPreferences.ensureDefault<boolean>(ReplayPreferences.ENABLE_BLUR_OVERLAY_KEY, false)
     ReplayPreferences.ensureDefault<number>(ReplayPreferences.VERSION_KEY, 0)
   }
@@ -50,6 +53,7 @@ export class ReplayPreferences {
       filterId: ReplayPreferences.getFilterId(),
       transitionType: ReplayPreferences.getTransitionType(),
       enableRipple: ReplayPreferences.getEnableRipple(),
+      enableRouteAnimation: ReplayPreferences.getEnableRouteAnimation(),
       enableBlurOverlay: ReplayPreferences.getEnableBlurOverlay()
     }
   }
@@ -105,6 +109,16 @@ export class ReplayPreferences {
 
   static setEnableRipple(value: boolean): void {
     AppStorage.setOrCreate(ReplayPreferences.ENABLE_RIPPLE_KEY, value)
+    ReplayPreferences.bumpVersion()
+  }
+
+  static getEnableRouteAnimation(): boolean {
+    ReplayPreferences.initializeDefaults()
+    return AppStorage.get<boolean>(ReplayPreferences.ENABLE_ROUTE_ANIMATION_KEY) ?? false
+  }
+
+  static setEnableRouteAnimation(value: boolean): void {
+    AppStorage.setOrCreate(ReplayPreferences.ENABLE_ROUTE_ANIMATION_KEY, value)
     ReplayPreferences.bumpVersion()
   }
 

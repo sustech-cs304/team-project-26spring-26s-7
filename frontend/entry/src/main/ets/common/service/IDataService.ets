@@ -32,6 +32,7 @@ export interface CreateTravelInput {
   replayFilterId?: string;
   replayTransitionType?: string;
   replayEnableRipple?: boolean;
+  replayEnableRouteAnimation?: boolean;
   replayEnableBlurOverlay?: boolean;
 }
 
@@ -52,6 +53,7 @@ export interface UpdateTravelInput {
   replayFilterId?: string;
   replayTransitionType?: string;
   replayEnableRipple?: boolean;
+  replayEnableRouteAnimation?: boolean;
   replayEnableBlurOverlay?: boolean;
 }
 

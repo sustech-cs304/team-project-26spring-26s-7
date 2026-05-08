@@ -43,6 +43,10 @@ export interface ReplayStyleKit {
   shadowColor: string
   mapPolylineColor: string
   mapPolylineWidth: number
+  routePendingColor: string
+  routePendingWidth: number
+  routeVisitedColor: string
+  routeVisitedWidth: number
 }
 
 const STYLE_KITS: ReplayStyleKit[] = [
@@ -77,7 +81,11 @@ const STYLE_KITS: ReplayStyleKit[] = [
     rippleColor: 'rgba(24, 144, 255, 0.28)',
     shadowColor: 'rgba(15, 23, 42, 0.18)',
     mapPolylineColor: '#1890FF',
-    mapPolylineWidth: 4
+    mapPolylineWidth: 4,
+    routePendingColor: 'rgba(24, 144, 255, 0.22)',
+    routePendingWidth: 4,
+    routeVisitedColor: '#1890FF',
+    routeVisitedWidth: 6
   },
   {
     id: ReplayStyleKitId.DARK_NIGHT,
@@ -110,7 +118,11 @@ const STYLE_KITS: ReplayStyleKit[] = [
     rippleColor: 'rgba(103, 183, 255, 0.30)',
     shadowColor: 'rgba(0, 0, 0, 0.34)',
     mapPolylineColor: '#67B7FF',
-    mapPolylineWidth: 5
+    mapPolylineWidth: 5,
+    routePendingColor: 'rgba(103, 183, 255, 0.20)',
+    routePendingWidth: 5,
+    routeVisitedColor: '#A8D8FF',
+    routeVisitedWidth: 7
   },
   {
     id: ReplayStyleKitId.VINTAGE_FILM,
@@ -143,7 +155,11 @@ const STYLE_KITS: ReplayStyleKit[] = [
     rippleColor: 'rgba(177, 92, 58, 0.26)',
     shadowColor: 'rgba(70, 42, 20, 0.20)',
     mapPolylineColor: '#B56B36',
-    mapPolylineWidth: 5
+    mapPolylineWidth: 5,
+    routePendingColor: 'rgba(181, 107, 54, 0.18)',
+    routePendingWidth: 5,
+    routeVisitedColor: '#B56B36',
+    routeVisitedWidth: 7
   }
 ]
 

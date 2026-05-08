@@ -56,6 +56,7 @@ export class MockDataService implements IDataService {
         replayFilterId: '',
         replayTransitionType: '',
         replayEnableRipple: false,
+        replayEnableRouteAnimation: false,
         replayEnableBlurOverlay: false,
         nodeIds: ['node-001', 'node-002', 'node-003'],
         totalDistance: 128,
@@ -75,6 +76,7 @@ export class MockDataService implements IDataService {
         replayFilterId: '',
         replayTransitionType: '',
         replayEnableRipple: false,
+        replayEnableRouteAnimation: false,
         replayEnableBlurOverlay: false,
         nodeIds: ['node-004', 'node-005'],
         totalDistance: 45,
@@ -114,6 +116,7 @@ export class MockDataService implements IDataService {
       replayFilterId: travel.replayFilterId,
       replayTransitionType: travel.replayTransitionType,
       replayEnableRipple: travel.replayEnableRipple,
+      replayEnableRouteAnimation: travel.replayEnableRouteAnimation,
       replayEnableBlurOverlay: travel.replayEnableBlurOverlay,
       nodeIds: travel.nodeIds,
       totalDistance: travel.totalDistance,
@@ -145,6 +148,7 @@ export class MockDataService implements IDataService {
     if (data.replayFilterId !== undefined) current.replayFilterId = data.replayFilterId;
     if (data.replayTransitionType !== undefined) current.replayTransitionType = data.replayTransitionType;
     if (data.replayEnableRipple !== undefined) current.replayEnableRipple = data.replayEnableRipple;
+    if (data.replayEnableRouteAnimation !== undefined) current.replayEnableRouteAnimation = data.replayEnableRouteAnimation;
     if (data.replayEnableBlurOverlay !== undefined) current.replayEnableBlurOverlay = data.replayEnableBlurOverlay;
     current.updatedAt = Date.now();
 
@@ -173,6 +177,7 @@ export class MockDataService implements IDataService {
       replayFilterId: travel.replayFilterId,
       replayTransitionType: travel.replayTransitionType,
       replayEnableRipple: travel.replayEnableRipple,
+      replayEnableRouteAnimation: travel.replayEnableRouteAnimation,
       replayEnableBlurOverlay: travel.replayEnableBlurOverlay
     };
   }
@@ -187,6 +192,7 @@ export class MockDataService implements IDataService {
     if (data.replayFilterId !== undefined) travel.replayFilterId = data.replayFilterId;
     if (data.replayTransitionType !== undefined) travel.replayTransitionType = data.replayTransitionType;
     if (data.replayEnableRipple !== undefined) travel.replayEnableRipple = data.replayEnableRipple;
+    if (data.replayEnableRouteAnimation !== undefined) travel.replayEnableRouteAnimation = data.replayEnableRouteAnimation;
     if (data.replayEnableBlurOverlay !== undefined) travel.replayEnableBlurOverlay = data.replayEnableBlurOverlay;
     travel.updatedAt = Date.now();
     return {
@@ -195,6 +201,7 @@ export class MockDataService implements IDataService {
       replayFilterId: travel.replayFilterId,
       replayTransitionType: travel.replayTransitionType,
       replayEnableRipple: travel.replayEnableRipple,
+      replayEnableRouteAnimation: travel.replayEnableRouteAnimation,
       replayEnableBlurOverlay: travel.replayEnableBlurOverlay
     };
   }

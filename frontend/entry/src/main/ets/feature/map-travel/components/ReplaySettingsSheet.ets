@@ -31,6 +31,7 @@ export struct ReplaySettingsSheet {
   @Prop selectedFilterId: ReplayFilterId = ReplayFilterId.NONE
   @Prop selectedTransitionType: ReplayTransitionType = ReplayTransitionType.FADE
   @Prop enableRipple: boolean = false
+  @Prop enableRouteAnimation: boolean = false
   @Prop enableBlurOverlay: boolean = false
   @State private activeTab: ReplaySettingsTab = ReplaySettingsTab.STYLE
 
@@ -40,6 +41,7 @@ export struct ReplaySettingsSheet {
   onFilterChange?: (filterId: ReplayFilterId) => void
   onTransitionChange?: (transitionType: ReplayTransitionType) => void
   onRippleToggle?: (enabled: boolean) => void
+  onRouteAnimationToggle?: (enabled: boolean) => void
   onBlurOverlayToggle?: (enabled: boolean) => void
 
   private close(): void {
@@ -81,6 +83,14 @@ export struct ReplaySettingsSheet {
     ReplayPreferences.setEnableRipple(nextValue)
     if (this.onRippleToggle) {
       this.onRippleToggle(nextValue)
+    }
+  }
+
+  private toggleRouteAnimation(): void {
+    const nextValue = !this.enableRouteAnimation
+    ReplayPreferences.setEnableRouteAnimation(nextValue)
+    if (this.onRouteAnimationToggle) {
+      this.onRouteAnimationToggle(nextValue)
     }
   }
 
@@ -294,6 +304,13 @@ export struct ReplaySettingsSheet {
         '到达新节点时，在地图上叠加一层轻量扩散反馈。',
         this.enableRipple,
         () => this.toggleRipple()
+      )
+
+      this.buildToggleCard(
+        '路线留痕',
+        '显示未来路线底线，并用高亮轨迹标记已经走过的路段。',
+        this.enableRouteAnimation,
+        () => this.toggleRouteAnimation()
       )
 
       this.buildToggleCard(

@@ -38,6 +38,7 @@ export interface CreateTravelInput {
   replayFilterId?: string;
   replayTransitionType?: string;
   replayEnableRipple?: boolean;
+  replayEnableRouteAnimation?: boolean;
   replayEnableBlurOverlay?: boolean;
 }
 
@@ -56,6 +57,7 @@ export interface UpdateTravelInput {
   replayFilterId?: string;
   replayTransitionType?: string;
   replayEnableRipple?: boolean;
+  replayEnableRouteAnimation?: boolean;
   replayEnableBlurOverlay?: boolean;
 }
 
@@ -124,6 +126,7 @@ export class TravelRepository {
     const replayFilterIdIdx = resultSet.getColumnIndex('replay_filter_id');
     const replayTransitionTypeIdx = resultSet.getColumnIndex('replay_transition_type');
     const replayEnableRippleIdx = resultSet.getColumnIndex('replay_enable_ripple');
+    const replayEnableRouteAnimationIdx = resultSet.getColumnIndex('replay_enable_route_animation');
     const replayEnableBlurOverlayIdx = resultSet.getColumnIndex('replay_enable_blur_overlay');
 
     const trip: Trip = {
@@ -149,6 +152,8 @@ export class TravelRepository {
       replayFilterId: replayFilterIdIdx >= 0 ? (resultSet.getString(replayFilterIdIdx) ?? '') : '',
       replayTransitionType: replayTransitionTypeIdx >= 0 ? (resultSet.getString(replayTransitionTypeIdx) ?? '') : '',
       replayEnableRipple: replayEnableRippleIdx >= 0 ? resultSet.getDouble(replayEnableRippleIdx) === 1 : false,
+      replayEnableRouteAnimation: replayEnableRouteAnimationIdx >= 0 ?
+        resultSet.getDouble(replayEnableRouteAnimationIdx) === 1 : false,
       replayEnableBlurOverlay: replayEnableBlurOverlayIdx >= 0 ? resultSet.getDouble(replayEnableBlurOverlayIdx) === 1 : false
     };
     return trip;
@@ -251,6 +256,7 @@ export class TravelRepository {
         'replay_filter_id': travel.replayFilterId ?? '',
         'replay_transition_type': travel.replayTransitionType ?? '',
         'replay_enable_ripple': travel.replayEnableRipple ? 1 : 0,
+        'replay_enable_route_animation': travel.replayEnableRouteAnimation ? 1 : 0,
         'replay_enable_blur_overlay': travel.replayEnableBlurOverlay ? 1 : 0
       };
       const rowId = await store.insert(TABLE_NAME, valueBucket);
@@ -306,6 +312,9 @@ export class TravelRepository {
       }
       if (travel.replayEnableRipple !== undefined) {
         valueBucket['replay_enable_ripple'] = travel.replayEnableRipple ? 1 : 0;
+      }
+      if (travel.replayEnableRouteAnimation !== undefined) {
+        valueBucket['replay_enable_route_animation'] = travel.replayEnableRouteAnimation ? 1 : 0;
       }
       if (travel.replayEnableBlurOverlay !== undefined) {
         valueBucket['replay_enable_blur_overlay'] = travel.replayEnableBlurOverlay ? 1 : 0;
@@ -449,6 +458,7 @@ export class TravelRepository {
       replay_filter_id: travel.replayFilterId ?? '',
       replay_transition_type: travel.replayTransitionType ?? '',
       replay_enable_ripple: travel.replayEnableRipple ? 1 : 0,
+      replay_enable_route_animation: travel.replayEnableRouteAnimation ? 1 : 0,
       replay_enable_blur_overlay: travel.replayEnableBlurOverlay ? 1 : 0
     };
 

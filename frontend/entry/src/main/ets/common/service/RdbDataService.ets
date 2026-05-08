@@ -221,6 +221,7 @@ export class RdbDataService implements IDataService {
         replayFilterId: trips[i].replayFilterId,
         replayTransitionType: trips[i].replayTransitionType,
         replayEnableRipple: trips[i].replayEnableRipple,
+        replayEnableRouteAnimation: trips[i].replayEnableRouteAnimation,
         replayEnableBlurOverlay: trips[i].replayEnableBlurOverlay
       };
       }
@@ -265,6 +266,7 @@ export class RdbDataService implements IDataService {
         replayFilterId: trip.replayFilterId,
         replayTransitionType: trip.replayTransitionType,
         replayEnableRipple: trip.replayEnableRipple,
+        replayEnableRouteAnimation: trip.replayEnableRouteAnimation,
         replayEnableBlurOverlay: trip.replayEnableBlurOverlay
       };
       return result;
@@ -286,6 +288,7 @@ export class RdbDataService implements IDataService {
       replayFilterId: travel.replayFilterId,
       replayTransitionType: travel.replayTransitionType,
       replayEnableRipple: travel.replayEnableRipple,
+      replayEnableRouteAnimation: travel.replayEnableRouteAnimation,
       replayEnableBlurOverlay: travel.replayEnableBlurOverlay
     };
     const id = await this.travelRepo.createTravel(repoInput);
@@ -341,6 +344,9 @@ export class RdbDataService implements IDataService {
     if (data.replayEnableRipple !== undefined) {
       repoInput.replayEnableRipple = data.replayEnableRipple;
     }
+    if (data.replayEnableRouteAnimation !== undefined) {
+      repoInput.replayEnableRouteAnimation = data.replayEnableRouteAnimation;
+    }
     if (data.replayEnableBlurOverlay !== undefined) {
       repoInput.replayEnableBlurOverlay = data.replayEnableBlurOverlay;
     }
@@ -379,6 +385,7 @@ export class RdbDataService implements IDataService {
       replayFilterId: trip.replayFilterId ?? '',
       replayTransitionType: trip.replayTransitionType ?? '',
       replayEnableRipple: trip.replayEnableRipple ?? false,
+      replayEnableRouteAnimation: trip.replayEnableRouteAnimation ?? false,
       replayEnableBlurOverlay: trip.replayEnableBlurOverlay ?? false
     };
   }
@@ -390,6 +397,7 @@ export class RdbDataService implements IDataService {
       replayFilterId: data.replayFilterId,
       replayTransitionType: data.replayTransitionType,
       replayEnableRipple: data.replayEnableRipple,
+      replayEnableRouteAnimation: data.replayEnableRouteAnimation,
       replayEnableBlurOverlay: data.replayEnableBlurOverlay
     });
     if (!updatedOk) {

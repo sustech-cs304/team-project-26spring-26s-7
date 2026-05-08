@@ -35,6 +35,10 @@ const PHASE_STAYING = 2
 const PHASE_EXIT = 3
 const PHASE_MOVING = 4
 
+interface RemovableOverlay {
+  remove: () => void
+}
+
 @Entry
 @Component
 export struct TripReplayPage {
@@ -64,6 +68,7 @@ export struct TripReplayPage {
   @State selectedFilterId: ReplayFilterId = ReplayFilterId.NONE
   @State selectedTransitionType: ReplayTransitionType = ReplayTransitionType.FADE
   @State enableRipple: boolean = false
+  @State enableRouteAnimation: boolean = false
   @State enableBlurOverlay: boolean = false
   @State currentStyleKit: ReplayStyleKit = ReplayStyleKitCatalog.getById(ReplayStyleKitCatalog.DEFAULT_ID)
 
@@ -104,6 +109,11 @@ export struct TripReplayPage {
   private shouldAudioPlay: boolean = false
   private isPageActive: boolean = false
   private manualJumpGeneration: number = 0
+  private routeTrailGeneration: number = 0
+  private routePoints: mapCommon.LatLng[] = []
+  private staticRouteOverlay?: RemovableOverlay
+  private pendingRouteOverlay?: RemovableOverlay
+  private visitedRouteOverlay?: RemovableOverlay
 
   private mapCallback: AsyncCallback<map.MapComponentController> = async (err, controller) => {
     if (!err && controller) {
@@ -266,6 +276,8 @@ export struct TripReplayPage {
   aboutToDisappear(): void {
     this.isPageActive = false
     this.stopPlay()
+    this.routeTrailGeneration += 1
+    this.clearRouteOverlays()
     void this.stopMusic()
   }
 
@@ -276,6 +288,7 @@ export struct TripReplayPage {
     this.selectedFilterId = (preferences.replayFilterId as ReplayFilterId) || fallback.filterId
     this.selectedTransitionType = (preferences.replayTransitionType as ReplayTransitionType) || fallback.transitionType
     this.enableRipple = preferences.replayEnableRipple ?? fallback.enableRipple
+    this.enableRouteAnimation = preferences.replayEnableRouteAnimation ?? fallback.enableRouteAnimation
     this.enableBlurOverlay = preferences.replayEnableBlurOverlay ?? fallback.enableBlurOverlay
     this.currentStyleKit = ReplayStyleKitCatalog.getById(this.selectedStyleKitId)
   }
@@ -315,6 +328,9 @@ export struct TripReplayPage {
       this.currentNodeIndex = 0
       this.progress = 0
       this.routeRendered = false
+      this.routePoints = []
+      this.clearRouteOverlays()
+      this.routeTrailGeneration += 1
       this.resetCardTransform(true)
 
       if (nodes.length > 0) {
@@ -553,7 +569,7 @@ export struct TripReplayPage {
   }
 
   private async drawRouteAndMarkers(): Promise<void> {
-    if (!this.mapController || !this.replayRoute || this.routeRendered) {
+    if (!this.mapController || !this.replayRoute) {
       return
     }
 
@@ -565,69 +581,128 @@ export struct TripReplayPage {
       })
     }
 
+    this.routePoints = positions
     if (positions.length === 0) {
       return
     }
 
-    if (positions.length > 1) {
-      await this.mapController.addPolyline({
-        points: positions,
-        clickable: false,
-        visible: true,
-        width: this.currentStyleKit.mapPolylineWidth,
-        zIndex: 5,
-        geodesic: true,
-        gradient: false,
-        jointType: mapCommon.JointType.ROUND,
-        startCap: mapCommon.CapStyle.ROUND,
-        endCap: mapCommon.CapStyle.ROUND
-      })
+    if (!this.routeRendered) {
+      for (const point of positions) {
+        await this.mapController.addMarker({
+          position: point,
+          visible: true,
+          clickable: false,
+          draggable: false,
+          flat: false,
+          rotation: 0,
+          zIndex: 10,
+          alpha: 1,
+          anchorU: 0.5,
+          anchorV: 1
+        })
+      }
+
+      const latitudeOffset = 0.0025
+      if (positions.length > 1) {
+        const bearing = this.calculateBearing(
+          positions[0].latitude,
+          positions[0].longitude,
+          positions[1].latitude,
+          positions[1].longitude
+        )
+        const cameraUpdate = map.newCameraPosition({
+          target: {
+            latitude: positions[0].latitude + latitudeOffset,
+            longitude: positions[0].longitude
+          },
+          zoom: 15,
+          bearing: bearing,
+          tilt: 45
+        })
+        this.mapController.animateCamera(cameraUpdate, 1000)
+      } else {
+        const cameraUpdate = map.newCameraPosition({
+          target: {
+            latitude: positions[0].latitude + latitudeOffset,
+            longitude: positions[0].longitude
+          },
+          zoom: 15
+        })
+        this.mapController.animateCamera(cameraUpdate, 500)
+      }
+      this.routeRendered = true
     }
 
-    for (const point of positions) {
-      await this.mapController.addMarker({
-        position: point,
-        visible: true,
-        clickable: false,
-        draggable: false,
-        flat: false,
-        rotation: 0,
-        zIndex: 10,
-        alpha: 1,
-        anchorU: 0.5,
-        anchorV: 1
-      })
+    await this.refreshRouteOverlays()
+  }
+
+  private clearRouteOverlays(): void {
+    this.staticRouteOverlay?.remove()
+    this.pendingRouteOverlay?.remove()
+    this.visitedRouteOverlay?.remove()
+    this.staticRouteOverlay = undefined
+    this.pendingRouteOverlay = undefined
+    this.visitedRouteOverlay = undefined
+  }
+
+  private async addRoutePolyline(
+    points: mapCommon.LatLng[],
+    width: number,
+    zIndex: number
+  ): Promise<RemovableOverlay | undefined> {
+    if (!this.mapController || points.length < 2) {
+      return undefined
+    }
+    return await this.mapController.addPolyline({
+      points: points,
+      clickable: false,
+      visible: true,
+      width: width,
+      zIndex: zIndex,
+      geodesic: true,
+      gradient: false,
+      jointType: mapCommon.JointType.ROUND,
+      startCap: mapCommon.CapStyle.ROUND,
+      endCap: mapCommon.CapStyle.ROUND
+    }) as RemovableOverlay
+  }
+
+  private async refreshRouteOverlays(): Promise<void> {
+    this.clearRouteOverlays()
+    if (this.routePoints.length < 2) {
+      return
     }
 
-    const latitudeOffset = 0.0025
-    if (positions.length > 1) {
-      const bearing = this.calculateBearing(
-        positions[0].latitude,
-        positions[0].longitude,
-        positions[1].latitude,
-        positions[1].longitude
+    if (!this.enableRouteAnimation) {
+      this.staticRouteOverlay = await this.addRoutePolyline(
+        this.routePoints,
+        this.currentStyleKit.mapPolylineWidth,
+        5
       )
-      const cameraUpdate = map.newCameraPosition({
-        target: {
-          latitude: positions[0].latitude + latitudeOffset,
-          longitude: positions[0].longitude
-        },
-        zoom: 15,
-        bearing: bearing,
-        tilt: 45
-      })
-      this.mapController.animateCamera(cameraUpdate, 1000)
-    } else {
-      const cameraUpdate = map.newCameraPosition({
-        target: {
-          latitude: positions[0].latitude + latitudeOffset,
-          longitude: positions[0].longitude
-        },
-        zoom: 15
-      })
-      this.mapController.animateCamera(cameraUpdate, 500)
+      return
     }
-    this.routeRendered = true
+
+    this.pendingRouteOverlay = await this.addRoutePolyline(
+      this.routePoints,
+      this.currentStyleKit.routePendingWidth,
+      4
+    )
+    await this.syncVisitedRouteToNodeIndex(this.currentNodeIndex)
+  }
+
+  private async syncVisitedRouteToNodeIndex(index: number): Promise<void> {
+    this.visitedRouteOverlay?.remove()
+    this.visitedRouteOverlay = undefined
+    if (!this.enableRouteAnimation || this.routePoints.length < 2 || index <= 0) {
+      return
+    }
+
+    const visitedPoints = this.routePoints.slice(0, Math.min(index + 1, this.routePoints.length))
+    this.visitedRouteOverlay = await this.addRoutePolyline(
+      visitedPoints,
+      this.currentStyleKit.routeVisitedWidth,
+      7
+    )
   }
 
   private moveToNode(index: number): void {
@@ -656,6 +731,9 @@ export struct TripReplayPage {
       this.startMovingIconAnimation(fromNode.position, targetNode.position)
     }
 
+    this.routeTrailGeneration += 1
+    const generation = this.routeTrailGeneration
+
     const cameraUpdate = map.newCameraPosition({
       target: {
         latitude: targetNode.position.latitude,
@@ -667,6 +745,9 @@ export struct TripReplayPage {
     })
     this.mapController.animateCamera(cameraUpdate, this.getMoveDuration())
     setTimeout(() => {
+      if (generation === this.routeTrailGeneration) {
+        void this.syncVisitedRouteToNodeIndex(index)
+      }
       this.movingIconVisible = false
     }, this.getMoveDuration())
   }
@@ -765,6 +846,7 @@ export struct TripReplayPage {
     }
 
     this.manualJumpGeneration += 1
+    this.routeTrailGeneration += 1
     const generation = this.manualJumpGeneration
     this.isCardVisible = false
     this.cardOpacity = 1
@@ -774,6 +856,7 @@ export struct TripReplayPage {
     const lastIndex = this.replayRoute.nodes.length - 1
     this.progress = lastIndex === 0 ? 100 : (index / lastIndex) * 100
     this.currentPhase = PHASE_IDLE
+    void this.syncVisitedRouteToNodeIndex(index)
 
     const targetNode = this.replayRoute.nodes[index]
     if (this.mapController) {
@@ -854,6 +937,9 @@ export struct TripReplayPage {
     chips.push(`滤镜 ${this.selectedFilterId === ReplayFilterId.NONE ? '原片' : '已启用'}`)
     if (this.enableRipple) {
       chips.push('节点波纹')
+    }
+    if (this.enableRouteAnimation) {
+      chips.push('路线留痕')
     }
     if (this.enableBlurOverlay) {
       chips.push('玻璃详情层')
@@ -1122,6 +1208,7 @@ export struct TripReplayPage {
           selectedFilterId: this.selectedFilterId,
           selectedTransitionType: this.selectedTransitionType,
           enableRipple: this.enableRipple,
+          enableRouteAnimation: this.enableRouteAnimation,
           enableBlurOverlay: this.enableBlurOverlay,
           onClose: () => {
             this.closeSettingsSheet()
@@ -1129,6 +1216,7 @@ export struct TripReplayPage {
           onStyleChange: (styleKitId: ReplayStyleKitId) => {
             this.selectedStyleKitId = styleKitId
             this.currentStyleKit = ReplayStyleKitCatalog.getById(styleKitId)
+            void this.refreshRouteOverlays()
             void this.persistReplayPreferences({
               replayStyleKitId: styleKitId
             })
@@ -1156,6 +1244,14 @@ export struct TripReplayPage {
             this.enableRipple = enabled
             void this.persistReplayPreferences({
               replayEnableRipple: enabled
+            })
+          },
+          onRouteAnimationToggle: (enabled: boolean) => {
+            this.enableRouteAnimation = enabled
+            this.routeTrailGeneration += 1
+            void this.refreshRouteOverlays()
+            void this.persistReplayPreferences({
+              replayEnableRouteAnimation: enabled
             })
           },
           onBlurOverlayToggle: (enabled: boolean) => {
