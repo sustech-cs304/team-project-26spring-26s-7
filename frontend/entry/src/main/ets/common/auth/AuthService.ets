@@ -399,4 +399,87 @@ export class AuthService {
       CloudStorageService.reset();
     }
   }
+
+  /**
+   * 注销账号：永久删除该用户的全部数据。
+   *
+   * 流程：
+   *  1. 拉取云端 travel + node 列表，逐条 hardDelete
+   *  2. 删除云存储下 users/{uid}/travels 与 users/{uid}/profiles 目录
+   *  3. 清空本地 RDB（travels / memory_nodes / sync_queue / app_sync_state / user_profile）
+   *  4. 清空本地 sandbox 照片目录
+   *  5. signOut 退出 AGC 账号
+   *  6. 清除全部同意状态
+   *
+   * 任一步失败都会继续后续步骤（best-effort），保证用户数据尽可能被清理。
+   */
+  static async deleteAccount(): Promise<void> {
+    const user = await AuthService.getCurrentUser();
+    const uid = user?.uid ?? '';
+    hilog.info(DOMAIN, TAG, `deleteAccount start, uid=${uid}`);
+
+    // Step 1: 删除云端数据库记录（含 profile，否则重新登录会拉旧昵称/bio 回写本地）。
+    // 三类删除分别独立 try，任一失败不影响其他删除。
+    if (uid.length > 0) {
+      try {
+        const cloudTravels = await CloudSyncService.fetchTravels(uid);
+        for (let i = 0; i < cloudTravels.length; i++) {
+          const cloudId = cloudTravels[i].cloudId ?? '';
+          if (cloudId.length > 0) {
+            await CloudSyncService.hardDeleteTravelByCloudId(cloudId);
+          }
+        }
+      } catch (err) {
+        hilog.error(DOMAIN, TAG, `deleteAccount: travel cleanup failed: ${JSON.stringify(err)}`);
+      }
+      try {
+        const cloudNodes = await CloudSyncService.fetchMemoryNodes(uid);
+        for (let i = 0; i < cloudNodes.length; i++) {
+          const cloudId = cloudNodes[i].cloudId ?? '';
+          if (cloudId.length > 0) {
+            await CloudSyncService.hardDeleteMemoryNodeByCloudId(cloudId);
+          }
+        }
+      } catch (err) {
+        hilog.error(DOMAIN, TAG, `deleteAccount: node cleanup failed: ${JSON.stringify(err)}`);
+      }
+      try {
+        await CloudSyncService.hardDeleteProfileByOwnerUid(uid);
+      } catch (err) {
+        hilog.error(DOMAIN, TAG, `deleteAccount: profile cleanup failed: ${JSON.stringify(err)}`);
+      }
+    }
+
+    // Step 2: 删除云存储下该用户的所有目录
+    try {
+      await CloudStorageService.deleteDirectoryRecursively('travels/');
+    } catch (err) {
+      hilog.warn(DOMAIN, TAG, `deleteAccount: travel storage cleanup failed: ${JSON.stringify(err)}`);
+    }
+    try {
+      await CloudStorageService.deleteDirectoryRecursively('profiles/');
+    } catch (err) {
+      hilog.warn(DOMAIN, TAG, `deleteAccount: profile storage cleanup failed: ${JSON.stringify(err)}`);
+    }
+
+    // Step 3: 清空本地数据库
+    try {
+      await RdbHelper.getInstance().wipeAllUserData();
+    } catch (err) {
+      hilog.error(DOMAIN, TAG, `deleteAccount: rdb wipe failed: ${JSON.stringify(err)}`);
+    }
+
+    // Step 4: 退出账号
+    try {
+      await auth.signOut();
+    } catch (err) {
+      hilog.warn(DOMAIN, TAG, `deleteAccount: signOut failed: ${JSON.stringify(err)}`);
+    }
+
+    currentUser = null;
+    cachedEffectiveProfile = null;
+    CloudStorageService.reset();
+
+    hilog.info(DOMAIN, TAG, 'deleteAccount done');
+  }
 }

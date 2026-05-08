@@ -10,8 +10,8 @@
           "keyAlias": "test",
           "keyPassword": "0000001D0C7C0DBDEC7574D2DD0971B7D76766F4110BD811719D13FFBB74FB9F18BCC4A8228A0A70A6DD7A3112",
           "signAlg": "SHA256withECDSA",
-          "profile": "D:/Projects/SoftwareEngineering/4.10/team-project-26spring-26s-7/certificates/testDebug.p7b",
-          "certpath": "D:/Projects/SoftwareEngineering/4.10/team-project-26spring-26s-7/certificates/test.cer"
+          "profile": "../certificates/testDebug.p7b",
+          "certpath": "../certificates/test.cer"
         }
       }
     ],
