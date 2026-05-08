@@ -395,7 +395,8 @@ export class TravelRepository {
       deleted_at: travel.deletedAt ?? 0,
       last_synced_at: Date.now(),
       version: travel.version ?? 1,
-      sensitivity: 'S1'
+      sensitivity: 'S1',
+      is_public: travel.isPublic ? 1 : 0
     };
 
     try {
