@@ -19,8 +19,9 @@ import {
 enum ReplaySettingsTab {
   STYLE = 0,
   MUSIC = 1,
-  EFFECTS = 2,
-  TRANSITION = 3
+  DISPLAY = 2,
+  EFFECTS = 3,
+  TRANSITION = 4
 }
 
 @Component
@@ -30,19 +31,34 @@ export struct ReplaySettingsSheet {
   @Prop selectedBgmId: ReplayBgmId = ReplayMusicCatalog.DEFAULT_ID
   @Prop selectedFilterId: ReplayFilterId = ReplayFilterId.NONE
   @Prop selectedTransitionType: ReplayTransitionType = ReplayTransitionType.FADE
-  @Prop enableRipple: boolean = false
   @Prop enableRouteAnimation: boolean = false
   @Prop enableBlurOverlay: boolean = false
+
   @State private activeTab: ReplaySettingsTab = ReplaySettingsTab.STYLE
+  @State private activeStyleKitId: ReplayStyleKitId = ReplayStyleKitCatalog.DEFAULT_ID
+  @State private activeBgmId: ReplayBgmId = ReplayMusicCatalog.DEFAULT_ID
+  @State private activeFilterId: ReplayFilterId = ReplayFilterId.NONE
+  @State private activeTransitionType: ReplayTransitionType = ReplayTransitionType.FADE
+  @State private activeEnableRouteAnimation: boolean = false
+  @State private activeEnableBlurOverlay: boolean = false
+  @State private feedbackKey: string = ''
 
   onClose?: () => void
   onStyleChange?: (styleKitId: ReplayStyleKitId) => void
   onBgmChange?: (bgmId: ReplayBgmId) => void
   onFilterChange?: (filterId: ReplayFilterId) => void
   onTransitionChange?: (transitionType: ReplayTransitionType) => void
-  onRippleToggle?: (enabled: boolean) => void
   onRouteAnimationToggle?: (enabled: boolean) => void
   onBlurOverlayToggle?: (enabled: boolean) => void
+
+  aboutToAppear(): void {
+    this.activeStyleKitId = this.selectedStyleKitId
+    this.activeBgmId = this.selectedBgmId
+    this.activeFilterId = this.selectedFilterId
+    this.activeTransitionType = this.selectedTransitionType
+    this.activeEnableRouteAnimation = this.enableRouteAnimation
+    this.activeEnableBlurOverlay = this.enableBlurOverlay
+  }
 
   private close(): void {
     if (this.onClose) {
@@ -50,7 +66,50 @@ export struct ReplaySettingsSheet {
     }
   }
 
+  private triggerOptionFeedback(key: string): void {
+    this.feedbackKey = key
+    setTimeout(() => {
+      if (this.feedbackKey === key) {
+        this.feedbackKey = ''
+      }
+    }, 180)
+  }
+
+  private isHighlighted(key: string, selected: boolean): boolean {
+    return selected || this.feedbackKey === key
+  }
+
+  private getCardBackground(key: string, selected: boolean): string {
+    return this.isHighlighted(key, selected) ? 'rgba(24, 144, 255, 0.08)' : AppColors.CARD_BG
+  }
+
+  private getCardBorderColor(key: string, selected: boolean): string {
+    return this.isHighlighted(key, selected) ? AppColors.PRIMARY : AppColors.DIVIDER
+  }
+
+  private getCardBorderWidth(key: string, selected: boolean): number {
+    return this.isHighlighted(key, selected) ? 2 : 1
+  }
+
+  private getCardScale(key: string): number {
+    return this.feedbackKey === key ? 0.985 : 1
+  }
+
+  private getToggleCardBackground(enabled: boolean): string {
+    return enabled ? 'rgba(24, 144, 255, 0.08)' : AppColors.CARD_BG
+  }
+
+  private getToggleCardBorderColor(enabled: boolean): string {
+    return enabled ? AppColors.PRIMARY : AppColors.DIVIDER
+  }
+
+  private getToggleCardBorderWidth(enabled: boolean): number {
+    return enabled ? 2 : 1
+  }
+
   private selectStyleKit(styleKitId: ReplayStyleKitId): void {
+    this.activeStyleKitId = styleKitId
+    this.triggerOptionFeedback(`style:${styleKitId}`)
     ReplayPreferences.setStyleKitId(styleKitId)
     if (this.onStyleChange) {
       this.onStyleChange(styleKitId)
@@ -58,6 +117,8 @@ export struct ReplaySettingsSheet {
   }
 
   private selectBgm(bgmId: ReplayBgmId): void {
+    this.activeBgmId = bgmId
+    this.triggerOptionFeedback(`music:${bgmId}`)
     ReplayPreferences.setBgmId(bgmId)
     if (this.onBgmChange) {
       this.onBgmChange(bgmId)
@@ -65,6 +126,8 @@ export struct ReplaySettingsSheet {
   }
 
   private selectFilter(filterId: ReplayFilterId): void {
+    this.activeFilterId = filterId
+    this.triggerOptionFeedback(`filter:${filterId}`)
     ReplayPreferences.setFilterId(filterId)
     if (this.onFilterChange) {
       this.onFilterChange(filterId)
@@ -72,22 +135,17 @@ export struct ReplaySettingsSheet {
   }
 
   private selectTransition(transitionType: ReplayTransitionType): void {
+    this.activeTransitionType = transitionType
+    this.triggerOptionFeedback(`transition:${transitionType}`)
     ReplayPreferences.setTransitionType(transitionType)
     if (this.onTransitionChange) {
       this.onTransitionChange(transitionType)
     }
   }
 
-  private toggleRipple(): void {
-    const nextValue = !this.enableRipple
-    ReplayPreferences.setEnableRipple(nextValue)
-    if (this.onRippleToggle) {
-      this.onRippleToggle(nextValue)
-    }
-  }
-
   private toggleRouteAnimation(): void {
-    const nextValue = !this.enableRouteAnimation
+    const nextValue = !this.activeEnableRouteAnimation
+    this.activeEnableRouteAnimation = nextValue
     ReplayPreferences.setEnableRouteAnimation(nextValue)
     if (this.onRouteAnimationToggle) {
       this.onRouteAnimationToggle(nextValue)
@@ -95,7 +153,8 @@ export struct ReplaySettingsSheet {
   }
 
   private toggleBlurOverlay(): void {
-    const nextValue = !this.enableBlurOverlay
+    const nextValue = !this.activeEnableBlurOverlay
+    this.activeEnableBlurOverlay = nextValue
     ReplayPreferences.setEnableBlurOverlay(nextValue)
     if (this.onBlurOverlayToggle) {
       this.onBlurOverlayToggle(nextValue)
@@ -117,102 +176,89 @@ export struct ReplaySettingsSheet {
   }
 
   @Builder
-  private buildOptionFooter(selected: boolean) {
-    Text(selected ? '当前使用' : '选择')
-      .fontSize(AppDimens.FONT_SM)
-      .fontColor(selected ? AppColors.PRIMARY : AppColors.TEXT_HINT)
+  private buildStyleCard(item: ReplayStyleKitOption) {
+    Row({ space: 12 }) {
+      Blank()
+        .width(36)
+        .height(36)
+        .backgroundColor(item.previewColor)
+        .borderRadius(10)
+
+      Column() {
+        Text(item.title)
+          .fontSize(AppDimens.FONT_MD)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(AppColors.TEXT_PRIMARY)
+          .width('100%')
+        Text(item.subtitle)
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_HINT)
+          .width('100%')
+          .margin({ top: 4 })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      Text(this.activeStyleKitId === item.id ? '当前使用' : '点击选择')
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(this.activeStyleKitId === item.id ? AppColors.PRIMARY : AppColors.TEXT_HINT)
+    }
+    .width('100%')
+    .padding(AppDimens.PADDING_MD)
+    .backgroundColor(this.getCardBackground(`style:${item.id}`, this.activeStyleKitId === item.id))
+    .borderRadius(16)
+    .border({
+      width: this.getCardBorderWidth(`style:${item.id}`, this.activeStyleKitId === item.id),
+      color: this.getCardBorderColor(`style:${item.id}`, this.activeStyleKitId === item.id)
+    })
+    .scale({
+      x: this.getCardScale(`style:${item.id}`),
+      y: this.getCardScale(`style:${item.id}`)
+    })
+    .animation({ duration: 160, curve: Curve.EaseOut })
+    .onClick(() => {
+      this.selectStyleKit(item.id)
+    })
   }
 
   @Builder
-  private buildStyleTab() {
-    Column({ space: 12 }) {
-      Text('三套主题会即时作用到卡片、进度条、控制栏和回放详情层。')
+  private buildMusicCard(item: ReplayMusicOption) {
+    Row({ space: 12 }) {
+      Column() {
+        Text(item.title)
+          .fontSize(AppDimens.FONT_MD)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(AppColors.TEXT_PRIMARY)
+          .width('100%')
+        Text(item.subtitle)
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_HINT)
+          .width('100%')
+          .margin({ top: 4 })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      Text(this.activeBgmId === item.id ? '当前使用' : '点击选择')
         .fontSize(AppDimens.FONT_SM)
-        .fontColor(AppColors.TEXT_HINT)
-        .width('100%')
-
-      ForEach(ReplayStyleKitCatalog.list(), (item: ReplayStyleKitOption) => {
-        Row({ space: 12 }) {
-          Blank()
-            .width(36)
-            .height(36)
-            .backgroundColor(item.previewColor)
-            .borderRadius(10)
-
-          Column() {
-            Text(item.title)
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.TEXT_PRIMARY)
-              .width('100%')
-            Text(item.subtitle)
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(AppColors.TEXT_HINT)
-              .width('100%')
-              .margin({ top: 4 })
-          }
-          .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-          this.buildOptionFooter(this.selectedStyleKitId === item.id)
-        }
-        .width('100%')
-        .padding(AppDimens.PADDING_MD)
-        .backgroundColor(AppColors.CARD_BG)
-        .borderRadius(16)
-        .border({
-          width: 1,
-          color: this.selectedStyleKitId === item.id ? AppColors.PRIMARY : AppColors.DIVIDER
-        })
-        .onClick(() => {
-          this.selectStyleKit(item.id)
-        })
-      })
+        .fontColor(this.activeBgmId === item.id ? AppColors.PRIMARY : AppColors.TEXT_HINT)
     }
     .width('100%')
-  }
-
-  @Builder
-  private buildMusicTab() {
-    Column({ space: 12 }) {
-      Text('本地曲库已经接入真实资源，切歌会即时重载播放器。')
-        .fontSize(AppDimens.FONT_SM)
-        .fontColor(AppColors.TEXT_HINT)
-        .width('100%')
-
-      ForEach(ReplayMusicCatalog.list(), (item: ReplayMusicOption) => {
-        Row({ space: 12 }) {
-          Column() {
-            Text(item.title)
-              .fontSize(AppDimens.FONT_MD)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.TEXT_PRIMARY)
-              .width('100%')
-            Text(item.subtitle)
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(AppColors.TEXT_HINT)
-              .width('100%')
-              .margin({ top: 4 })
-          }
-          .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-          this.buildOptionFooter(this.selectedBgmId === item.id)
-        }
-        .width('100%')
-        .padding(AppDimens.PADDING_MD)
-        .backgroundColor(AppColors.CARD_BG)
-        .borderRadius(16)
-        .border({
-          width: 1,
-          color: this.selectedBgmId === item.id ? AppColors.PRIMARY : AppColors.DIVIDER
-        })
-        .onClick(() => {
-          this.selectBgm(item.id)
-        })
-      })
-    }
-    .width('100%')
+    .padding(AppDimens.PADDING_MD)
+    .backgroundColor(this.getCardBackground(`music:${item.id}`, this.activeBgmId === item.id))
+    .borderRadius(16)
+    .border({
+      width: this.getCardBorderWidth(`music:${item.id}`, this.activeBgmId === item.id),
+      color: this.getCardBorderColor(`music:${item.id}`, this.activeBgmId === item.id)
+    })
+    .scale({
+      x: this.getCardScale(`music:${item.id}`),
+      y: this.getCardScale(`music:${item.id}`)
+    })
+    .animation({ duration: 160, curve: Curve.EaseOut })
+    .onClick(() => {
+      this.selectBgm(item.id)
+    })
   }
 
   @Builder
@@ -239,88 +285,26 @@ export struct ReplaySettingsSheet {
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
 
-      this.buildOptionFooter(this.selectedFilterId === item.id)
+      Text(this.activeFilterId === item.id ? '当前使用' : '点击选择')
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(this.activeFilterId === item.id ? AppColors.PRIMARY : AppColors.TEXT_HINT)
     }
     .width('100%')
     .padding(AppDimens.PADDING_MD)
-    .backgroundColor(AppColors.CARD_BG)
+    .backgroundColor(this.getCardBackground(`filter:${item.id}`, this.activeFilterId === item.id))
     .borderRadius(16)
     .border({
-      width: 1,
-      color: this.selectedFilterId === item.id ? AppColors.PRIMARY : AppColors.DIVIDER
+      width: this.getCardBorderWidth(`filter:${item.id}`, this.activeFilterId === item.id),
+      color: this.getCardBorderColor(`filter:${item.id}`, this.activeFilterId === item.id)
     })
+    .scale({
+      x: this.getCardScale(`filter:${item.id}`),
+      y: this.getCardScale(`filter:${item.id}`)
+    })
+    .animation({ duration: 160, curve: Curve.EaseOut })
     .onClick(() => {
       this.selectFilter(item.id)
     })
-  }
-
-  @Builder
-  private buildToggleCard(title: string, subtitle: string, enabled: boolean, onTap: () => void) {
-    Row({ space: 12 }) {
-      Column() {
-        Text(title)
-          .fontSize(AppDimens.FONT_MD)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(AppColors.TEXT_PRIMARY)
-          .width('100%')
-        Text(subtitle)
-          .fontSize(AppDimens.FONT_SM)
-          .fontColor(AppColors.TEXT_HINT)
-          .width('100%')
-          .margin({ top: 4 })
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Start)
-
-      Text(enabled ? '已开启' : '已关闭')
-        .fontSize(AppDimens.FONT_SM)
-        .fontColor(enabled ? AppColors.PRIMARY : AppColors.TEXT_HINT)
-    }
-    .width('100%')
-    .padding(AppDimens.PADDING_MD)
-    .backgroundColor(AppColors.CARD_BG)
-    .borderRadius(16)
-    .border({
-      width: 1,
-      color: enabled ? AppColors.PRIMARY : AppColors.DIVIDER
-    })
-    .onClick(() => onTap())
-  }
-
-  @Builder
-  private buildEffectsTab() {
-    Column({ space: 12 }) {
-      Text('滤镜会立即作用到照片卡片与全屏详情；波纹和玻璃面板默认保持保守配置。')
-        .fontSize(AppDimens.FONT_SM)
-        .fontColor(AppColors.TEXT_HINT)
-        .width('100%')
-
-      ForEach(ReplayFilterCatalog.list(), (item: ReplayFilterOption) => {
-        this.buildFilterCard(item)
-      })
-
-      this.buildToggleCard(
-        '节点波纹',
-        '到达新节点时，在地图上叠加一层轻量扩散反馈。',
-        this.enableRipple,
-        () => this.toggleRipple()
-      )
-
-      this.buildToggleCard(
-        '路线留痕',
-        '显示未来路线底线，并用高亮轨迹标记已经走过的路段。',
-        this.enableRouteAnimation,
-        () => this.toggleRouteAnimation()
-      )
-
-      this.buildToggleCard(
-        '玻璃详情层',
-        '展开照片详情时使用更通透的半透明面板。',
-        this.enableBlurOverlay,
-        () => this.toggleBlurOverlay()
-      )
-    }
-    .width('100%')
   }
 
   @Builder
@@ -341,25 +325,165 @@ export struct ReplaySettingsSheet {
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
 
-      this.buildOptionFooter(this.selectedTransitionType === item.id)
+      Text(this.activeTransitionType === item.id ? '当前使用' : '点击选择')
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(this.activeTransitionType === item.id ? AppColors.PRIMARY : AppColors.TEXT_HINT)
     }
     .width('100%')
     .padding(AppDimens.PADDING_MD)
-    .backgroundColor(AppColors.CARD_BG)
+    .backgroundColor(this.getCardBackground(`transition:${item.id}`, this.activeTransitionType === item.id))
     .borderRadius(16)
     .border({
-      width: 1,
-      color: this.selectedTransitionType === item.id ? AppColors.PRIMARY : AppColors.DIVIDER
+      width: this.getCardBorderWidth(`transition:${item.id}`, this.activeTransitionType === item.id),
+      color: this.getCardBorderColor(`transition:${item.id}`, this.activeTransitionType === item.id)
     })
+    .scale({
+      x: this.getCardScale(`transition:${item.id}`),
+      y: this.getCardScale(`transition:${item.id}`)
+    })
+    .animation({ duration: 160, curve: Curve.EaseOut })
     .onClick(() => {
       this.selectTransition(item.id)
     })
   }
 
   @Builder
+  private buildRouteTrailToggleCard() {
+    Row({ space: 12 }) {
+      Column() {
+        Text('路线留痕')
+          .fontSize(AppDimens.FONT_MD)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(AppColors.TEXT_PRIMARY)
+          .width('100%')
+        Text('显示未走过路线底线，并用双层高亮轨迹持续点亮已经走过的路段。')
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_HINT)
+          .width('100%')
+          .margin({ top: 4 })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      Text(this.activeEnableRouteAnimation ? '已开启' : '已关闭')
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(this.activeEnableRouteAnimation ? AppColors.PRIMARY : AppColors.TEXT_HINT)
+    }
+    .width('100%')
+    .padding(AppDimens.PADDING_MD)
+    .backgroundColor(this.getToggleCardBackground(this.activeEnableRouteAnimation))
+    .borderRadius(16)
+    .border({
+      width: this.getToggleCardBorderWidth(this.activeEnableRouteAnimation),
+      color: this.getToggleCardBorderColor(this.activeEnableRouteAnimation)
+    })
+    .scale({ x: 1, y: 1 })
+    .animation({ duration: 160, curve: Curve.EaseOut })
+    .onClick(() => {
+      this.toggleRouteAnimation()
+    })
+  }
+
+  @Builder
+  private buildBlurOverlayToggleCard() {
+    Row({ space: 12 }) {
+      Column() {
+        Text('玻璃详情层')
+          .fontSize(AppDimens.FONT_MD)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(AppColors.TEXT_PRIMARY)
+          .width('100%')
+        Text('展开照片详情时使用更通透的半透明面板。')
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_HINT)
+          .width('100%')
+          .margin({ top: 4 })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      Text(this.activeEnableBlurOverlay ? '已开启' : '已关闭')
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(this.activeEnableBlurOverlay ? AppColors.PRIMARY : AppColors.TEXT_HINT)
+    }
+    .width('100%')
+    .padding(AppDimens.PADDING_MD)
+    .backgroundColor(this.getToggleCardBackground(this.activeEnableBlurOverlay))
+    .borderRadius(16)
+    .border({
+      width: this.getToggleCardBorderWidth(this.activeEnableBlurOverlay),
+      color: this.getToggleCardBorderColor(this.activeEnableBlurOverlay)
+    })
+    .scale({ x: 1, y: 1 })
+    .animation({ duration: 160, curve: Curve.EaseOut })
+    .onClick(() => {
+      this.toggleBlurOverlay()
+    })
+  }
+
+  @Builder
+  private buildStyleTab() {
+    Column({ space: 12 }) {
+      Text('主题会立即作用到照片卡片、进度条、控制栏和回放详情层。')
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(AppColors.TEXT_HINT)
+        .width('100%')
+
+      ForEach(ReplayStyleKitCatalog.list(), (item: ReplayStyleKitOption) => {
+        this.buildStyleCard(item)
+      })
+    }
+    .width('100%')
+  }
+
+  @Builder
+  private buildMusicTab() {
+    Column({ space: 12 }) {
+      Text('切换音乐后会立刻重载播放器，确保当前只播放一首歌。')
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(AppColors.TEXT_HINT)
+        .width('100%')
+
+      ForEach(ReplayMusicCatalog.list(), (item: ReplayMusicOption) => {
+        this.buildMusicCard(item)
+      })
+    }
+    .width('100%')
+  }
+
+  @Builder
+  private buildDisplayTab() {
+    Column({ space: 12 }) {
+      Text('这里集中控制地图和照片详情层的展示方式，方便快速切换。')
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(AppColors.TEXT_HINT)
+        .width('100%')
+
+      this.buildRouteTrailToggleCard()
+      this.buildBlurOverlayToggleCard()
+    }
+    .width('100%')
+  }
+
+  @Builder
+  private buildEffectsTab() {
+    Column({ space: 12 }) {
+      Text('滤镜会立即作用到照片卡片与全屏详情，选中后会立刻反馈。')
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(AppColors.TEXT_HINT)
+        .width('100%')
+
+      ForEach(ReplayFilterCatalog.list(), (item: ReplayFilterOption) => {
+        this.buildFilterCard(item)
+      })
+    }
+    .width('100%')
+  }
+
+  @Builder
   private buildTransitionTab() {
     Column({ space: 12 }) {
-      Text('转场只作用于回放卡片，地图相机移动节奏保持原来的稳定实现。')
+      Text('转场只作用于回放卡片，地图镜头移动节奏保持稳定。')
         .fontSize(AppDimens.FONT_SM)
         .fontColor(AppColors.TEXT_HINT)
         .width('100%')
@@ -398,6 +522,7 @@ export struct ReplaySettingsSheet {
           Row({ space: 8 }) {
             this.buildTabButton(ReplaySettingsTab.STYLE, '风格')
             this.buildTabButton(ReplaySettingsTab.MUSIC, '音乐')
+            this.buildTabButton(ReplaySettingsTab.DISPLAY, '显示')
             this.buildTabButton(ReplaySettingsTab.EFFECTS, '效果')
             this.buildTabButton(ReplaySettingsTab.TRANSITION, '转场')
           }
@@ -410,6 +535,8 @@ export struct ReplaySettingsSheet {
                 this.buildStyleTab()
               } else if (this.activeTab === ReplaySettingsTab.MUSIC) {
                 this.buildMusicTab()
+              } else if (this.activeTab === ReplaySettingsTab.DISPLAY) {
+                this.buildDisplayTab()
               } else if (this.activeTab === ReplaySettingsTab.EFFECTS) {
                 this.buildEffectsTab()
               } else {

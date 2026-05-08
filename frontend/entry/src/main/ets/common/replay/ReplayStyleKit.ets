@@ -39,12 +39,13 @@ export interface ReplayStyleKit {
   overlaySecondaryTextColor: string
   moodTextColor: string
   moodBackgroundColor: string
-  rippleColor: string
   shadowColor: string
   mapPolylineColor: string
   mapPolylineWidth: number
   routePendingColor: string
   routePendingWidth: number
+  routeVisitedGlowColor: string
+  routeVisitedGlowWidth: number
   routeVisitedColor: string
   routeVisitedWidth: number
 }
@@ -78,14 +79,15 @@ const STYLE_KITS: ReplayStyleKit[] = [
     overlaySecondaryTextColor: '#5B6472',
     moodTextColor: '#D9485F',
     moodBackgroundColor: 'rgba(217, 72, 95, 0.10)',
-    rippleColor: 'rgba(24, 144, 255, 0.28)',
     shadowColor: 'rgba(15, 23, 42, 0.18)',
     mapPolylineColor: '#1890FF',
     mapPolylineWidth: 4,
-    routePendingColor: 'rgba(24, 144, 255, 0.22)',
-    routePendingWidth: 4,
+    routePendingColor: 'rgba(24, 144, 255, 0.28)',
+    routePendingWidth: 32,
+    routeVisitedGlowColor: 'rgba(24, 144, 255, 0.35)',
+    routeVisitedGlowWidth: 36,
     routeVisitedColor: '#1890FF',
-    routeVisitedWidth: 6
+    routeVisitedWidth: 24
   },
   {
     id: ReplayStyleKitId.DARK_NIGHT,
@@ -115,14 +117,15 @@ const STYLE_KITS: ReplayStyleKit[] = [
     overlaySecondaryTextColor: '#B0C5D9',
     moodTextColor: '#FFB38A',
     moodBackgroundColor: 'rgba(255, 179, 138, 0.12)',
-    rippleColor: 'rgba(103, 183, 255, 0.30)',
     shadowColor: 'rgba(0, 0, 0, 0.34)',
     mapPolylineColor: '#67B7FF',
     mapPolylineWidth: 5,
-    routePendingColor: 'rgba(103, 183, 255, 0.20)',
-    routePendingWidth: 5,
+    routePendingColor: 'rgba(103, 183, 255, 0.28)',
+    routePendingWidth: 32,
+    routeVisitedGlowColor: 'rgba(168, 216, 255, 0.35)',
+    routeVisitedGlowWidth: 36,
     routeVisitedColor: '#A8D8FF',
-    routeVisitedWidth: 7
+    routeVisitedWidth: 24
   },
   {
     id: ReplayStyleKitId.VINTAGE_FILM,
@@ -152,14 +155,15 @@ const STYLE_KITS: ReplayStyleKit[] = [
     overlaySecondaryTextColor: '#6D5642',
     moodTextColor: '#B15C3A',
     moodBackgroundColor: 'rgba(177, 92, 58, 0.12)',
-    rippleColor: 'rgba(177, 92, 58, 0.26)',
     shadowColor: 'rgba(70, 42, 20, 0.20)',
     mapPolylineColor: '#B56B36',
     mapPolylineWidth: 5,
-    routePendingColor: 'rgba(181, 107, 54, 0.18)',
-    routePendingWidth: 5,
+    routePendingColor: 'rgba(181, 107, 54, 0.28)',
+    routePendingWidth: 32,
+    routeVisitedGlowColor: 'rgba(181, 107, 54, 0.35)',
+    routeVisitedGlowWidth: 36,
     routeVisitedColor: '#B56B36',
-    routeVisitedWidth: 7
+    routeVisitedWidth: 24
   }
 ]
 

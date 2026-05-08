@@ -76,12 +76,6 @@ export struct TripReplayPage {
   @State movingIconScreenX: number = 0
   @State movingIconScreenY: number = 0
 
-  @State rippleVisible: boolean = false
-  @State rippleCenterX: number = 180
-  @State rippleCenterY: number = 320
-  @State rippleScale: number = 0.2
-  @State rippleOpacity: number = 0.42
-
   private speeds: string[] = ['0.5x', '1x', '2x']
   private playTimer: number = -1
   private readonly FADE_IN_DURATION: number = 2000
@@ -110,10 +104,14 @@ export struct TripReplayPage {
   private isPageActive: boolean = false
   private manualJumpGeneration: number = 0
   private routeTrailGeneration: number = 0
+  private routeOverlayUpdateGeneration: number = 0
   private routePoints: mapCommon.LatLng[] = []
   private staticRouteOverlay?: RemovableOverlay
   private pendingRouteOverlay?: RemovableOverlay
-  private visitedRouteOverlay?: RemovableOverlay
+  private visitedRouteGlowOverlay?: RemovableOverlay
+  private visitedRouteCoreOverlay?: RemovableOverlay
+  private lastTrailSampleLat?: number
+  private lastTrailSampleLng?: number
 
   private mapCallback: AsyncCallback<map.MapComponentController> = async (err, controller) => {
     if (!err && controller) {
@@ -287,7 +285,6 @@ export struct TripReplayPage {
     this.selectedBgmId = (preferences.replayBgmId as ReplayBgmId) || fallback.bgmId
     this.selectedFilterId = (preferences.replayFilterId as ReplayFilterId) || fallback.filterId
     this.selectedTransitionType = (preferences.replayTransitionType as ReplayTransitionType) || fallback.transitionType
-    this.enableRipple = preferences.replayEnableRipple ?? fallback.enableRipple
     this.enableRouteAnimation = preferences.replayEnableRouteAnimation ?? fallback.enableRouteAnimation
     this.enableBlurOverlay = preferences.replayEnableBlurOverlay ?? fallback.enableBlurOverlay
     this.currentStyleKit = ReplayStyleKitCatalog.getById(this.selectedStyleKitId)
@@ -433,8 +430,6 @@ export struct TripReplayPage {
     this.currentPhase = PHASE_ENTER
     this.prepareCardEnterState()
     this.isCardVisible = true
-    this.triggerRippleIfNeeded()
-
     animateTo({
       duration: this.getFadeInDuration(),
       curve: Curve.EaseInOut,
@@ -639,14 +634,19 @@ export struct TripReplayPage {
   private clearRouteOverlays(): void {
     this.staticRouteOverlay?.remove()
     this.pendingRouteOverlay?.remove()
-    this.visitedRouteOverlay?.remove()
+    this.visitedRouteGlowOverlay?.remove()
+    this.visitedRouteCoreOverlay?.remove()
     this.staticRouteOverlay = undefined
     this.pendingRouteOverlay = undefined
-    this.visitedRouteOverlay = undefined
+    this.visitedRouteGlowOverlay = undefined
+    this.visitedRouteCoreOverlay = undefined
+    this.lastTrailSampleLat = undefined
+    this.lastTrailSampleLng = undefined
   }
 
   private async addRoutePolyline(
     points: mapCommon.LatLng[],
+    color: number,
     width: number,
     zIndex: number
   ): Promise<RemovableOverlay | undefined> {
@@ -657,6 +657,7 @@ export struct TripReplayPage {
       points: points,
       clickable: false,
       visible: true,
+      color: color,
       width: width,
       zIndex: zIndex,
       geodesic: true,
@@ -665,6 +666,87 @@ export struct TripReplayPage {
       startCap: mapCommon.CapStyle.ROUND,
       endCap: mapCommon.CapStyle.ROUND
     }) as RemovableOverlay
+  }
+
+  private clampColorChannel(value: number): number {
+    return Math.max(0, Math.min(255, Math.round(value)))
+  }
+
+  private toMapColor(color: string): number {
+    const value = color.trim()
+    if (value.startsWith('#')) {
+      const hex = value.substring(1)
+      if (hex.length === 6) {
+        return 0xFF000000 + parseInt(hex, 16)
+      }
+      if (hex.length === 8) {
+        return parseInt(hex, 16)
+      }
+    }
+
+    if (value.startsWith('rgba(') && value.endsWith(')')) {
+      const rgba = value.substring(5, value.length - 1).split(',')
+      if (rgba.length === 4) {
+        const red = this.clampColorChannel(Number(rgba[0].trim()))
+        const green = this.clampColorChannel(Number(rgba[1].trim()))
+        const blue = this.clampColorChannel(Number(rgba[2].trim()))
+        const alpha = this.clampColorChannel(Number(rgba[3].trim()) * 255)
+        return alpha * 0x1000000 + red * 0x10000 + green * 0x100 + blue
+      }
+    }
+
+    if (value.startsWith('rgb(') && value.endsWith(')')) {
+      const rgb = value.substring(4, value.length - 1).split(',')
+      if (rgb.length === 3) {
+        const red = this.clampColorChannel(Number(rgb[0].trim()))
+        const green = this.clampColorChannel(Number(rgb[1].trim()))
+        const blue = this.clampColorChannel(Number(rgb[2].trim()))
+        return 0xFF000000 + red * 0x10000 + green * 0x100 + blue
+      }
+    }
+
+    return 0xFF1890FF
+  }
+
+  private shouldSkipTrailSample(latitude: number, longitude: number): boolean {
+    if (this.lastTrailSampleLat === undefined || this.lastTrailSampleLng === undefined) {
+      return false
+    }
+    const latDelta = latitude - this.lastTrailSampleLat
+    const lngDelta = longitude - this.lastTrailSampleLng
+    const distanceSq = latDelta * latDelta + lngDelta * lngDelta
+    return distanceSq < 1e-10
+  }
+
+  private async replaceVisitedRouteOverlays(points: mapCommon.LatLng[]): Promise<void> {
+    const updateGeneration = ++this.routeOverlayUpdateGeneration
+    const overlays = await Promise.all([
+      this.addRoutePolyline(
+        points,
+        this.toMapColor(this.currentStyleKit.routeVisitedGlowColor),
+        this.currentStyleKit.routeVisitedGlowWidth,
+        6
+      ),
+      this.addRoutePolyline(
+        points,
+        this.toMapColor(this.currentStyleKit.routeVisitedColor),
+        this.currentStyleKit.routeVisitedWidth,
+        7
+      )
+    ])
+    const nextGlowOverlay = overlays[0]
+    const nextCoreOverlay = overlays[1]
+
+    if (updateGeneration !== this.routeOverlayUpdateGeneration) {
+      nextGlowOverlay?.remove()
+      nextCoreOverlay?.remove()
+      return
+    }
+
+    this.visitedRouteGlowOverlay?.remove()
+    this.visitedRouteCoreOverlay?.remove()
+    this.visitedRouteGlowOverlay = nextGlowOverlay
+    this.visitedRouteCoreOverlay = nextCoreOverlay
   }
 
   private async refreshRouteOverlays(): Promise<void> {
@@ -676,6 +758,7 @@ export struct TripReplayPage {
     if (!this.enableRouteAnimation) {
       this.staticRouteOverlay = await this.addRoutePolyline(
         this.routePoints,
+        this.toMapColor(this.currentStyleKit.mapPolylineColor),
         this.currentStyleKit.mapPolylineWidth,
         5
       )
@@ -684,6 +767,7 @@ export struct TripReplayPage {
 
     this.pendingRouteOverlay = await this.addRoutePolyline(
       this.routePoints,
+      this.toMapColor(this.currentStyleKit.routePendingColor),
       this.currentStyleKit.routePendingWidth,
       4
     )
@@ -691,18 +775,55 @@ export struct TripReplayPage {
   }
 
   private async syncVisitedRouteToNodeIndex(index: number): Promise<void> {
-    this.visitedRouteOverlay?.remove()
-    this.visitedRouteOverlay = undefined
-    if (!this.enableRouteAnimation || this.routePoints.length < 2 || index <= 0) {
+    if (!this.enableRouteAnimation || this.routePoints.length < 2) {
+      this.routeOverlayUpdateGeneration += 1
+      this.visitedRouteGlowOverlay?.remove()
+      this.visitedRouteCoreOverlay?.remove()
+      this.visitedRouteGlowOverlay = undefined
+      this.visitedRouteCoreOverlay = undefined
+      this.lastTrailSampleLat = undefined
+      this.lastTrailSampleLng = undefined
+      return
+    }
+
+    if (index <= 0) {
+      this.routeOverlayUpdateGeneration += 1
+      this.visitedRouteGlowOverlay?.remove()
+      this.visitedRouteCoreOverlay?.remove()
+      this.visitedRouteGlowOverlay = undefined
+      this.visitedRouteCoreOverlay = undefined
+      this.lastTrailSampleLat = undefined
+      this.lastTrailSampleLng = undefined
       return
     }
 
     const visitedPoints = this.routePoints.slice(0, Math.min(index + 1, this.routePoints.length))
-    this.visitedRouteOverlay = await this.addRoutePolyline(
-      visitedPoints,
-      this.currentStyleKit.routeVisitedWidth,
-      7
-    )
+    const lastPoint = visitedPoints[visitedPoints.length - 1]
+    this.lastTrailSampleLat = lastPoint.latitude
+    this.lastTrailSampleLng = lastPoint.longitude
+    await this.replaceVisitedRouteOverlays(visitedPoints)
+  }
+
+  private async syncVisitedRouteToMovingPosition(index: number, latitude: number, longitude: number): Promise<void> {
+    if (!this.enableRouteAnimation || this.routePoints.length < 2) {
+      return
+    }
+    if (this.shouldSkipTrailSample(latitude, longitude)) {
+      return
+    }
+
+    const visitedPoints = this.routePoints.slice(0, Math.max(1, Math.min(index, this.routePoints.length)))
+    visitedPoints.push({
+      latitude: latitude,
+      longitude: longitude
+    })
+    if (visitedPoints.length < 2) {
+      return
+    }
+
+    this.lastTrailSampleLat = latitude
+    this.lastTrailSampleLng = longitude
+    await this.replaceVisitedRouteOverlays(visitedPoints)
   }
 
   private moveToNode(index: number): void {
@@ -760,12 +881,12 @@ export struct TripReplayPage {
         latitude: fromPos.latitude,
         longitude: fromPos.longitude
       })
-      this.movingIconScreenX = startPos.positionX
-      this.movingIconScreenY = startPos.positionY
+      this.movingIconScreenX = px2vp(startPos.positionX)
+      this.movingIconScreenY = px2vp(startPos.positionY)
     }
 
     const duration = this.getMoveDuration()
-    const intervalMs = 50
+    const intervalMs = this.playbackSpeed === '0.5x' ? 100 : 80
     const steps = Math.floor(duration / intervalMs)
     let currentStep = 0
 
@@ -784,41 +905,14 @@ export struct TripReplayPage {
           latitude: currentLat,
           longitude: currentLng
         })
-        this.movingIconScreenX = screenPos.positionX
-        this.movingIconScreenY = screenPos.positionY
+        this.movingIconScreenX = px2vp(screenPos.positionX)
+        this.movingIconScreenY = px2vp(screenPos.positionY)
+      }
+      if (this.enableRouteAnimation) {
+        void this.syncVisitedRouteToMovingPosition(this.currentNodeIndex, currentLat, currentLng)
       }
       currentStep++
     }, intervalMs)
-  }
-
-  private triggerRippleIfNeeded(): void {
-    if (!this.enableRipple || !this.replayRoute || !this.mapController) {
-      return
-    }
-    const currentNode = this.replayRoute.nodes[this.currentNodeIndex]
-    const projection = this.mapController.getProjection()
-    if (projection) {
-      const point = projection.toScreenLocation({
-        latitude: currentNode.position.latitude,
-        longitude: currentNode.position.longitude
-      })
-      this.rippleCenterX = point.positionX
-      this.rippleCenterY = point.positionY - 12
-    }
-
-    this.rippleVisible = true
-    this.rippleScale = 0.2
-    this.rippleOpacity = 0.42
-    animateTo({
-      duration: 900,
-      curve: Curve.EaseOut,
-      onFinish: () => {
-        this.rippleVisible = false
-      }
-    }, () => {
-      this.rippleScale = 1.8
-      this.rippleOpacity = 0
-    })
   }
 
   private calculateBearing(fromLat: number, fromLng: number, toLat: number, toLng: number): number {
@@ -884,7 +978,6 @@ export struct TripReplayPage {
     this.cardScale = 1
     this.cardTranslateX = 0
     this.isCardVisible = true
-    this.triggerRippleIfNeeded()
     animateTo({
       duration: 220,
       curve: Curve.EaseOut
@@ -949,29 +1042,6 @@ export struct TripReplayPage {
 
   @Builder
   private buildRipple() {
-    if (this.rippleVisible) {
-      Stack() {
-        Column()
-          .width(84)
-          .height(84)
-          .borderRadius(42)
-          .border({ width: 2, color: this.currentStyleKit.rippleColor })
-          .opacity(this.rippleOpacity)
-          .scale({ x: this.rippleScale, y: this.rippleScale })
-
-        Column()
-          .width(84)
-          .height(84)
-          .borderRadius(42)
-          .border({ width: 1, color: this.currentStyleKit.rippleColor })
-          .opacity(this.rippleOpacity * 0.72)
-          .scale({ x: this.rippleScale * 0.72, y: this.rippleScale * 0.72 })
-      }
-      .width(84)
-      .height(84)
-      .position({ x: this.rippleCenterX - 42, y: this.rippleCenterY - 42 })
-      .zIndex(40)
-    }
   }
 
   @Builder
@@ -1043,9 +1113,7 @@ export struct TripReplayPage {
         .justifyContent(FlexAlign.Center)
       }
 
-      this.buildRipple()
-
-      if (this.movingIconVisible) {
+      if (this.movingIconVisible && !this.enableRouteAnimation) {
         Column() {
           SymbolGlyph($r('sys.symbol.figure_walk'))
             .fontSize(32)
@@ -1076,15 +1144,13 @@ export struct TripReplayPage {
         .translate({ x: -140 + this.cardTranslateX, y: -90 })
         .scale({ x: this.cardScale, y: this.cardScale })
         .opacity(this.cardOpacity)
+        .zIndex(70)
       }
 
       Column() {
         ReplayProgressBar({
           value: this.progress,
           nodeCount: this.replayRoute ? this.replayRoute.nodes.length : 0,
-          nodeLabels: this.replayRoute ? this.replayRoute.nodes.map((node: ReplayNode) => {
-            return this.formatShortDate(node.timestamp)
-          }) : [],
           styleKit: this.currentStyleKit,
           onChange: (index: number) => {
             this.jumpToNode(index)
@@ -1207,7 +1273,6 @@ export struct TripReplayPage {
           selectedBgmId: this.selectedBgmId,
           selectedFilterId: this.selectedFilterId,
           selectedTransitionType: this.selectedTransitionType,
-          enableRipple: this.enableRipple,
           enableRouteAnimation: this.enableRouteAnimation,
           enableBlurOverlay: this.enableBlurOverlay,
           onClose: () => {
@@ -1238,12 +1303,6 @@ export struct TripReplayPage {
             this.selectedTransitionType = transitionType
             void this.persistReplayPreferences({
               replayTransitionType: transitionType
-            })
-          },
-          onRippleToggle: (enabled: boolean) => {
-            this.enableRipple = enabled
-            void this.persistReplayPreferences({
-              replayEnableRipple: enabled
             })
           },
           onRouteAnimationToggle: (enabled: boolean) => {

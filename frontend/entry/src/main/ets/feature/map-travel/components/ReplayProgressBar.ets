@@ -1,40 +1,76 @@
-import { AppDimens, ReplayStyleKit, ReplayStyleKitCatalog } from '../../../common'
+import { ReplayStyleKit, ReplayStyleKitCatalog } from '../../../common'
 
 @Component
 export struct ReplayProgressBar {
   @Prop value: number = 0
   @Prop nodeCount: number = 0
-  @Prop nodeLabels: string[] = []
   @Prop styleKit: ReplayStyleKit = ReplayStyleKitCatalog.getById(ReplayStyleKitCatalog.DEFAULT_ID)
 
   onChange?: (index: number) => void
 
+  private readonly MAX_VISIBLE_MARKERS: number = 8
+  private readonly CURRENT_MARKER_SIZE: number = 12
+  private readonly DEFAULT_MARKER_SIZE: number = 8
+  private readonly TRACK_EDGE_INSET: number = 4
+
+  private getCurrentIndex(): number {
+    if (this.nodeCount <= 1) {
+      return 0
+    }
+    return Math.round((this.value / 100) * (this.nodeCount - 1))
+  }
+
+  private shouldShowMarkers(): boolean {
+    return this.nodeCount >= 2 && this.nodeCount <= this.MAX_VISIBLE_MARKERS
+  }
+
+  private buildMarkerIndexes(): number[] {
+    const indexes: number[] = []
+    for (let i = 0; i < this.nodeCount; i++) {
+      indexes.push(i)
+    }
+    return indexes
+  }
+
+  @Builder
+  private buildMarkerLayer() {
+    if (this.shouldShowMarkers()) {
+      Row() {
+        ForEach(this.buildMarkerIndexes(), (index: number) => {
+          Column()
+            .width(index === this.getCurrentIndex() ? this.CURRENT_MARKER_SIZE : this.DEFAULT_MARKER_SIZE)
+            .height(index === this.getCurrentIndex() ? this.CURRENT_MARKER_SIZE : this.DEFAULT_MARKER_SIZE)
+            .borderRadius(index === this.getCurrentIndex()
+              ? this.CURRENT_MARKER_SIZE / 2
+              : this.DEFAULT_MARKER_SIZE / 2)
+            .backgroundColor(index <= this.getCurrentIndex()
+              ? this.styleKit.progressSelectedColor
+              : this.styleKit.progressTrackColor)
+        })
+      }
+      .width('100%')
+      .padding({
+        left: this.TRACK_EDGE_INSET,
+        right: this.TRACK_EDGE_INSET
+      })
+      .justifyContent(FlexAlign.SpaceBetween)
+      .hitTestBehavior(HitTestMode.None)
+    }
+  }
+
   build() {
     Column() {
-      if (this.nodeLabels.length > 0) {
-        Row() {
-          ForEach(this.nodeLabels, (label: string, index: number) => {
-            Text(label)
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(this.styleKit.progressLabelColor)
-              .layoutWeight(1)
-              .textAlign(index === 0 ? TextAlign.Start : (index === this.nodeLabels.length - 1 ? TextAlign.End : TextAlign.Center))
-          })
-        }
-        .width('100%')
-      }
-
-      Row() {
+      Stack({ alignContent: Alignment.Center }) {
         Slider({
           value: this.value,
           min: 0,
           max: 100,
           step: this.nodeCount > 1 ? 100 / (this.nodeCount - 1) : 1
         })
-          .layoutWeight(1)
+          .width('100%')
           .trackColor(this.styleKit.progressTrackColor)
           .selectedColor(this.styleKit.progressSelectedColor)
-          .blockColor(this.styleKit.progressBlockColor)
+          .blockColor(this.styleKit.progressSelectedColor)
           .onChange((value: number) => {
             const index = this.nodeCount > 1
               ? Math.round((value / 100) * (this.nodeCount - 1))
@@ -43,10 +79,12 @@ export struct ReplayProgressBar {
               this.onChange(index)
             }
           })
+
+        this.buildMarkerLayer()
       }
       .width('100%')
-      .alignItems(VerticalAlign.Center)
-      .margin({ top: 8 })
+      .height(28)
+      .margin({ top: 6 })
     }
     .width('100%')
   }
