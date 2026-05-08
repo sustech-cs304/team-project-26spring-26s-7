@@ -462,6 +462,24 @@ export class RdbHelper {
     await store.delete(predicates);
   }
 
+  /**
+   * 注销账号：清除本地所有用户数据。
+   * 不会重建数据库 schema，仅 truncate 各表。
+   */
+  async wipeAllUserData(): Promise<void> {
+    const store = await this.getStore();
+    const tables = ['memory_nodes', 'travels', 'sync_queue', 'app_sync_state', 'user_profile'];
+    for (let i = 0; i < tables.length; i++) {
+      const predicates = new rdb.RdbPredicates(tables[i]);
+      try {
+        await store.delete(predicates);
+      } catch (err) {
+        logger.error(TAG, `wipeAllUserData: failed to clear ${tables[i]}: ${JSON.stringify(err)}`);
+      }
+    }
+    logger.info(TAG, 'wipeAllUserData done');
+  }
+
   /** 保存用户 profile 到 user_profile 表（id=1 的单行） */
   async saveUserProfile(displayName: string, avatarPath: string, bio: string): Promise<void> {
     logger.info(TAG, `saveUserProfile CALLED: displayName=${displayName}, avatarPath=${avatarPath}, bio=${bio}`);

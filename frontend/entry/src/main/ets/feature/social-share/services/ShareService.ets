@@ -24,6 +24,7 @@ import {
 import { logger } from '../../../common/utils/Logger'
 import {
   ReplaceLink,
+  RevokeByTripOk,
   SharePublishOk,
   SharePublishRequest,
   SharePublishResponse,
@@ -183,6 +184,49 @@ export class ShareService {
     } catch (e) {
       const be = e as BusinessError
       return errResult(0, 'NETWORK_ERROR', be?.message ?? JSON.stringify(e))
+    } finally {
+      httpReq.destroy()
+    }
+  }
+
+  /**
+   * 关停某 trip 的全部分享 — 当用户把 trip 从公开切换到私密时调用。
+   * 调用 POST /api/v1/share/revoke-by-trip (v0.8)。
+   *
+   * 失败处理：网络错误等不该阻塞 trip 保存本身（隐私设置已经在 RDB 写好），
+   * 调用方应该 fire-and-forget 这个调用，最多 log 一行警告。
+   *
+   * @param tripId  本地 RDB 里 Trip.id（与 publish 时上传的 tripData.tripId 一致）
+   * @returns       后端实际撤销的链接条数（0 = 这个 trip 没分享或已都失活）
+   */
+  async revokeByTrip(tripId: string): Promise<ShareCallResult<RevokeByTripOk>> {
+    const url = `${this.baseUrl}${ShareEndpoints.REVOKE_BY_TRIP}`
+    logger.info(TAG, `POST ${url} tripId=${tripId}`)
+
+    const httpReq = http.createHttp()
+    try {
+      const options: http.HttpRequestOptions = {
+        method: http.RequestMethod.POST,
+        header: { 'Content-Type': 'application/json' },
+        readTimeout: HttpTimeout.DEFAULT,
+        connectTimeout: HttpTimeout.DEFAULT,
+        expectDataType: http.HttpDataType.OBJECT,
+        extraData: JSON.stringify({ tripId }),
+      }
+      const resp = await httpReq.request(url, options)
+      const parsed = parseEnvelope<RevokeByTripOk>(resp.result)
+      if (resp.responseCode === 200 && parsed.code === 0 && parsed.data) {
+        logger.info(TAG, `revoked ${parsed.data.revokedCount} shares for trip=${tripId}`)
+        return okResult(parsed.data)
+      }
+      const errMsg = parsed.message || `HTTP ${resp.responseCode}`
+      logger.warn(TAG, `revokeByTrip failed: ${errMsg}`)
+      return errResult(parsed.code || resp.responseCode, errMsg, parsed.detail)
+    } catch (e) {
+      const be = e as BusinessError
+      const msg = `Network error: ${be?.message ?? JSON.stringify(e)}`
+      logger.warn(TAG, msg)
+      return errResult(0, 'NETWORK_ERROR', msg)
     } finally {
       httpReq.destroy()
     }

@@ -229,7 +229,7 @@ export struct TripDetailPage {
   private handleDeleteTrip(): void {
     AlertDialog.show({
       title: '删除旅行',
-      message: '确定要删除「' + this.tripName + '」吗？此操作不可撤销。',
+      message: '确定要删除「' + this.tripName + '」吗？此操作不可撤销，但不会删除该旅行下的节点，这些节点会保留。',
       primaryButton: {
         value: '取消',
         action: () => {}

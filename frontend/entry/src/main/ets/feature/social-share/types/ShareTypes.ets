@@ -94,6 +94,13 @@ export interface ShareStatusOk {
   publishedAt: number
 }
 
+/** POST /api/v1/share/revoke-by-trip 响应 data 字段（v0.8） */
+export interface RevokeByTripOk {
+  tripId: string
+  /** 实际被这次撤销翻成 PRIVATE 的分享条数（已 revoked / 已自然过期的不算） */
+  revokedCount: number
+}
+
 /** 错误码（§4.5） */
 export interface SharePhotoIssue {
   nodeId?: string
@@ -129,5 +136,7 @@ export class ShareErrorCode {
   static readonly INVALID_EXPIRY: number = 40007
   static readonly RATE_LIMITED: number = 42901
   static readonly NOT_FOUND_OR_EXPIRED: number = 40401
+  /** v0.8: trip 改私密 → 该分享已被 owner 撤销 */
+  static readonly REVOKED_BY_OWNER_PRIVATE: number = 40402
   static readonly INTERNAL_ERROR: number = 50000
 }
