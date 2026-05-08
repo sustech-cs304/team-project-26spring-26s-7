@@ -2,7 +2,7 @@ import { router, promptAction } from '@kit.ArkUI'
 import { common } from '@kit.AbilityKit'
 import { http } from '@kit.NetworkKit'
 import { pasteboard } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens, getDataService, RouterParam, SharePlatform } from '../../../common'
+import { AppColors, AppDimens, getDataService, ReplayPreferences, RouterParam, SharePlatform } from '../../../common'
 import type { MemoryNode, Trip } from '../../../common'
 import { ShareErrorMapper } from '../services/ShareErrorMapper'
 import { SharePhoto, ShareService } from '../services/ShareService'
@@ -11,6 +11,7 @@ import { SharePreflight } from '../services/SharePreflight'
 import { SystemShareService, SystemSharePayload } from '../services/SystemShareService'
 import {
   ReplaceLink,
+  ReplayPrefsForShare,
   SharePhotoIssue,
   SharePublishNode,
   SharePublishRequest,
@@ -149,7 +150,22 @@ export struct SharePage {
         return
       }
 
-      const result = await this.shareService.publish(req, photos, hours, minutes, replace)
+      // v1.0：把当前 AppStorage 里的回放偏好（用户在 ReplaySettingsSheet 调过的设置）
+      // 顺路上传，让 /sreplay 页面与发布者本机的视觉风格保持一致。
+      // ReplayPreferencesState 字段名 / 值都是 ArkTS enum 字符串 value，与
+      // ReplayPrefsForShare wire 字段一一对应。
+      const replayState = ReplayPreferences.getState()
+      const replayPrefs: ReplayPrefsForShare = {
+        styleKitId: replayState.styleKitId,
+        bgmId: replayState.bgmId,
+        filterId: replayState.filterId,
+        transitionType: replayState.transitionType,
+        enableBlurOverlay: replayState.enableBlurOverlay,
+        enableRouteAnimation: replayState.enableRouteAnimation,
+      }
+
+      const result = await this.shareService.publish(
+        req, photos, hours, minutes, replace, replayPrefs)
       if (result.ok && result.data) {
         this.shareUrl = result.data.url
         this.copyText = `我刚分享了一段旅行：${req.tripName}\n${result.data.url}`
