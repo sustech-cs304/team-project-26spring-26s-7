@@ -65,6 +65,10 @@ export class SyncManager {
     SyncManager.syncing = true
     try {
       await SyncManager.syncAllLocalToCloud()
+      // syncAllLocalToCloud 已对全量本地数据按当前状态推送到云端，
+      // sync_queue 里残留的离线 CRUD 记录此时已被覆盖，全部清空以避免 pendingCount 永不归零，
+      // 也避免下次任何手动调用 pushLocalNow 时把过期 payload 再推一次。
+      await RdbHelper.getInstance().clearSyncQueue()
       await RdbHelper.getInstance().setSyncState('last_push_at', Date.now())
     } finally {
       SyncManager.syncing = false
@@ -103,28 +107,39 @@ export class SyncManager {
         hilog.info(DOMAIN, TAG, `[handleItem] travel upsert success cloudId=${cloudId}`)
         await new TravelRepository().updateSyncMetadata(item.entityId, cloudId, 'synced', Date.now())
       } else if (item.entityType === 'travel' && item.operation === 'delete') {
+        // Bug 1 修复关键点：删 travel 时**只删 cloudDB 行**，不再 deleteDirectoryRecursively
+        // 整个 travels/<T>/ 目录。原因：在我们的设计里 deleteTravel 只是软删 travel 元数据，
+        // 子节点会被迁移到 UNCATEGORIZED（不删）。它们的图片文件仍然保留在原 travels/<T>/nodes/<N>/
+        // 路径下，photoManifest 也指向那里。如果这里 wipe 整目录，孩子们的图就一起没了。
+        // 真正需要删图的场景在 deleteNode 那条路径上，按 photoCloudPaths 精准删。
         const data = JSON.parse(item.payload) as Record<string, string | number>
         const localId = (data.localId as string) || item.entityId
-        const cloudId = `travel_${localId}`
-        await CloudStorageService.deleteDirectoryRecursively(CloudStorageService.buildTravelPhotoRoot(localId))
-        await CloudSyncService.hardDeleteTravelByCloudId(cloudId)
+        const ownerUid = (data.ownerUid as string) || ''
+        const cloudId = (data.cloudId as string) || CloudSyncService.buildTravelCloudId(ownerUid, localId)
+        await CloudSyncService.hardDeleteTravelByCloudId(cloudId, ownerUid)
         await new TravelRepository().updateSyncMetadata(item.entityId, cloudId, 'synced', Date.now())
       } else if (item.entityType === 'memory_node' && item.operation === 'upsert') {
         const cloudId = await CloudSyncService.upsertMemoryNode(item.payload)
         await new MemoryNodeRepository().updateSyncMetadata(item.entityId, cloudId, 'synced', Date.now())
       } else if (item.entityType === 'memory_node' && item.operation === 'delete') {
+        // 删节点时按 photoCloudPaths 精准删每张图（这些路径来自 photoManifest，是云端真实位置）。
+        // 不再 deleteDirectoryRecursively(travels/<currentTravelId>/nodes/<N>/) —— 节点可能跨过 travel
+        // （比如经历过 deleteTravel 进入 UNCATEGORIZED），currentTravelId='-1' 但实际文件在原 travel 目录，
+        // 那条 wipe 既删错地方又会顺手把别的孤儿文件牵连。
         const data = JSON.parse(item.payload) as Record<string, string | number | string[]>
         const localId = (data.localId as string) || item.entityId
-        const travelId = (data.travelId as string) || ''
-        const cloudId = `node_${localId}`
+        const ownerUid = (data.ownerUid as string) || ''
+        const cloudId = (data.cloudId as string) || CloudSyncService.buildNodeCloudId(ownerUid, localId)
         const photoCloudPaths = Array.isArray(data.photoCloudPaths) ? data.photoCloudPaths as string[] : []
         for (let i = 0; i < photoCloudPaths.length; i++) {
-          await CloudStorageService.deleteFile(photoCloudPaths[i])
+          try {
+            await CloudStorageService.deleteFile(photoCloudPaths[i])
+          } catch (err) {
+            // 单张图删失败不阻断后续删除（可能是已经被删过、路径不存在等等）
+            hilog.warn(DOMAIN, TAG, `delete photo file failed: ${photoCloudPaths[i]}: ${JSON.stringify(err)}`)
+          }
         }
-        if (travelId.length > 0) {
-          await CloudStorageService.deleteDirectoryRecursively(CloudStorageService.buildNodePhotoDir(travelId, localId))
-        }
-        await CloudSyncService.hardDeleteMemoryNodeByCloudId(cloudId)
+        await CloudSyncService.hardDeleteMemoryNodeByCloudId(cloudId, ownerUid)
         await new MemoryNodeRepository().updateSyncMetadata(item.entityId, cloudId, 'synced', Date.now())
       } else {
         logger.warn(TAG, `Skip unsupported sync item: ${item.entityType}/${item.operation}`)
@@ -156,12 +171,15 @@ export class SyncManager {
 
     for (let i = 0; i < localTravels.length; i++) {
       const travel = localTravels[i]
-      const cloudId = travel.cloudId && travel.cloudId.length > 0 ? travel.cloudId : `travel_${travel.id}`
+      const cloudId = travel.cloudId && travel.cloudId.length > 0
+        ? travel.cloudId
+        : CloudSyncService.buildTravelCloudId(user.uid, travel.id)
       localTravelMap.set(cloudId, travel)
       const payload = await CloudSyncService.buildTravelPayload(travel)
       if ((travel.deletedAt ?? 0) > 0) {
-        await CloudStorageService.deleteDirectoryRecursively(CloudStorageService.buildTravelPhotoRoot(travel.id))
-        await CloudSyncService.hardDeleteTravelByCloudId(cloudId)
+        // 与 handleItem('travel','delete') 同款修法：只删 cloudDB 行，不再 wipe travels/<T>/ 整目录。
+        // 子节点（已迁到 UNCATEGORIZED）的图片仍然在 travels/<T>/nodes/<N>/ 下被引用，不能动。
+        await CloudSyncService.hardDeleteTravelByCloudId(cloudId, user.uid)
       } else {
         await CloudSyncService.upsertTravel(payload)
       }
@@ -170,12 +188,23 @@ export class SyncManager {
 
     for (let i = 0; i < localNodes.length; i++) {
       const node = localNodes[i]
-      const cloudId = node.cloudId && node.cloudId.length > 0 ? node.cloudId : `node_${node.id}`
+      const cloudId = node.cloudId && node.cloudId.length > 0
+        ? node.cloudId
+        : CloudSyncService.buildNodeCloudId(user.uid, node.id)
       localNodeMap.set(cloudId, node)
       const payload = await CloudSyncService.buildNodePayload(node)
       if ((node.deletedAt ?? 0) > 0) {
-        await CloudStorageService.deleteDirectoryRecursively(CloudStorageService.buildNodePhotoDir(node.travelId, node.id))
-        await CloudSyncService.hardDeleteMemoryNodeByCloudId(cloudId)
+        // 按 photoManifest 精准删每张图，避免按 currentTravelId 拼出来的目录指错地方
+        // （跨 travel 的节点 currentTravelId='-1' 但实际文件在原 travel 目录）。
+        const manifestPaths = SyncManager.parsePhotoManifest(node.photoManifest ?? '')
+        for (let p = 0; p < manifestPaths.length; p++) {
+          try {
+            await CloudStorageService.deleteFile(manifestPaths[p])
+          } catch (err) {
+            hilog.warn(DOMAIN, TAG, `delete node photo failed: ${manifestPaths[p]}: ${JSON.stringify(err)}`)
+          }
+        }
+        await CloudSyncService.hardDeleteMemoryNodeByCloudId(cloudId, user.uid)
       } else {
         await CloudSyncService.upsertMemoryNode(payload)
         await SyncManager.syncNodePhotosForUpload(node)
@@ -193,27 +222,9 @@ export class SyncManager {
       if (!cloudId || localTravelMap.has(cloudId)) {
         continue
       }
-      const deletedTravel: Trip = {
-        id: cloudId.replace('travel_', ''),
-        name: cloudTravel.name,
-        description: cloudTravel.description,
-        coverPhoto: cloudTravel.coverPhoto,
-        isPublic: cloudTravel.isPublic,
-        startDate: cloudTravel.startDate,
-        endDate: cloudTravel.endDate,
-        nodeIds: cloudTravel.nodeIds,
-        totalDistance: cloudTravel.totalDistance,
-        createdAt: cloudTravel.createdAt,
-        updatedAt: Date.now(),
-        ownerUid: cloudTravel.ownerUid ?? user.uid,
-        cloudId: cloudId,
-        syncStatus: 'synced',
-        deletedAt: Date.now(),
-        lastSyncedAt: Date.now(),
-        version: Math.max(cloudTravel.version ?? 1, 999999)
-      }
-      await CloudStorageService.deleteDirectoryRecursively(CloudStorageService.buildTravelPhotoRoot(deletedTravel.id))
-      await CloudSyncService.hardDeleteTravelByCloudId(cloudId)
+      // 反向清理：fetch 已按 ownerUid 过滤，hardDelete 又加 ownerUid 闸门，
+      // 所以只会动到当前用户的行。这里只删 DB 行，不再 wipe 目录 —— 同 deletedAt 分支理由。
+      await CloudSyncService.hardDeleteTravelByCloudId(cloudId, user.uid)
     }
 
     for (let i = 0; i < cloudNodes.length; i++) {
@@ -223,30 +234,27 @@ export class SyncManager {
       if (!cloudId || localNodeMap.has(cloudId)) {
         continue
       }
-      const deletedNode: MemoryNode = {
-        id: cloudId.replace('node_', ''),
-        travelId: cloudNode.travelId,
-        title: cloudNode.title,
-        content: cloudNode.content,
-        latitude: cloudNode.latitude,
-        longitude: cloudNode.longitude,
-        poiName: cloudNode.poiName,
-        photos: cloudNode.photos,
-        mood: cloudNode.mood,
-        tags: cloudNode.tags,
-        createdAt: cloudNode.createdAt,
-        updatedAt: Date.now(),
-        nodeOrder: cloudNode.nodeOrder ?? 0,
-        ownerUid: cloudNode.ownerUid ?? user.uid,
-        cloudId: cloudId,
-        syncStatus: 'synced',
-        deletedAt: Date.now(),
-        lastSyncedAt: Date.now(),
-        version: Math.max(cloudNode.version ?? 1, 999999),
-        photoManifest: cloudNode.photoManifest ?? JSON.stringify(cloudNode.photos)
+      // 反向清理节点：按云端节点自己的 photoManifest 精准删图（这是最可靠的真相），
+      // 没有 manifest 才回退到按 cloud_id 反推的路径。
+      const cloudManifestPaths = SyncManager.parsePhotoManifest(cloudNode.photoManifest ?? '')
+      if (cloudManifestPaths.length > 0) {
+        for (let p = 0; p < cloudManifestPaths.length; p++) {
+          try {
+            await CloudStorageService.deleteFile(cloudManifestPaths[p])
+          } catch (err) {
+            hilog.warn(DOMAIN, TAG, `reverse-cleanup delete photo failed: ${cloudManifestPaths[p]}: ${JSON.stringify(err)}`)
+          }
+        }
+      } else {
+        const nodeLocalIdForPath = CloudSyncService.extractLocalIdFromCloudId(cloudId)
+        const travelLocalIdForPath = cloudNode.travelId
+          ? CloudSyncService.extractLocalIdFromCloudId(cloudNode.travelId)
+          : ''
+        if (travelLocalIdForPath.length > 0) {
+          await CloudStorageService.deleteDirectoryRecursively(CloudStorageService.buildNodePhotoDir(travelLocalIdForPath, nodeLocalIdForPath))
+        }
       }
-      await CloudStorageService.deleteDirectoryRecursively(CloudStorageService.buildNodePhotoDir(deletedNode.travelId.replace('travel_', ''), deletedNode.id))
-      await CloudSyncService.hardDeleteMemoryNodeByCloudId(cloudId)
+      await CloudSyncService.hardDeleteMemoryNodeByCloudId(cloudId, user.uid)
     }
 
     for (let i = 0; i < localNodes.length; i++) {
@@ -254,7 +262,9 @@ export class SyncManager {
       if ((node.deletedAt ?? 0) > 0) {
         continue
       }
-      const cloudId = node.cloudId && node.cloudId.length > 0 ? node.cloudId : `node_${node.id}`
+      const cloudId = node.cloudId && node.cloudId.length > 0
+        ? node.cloudId
+        : CloudSyncService.buildNodeCloudId(user.uid, node.id)
       if (!cloudNodeIds.has(cloudId)) {
         await SyncManager.syncNodePhotosForUpload(node)
       }
@@ -302,7 +312,9 @@ export class SyncManager {
       if ((localTravel.deletedAt ?? 0) > 0) {
         continue
       }
-      const cloudId = localTravel.cloudId && localTravel.cloudId.length > 0 ? localTravel.cloudId : `travel_${localTravel.id}`
+      const cloudId = localTravel.cloudId && localTravel.cloudId.length > 0
+        ? localTravel.cloudId
+        : CloudSyncService.buildTravelCloudId(user.uid, localTravel.id)
       if (!activeCloudTravelIds.has(cloudId)) {
         await travelRepo.deleteTravel(localTravel.id)
         await travelRepo.updateSyncMetadata(localTravel.id, cloudId, 'synced', Date.now())
@@ -370,7 +382,9 @@ export class SyncManager {
       if ((localNode.deletedAt ?? 0) > 0) {
         continue
       }
-      const cloudId = localNode.cloudId && localNode.cloudId.length > 0 ? localNode.cloudId : `node_${localNode.id}`
+      const cloudId = localNode.cloudId && localNode.cloudId.length > 0
+        ? localNode.cloudId
+        : CloudSyncService.buildNodeCloudId(user.uid, localNode.id)
       if (!activeCloudNodeIds.has(cloudId)) {
         if (localNode.travelId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
           continue
@@ -423,6 +437,20 @@ export class SyncManager {
     if ((node.deletedAt ?? 0) > 0) {
       return
     }
+    // 用 home dir 作为上传/清理的目录前缀，而不是 node.travelId。这样跨过 travel 的节点
+    // 上传仍然落到原 travel 目录，与 photoManifest 中既有路径保持一致；下面的"清理孤儿"也只
+    // 在 home dir 范围内做，绝不会越界删别的 travel 的文件。
+    const homeDir = CloudStorageService.getNodeHomeDir(node.photoManifest ?? '', node.travelId, node.id)
+    const oldManifestPaths = SyncManager.parsePhotoManifest(node.photoManifest ?? '')
+    const oldBasenameToPath = new Map<string, string>()
+    for (let i = 0; i < oldManifestPaths.length; i++) {
+      const p = oldManifestPaths[i]
+      const slashIdx = p.lastIndexOf('/')
+      if (slashIdx >= 0) {
+        oldBasenameToPath.set(p.substring(slashIdx + 1), p)
+      }
+    }
+
     const expectedCloudFiles: Set<string> = new Set<string>()
     const manifestPaths: string[] = []
     for (let i = 0; i < node.photos.length; i++) {
@@ -430,21 +458,26 @@ export class SyncManager {
       if (!PhotoPickerUtil.photoExists(photo)) {
         continue
       }
-      const cloudPath = CloudStorageService.buildNodePhotoPath(node.travelId, node.id, photo)
+      const fileName = CloudStorageService.getFileNameFromPath(photo)
+      // 已经在旧 manifest 里出现过的图沿用旧路径（即使它的 dir 与当前 home dir 不同也保留），
+      // 没在的（新加图）落到当前 home dir。
+      const cloudPath = oldBasenameToPath.get(fileName) ?? `${homeDir}${fileName}`
       expectedCloudFiles.add(cloudPath)
       manifestPaths.push(cloudPath)
       await CloudStorageService.uploadFile(photo, cloudPath)
     }
 
-    const cloudFiles = await CloudStorageService.listFiles(CloudStorageService.buildNodePhotoDir(node.travelId, node.id))
+    // 在 home dir 下做孤儿清理：listFiles(homeDir) 出来的文件，凡是不在 expectedCloudFiles 里的就删。
+    // 之前这一步用的是 buildNodePhotoDir(node.travelId, node.id)，对跨过 travel 的节点会指向错误目录。
+    const cloudFiles = await CloudStorageService.listFiles(homeDir)
     for (let i = 0; i < cloudFiles.length; i++) {
-      const relativeCloudPath = `${CloudStorageService.buildNodePhotoDir(node.travelId, node.id)}${cloudFiles[i]}`
+      const relativeCloudPath = `${homeDir}${cloudFiles[i]}`
       if (!expectedCloudFiles.has(relativeCloudPath)) {
         await CloudStorageService.deleteFile(relativeCloudPath)
       }
     }
 
-    // 上传完成后，用正确的云端路径更新本地 DB 的 photo_manifest
+    // 上传完成后，把正确的 manifest 写回本地 DB；node.photoManifest 也即时更新。
     const manifest = JSON.stringify(manifestPaths)
     const nodeRepo = new MemoryNodeRepository()
     await nodeRepo.updatePhotoManifest(node.id, manifest)

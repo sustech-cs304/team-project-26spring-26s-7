@@ -426,7 +426,7 @@ export class AuthService {
         for (let i = 0; i < cloudTravels.length; i++) {
           const cloudId = cloudTravels[i].cloudId ?? '';
           if (cloudId.length > 0) {
-            await CloudSyncService.hardDeleteTravelByCloudId(cloudId);
+            await CloudSyncService.hardDeleteTravelByCloudId(cloudId, uid);
           }
         }
       } catch (err) {
@@ -437,7 +437,7 @@ export class AuthService {
         for (let i = 0; i < cloudNodes.length; i++) {
           const cloudId = cloudNodes[i].cloudId ?? '';
           if (cloudId.length > 0) {
-            await CloudSyncService.hardDeleteMemoryNodeByCloudId(cloudId);
+            await CloudSyncService.hardDeleteMemoryNodeByCloudId(cloudId, uid);
           }
         }
       } catch (err) {

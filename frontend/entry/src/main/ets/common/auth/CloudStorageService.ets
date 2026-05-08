@@ -117,12 +117,54 @@ export class CloudStorageService {
     return `travels/${travelId}/nodes/${nodeId}/${fileName}`
   }
 
+  /**
+   * 把一个本地文件路径在指定的 home 目录下落位。
+   * homeDir 形如 `travels/<T>/nodes/<N>/`（注意末尾要有斜杠，由调用方保证）。
+   */
+  static buildNodePhotoPathInHomeDir(homeDir: string, localPath: string): string {
+    return `${homeDir}${CloudStorageService.getFileName(localPath)}`
+  }
+
+  /**
+   * 从 photoManifest（JSON 字符串）反推节点的 "home 目录"——即第一条云路径的 dirname，
+   * 该目录就是这个节点首次上传时的 travel/node 落位。后续无论节点跨过多少次 travel，
+   * 它的图片都继续落在这里，path 由 home 决定而非 currentTravelId。
+   *
+   * manifest 为空（节点从未上传过任何图）时退回到 currentTravelId/nodeId 拼出来的目录，
+   * 表示"还没有 home，现在选一个"——之后第一次上传完成、manifest 写入，home 就此锁定。
+   */
+  static getNodeHomeDir(photoManifestJson: string, fallbackTravelId: string, nodeId: string): string {
+    if (photoManifestJson && photoManifestJson.length > 2) {
+      try {
+        const parsed = JSON.parse(photoManifestJson) as Object
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const first = parsed[0] as string
+          if (typeof first === 'string') {
+            const slashIdx = first.lastIndexOf('/')
+            if (slashIdx > 0) {
+              return first.substring(0, slashIdx + 1)
+            }
+          }
+        }
+      } catch (_) {}
+    }
+    return CloudStorageService.buildNodePhotoDir(fallbackTravelId, nodeId)
+  }
+
   static buildTravelPhotoRoot(travelId: string): string {
     return `travels/${travelId}/`
   }
 
   static buildNodePhotoDir(travelId: string, nodeId: string): string {
     return `travels/${travelId}/nodes/${nodeId}/`
+  }
+
+  /**
+   * 暴露给上层：把一个本地路径或云路径里的最后一段（文件名）取出来。
+   * RdbDataService / SyncManager 在按 home-dir 拼路径时需要。
+   */
+  static getFileNameFromPath(path: string): string {
+    return CloudStorageService.getFileName(path)
   }
 
   // ========== Profile Avatar ==========

@@ -360,7 +360,11 @@ export class MemoryNodeRepository {
       }
       if (node.photos !== undefined) {
         valueBucket['photos'] = JSON.stringify(node.photos);
-        valueBucket['photo_manifest'] = '[]';
+        // 不再把 photo_manifest 重置成 '[]'：跨 travel 时如果 manifest 被这条 reset 抹掉，
+        // 紧接着 sortNodesByVisitedAt → syncNodeOrdersToCloud 会用 sibling.travelId（新 travel）
+        // 兜底 buildPhotoManifest 算出错的路径并入队。
+        // 现在的契约：调用方（RdbDataService.updateNode）在 photos 变更后立即用 home dir 重算
+        // manifest 并通过 updatePhotoManifest 显式写回，确保同一事务结束时 manifest 始终正确。
       }
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'node id'));
