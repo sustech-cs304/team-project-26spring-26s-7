@@ -283,3 +283,65 @@ describe('RdbHelperTest', () => {
 - **@ohos.UiTest API**: https://developer.huawei.com/consumer/cn/doc/harmonyos-references/js-apis-uitest
 - **单元测试框架**: https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/unittest-guidelines
 - **关系型数据库测试**: https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/arkts-data-persistence-by-rdb-store
+
+---
+
+## 2026-05-07 Replay 增广 Phase 0 手动验证
+
+### P0 - 设置面板骨架与默认行为回归
+
+- [x] `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 已执行并通过（2026-05-07）
+- [ ] T-RP0-001: 进入 `TripReplayPage` 后，右上角除音乐按钮外新增齿轮设置按钮
+- [ ] T-RP0-002: 点击齿轮按钮后，底部弹出 `Replay Settings` 面板
+- [ ] T-RP0-003: 设置面板包含 `Style` 和 `Music` 两个 Tab，且默认进入 `Style`
+- [ ] T-RP0-004: 在 `Style` Tab 中可切换 `Minimal White / Dark Night / Vintage Film`，选中项会显示 `Current`
+- [ ] T-RP0-005: 在 `Music` Tab 中能看到当前内置曲目 `South-East Traveling`
+- [ ] T-RP0-006: 关闭设置面板后，Replay 页面原有播放、进度条、上一节点、下一节点、照片展开行为不回归
+- [ ] T-RP0-007: 退出 Replay 页面再重新进入，先前选择的 Style / Music 项仍然保留
+
+---
+
+## 2026-05-07 Replay 增广 Phase 1 手动验证
+
+### P0 - 路线级本地持久化与多 BGM
+
+- [x] `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 已执行并通过（2026-05-07）
+- [ ] T-RP1-001: `回放设置 -> 音乐` 中能看到 5 首中文命名曲目
+- [ ] T-RP1-002: 在同一条路线的 Replay 页面中切换音乐后，当前播放音轨会即时切换
+- [ ] T-RP1-003: 在同一条路线中切换风格后，关闭设置面板再打开，选中项仍保留
+- [ ] T-RP1-004: 退出该路线 Replay，再重新进入同一路线，风格与音乐选中项仍保留
+- [ ] T-RP1-005: 换到另一条从未设置过 Replay 的路线时，应使用默认 Replay 配置，而不是被上一条路线强制覆盖
+- [ ] T-RP1-006: 在路线 A 设置一种音乐，在路线 B 设置另一种音乐，再分别进入 A/B，确认两条路线的音乐选择互不串线
+- [ ] T-RP1-007: 原有播放、暂停、上一节点、下一节点、进度条跳转、照片展开行为无回归
+## 2026-05-07 Replay 澧炲箍 Phase 2 鎵嬪姩楠岃瘉
+
+### P0 - Style Kit 涓庤繘鍏ュ墠棰勮鎽樿
+
+- [x] `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 宸叉墽琛屽苟閫氳繃锛?026-05-07锛?
+- [ ] T-RP2-001: 杩涘叆 `TripReplayPage -> 鍥炴斁璁剧疆 -> 椋庢牸`锛屽彲鍦?`鏋佺畝鐧? / 鏆楀钃? / 澶嶅彜鑳剁墖` 涔嬮棿鍒囨崲
+- [ ] T-RP2-002: 鍒囨崲椋庢牸鍚庯紝鐓х墖鍗＄墖銆佸簳閮ㄦ帶鍒舵爮銆佽繘搴︽潯棰滆壊浼氱珛鍗冲彉鍖?
+- [ ] T-RP2-003: 鐐瑰嚮鍗＄墖灞曞紑瑕嗙洊灞傚悗锛屽叏灞忚鎯呭眰鐨勮儗鏅€佹枃瀛楀拰 tag 閰嶈壊浼氳窡闅?style 鍙樺寲
+- [ ] T-RP2-004: 杩涘叆 `TripDetailPage` 鏃讹紝鍙湅鍒扳€滃洖鏀鹃璁锯€濇憳瑕佸崱鐗囷紝鏄剧ず褰撳墠椋庢牸 / 闊充箰 / 婊ら暅 / 杞満
+- [ ] T-RP2-005: 閫€鍑?Replay 鍐嶈繘鍏ュ悓涓€璺嚎锛屽厛鍓嶉€夋嫨鐨?style 浠嶄繚鎸?
+## 2026-05-07 Replay 澧炲箍 Phase 3 鎵嬪姩楠岃瘉
+
+### P1 - 婊ら暅 / 娉㈢汗 / 鐜荤拑璇︽儏灞?
+
+- [x] `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 宸叉墽琛屽苟閫氳繃锛?026-05-07锛?
+- [ ] T-RP3-001: `鍥炴斁璁剧疆 -> 鏁堟灉` 涓彲鍦?`鍘熺墖 / 鑳剁墖 / 鏆栭槼 / 鍐疯皟 / 榛戠櫧` 闂村垏鎹㈡护闀?
+- [ ] T-RP3-002: 鍒囨崲婊ら暅鍚庯紝鍗＄墖涓庣収鐗囪鎯呭眰鐨勫浘鍍忛鑹叉皼鍥寸珛鍗冲彉鍖?
+- [ ] T-RP3-003: 鎵撳紑鈥滆妭鐐规尝绾光€濆悗锛屾挱鏀惧埌鏂拌妭鐐规椂鍦板浘涓婂嚭鐜拌交閲忔墿鏁ｆ晥鏋?
+- [ ] T-RP3-004: 鎵撳紑鈥滅幓鐠冭鎯呭眰鈥濆悗锛岀偣鍑荤収鐗囧崱鐗囨墦寮€璇︽儏灞傦紝闈㈡澘鑳屾櫙鏇撮€忔槑
+- [ ] T-RP3-005: Replay 椤甸潰鍙充笂瑙掑彲鐪嬪埌褰撳墠婊ら暅鍜屽凡寮€鍚壒鏁堢殑鐘舵€佹爣绛?
+- [ ] T-RP3-006: `TripDetailPage` 鐨勫洖鏀鹃璁惧崱鐗囦細鍚屾鏄剧ず鐗规晥鎽樿
+## 2026-05-07 Replay 澧炲箍 Phase 4 鎵嬪姩楠岃瘉
+
+### P1 - 杞満鍜屾挱鏀剧姸鎬佹満鍥炲綊
+
+- [x] `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 宸叉墽琛屽苟閫氳繃锛?026-05-07锛?
+- [ ] T-RP4-001: `鍥炴斁璁剧疆 -> 杞満` 涓彲鍦?`娣″叆娣″嚭 / 妯悜婊戝叆 / 杞诲井缂╂斁` 闂村垏鎹?
+- [ ] T-RP4-002: 鑷姩鎾斁鏃讹紝鍗＄墖鍒囨崲浼氭寜褰撳墠杞満妯″紡杩涘叆/閫€鍑?
+- [ ] T-RP4-003: 鐐瑰嚮鈥滀笂涓€鑺傜偣 / 涓嬩竴鑺傜偣鈥濇椂锛屼笉鍐嶇洿鎺ラ棯鏂癸紝鑰屾槸浠ュ綋鍓嶈浆鍦洪€昏緫鍒囨崲
+- [ ] T-RP4-004: 鎷栧姩杩涘害鏉¤烦鍒版柊鑺傜偣鏃讹紝鍗＄墖鍏ュ満/鍑哄満鍔ㄧ敾涓庢寜閽烦杞畬鍏ㄤ竴鑷?
+- [ ] T-RP4-005: 鍙充笂瑙掔姸鎬佹爣绛句細鏄剧ず褰撳墠杞満妯″紡锛屼究浜庢墜鍔ㄦ祴璇曟牳瀵?
+- [ ] T-RP4-006: 鎾斁銆佹殏鍋溿€佸垏鏂伴煶涔愩€佸睍寮€鐓х墖璇︽儏灞傜瓑鍘熸湁琛屼负鏃犲洖褰?

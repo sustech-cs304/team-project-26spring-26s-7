@@ -1,7 +1,12 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
+import {
+  AppColors,
+  AppDimens,
+  RouterUrls,
+  getDataService
+} from '../../../common'
 import { RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
 

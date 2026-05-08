@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import type { Trip, MemoryNode } from './types';
+import type { Trip, MemoryNode, ReplayTripPreferences } from './types';
 
 /**
  * 创建旅行输入参数（不包含 id, createdAt, updatedAt）
@@ -27,6 +27,13 @@ export interface CreateTravelInput {
   endDate: number;
   nodeIds: string[];
   totalDistance: number;
+  replayStyleKitId?: string;
+  replayBgmId?: string;
+  replayFilterId?: string;
+  replayTransitionType?: string;
+  replayEnableRipple?: boolean;
+  replayEnableRouteAnimation?: boolean;
+  replayEnableBlurOverlay?: boolean;
 }
 
 /**
@@ -41,6 +48,13 @@ export interface UpdateTravelInput {
   endDate?: number;
   nodeIds?: string[];
   totalDistance?: number;
+  replayStyleKitId?: string;
+  replayBgmId?: string;
+  replayFilterId?: string;
+  replayTransitionType?: string;
+  replayEnableRipple?: boolean;
+  replayEnableRouteAnimation?: boolean;
+  replayEnableBlurOverlay?: boolean;
 }
 
 /**
@@ -108,6 +122,16 @@ export interface IDataService {
    * 更新旅行
    */
   updateTravel(travelId: string, data: UpdateTravelInput): Promise<Trip>;
+
+  /**
+   * 获取单条路线的本地 Replay 配置
+   */
+  getTripReplayPreferences(travelId: string): Promise<ReplayTripPreferences>;
+
+  /**
+   * 仅更新单条路线的本地 Replay 配置，不进入云同步逻辑
+   */
+  updateTripReplayPreferences(travelId: string, data: ReplayTripPreferences): Promise<ReplayTripPreferences>;
 
   /**
    * 删除旅行
