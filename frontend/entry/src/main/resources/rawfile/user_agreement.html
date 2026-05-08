@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TravelPin 用户协议</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #1a1a1a;
+      --muted: #666666;
+      --link: #1890ff;
+      --hr: #e8e8e8;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111418;
+        --fg: #f5f7fa;
+        --muted: #c4ccd4;
+        --link: #69b1ff;
+        --hr: #2b333d;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "HarmonyOS Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      -webkit-text-size-adjust: 100%;
+    }
+    .container {
+      max-width: 100%;
+      padding: 20px 18px 60px;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0 0 6px;
+      font-weight: 600;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    h2 {
+      font-size: 17px;
+      margin: 24px 0 8px;
+      font-weight: 600;
+    }
+    p { margin: 8px 0; }
+    ul, ol { padding-left: 22px; margin: 8px 0; }
+    li { margin: 4px 0; }
+    hr {
+      border: 0;
+      border-top: 1px solid var(--hr);
+      margin: 24px 0;
+    }
+    .highlight {
+      background: rgba(24, 144, 255, 0.08);
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+    a { color: var(--link); text-decoration: none; }
+    .placeholder {
+      color: var(--link);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>TravelPin 用户协议</h1>
+    <div class="meta">版本 v1.0 · 生效日期：<span class="placeholder">2026-05-08</span></div>
+
+    <div class="highlight">
+      <p>欢迎您使用 TravelPin（以下简称"本应用"）。本协议是您与 TravelPin 团队（以下简称"我们"）之间就使用本应用所订立的协议。请您仔细阅读本协议，特别是免除或限制我方责任的条款。您一旦下载、安装、注册或使用本应用，即视为您已阅读并同意接受本协议全部条款。</p>
+    </div>
+
+    <h2>1. 适用范围</h2>
+    <p>本协议适用于本应用提供的全部功能与服务，包括但不限于：</p>
+    <ul>
+      <li>地图打点与旅行路径记录</li>
+      <li>记忆节点的创建、编辑、查看与删除</li>
+      <li>云端数据同步（基于华为 AGConnect 服务）</li>
+      <li>AI 文案生成（基于本地推理或可选的云端 Qwen-VL 服务）</li>
+      <li>分享链接生成与管理</li>
+    </ul>
+
+    <h2>2. 账号注册与登录</h2>
+    <p>2.1 您需通过 华为 HarmonyOS 账号 登录后才能使用云端同步与分享等功能。</p>
+    <p>2.2 您应妥善保管华为账号信息，由您账号产生的全部行为由您负责。</p>
+    <p>2.3 您可在"个人中心 → 注销账号"中永久删除您在本应用中的全部数据。注销后数据不可恢复。</p>
+
+    <h2>3. 用户行为规范</h2>
+    <p>使用本应用时，您承诺不会：</p>
+    <ul>
+      <li>上传或分享含有违法、暴力、色情、辱骂、歧视、虚假信息或侵犯他人合法权益的内容；</li>
+      <li>滥用 AI 文案生成功能生成上述内容；</li>
+      <li>通过任何手段干扰、破坏本应用的正常运行；</li>
+      <li>未经授权访问、采集其他用户的个人信息或数据；</li>
+      <li>从事任何违反中华人民共和国法律法规、社会公共道德或本协议约定的行为。</li>
+    </ul>
+    <p>对于您发布的内容，本应用接入了内容安全检测服务进行机器审核。如检测到敏感内容，相关操作将被拒绝。</p>
+
+    <h2>4. 知识产权</h2>
+    <p>4.1 本应用的软件、界面设计、商标及相关资料的全部知识产权归 TravelPin 团队所有。</p>
+    <p>4.2 您在本应用中创建的旅行内容（文字、照片等）的著作权归您所有。您授予我们一项非独占的、免费的、可全球使用的许可，以便我们为您提供同步、备份与分享服务。</p>
+
+    <h2>5. 第三方服务</h2>
+    <p>本应用集成了以下第三方服务，使用相关功能即表示您同意各服务方的协议：</p>
+    <ul>
+      <li><b>华为 HMS Core / AGConnect</b>：账号、云数据库、云存储、地图等</li>
+      <li><b>阿里云 Qwen-VL</b>：仅当您主动开启"AI 云端识别画面内容"开关时启用，用于对您选定的照片进行内容识别以辅助生成文案</li>
+    </ul>
+
+    <h2>6. 服务变更、中止与终止</h2>
+    <p>6.1 我们可能根据业务需要更新或调整本应用的功能。重大变更将通过应用内通知或新版本公告告知您。</p>
+    <p>6.2 我们可能因维护、升级或不可抗力等原因暂停服务，对此造成的不便我们将尽力降低影响。</p>
+    <p>6.3 如您违反本协议或法律规定，我们有权立即中止或终止向您提供服务。</p>
+
+    <h2>7. 免责声明</h2>
+    <p>7.1 本应用按"现状"提供，我们不对本应用所提供的任何 AI 生成结果的准确性、完整性、合时性作出保证。</p>
+    <p>7.2 您应自行承担使用本应用所产生的风险，包括但不限于因网络故障、设备损坏、第三方服务变更等导致的内容丢失。</p>
+    <p>7.3 在适用法律允许的最大范围内，我们对任何间接、附带、特殊、衍生性损害不承担责任。</p>
+
+    <h2>8. 法律适用与争议解决</h2>
+    <p>8.1 本协议的订立、生效、解释、履行均适用 中华人民共和国 法律。</p>
+    <p>8.2 因本协议或本应用的使用引起的任何争议，双方应友好协商解决；协商不成的，任何一方均可向 <span class="placeholder">深圳市南山区</span> 有管辖权的人民法院提起诉讼。</p>
+
+    <h2>9. 联系方式</h2>
+    <p>如您对本协议有任何疑问、意见或建议，欢迎通过以下方式与我们联系：</p>
+    <ul>
+      <li>开发主体：<span class="placeholder">SUSTech-SE-26S7（南方科技大学软件工程课程 26S-7 小组）</span></li>
+      <li>联系邮箱：<span class="placeholder">your-team@example.com</span></li>
+    </ul>
+
+    <hr>
+    <p class="meta">本协议条款的最终解释权归 TravelPin 团队所有。</p>
+  </div>
+</body>
+</html>

@@ -51,6 +51,14 @@ struct Index {
     this.context.terminateSelf()
   }
 
+  private openUserAgreement(): void {
+    router.pushUrl({ url: RouterUrls.USER_AGREEMENT })
+  }
+
+  private openPrivacyPolicy(): void {
+    router.pushUrl({ url: RouterUrls.PRIVACY_POLICY })
+  }
+
   build() {
     Stack() {
       Column() {
@@ -108,9 +116,29 @@ struct Index {
             .lineHeight(22)
             .textAlign(TextAlign.Start)
         }
-        .height(280)
+        .height(260)
         .scrollBar(BarState.Auto)
-        .margin({ bottom: 20 })
+        .margin({ bottom: 12 })
+
+        Row() {
+          Text('查看完整内容：')
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor(AppColors.TEXT_HINT)
+          Text('《用户协议》')
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor(AppColors.PRIMARY)
+            .onClick(() => this.openUserAgreement())
+          Text(' · ')
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor(AppColors.TEXT_HINT)
+          Text('《隐私政策》')
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor(AppColors.PRIMARY)
+            .onClick(() => this.openPrivacyPolicy())
+        }
+        .width('100%')
+        .margin({ bottom: 16 })
+        .justifyContent(FlexAlign.Start)
 
         Row() {
           Button($r('app.string.privacy_dialog_disagree'))

@@ -494,6 +494,10 @@ export struct ProfileView {
           Divider().color(AppColors.DIVIDER)
           this.settingItem('分享链接默认有效期', this.shareLinkExpiry, () => this.showExpirySettings())
           Divider().color(AppColors.DIVIDER)
+          this.settingItem('用户协议', '', () => router.pushUrl({ url: RouterUrls.USER_AGREEMENT }))
+          Divider().color(AppColors.DIVIDER)
+          this.settingItem('隐私政策', '', () => router.pushUrl({ url: RouterUrls.PRIVACY_POLICY }))
+          Divider().color(AppColors.DIVIDER)
           this.settingItem('关于 TravelPin', 'v1.0.0', () => this.showAbout())
         }
         .margin({ top: 12 })
