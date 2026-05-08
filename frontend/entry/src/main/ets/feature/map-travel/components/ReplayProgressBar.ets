@@ -1,75 +1,90 @@
-import { AppDimens, AppColors } from '../../../common'
+import { ReplayStyleKit, ReplayStyleKitCatalog } from '../../../common'
 
-/**
- * 离散步进进度条组件
- * 用于旅程回放，只能在节点之间跳转
- */
 @Component
 export struct ReplayProgressBar {
-  @Prop value: number = 0          // 当前值 (0-100)
-  @Prop nodeCount: number = 3      // 节点总数
-  @Prop nodeLabels: string[] = []  // 节点标签（如日期）
+  @Prop value: number = 0
+  @Prop nodeCount: number = 0
+  @Prop styleKit: ReplayStyleKit = ReplayStyleKitCatalog.getById(ReplayStyleKitCatalog.DEFAULT_ID)
 
-  // 进度变化回调
   onChange?: (index: number) => void
 
-  /**
-   * 获取当前节点索引
-   */
-  get currentIndex(): number {
+  private readonly MAX_VISIBLE_MARKERS: number = 8
+  private readonly CURRENT_MARKER_SIZE: number = 12
+  private readonly DEFAULT_MARKER_SIZE: number = 8
+  private readonly TRACK_EDGE_INSET: number = 4
+
+  private getCurrentIndex(): number {
+    if (this.nodeCount <= 1) {
+      return 0
+    }
     return Math.round((this.value / 100) * (this.nodeCount - 1))
   }
 
-  /**
-   * 设置进度
-   * @param index 节点索引
-   */
-  setProgress(index: number): void {
-    if (this.nodeCount <= 1) {
-      this.value = 0
-      return
+  private shouldShowMarkers(): boolean {
+    return this.nodeCount >= 2 && this.nodeCount <= this.MAX_VISIBLE_MARKERS
+  }
+
+  private buildMarkerIndexes(): number[] {
+    const indexes: number[] = []
+    for (let i = 0; i < this.nodeCount; i++) {
+      indexes.push(i)
     }
-    this.value = (index / (this.nodeCount - 1)) * 100
+    return indexes
+  }
+
+  @Builder
+  private buildMarkerLayer() {
+    if (this.shouldShowMarkers()) {
+      Row() {
+        ForEach(this.buildMarkerIndexes(), (index: number) => {
+          Column()
+            .width(index === this.getCurrentIndex() ? this.CURRENT_MARKER_SIZE : this.DEFAULT_MARKER_SIZE)
+            .height(index === this.getCurrentIndex() ? this.CURRENT_MARKER_SIZE : this.DEFAULT_MARKER_SIZE)
+            .borderRadius(index === this.getCurrentIndex()
+              ? this.CURRENT_MARKER_SIZE / 2
+              : this.DEFAULT_MARKER_SIZE / 2)
+            .backgroundColor(index <= this.getCurrentIndex()
+              ? this.styleKit.progressSelectedColor
+              : this.styleKit.progressTrackColor)
+        })
+      }
+      .width('100%')
+      .padding({
+        left: this.TRACK_EDGE_INSET,
+        right: this.TRACK_EDGE_INSET
+      })
+      .justifyContent(FlexAlign.SpaceBetween)
+      .hitTestBehavior(HitTestMode.None)
+    }
   }
 
   build() {
     Column() {
-      // 节点标签行 - 显示节点序号 (1, 2, 3...)
-      if (this.nodeLabels.length > 0) {
-        Row() {
-          ForEach(this.nodeLabels, (label: string, index: number) => {
-            Text(label)
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor('#333333')  // 黑色字体，清晰可读
-              .layoutWeight(1)
-              .textAlign(index === 0 ? TextAlign.Start : (index === this.nodeLabels.length - 1 ? TextAlign.End : TextAlign.Center))
-          })
-        }
-        .width('100%')
-      }
-
-      // 进度条主体
-      Row() {
-        // 滑块区域
+      Stack({ alignContent: Alignment.Center }) {
         Slider({
           value: this.value,
           min: 0,
           max: 100,
           step: this.nodeCount > 1 ? 100 / (this.nodeCount - 1) : 1
         })
-          .layoutWeight(1)
-          .trackColor('#FFFFFF33')
-          .selectedColor('#1890FF')  // 主蓝色，更清晰
-          .blockColor('#FFFFFF')     // 白色滑块
+          .width('100%')
+          .trackColor(this.styleKit.progressTrackColor)
+          .selectedColor(this.styleKit.progressSelectedColor)
+          .blockColor(this.styleKit.progressSelectedColor)
           .onChange((value: number) => {
-            const index = Math.round((value / 100) * (this.nodeCount - 1))
+            const index = this.nodeCount > 1
+              ? Math.round((value / 100) * (this.nodeCount - 1))
+              : 0
             if (this.onChange) {
               this.onChange(index)
             }
           })
+
+        this.buildMarkerLayer()
       }
       .width('100%')
-      .alignItems(VerticalAlign.Center)
+      .height(28)
+      .margin({ top: 6 })
     }
     .width('100%')
   }

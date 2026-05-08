@@ -62,7 +62,14 @@ const SQL_CREATE_TRAVELS = `
     sync_status TEXT NOT NULL DEFAULT 'local_only',
     deleted_at INTEGER DEFAULT 0,
     last_synced_at INTEGER DEFAULT 0,
-    version INTEGER NOT NULL DEFAULT 1
+    version INTEGER NOT NULL DEFAULT 1,
+    replay_style_kit_id TEXT DEFAULT '',
+    replay_bgm_id TEXT DEFAULT '',
+    replay_filter_id TEXT DEFAULT '',
+    replay_transition_type TEXT DEFAULT '',
+    replay_enable_ripple INTEGER DEFAULT 0,
+    replay_enable_route_animation INTEGER DEFAULT 0,
+    replay_enable_blur_overlay INTEGER DEFAULT 0
   )
 `;
 
@@ -116,6 +123,34 @@ const SQL_ADD_TRAVEL_LAST_SYNCED_AT = `
 
 const SQL_ADD_TRAVEL_VERSION = `
   ALTER TABLE travels ADD COLUMN version INTEGER NOT NULL DEFAULT 1
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_STYLE_KIT_ID = `
+  ALTER TABLE travels ADD COLUMN replay_style_kit_id TEXT DEFAULT ''
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_BGM_ID = `
+  ALTER TABLE travels ADD COLUMN replay_bgm_id TEXT DEFAULT ''
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_FILTER_ID = `
+  ALTER TABLE travels ADD COLUMN replay_filter_id TEXT DEFAULT ''
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_TRANSITION_TYPE = `
+  ALTER TABLE travels ADD COLUMN replay_transition_type TEXT DEFAULT ''
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_ENABLE_RIPPLE = `
+  ALTER TABLE travels ADD COLUMN replay_enable_ripple INTEGER DEFAULT 0
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_ENABLE_ROUTE_ANIMATION = `
+  ALTER TABLE travels ADD COLUMN replay_enable_route_animation INTEGER DEFAULT 0
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_ENABLE_BLUR_OVERLAY = `
+  ALTER TABLE travels ADD COLUMN replay_enable_blur_overlay INTEGER DEFAULT 0
 `;
 
 const SQL_ADD_MEMORY_NODE_TITLE = `
@@ -299,6 +334,13 @@ export class RdbHelper {
       SQL_ADD_TRAVEL_DELETED_AT,
       SQL_ADD_TRAVEL_LAST_SYNCED_AT,
       SQL_ADD_TRAVEL_VERSION,
+      SQL_ADD_TRAVEL_REPLAY_STYLE_KIT_ID,
+      SQL_ADD_TRAVEL_REPLAY_BGM_ID,
+      SQL_ADD_TRAVEL_REPLAY_FILTER_ID,
+      SQL_ADD_TRAVEL_REPLAY_TRANSITION_TYPE,
+      SQL_ADD_TRAVEL_REPLAY_ENABLE_RIPPLE,
+      SQL_ADD_TRAVEL_REPLAY_ENABLE_ROUTE_ANIMATION,
+      SQL_ADD_TRAVEL_REPLAY_ENABLE_BLUR_OVERLAY,
       SQL_ADD_MEMORY_NODE_TITLE,
       SQL_ADD_MEMORY_NODE_POI_NAME,
       SQL_ADD_MEMORY_NODE_DESCRIPTION,

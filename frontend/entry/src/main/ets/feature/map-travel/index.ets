@@ -26,6 +26,7 @@ export { PhotoSelector } from './components/PhotoSelector';
 export { ReplayPhotoCard } from './components/ReplayPhotoCard';
 export { ReplayProgressBar } from './components/ReplayProgressBar';
 export { PhotoCardOverlay } from './components/PhotoCardOverlay';
+export { ReplaySettingsSheet } from './components/ReplaySettingsSheet';
 
 // Pages 导出（如需在 feature 间引用）
 export { NodeEditPage } from './pages/NodeEditPage';

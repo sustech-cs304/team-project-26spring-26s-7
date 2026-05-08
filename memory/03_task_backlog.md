@@ -43,6 +43,64 @@
 - `git diff --check` 已在 merge 阶段通过。
 - `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 已通过。
 
+---
+
+## 2026-05-07 Update: Replay Enhancement Phase 0
+
+### ✅ 已完成工作 (2026-05-07)
+
+**Replay 配置骨架**:
+- 新增 `common/replay/` 目录，抽离 Replay 偏好、风格套件、BGM 目录和特效配置枚举。
+- 新增 `ReplayPreferences`，统一管理 `replayStyleKitId`、`replayBgmId`、`replayFilterId`、`replayTransitionType` 和 `replayPreferencesVersion`。
+
+**Replay 设置面板骨架**:
+- 新增 `ReplaySettingsSheet` 组件，先提供 `Style` 和 `Music` 两个 Tab。
+- 当前 Phase 0 仅实现选择与持久化，不改变现有默认视觉和实际音轨切换行为。
+
+**TripReplayPage 接入**:
+- 右上角新增齿轮设置入口，点击可打开 Replay 设置面板。
+- 页面进入时初始化 Replay 默认偏好并同步当前选择状态。
+- 背景音乐加载路径改为从 `ReplayMusicCatalog` 读取，当前仍指向现有单曲 `South-East-Traveling.mp3`。
+
+**验证状态**:
+- `git diff --check` 已通过。
+- `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 已通过。
+- 构建输出包含仓库既有 ArkTS warnings，但无新增阻塞编译错误。
+
+### ⏳ 后续任务
+
+- Phase 1: 将真实曲库接入 `ReplayMusicCatalog`，支持多首 BGM 切换和播放器重载。
+- Phase 2: 让 `ReplayStyleKit` 真正驱动照片卡片、进度条、控制栏和路线样式。
+- 补齐素材合规记录 `references/documents/replay/assets/music-attribution.md`，在提交或分发前完成。
+
+---
+
+## 2026-05-07 Update: Replay Enhancement Phase 1
+
+### ✅ 已完成工作 (2026-05-07)
+
+**路线级本地 Replay 持久化**:
+- `travels` 表新增本地 Replay 配置列：`replay_style_kit_id`、`replay_bgm_id`、`replay_filter_id`、`replay_transition_type`。
+- `Trip` 模型和 `IDataService` 已支持读取与更新单条路线的 Replay 配置。
+- 当前实现仅适配本地 RDB，不进入专门的云同步逻辑。
+
+**多 BGM 接入**:
+- `ReplayMusicCatalog` 已接入 5 首本地音乐素材，并映射中文名称和说明。
+- `TripReplayPage` 中切换音乐后会即时重载播放器，不再只是 UI 选择。
+
+**页面行为**:
+- 进入某条路线的 Replay 页面时，会优先读取该路线的本地 Replay 配置。
+- 在 Replay 设置面板中切换风格或音乐后，会写回当前路线本地配置。
+
+**验证状态**:
+- `git diff --check` 已通过。
+- `frontend/build.ps1 --mode module -p module=entry@default assembleHap` 已通过。
+
+### ⏳ 后续任务
+
+- Phase 2: 将 `ReplayStyleKit` 真正应用到卡片、进度条、控制栏和地图样式。
+- Phase 3: 低成本视觉增强（滤镜、玻璃覆盖层、波纹等）。
+- 后续再按需要设计华为云数据库字段与同步映射，不在当前 Phase 1 范围内。
 ### ⏳ 后续任务
 
 - 增加分享发布阶段提示。
@@ -474,3 +532,26 @@ base/common/
 2. **选择第一个整合目标** - 建议从 P1.1 (common/utils) 开始
 3. **验证 DevEco Studio 配置** - 确保能够正常编译当前 frontend
 4. **设置模块化导入** - 配置 oh-package.json5 支持包名导入
+## 2026-05-07 Replay 澧炲箍 Phase 2
+
+- [x] R2.1 `ReplayStyleKit` 宸ュ巶鍗囩骇涓虹湡瀹?style token锛屾敮鎸佸崱鐗囥€佹帶鍒舵爮銆佽鎯呭眰銆佽繘搴︽潯閰嶈壊
+- [x] R2.2 `ReplayPhotoCard` 鎺ユ敹 style/filter 鍙傛暟锛岄殢 style kit 鏀瑰彉鍗＄墖鑳屾櫙銆佹枃瀛楀拰 tag
+- [x] R2.3 `ReplayProgressBar` 鎺ユ敹 style 鍙傛暟锛岃繘搴︽潯鍜屾爣绛鹃厤鑹插彲閰嶇疆
+- [x] R2.4 `TripReplayPage` 搴曢儴鎺у埗鏍忋€佸睆钂欍€佸崱鐗囨敼涓鸿鍙?style kit
+- [~] R2.5 鍦板浘 polyline 鏍峰紡鍏堟帴鍏?width锛涢鑹插洜 MapKit overlay 娓呯悊鑳藉姏闄愬埗锛屼繚鐣欎负涓嬩竴娆¤繘鍏ョ敓鏁堢殑娓愯繘澧炲己
+- [x] R2.6 `ReplaySettingsSheet` 鎵╁睍涓虹粺涓€璁剧疆鍏ュ彛锛孲tyle 閫夋嫨绔嬪嵆鐢熸晥
+- [x] R2.7 `TripDetailPage` 鏂板鈥滃洖鏀鹃璁锯€濇憳瑕佸崱鐗囷紝鍏ュ彛鍓嶅彲鏌ョ湅褰撳墠椋庢牸/闊充箰/婊ら暅/杞満
+## 2026-05-07 Replay 澧炲箍 Phase 3
+
+- [x] R3.1 `ReplayEffectOptions` 鎵╁睍涓?none / film / warm / cool / mono 婊ら暅鐩綍锛岃矾绾跨骇鏈湴鎸佷箙鍖栧凡鎺ラ€?
+- [x] R3.2 鐓х墖鍖哄煙婊ら暅浣跨敤鍥捐薄鍙犲姞灞傚疄鐜版垚鏈彲鎺х殑棰滆壊鍊惧悜
+- [x] R3.3 璇︽儏灞傛敮鎸佲€滅幓鐠冣€濋鏍兼ā寮忥紙鍗婇€忔槑闈㈡澘闄嶇骇锛屼笉寮曞叆楂橀闄╃殑 blur API锛?
+- [x] R3.4 鑺傜偣鍒拌揪鏃跺彲閫夋尝绾规晥鏋滃凡鍦?TripReplayPage 鎺ュ叆
+- [x] R3.5 Replay 鍐呴〉鍜?TripDetailPage 鍧囨柊澧炵壒鏁堟憳瑕佸弽棣堬紝涓嶅啀鏄粯榛樼殑榛戠寮€鍏?
+## 2026-05-07 Replay 澧炲箍 Phase 4
+
+- [x] R4.1 杞満鏋氫妇鍜?UI 宸插湪 Phase 2/3 鍩虹涓婅繛閫氾紝鏀寔 fade / slide / scale 涓夌妯″紡
+- [x] R4.2 `TripReplayPage` 鍗＄墖鍏ュ満/鍑哄満鍔ㄧ敾宸叉妽璞′负 opacity / scale / translate 鍙橀噺
+- [x] R4.3 slide 杞満鍦ㄨ嚜鍔ㄦ挱鏀惧拰鎵嬪姩璺宠浆鍦烘櫙涓嬪潎鐢熸晥
+- [x] R4.4 scale 杞満鍦ㄨ嚜鍔ㄦ挱鏀惧拰鎵嬪姩璺宠浆鍦烘櫙涓嬪潎鐢熸晥
+- [x] R4.5 涓婁竴鑺傜偣 / 涓嬩竴鑺傜偣 / 杩涘害鏉¤烦杞凡瀵归綈鍒板悓涓€濂楄浆鍦洪€昏緫锛屼笉鍐嶇洿鎺ョ獊鍏鍒囨崲

@@ -51,6 +51,7 @@ export { PhotoMetadataRepository } from './data/index';
 export type {
   MemoryNode,
   Trip,
+  ReplayTripPreferences,
   SyncStatus,
   CopywritingRequest,
   ShareInfo,
@@ -97,3 +98,13 @@ export {
   AiCopyResponseData,
   VisualKitResult
 } from './ai/index';
+
+// Replay config 导出
+export { ReplayPreferences } from './replay/ReplayPreferences';
+export type { ReplayPreferencesState } from './replay/ReplayPreferences';
+export { ReplayStyleKitCatalog, ReplayStyleKitId } from './replay/ReplayStyleKit';
+export type { ReplayStyleKit, ReplayStyleKitOption } from './replay/ReplayStyleKit';
+export { ReplayMusicCatalog, ReplayBgmId } from './replay/ReplayMusicCatalog';
+export type { ReplayMusicOption } from './replay/ReplayMusicCatalog';
+export { ReplayFilterId, ReplayFilterCatalog, ReplayTransitionType, ReplayTransitionCatalog, ReplayEffectsDefaults } from './replay/ReplayEffectOptions';
+export type { ReplayFilterOption, ReplayTransitionOption, ReplayEffectsState } from './replay/ReplayEffectOptions';
