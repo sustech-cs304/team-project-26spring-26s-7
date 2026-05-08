@@ -27,6 +27,7 @@ interface TravelPayload {
   updatedAt: number
   deletedAt: number
   version: number
+  isPublic: number
 }
 
 interface NodePayload {
@@ -92,6 +93,7 @@ export class CloudSyncService {
   }
 
   static async buildTravelPayload(travel: Trip): Promise<string> {
+    hilog.info(DOMAIN, TAG, `[buildTravelPayload] travel.id=${travel.id}, isPublic=${travel.isPublic}`)
     const payload: TravelPayload = {
       ownerUid: travel.ownerUid ?? '',
       localId: travel.id,
@@ -103,8 +105,10 @@ export class CloudSyncService {
       createdAt: travel.createdAt,
       updatedAt: travel.updatedAt,
       deletedAt: travel.deletedAt ?? 0,
-      version: travel.version ?? 1
+      version: travel.version ?? 1,
+      isPublic: travel.isPublic ? 1 : 0
     }
+    hilog.info(DOMAIN, TAG, `[buildTravelPayload] payload.isPublic=${payload.isPublic}, id=${travel.id}`)
     return JSON.stringify(payload)
   }
 
@@ -140,6 +144,7 @@ export class CloudSyncService {
     }
 
     const data = JSON.parse(payload) as TravelPayload
+    hilog.info(DOMAIN, TAG, `[upsertTravel] isPublic=${data.isPublic}, cloudId=${data.cloudId || `travel_${data.localId}`}, name=${data.name}`)
     const cloudId = data.cloudId || `travel_${data.localId}`
     const travel = new CloudTravel()
     travel.cloudId = cloudId
@@ -152,7 +157,10 @@ export class CloudSyncService {
     travel.updatedAt = data.updatedAt
     travel.deletedAt = data.deletedAt
     travel.version = data.version
+    travel.isPublic = data.isPublic
+    hilog.info(DOMAIN, TAG, `[upsertTravel] travel.isPublic assigned=${travel.isPublic}`)
     await databaseZone.upsert(travel)
+    hilog.info(DOMAIN, TAG, `[upsertTravel] upsert completed for cloudId=${cloudId}`)
     return cloudId
   }
 
@@ -269,7 +277,7 @@ export class CloudSyncService {
         name: record.name ?? '',
         description: '',
         coverPhoto: record.coverPhotoObjectKey ?? '',
-        isPublic: false,
+        isPublic: (record.isPublic ?? 0) === 1,
         startDate: record.startDate ?? 0,
         endDate: record.endDate ?? 0,
         nodeIds: [],

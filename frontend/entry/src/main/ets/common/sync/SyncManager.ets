@@ -98,7 +98,9 @@ export class SyncManager {
   private static async handleItem(item: SyncQueueItem): Promise<void> {
     try {
       if (item.entityType === 'travel' && item.operation === 'upsert') {
+        hilog.info(DOMAIN, TAG, `[handleItem] travel upsert payload=${item.payload}`)
         const cloudId = await CloudSyncService.upsertTravel(item.payload)
+        hilog.info(DOMAIN, TAG, `[handleItem] travel upsert success cloudId=${cloudId}`)
         await new TravelRepository().updateSyncMetadata(item.entityId, cloudId, 'synced', Date.now())
       } else if (item.entityType === 'travel' && item.operation === 'delete') {
         const data = JSON.parse(item.payload) as Record<string, string | number>
