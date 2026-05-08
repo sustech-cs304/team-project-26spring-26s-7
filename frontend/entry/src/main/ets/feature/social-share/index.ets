@@ -36,4 +36,5 @@ export {
   ShareStatusOk,
   ShareErrorCode,
   ReplaceLink,
+  RevokeByTripOk,
 } from './types/ShareTypes';

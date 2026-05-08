@@ -2,6 +2,7 @@ import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
+import { ShareService } from '../../social-share'
 
 interface TripNodeItem {
   id: string
@@ -25,8 +26,12 @@ export struct TripEditPage {
   @State isSaving: boolean = false
   @State nodes: TripNodeItem[] = []
   private orderDirty: boolean = false
+  // v0.8: 进入编辑页时记下原始 isPublic，保存时如果是 公开 → 私密
+  // 的过渡就发"关停所有分享"请求给后端
+  private originalIsPublic: boolean = false
 
   private dataService = getDataService()
+  private shareService: ShareService = new ShareService()
 
   private bumpTravelDataVersion(): void {
     const version = (AppStorage.get('travelDataVersion') as number) || 0
@@ -110,6 +115,7 @@ export struct TripEditPage {
 
       this.title = trip.name
       this.isPublic = trip.isPublic
+      this.originalIsPublic = trip.isPublic
       await this.loadNodesOnly()
     } catch (_) {
       promptAction.showToast({ message: '加载 Track 信息失败' })
@@ -151,6 +157,27 @@ export struct TripEditPage {
     this.orderDirty = true
   }
 
+  /**
+   * v0.8：trip 改私密后异步告诉后端把这条 trip 的所有公开分享关停。
+   * 失败（网络断 / 后端挂）不影响 RDB 的隐私设置，所以这里 catch 并 toast
+   * 提示一下；正常情况下用户感知不到这个调用。
+   */
+  private revokeSharesAfterPrivacyToggle(tripId: string): void {
+    void (async (): Promise<void> => {
+      try {
+        const result = await this.shareService.revokeByTrip(tripId)
+        if (result.ok && result.data && result.data.revokedCount > 0) {
+          promptAction.showToast({
+            message: `已设为私密，关停了 ${result.data.revokedCount} 条公开分享`
+          })
+        }
+        // revokedCount === 0 时静默：用户可能本来就没分享过，不打扰
+      } catch (_) {
+        promptAction.showToast({ message: '隐私已生效，但关停旧分享失败，请稍后重试' })
+      }
+    })()
+  }
+
   private async handleSave(): Promise<void> {
     const trimmedTitle = this.title.trim()
     if (trimmedTitle.length === 0) {
@@ -171,6 +198,12 @@ export struct TripEditPage {
           isPublic: this.isPublic
         })
         this.bumpTravelDataVersion()
+        // v0.8: 公开 → 私密 的过渡需要立刻关停该 trip 全部分享链接
+        // （fire-and-forget；网络失败不影响已写入本地的隐私设置）
+        if (this.originalIsPublic && !this.isPublic) {
+          this.revokeSharesAfterPrivacyToggle(this.tripId)
+        }
+        this.originalIsPublic = this.isPublic
         promptAction.showToast({ message: 'Track 已更新' })
         router.back()
         return
