@@ -453,6 +453,7 @@ export class TravelRepository {
       last_synced_at: Date.now(),
       version: travel.version ?? 1,
       sensitivity: 'S1',
+      is_public: travel.isPublic ? 1 : 0,
       replay_style_kit_id: travel.replayStyleKitId ?? '',
       replay_bgm_id: travel.replayBgmId ?? '',
       replay_filter_id: travel.replayFilterId ?? '',

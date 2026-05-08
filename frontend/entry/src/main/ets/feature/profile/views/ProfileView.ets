@@ -175,6 +175,63 @@ export struct ProfileView {
     })
   }
 
+  private handleDeleteAccount(): void {
+    // 第一步：风险提示
+    AlertDialog.show({
+      title: '注销账号',
+      message: '注销账号将永久删除您的所有云端数据（旅行记录、照片、记忆节点等），此操作不可恢复。是否继续？',
+      primaryButton: {
+        value: '取消',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '我已知晓，继续',
+        fontColor: AppColors.DANGER,
+        action: () => this.confirmDeleteAccount()
+      }
+    })
+  }
+
+  private confirmDeleteAccount(): void {
+    // 第二步：最终确认
+    AlertDialog.show({
+      title: '最终确认',
+      message: '请再次确认注销账号。点击确认后将立即开始删除数据，此操作不可撤销。',
+      primaryButton: {
+        value: '取消',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '确认注销',
+        fontColor: AppColors.DANGER,
+        action: () => { void this.performDeleteAccount() }
+      }
+    })
+  }
+
+  private async performDeleteAccount(): Promise<void> {
+    if (this.isSyncing) {
+      promptAction.showToast({ message: '同步进行中，请稍后再试' })
+      return
+    }
+    this.isSyncing = true
+    try {
+      promptAction.showToast({ message: '正在注销账号，请稍候…' })
+      await AuthService.deleteAccount()
+      const uiContext = this.getUIContext()
+      const ctx = uiContext.getHostContext() as common.UIAbilityContext
+      if (ctx) {
+        await ConsentManager.clearAllConsents(ctx)
+      }
+      promptAction.showToast({ message: '账号已注销' })
+      router.replaceUrl({ url: RouterUrls.LOGIN })
+    } catch (err) {
+      promptAction.showToast({ message: '注销失败，请检查网络后重试' })
+    } finally {
+      this.isSyncing = false
+    }
+  }
+
   private showPrivacySettings(): void {
     const cloudOn = this.aiCloudTaggingEnabled
     const message =
@@ -437,6 +494,10 @@ export struct ProfileView {
           Divider().color(AppColors.DIVIDER)
           this.settingItem('分享链接默认有效期', this.shareLinkExpiry, () => this.showExpirySettings())
           Divider().color(AppColors.DIVIDER)
+          this.settingItem('用户协议', '', () => router.pushUrl({ url: RouterUrls.USER_AGREEMENT }))
+          Divider().color(AppColors.DIVIDER)
+          this.settingItem('隐私政策', '', () => router.pushUrl({ url: RouterUrls.PRIVACY_POLICY }))
+          Divider().color(AppColors.DIVIDER)
           this.settingItem('关于 TravelPin', 'v1.0.0', () => this.showAbout())
         }
         .margin({ top: 12 })
@@ -451,8 +512,19 @@ export struct ProfileView {
           .height(52)
           .backgroundColor(AppColors.CARD_BG)
           .borderRadius(AppDimens.RADIUS_MD)
-          .margin({ top: 24, bottom: 24 })
+          .margin({ top: 24 })
           .onClick(() => this.handleLogout())
+
+        Text('注销账号')
+          .fontSize(AppDimens.FONT_MD)
+          .fontColor(AppColors.DANGER)
+          .textAlign(TextAlign.Center)
+          .width('100%')
+          .height(52)
+          .backgroundColor(AppColors.CARD_BG)
+          .borderRadius(AppDimens.RADIUS_MD)
+          .margin({ top: 12, bottom: 24 })
+          .onClick(() => this.handleDeleteAccount())
       }
       .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD })
     }

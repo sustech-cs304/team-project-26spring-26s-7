@@ -3,6 +3,8 @@
     "pages/Index",
     "pages/LoginPage",
     "pages/MainPage",
+    "pages/UserAgreementPage",
+    "pages/PrivacyPolicyPage",
     "feature/map-travel/pages/NodeEditPage",
     "feature/map-travel/pages/NodeDetailPage",
     "feature/map-travel/pages/TripEditPage",

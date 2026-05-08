@@ -15,4 +15,5 @@ export class CloudTravel extends cloudDatabase.DatabaseObject {
   public updatedAt: number | undefined
   public deletedAt: number | undefined
   public version: number | undefined
+  public isPublic: number | undefined
 }

@@ -34,6 +34,7 @@ export {
 export type { MapCenter, MapPreferenceSource, MapPreferenceState } from './utils/MapLocationPreference';
 export { ImageSanitizer } from './utils/ImageSanitizer';
 export { ConsentManager, KEY_AI_CLOUD_TAGGING_ENABLED, KEY_AI_CLOUD_TAGGING_PROMPTED } from './utils/ConsentManager';
+export { CrashReporter } from './utils/CrashReporter';
 
 // Auth 导出
 export { AuthService, CloudStorageService } from './auth';

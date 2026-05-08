@@ -375,11 +375,11 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
   <rect x="${metrics.borderWidth}" y="${metrics.borderWidth}" width="${metrics.width - metrics.borderWidth * 2}"
     height="${metrics.height - metrics.borderWidth * 2}" rx="${(metrics.height - metrics.borderWidth * 2) / 2}"
     ry="${(metrics.height - metrics.borderWidth * 2) / 2}" fill="#1D63B3" />
-  <text x="50%" y="52%" font-family="sans-serif" font-size="${metrics.fontSize}" font-weight="900"
+  <text x="50%" y="66%" font-family="sans-serif" font-size="${metrics.fontSize}" font-weight="900"
     fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">${label}</text>
-  <text x="49.2%" y="52%" font-family="sans-serif" font-size="${metrics.fontSize}" font-weight="900"
+  <text x="49.2%" y="66%" font-family="sans-serif" font-size="${metrics.fontSize}" font-weight="900"
     fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">${label}</text>
-  <text x="50.8%" y="52%" font-family="sans-serif" font-size="${metrics.fontSize}" font-weight="900"
+  <text x="50.8%" y="66%" font-family="sans-serif" font-size="${metrics.fontSize}" font-weight="900"
     fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">${label}</text>
 </svg>`
       const encoder = new util.TextEncoder()
@@ -460,7 +460,7 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
     const badgeLeft = cornerX - metrics.width / 2
     const badgeTop = Math.max(0, cornerY - metrics.height / 2)
     const textLeft = badgeLeft + (metrics.width - textWidth) / 2
-    const textTop = badgeTop + (metrics.height - 7 * scale) / 2
+    const textTop = badgeTop + (metrics.height - 7 * scale) / 2 + Math.max(2, Math.round(scale * 0.75))
 
     this.fillRoundedRect(view, canvasSize, canvasSize, badgeLeft, badgeTop, metrics.width, metrics.height,
       metrics.height / 2, MARKER_WHITE)

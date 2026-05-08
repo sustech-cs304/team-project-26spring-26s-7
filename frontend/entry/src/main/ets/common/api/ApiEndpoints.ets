@@ -57,13 +57,16 @@ export class AiEndpoints {
   static readonly MODERATE: string = `/api/${API_VERSION}/ai/moderate`
 }
 
-/** 分享服务端点（P08 API 规范 §3） */
+/** 分享服务端点（P08 API 规范 §3 + v0.8 revoke-by-trip） */
 export class ShareEndpoints {
   /** 发布分享: POST /api/v1/share/publish (multipart/form-data) */
   static readonly PUBLISH: string = `/api/${API_VERSION}/share/publish`
 
   /** 状态查询: GET /api/v1/share/{shortCode}/status */
   static readonly STATUS_PREFIX: string = `/api/${API_VERSION}/share`
+
+  /** Trip 改私密时关停其全部分享: POST /api/v1/share/revoke-by-trip */
+  static readonly REVOKE_BY_TRIP: string = `/api/${API_VERSION}/share/revoke-by-trip`
 
   /** 旧字段名（保留以避免破坏其他引用） */
   static readonly VERIFY: string = `/api/${API_VERSION}/share`

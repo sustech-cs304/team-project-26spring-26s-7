@@ -23,6 +23,11 @@ const STORE_NAME = 'ai_consent_v1';
 /** 偏好键 / AppStorage 键 */
 const KEY_CLOUD_TAGGING_ENABLED = 'aiCloudTaggingEnabled';
 const KEY_CLOUD_TAGGING_PROMPTED = 'aiCloudTaggingPrompted';
+const KEY_APP_PRIVACY_AGREED = 'appPrivacyAgreed';
+const KEY_APP_PRIVACY_VERSION = 'appPrivacyVersion';
+
+/** 隐私协议当前版本号；变更后需让用户重新同意 */
+const CURRENT_PRIVACY_VERSION = 1;
 
 /**
  * AI 云端能力的同意状态管理
@@ -116,7 +121,57 @@ export class ConsentManager {
       logger.error(TAG, `persist failed: ${JSON.stringify(err)}`);
     }
   }
+
+  // ==================== 应用级隐私协议（首启强制弹窗） ====================
+
+  /**
+   * 用户是否已经同意当前版本的应用隐私协议。
+   * AppGallery 上架要求首启必须强制弹窗，用户同意才能进入主功能。
+   */
+  static async isAppPrivacyAgreed(context: common.UIAbilityContext): Promise<boolean> {
+    try {
+      const store = await preferences.getPreferences(context, { name: STORE_NAME });
+      const agreed = await store.get(KEY_APP_PRIVACY_AGREED, false) as boolean;
+      const version = await store.get(KEY_APP_PRIVACY_VERSION, 0) as number;
+      // 协议升版需重新同意
+      return agreed === true && version >= CURRENT_PRIVACY_VERSION;
+    } catch (err) {
+      logger.error(TAG, `isAppPrivacyAgreed failed: ${JSON.stringify(err)}`);
+      return false;
+    }
+  }
+
+  /** 用户点击"同意并继续"后调用 */
+  static async setAppPrivacyAgreed(context: common.UIAbilityContext): Promise<void> {
+    try {
+      const store = await preferences.getPreferences(context, { name: STORE_NAME });
+      await store.put(KEY_APP_PRIVACY_AGREED, true);
+      await store.put(KEY_APP_PRIVACY_VERSION, CURRENT_PRIVACY_VERSION);
+      await store.flush();
+      AppStorage.setOrCreate(KEY_APP_PRIVACY_AGREED, true);
+      logger.info(TAG, `App privacy agreed at version ${CURRENT_PRIVACY_VERSION}`);
+    } catch (err) {
+      logger.error(TAG, `setAppPrivacyAgreed failed: ${JSON.stringify(err)}`);
+    }
+  }
+
+  /** 注销账号或重置时调用：清除所有同意状态 */
+  static async clearAllConsents(context: common.UIAbilityContext): Promise<void> {
+    try {
+      const store = await preferences.getPreferences(context, { name: STORE_NAME });
+      await store.clear();
+      await store.flush();
+      AppStorage.setOrCreate(KEY_CLOUD_TAGGING_ENABLED, false);
+      AppStorage.setOrCreate(KEY_CLOUD_TAGGING_PROMPTED, false);
+      AppStorage.setOrCreate(KEY_APP_PRIVACY_AGREED, false);
+      ConsentManager.loaded = false;
+      logger.info(TAG, 'All consents cleared');
+    } catch (err) {
+      logger.error(TAG, `clearAllConsents failed: ${JSON.stringify(err)}`);
+    }
+  }
 }
 
 export const KEY_AI_CLOUD_TAGGING_ENABLED: string = KEY_CLOUD_TAGGING_ENABLED;
 export const KEY_AI_CLOUD_TAGGING_PROMPTED: string = KEY_CLOUD_TAGGING_PROMPTED;
+export const KEY_APP_PRIVACY_AGREED_EXPORT: string = KEY_APP_PRIVACY_AGREED;

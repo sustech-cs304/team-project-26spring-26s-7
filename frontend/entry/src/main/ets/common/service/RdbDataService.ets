@@ -306,13 +306,15 @@ export class RdbDataService implements IDataService {
       endDate: created.endDate,
       updatedAt: created.updatedAt,
       deletedAt: created.deletedAt ?? 0,
-      version: created.version ?? 1
+      version: created.version ?? 1,
+      isPublic: created.isPublic ? 1 : 0
     })
     await this.enqueueSync('travel', created.id, 'upsert', payload);
     return created;
   }
 
   async updateTravel(travelId: string, data: UpdateTravelInput): Promise<Trip> {
+    logger.info(TAG, `[updateTravel] ENTER isPublic=${data.isPublic}, travelId=${travelId}`)
     const repoInput: RepoUpdateTravelInput = {};
     if (data.name !== undefined) {
       repoInput.name = data.name;
@@ -358,6 +360,7 @@ export class RdbDataService implements IDataService {
     if (!updated) {
       throw new Error('Failed to retrieve updated travel');
     }
+    logger.info(TAG, `[updateTravel] READ BACK isPublic=${updated.isPublic}, id=${updated.id}`)
     const payload = JSON.stringify({
       ownerUid: updated.ownerUid ?? '',
       localId: updated.id,
@@ -368,8 +371,10 @@ export class RdbDataService implements IDataService {
       endDate: updated.endDate,
       updatedAt: updated.updatedAt,
       deletedAt: updated.deletedAt ?? 0,
-      version: updated.version ?? 1
+      version: updated.version ?? 1,
+      isPublic: updated.isPublic ? 1 : 0
     })
+    logger.info(TAG, `[updateTravel] PAYLOAD isPublic=${updated.isPublic ? 1 : 0}, payload=${payload}`)
     await this.enqueueSync('travel', updated.id, 'upsert', payload);
     return updated;
   }
