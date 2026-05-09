@@ -83,6 +83,12 @@ export struct SharePage {
       this.currentTripId = params.tripId
     }
     this.syncSelectedExpiryFromStorage()
+    // v1.0.5：开始读盘加载用户的回放偏好（fire-and-forget，不阻塞 UI）。
+    // publishShare 里会再 await 一次防止刚开页面立即点分享的 race。
+    const ctxEarly = getContext(this) as common.UIAbilityContext
+    if (ctxEarly) {
+      void ReplayPreferences.ensureLoaded(ctxEarly)
+    }
     void this.publishShare()
   }
 
@@ -154,6 +160,12 @@ export struct SharePage {
       // 顺路上传，让 /sreplay 页面与发布者本机的视觉风格保持一致。
       // ReplayPreferencesState 字段名 / 值都是 ArkTS enum 字符串 value，与
       // ReplayPrefsForShare wire 字段一一对应。
+      // v1.0.5：兜底再 await 一次 ensureLoaded —— aboutToAppear 是 fire-and-forget，
+      // "刚进 SharePage 立即点分享"那条路径可能磁盘还没读完。
+      const ctxForPrefs = getContext(this) as common.UIAbilityContext
+      if (ctxForPrefs) {
+        await ReplayPreferences.ensureLoaded(ctxForPrefs)
+      }
       const replayState = ReplayPreferences.getState()
       const replayPrefs: ReplayPrefsForShare = {
         styleKitId: replayState.styleKitId,
