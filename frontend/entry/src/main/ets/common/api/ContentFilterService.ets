@@ -1,10 +1,11 @@
 import { http } from '@kit.NetworkKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { CONTENT_FILTER_BASE_URL } from './ApiEndpoints';
 
 const DOMAIN = 0x0000;
 const TAG = 'ContentFilterService';
-const FILTER_BASE_URL = 'http://172.18.35.215:9100';
+const FILTER_BASE_URL = CONTENT_FILTER_BASE_URL;
 
 export interface CheckResult {
   blocked: boolean;

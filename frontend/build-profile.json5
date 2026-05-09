@@ -1,8 +1,33 @@
 {
   "app": {
+    // ===========================================================
+    // signingConfigs:
+    //   - "default"        ← 当前 debug / 真机调试用（testDebug.p7b + test.cer）
+    //   - "releaseConfig"  ← AppGallery 上架打 release 包时切换到这个
+    //                        （release_testRelease.p7b + release.cer）
+    //                        注意 1：keyAlias / storePassword / keyPassword
+    //                              如果与 debug 不同，需要在 DevEco
+    //                              "Project Structure → Signing Configs"
+    //                              里重新生成并替换下方加密串
+    //                        注意 2：上架时把 products[0].signingConfig 改成
+    //                              "releaseConfig"，或在 DevEco 直接切换
+    // ===========================================================
     "signingConfigs": [
       {
         "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "D:/Projects/SoftwareEngineering/4.10/team-project-26spring-26s-7/certificates/release.cer",
+          "keyAlias": "test",
+          "keyPassword": "0000001DF99CCCFA09744784FD7DD8E0E93C08C1A00562E0EF0E6F7A199D2F09E579BA8392FE42EF4B08921270",
+          "profile": "D:/Projects/SoftwareEngineering/4.10/team-project-26spring-26s-7/certificates/release_testRelease.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "../certificates/1.p12",
+          "storePassword": "0000001DCCE5DE315776F3C3A9105EF05355F0C5B2243B11E6CBFFD08025C1A0E318B9EA09A436878772D07722"
+        }
+      },
+      {
+        "name": "releaseConfig",
         "type": "HarmonyOS",
         "material": {
           "storeFile": "../certificates/1.p12",
@@ -10,14 +35,15 @@
           "keyAlias": "test",
           "keyPassword": "0000001D0C7C0DBDEC7574D2DD0971B7D76766F4110BD811719D13FFBB74FB9F18BCC4A8228A0A70A6DD7A3112",
           "signAlg": "SHA256withECDSA",
-          "profile": "../certificates/testDebug.p7b",
-          "certpath": "../certificates/test.cer"
+          "profile": "../certificates/release_testRelease.p7b",
+          "certpath": "../certificates/release.cer"
         }
       }
     ],
     "products": [
       {
         "name": "default",
+        // 当前指向 default（debug 流程用）；上架打包时改成 "releaseConfig"
         "signingConfig": "default",
         "compatibleSdkVersion": "5.0.5(17)",
         "targetSdkVersion": "5.0.5(17)",

@@ -452,7 +452,7 @@ export struct NodeListView {
           }
         }
         .width(28)
-        .height(92)
+        .height(108)
         .alignContent(Alignment.Center)
       }
 
@@ -474,8 +474,8 @@ export struct NodeListView {
           .backgroundColor('#F5F5F5')
         }
       }
-      .width(92)
-      .height(92)
+      .width(108)
+      .height(108)
       .borderRadius(AppDimens.RADIUS_MD)
       .clip(true)
       .margin({ left: this.isManageMode ? 8 : 0 })
@@ -515,19 +515,28 @@ export struct NodeListView {
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
 
+        Text(`${this.formatDate(item.createdAt)} ${this.formatTime(item.createdAt)}`)
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_HINT)
+          .width('100%')
+          .margin({ top: 10 })
+
         Row() {
-          Text(`${this.formatDate(item.createdAt)} ${this.formatTime(item.createdAt)}`)
+          Text('所属旅行')
             .fontSize(AppDimens.FONT_SM)
             .fontColor(AppColors.TEXT_HINT)
-          Text(`· ${item.tripName}`)
+
+          Text(item.tripName)
             .fontSize(AppDimens.FONT_SM)
             .fontColor(AppColors.PRIMARY)
+            .layoutWeight(1)
             .margin({ left: 8 })
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
         }
         .width('100%')
-        .margin({ top: 10 })
+        .margin({ top: 4 })
+        .alignItems(VerticalAlign.Center)
       }
       .layoutWeight(1)
       .margin({ left: 12 })

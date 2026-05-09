@@ -25,9 +25,6 @@ import { VisionLLMTest } from '../components/VisionLLMTest';
 @Component
 export struct VisionLLMPage {
   @StorageLink('appThemeVersion') themeVersion: number = 0
-  aboutToAppear(): void {
-    console.log('VisionLLMPage loaded');
-  }
 
   build() {
     Column() {
@@ -64,11 +61,6 @@ export struct VisionLLMPage {
               .fontColor(AppColors.TEXT_SECONDARY)
               .lineHeight(1.6)
               .margin({ bottom: 8 })
-
-            Text('API 端点: http://172.18.35.215:8000/v1/chat/completions/image')
-              .fontSize(AppDimens.FONT_XS)
-              .fontColor(AppColors.TEXT_SECONDARY)
-              .textAlign(TextAlign.Start)
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)

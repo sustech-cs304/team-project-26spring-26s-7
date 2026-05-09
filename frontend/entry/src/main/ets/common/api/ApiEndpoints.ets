@@ -31,19 +31,27 @@ export const API_BASE_URL: string = 'https://surprise-seekers-toxic-applies.tryc
 
 /**
  * VisionLLM 服务地址
- * 演示阶段优先用公网 cloudflared 隧道（同校园网外也能跑）；
- * 域名是 quick tunnel，后端重启会换，每次演示前向后端 cc 再确认一次。
- * LAN 直连地址：http://172.18.35.215:8000（同校园网时延最低，可作备选）
  * 上架前：换成正式 HTTPS 域名 + CA 证书
  */
-export const VISION_LLM_BASE_URL: string = 'https://auction-mild-shut-instrumental.trycloudflare.com'
+export const VISION_LLM_BASE_URL: string = 'https://rap-provide-eve-strap.trycloudflare.com'
 
 /**
- * VisionLLM Bearer token
- * 演示用静态 token，上架前会替换为通过 AGC 登录态签发的动态 token，header 名不变
+ * VisionLLM Bearer token（已迁移到 AiTokenManager 运行时申领，见 Tier 2.2）
+ * 上架包不再硬编码，通过 share_service /api/v1/auth/issue_ai_token 下发
  * /health 端点不需要 token，其他端点缺/错 token 返回 401
  */
-export const VISION_LLM_AUTH_TOKEN: string = 'DEV_05436de19d4ad0029b4d722b9288167b'
+
+/**
+ * 敏感词过滤服务
+ * TODO(release): 上架前替换为正式 HTTPS 域名（HarmonyOS 默认禁止明文 HTTP）
+ */
+export const CONTENT_FILTER_BASE_URL: string = 'http://172.18.35.215:9100'
+
+/**
+ * 图片内容审核服务（百度智能云代理）
+ * TODO(release): 上架前替换为正式 HTTPS 域名
+ */
+export const IMAGE_CENSOR_BASE_URL: string = 'http://172.18.35.215:9200'
 
 /** API 版本号 */
 export const API_VERSION: string = 'v1'

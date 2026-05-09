@@ -18,7 +18,8 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { logger } from '../utils/Logger';
 import { MultipartFormData, FormField, FileField } from './MultipartFormData';
 import { HttpResponse } from './HttpClient';
-import { VISION_LLM_BASE_URL, VISION_LLM_AUTH_TOKEN, HttpTimeout } from './ApiEndpoints';
+import { VISION_LLM_BASE_URL, HttpTimeout } from './ApiEndpoints';
+import { AiTokenManager } from './AiTokenManager';
 
 const TAG = 'VisionLLMClient';
 
@@ -178,11 +179,12 @@ export class VisionLLMClient {
       logger.info(TAG, `Sending POST request to: ${url}`);
 
       // 请求配置
+      const visionToken = await AiTokenManager.getVisionToken();
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
         header: {
           'Content-Type': formData.getContentType(),
-          'Authorization': `Bearer ${VISION_LLM_AUTH_TOKEN}`
+          'Authorization': `Bearer ${visionToken}`
         },
         readTimeout: this.timeout,
         connectTimeout: this.timeout,
@@ -262,11 +264,12 @@ export class VisionLLMClient {
       const url = `${this.baseUrl}/v1/chat/completions`;
       logger.info(TAG, `Sending POST request to: ${url}`);
 
+      const visionToken = await AiTokenManager.getVisionToken();
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
         header: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${VISION_LLM_AUTH_TOKEN}`
+          'Authorization': `Bearer ${visionToken}`
         },
         readTimeout: this.timeout,
         connectTimeout: this.timeout,
