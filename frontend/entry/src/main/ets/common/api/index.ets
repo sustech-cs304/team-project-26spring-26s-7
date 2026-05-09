@@ -17,7 +17,8 @@
 
 export { HttpClient, HttpResponse } from './HttpClient';
 export { AiGatewayClient, ImageCopyRequest, ImagesCopyRequest } from './AiGatewayClient';
-export { AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION, VISION_LLM_BASE_URL, VISION_LLM_AUTH_TOKEN } from './ApiEndpoints';
+export { AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION, VISION_LLM_BASE_URL } from './ApiEndpoints';
+export { AiTokenManager } from './AiTokenManager';
 export { ImageCensorService, ImageCensorResult } from './ImageCensorService';
 export { MultipartFormData } from './MultipartFormData';
 export { VisionLLMClient, VisionLLMRequest, VisionLLMResponse, TextLLMRequest } from './VisionLLMClient';

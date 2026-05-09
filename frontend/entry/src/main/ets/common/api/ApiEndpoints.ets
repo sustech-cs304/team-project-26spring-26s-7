@@ -36,11 +36,10 @@ export const API_BASE_URL: string = 'https://surprise-seekers-toxic-applies.tryc
 export const VISION_LLM_BASE_URL: string = 'https://auction-mild-shut-instrumental.trycloudflare.com'
 
 /**
- * VisionLLM Bearer token
- * 演示用静态 token，上架前会替换为通过 AGC 登录态签发的动态 token，header 名不变
+ * VisionLLM Bearer token（已迁移到 AiTokenManager 运行时申领，见 Tier 2.2）
+ * 上架包不再硬编码，通过 share_service /api/v1/auth/issue_ai_token 下发
  * /health 端点不需要 token，其他端点缺/错 token 返回 401
  */
-export const VISION_LLM_AUTH_TOKEN: string = 'DEV_05436de19d4ad0029b4d722b9288167b'
 
 /**
  * 敏感词过滤服务
