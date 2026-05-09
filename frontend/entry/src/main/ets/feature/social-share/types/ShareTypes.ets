@@ -76,7 +76,7 @@ export interface ReplaceLink {
  *  让生成的 /sreplay 页面完整复刻发布者本机的视觉。所有字段都是 enum
  *  value（小写字符串），与后端 share_service/models/publish.py 的白名单
  *  完全对齐——任意一边新增 value 都要同步另一边。
- *  6 个字段全部可选；缺哪个后端就用哪个的 default。 */
+ *  全部字段都是可选；缺哪个后端就用哪个的 default。 */
 export interface ReplayPrefsForShare {
   /** 'minimal_white' | 'dark_night' | 'vintage_film' */
   styleKitId?: string
@@ -89,6 +89,9 @@ export interface ReplayPrefsForShare {
   transitionType?: string
   enableBlurOverlay?: boolean
   enableRouteAnimation?: boolean
+  /** v1.0.1：节点 marker 的波纹脉冲。frontend ReplayPreferencesState
+   *  里有这个字段，前端 H5 端做了实际可视实现（活跃 pin ::after 动画）。 */
+  enableRipple?: boolean
 }
 
 /** POST /api/v1/share/publish 完整响应（§4.4 / §4.5） */

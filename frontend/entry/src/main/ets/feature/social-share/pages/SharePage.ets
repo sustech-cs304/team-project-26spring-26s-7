@@ -162,6 +162,7 @@ export struct SharePage {
         transitionType: replayState.transitionType,
         enableBlurOverlay: replayState.enableBlurOverlay,
         enableRouteAnimation: replayState.enableRouteAnimation,
+        enableRipple: replayState.enableRipple,
       }
 
       const result = await this.shareService.publish(
