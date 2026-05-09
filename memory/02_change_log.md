@@ -1,6 +1,14 @@
 # Change Log
 
-**Last Updated**: 2026-05-06
+**Last Updated**: 2026-05-10
+
+---
+
+## 2026-05-10
+
+- [2026-05-10] - CI - `.github/workflows/jenkinsfile-check.yml` - Added GitHub Actions bridge that triggers the local Jenkins job `travelpin-ci` on pushes to `test/ci-cd`, streams Jenkins logs, and uploads `.ci-logs` plus the matching `ci-artifacts` build directory
+- [2026-05-10] - CI - `scripts/watch-jenkins-build.ps1` - Added optional metadata output so downstream automation can resolve the Jenkins build number and artifact path for the current run
+- [2026-05-10] - CI - `Jenkinsfile` - Switched artifact root handling to use an overridable `LOCAL_ARTIFACT_ROOT` with the existing local `ci-artifacts` path preserved as the default
 
 ---
 

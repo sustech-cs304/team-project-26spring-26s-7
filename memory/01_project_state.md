@@ -1,6 +1,6 @@
 # Project State
 
-**Last Updated**: 2026-05-06 (share privacy gate)
+**Last Updated**: 2026-05-10 (GitHub Actions Jenkins bridge)
 **Project**: TravelPin - HarmonyOS Travel Journal App
 **Repository**: D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7
 **Current Branch**: feature/social-share
@@ -9,6 +9,12 @@
 **2026-05-06 Durable Notes**:
 - Trip sharing now requires `Trip.isPublic === true`. Private trips show a greyed share button on `TripDetailPage`; tapping it prompts the user to switch the trip to public before routing to `SharePage`.
 - `SharePage` now blocks direct entry for private trips as a frontend guardrail.
+
+**2026-05-10 Durable Notes**:
+- Added a GitHub Actions workflow at `.github/workflows/jenkinsfile-check.yml` that triggers the local Jenkins job `travelpin-ci` on pushes to `test/ci-cd`.
+- The workflow is designed for a Windows self-hosted runner on the same machine as Jenkins and uploads `.ci-logs` plus the matching `ci-artifacts/build-<BUILD_NUMBER>` directory.
+- `scripts/watch-jenkins-build.ps1` now writes `latest-run.json` metadata so GitHub Actions can resolve the Jenkins build number and artifact directory.
+- `Jenkinsfile` now allows `LOCAL_ARTIFACT_ROOT` to be overridden while keeping the current local `ci-artifacts` path as the default.
 
 ---
 

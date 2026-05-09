@@ -17,6 +17,8 @@ backend/cc4backend.md
 tmp/
 Temp/
 temp/
+.ci-logs/
+ci-artifacts/
 
 # ========================
 # OS generated
@@ -78,3 +80,9 @@ frontend/.idea/
 # package
 package-lock.json
 package.json
+
+# local CI hook config
+.local-ci/
+!.local-ci/
+.local-ci/*
+!.local-ci/local-jenkins-hook.example.json
