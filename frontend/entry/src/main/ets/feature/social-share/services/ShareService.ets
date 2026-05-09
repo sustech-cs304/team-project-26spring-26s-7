@@ -146,6 +146,10 @@ export class ShareService {
         form.addField('replayEnableRouteAnimation',
           replayPrefs.enableRouteAnimation ? 'true' : 'false')
       }
+      if (replayPrefs.enableRipple !== undefined) {
+        form.addField('replayEnableRipple',
+          replayPrefs.enableRipple ? 'true' : 'false')
+      }
     }
     // §4.1 + §4.3 — photo_N 作为文件字段，按 N 从 0 起连续
     for (let i = 0; i < photos.length; i++) {

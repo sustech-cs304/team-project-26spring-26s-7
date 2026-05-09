@@ -27,7 +27,7 @@
  * 后端实现路径：/data2/cse12310817/backend/share_service/
  * 后端契约文档：references/documents/social-share/分享系统 API 规范.md
  */
-export const API_BASE_URL: string = 'https://halloween-folder-unique-destination.trycloudflare.com'
+export const API_BASE_URL: string = 'https://graham-periodically-nutrition-shopper.trycloudflare.com'
 
 /**
  * VisionLLM 服务地址
