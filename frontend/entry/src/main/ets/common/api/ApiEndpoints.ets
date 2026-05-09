@@ -33,7 +33,7 @@ export const API_BASE_URL: string = 'https://surprise-seekers-toxic-applies.tryc
  * VisionLLM 服务地址
  * 上架前：换成正式 HTTPS 域名 + CA 证书
  */
-export const VISION_LLM_BASE_URL: string = 'https://auction-mild-shut-instrumental.trycloudflare.com'
+export const VISION_LLM_BASE_URL: string = 'https://rap-provide-eve-strap.trycloudflare.com'
 
 /**
  * VisionLLM Bearer token（已迁移到 AiTokenManager 运行时申领，见 Tier 2.2）

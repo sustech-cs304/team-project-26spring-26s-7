@@ -113,15 +113,17 @@ async function getTokens(): Promise<CachedTokens> {
   if (inflight) {
     return inflight;
   }
-  inflight = fetchTokens().then((t) => {
+  // fetchTokens 内部已经 try/catch 所有异常并降级到 fallback，不会 throw；
+  // 这里只用 try/finally 保证 inflight 被清理。
+  const p: Promise<CachedTokens> = fetchTokens();
+  inflight = p;
+  try {
+    const t: CachedTokens = await p;
     cached = t;
-    inflight = null;
     return t;
-  }).catch((e) => {
+  } finally {
     inflight = null;
-    throw e;
-  });
-  return inflight;
+  }
 }
 
 export class AiTokenManager {
