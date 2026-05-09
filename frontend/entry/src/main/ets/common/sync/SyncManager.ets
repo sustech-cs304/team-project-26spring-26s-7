@@ -161,7 +161,7 @@ export class SyncManager {
         logger.warn(TAG, `Skip unsupported sync item: ${item.entityType}/${item.operation}`)
         return
       }
-      await RdbHelper.getInstance().removeSyncItems(item.entityType, item.entityId, item.ownerUid)
+      await RdbHelper.getInstance().removeSyncItemById(item.id, item.ownerUid)
     } catch (err) {
       logger.error(TAG, `Failed to sync item ${item.id}: ${JSON.stringify(err)}`)
     }

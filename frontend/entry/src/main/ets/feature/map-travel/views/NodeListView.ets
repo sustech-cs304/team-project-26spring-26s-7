@@ -42,6 +42,9 @@ export struct NodeListView {
   }
 
   private onTravelDataVersionChange(): void {
+    if (this.isBulkOperating) {
+      return
+    }
     this.loadNodes()
   }
 
@@ -233,7 +236,7 @@ export struct NodeListView {
     this.showBulkTripSelector = false
   }
 
-  private applyLocalTripInfoToSelectedNodes(travelId: string): void {
+  private applyLocalTripInfoToSelectedNodes(travelId: string, selectedIds: string[]): void {
     let nextTripName: string = TravelSpecialValues.UNCATEGORIZED_TRAVEL_NAME
     let nextTripIsPublic: boolean = false
 
@@ -245,7 +248,6 @@ export struct NodeListView {
       }
     }
 
-    const selectedIds = [...this.selectedNodeIds]
     this.nodes = this.nodes.map((item: NodeFeedItem) => {
       if (selectedIds.indexOf(item.id) < 0) {
         return item
@@ -272,16 +274,19 @@ export struct NodeListView {
     this.isBulkOperating = true
     try {
       const selectedIds = this.selectedNodeIds.slice()
-      for (const nodeId of this.selectedNodeIds) {
-        await this.dataService.updateNode(nodeId, { travelId })
-      }
-      this.applyLocalTripInfoToSelectedNodes(travelId)
+      this.applyLocalTripInfoToSelectedNodes(travelId, selectedIds)
       this.selectedNodeIds = selectedIds
-      this.closeBulkTripSelector()
+      this.showBulkTripSelector = false
+      for (const nodeId of selectedIds) {
+        await this.dataService.updateNode(nodeId, { travelId })
+        this.bumpTravelDataVersion()
+      }
       this.bumpTravelDataVersion()
       promptAction.showToast({ message: '批量加入旅行成功' })
       this.exitManageMode()
+      await this.loadNodes()
     } catch (_) {
+      await this.loadNodes()
       promptAction.showToast({ message: '批量加入旅行失败' })
     } finally {
       this.isBulkOperating = false
@@ -706,7 +711,7 @@ export struct NodeListView {
               ListItem() {
                 this.buildNodeCard(item)
               }
-            }, (item: NodeFeedItem) => item.id)
+            }, (item: NodeFeedItem) => `${item.id}-${item.travelId}-${item.tripName}`)
           }
           .layoutWeight(1)
           .width('100%')
