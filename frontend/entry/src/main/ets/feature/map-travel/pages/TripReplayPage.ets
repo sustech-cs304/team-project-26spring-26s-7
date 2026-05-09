@@ -261,7 +261,13 @@ export struct TripReplayPage {
 
   aboutToAppear(): void {
     this.isPageActive = true
+    // v1.0.5：先把 in-memory 默认值兜上，再 fire-and-forget 读盘覆盖。
+    // 读盘完会 setOrCreate AppStorage，绑定的 selectedXxxId 自动刷新。
     ReplayPreferences.initializeDefaults()
+    const ctxEarly = getContext(this) as common.UIAbilityContext
+    if (ctxEarly) {
+      void ReplayPreferences.ensureLoaded(ctxEarly)
+    }
     const params = router.getParams() as RouterParam
     if (params?.tripId) {
       this.currentTripId = params.tripId
