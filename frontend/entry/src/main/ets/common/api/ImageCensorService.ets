@@ -2,10 +2,11 @@ import { http } from '@kit.NetworkKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { hilog } from '@kit.PerformanceAnalysisKit'
 import { MultipartFormData } from './MultipartFormData'
+import { IMAGE_CENSOR_BASE_URL as CENSOR_BASE_URL } from './ApiEndpoints'
 
 const DOMAIN = 0x0000
 const TAG = 'ImageCensorService'
-const IMAGE_CENSOR_BASE_URL = 'http://172.18.35.215:9200'
+const IMAGE_CENSOR_BASE_URL = CENSOR_BASE_URL
 
 export interface ImageCensorResult {
   conclusion: string
