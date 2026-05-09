@@ -206,10 +206,10 @@ export class CloudStorageService {
       throw new Error('应用上下文未初始化')
     }
 
-    let cacheFullPath = ''
+    let cacheRelativePath = ''
     try {
-      cacheFullPath = CloudStorageService.prepareUploadSource(appContext, localPath)
-      hilog.info(DOMAIN, TAG, `uploadFileWithoutUserScope: prepareUploadSource returned="${cacheFullPath}"`)
+      cacheRelativePath = CloudStorageService.prepareUploadSource(appContext, localPath)
+      hilog.info(DOMAIN, TAG, `uploadFileWithoutUserScope: prepareUploadSource returned="${cacheRelativePath}"`)
     } catch (err) {
       const error = err as Error
       hilog.error(DOMAIN, TAG, `uploadFileWithoutUserScope: prepareUploadSource FAILED: ${error.message}`)
@@ -223,9 +223,9 @@ export class CloudStorageService {
     await CloudStorageService.logAuthProviderToken('upload')
 
     await new Promise<void>((resolve, reject) => {
-      hilog.info(DOMAIN, TAG, `uploadFileWithoutUserScope: calling getBucket().uploadFile() with localPath="${cacheFullPath}"`)
+      hilog.info(DOMAIN, TAG, `uploadFileWithoutUserScope: calling getBucket().uploadFile() with localPath="${cacheRelativePath}"`)
       CloudStorageService.getBucket().uploadFile(appContext, {
-        localPath: cacheFullPath,
+        localPath: cacheRelativePath,
         cloudPath: fullCloudPath,
         mode: request.agent.Mode.BACKGROUND
       }).then((task: request.agent.Task) => {
@@ -564,8 +564,8 @@ export class CloudStorageService {
       hilog.info(DOMAIN, TAG, `prepareUploadSource: copy done, fileSize=${fs.statSync(cacheTargetPath).size}`)
     }
 
-    hilog.info(DOMAIN, TAG, `Prepared upload source: fullPath="${cacheTargetPath}", fileName="${fileName}"`)
-    return cacheTargetPath
+    hilog.info(DOMAIN, TAG, `Prepared upload source: fullPath="${cacheTargetPath}", relativePath="${fileName}"`)
+    return fileName
   }
 
   private static getFileName(localPath: string): string {
