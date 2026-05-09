@@ -24,6 +24,7 @@ import {
 import { logger } from '../../../common/utils/Logger'
 import {
   ReplaceLink,
+  ReplayPrefsForShare,
   RevokeByTripOk,
   SharePublishOk,
   SharePublishRequest,
@@ -83,13 +84,18 @@ export class ShareService {
    * @param replace         可选，要随本次发布**自动撤销**的旧链接三件套
    *                        (shortCode + expirySec + sig)。后端会校验 sig 后
    *                        在新发布**成功之后**才删除旧的；新失败旧保留。
+   * @param replayPrefs     可选（v1.0），把当前用户的回放偏好顺路上传，让生成
+   *                        的 /sreplay 页面与发布者本机的回放设置视觉一致。
+   *                        缺哪个字段后端就用哪个的 default；不传整个对象 →
+   *                        DB 存 NULL，viewer 走全局默认（极简白 + city_lights_lofi 等）。
    */
   async publish(
     trip: SharePublishRequest,
     photos: SharePhoto[],
     expiryHours: number = 168,
     expiryMinutes?: number,
-    replace?: ReplaceLink
+    replace?: ReplaceLink,
+    replayPrefs?: ReplayPrefsForShare
   ): Promise<ShareCallResult<SharePublishOk>> {
     // 客户端先做一遍 photoCount 校验，避免无谓的上传
     let expectedTotal = 0
@@ -117,6 +123,29 @@ export class ShareService {
       form.addField('replaceShortCode', replace.shortCode)
       form.addField('replaceExpiry',    replace.expirySec.toString())
       form.addField('replaceSig',       replace.sig)
+    }
+    // v1.0 — 回放偏好（6 个字段全部可选；后端按字段 fallback）
+    if (replayPrefs !== undefined) {
+      if (replayPrefs.styleKitId !== undefined) {
+        form.addField('replayStyleKitId', replayPrefs.styleKitId)
+      }
+      if (replayPrefs.bgmId !== undefined) {
+        form.addField('replayBgmId', replayPrefs.bgmId)
+      }
+      if (replayPrefs.filterId !== undefined) {
+        form.addField('replayFilterId', replayPrefs.filterId)
+      }
+      if (replayPrefs.transitionType !== undefined) {
+        form.addField('replayTransitionType', replayPrefs.transitionType)
+      }
+      if (replayPrefs.enableBlurOverlay !== undefined) {
+        form.addField('replayEnableBlurOverlay',
+          replayPrefs.enableBlurOverlay ? 'true' : 'false')
+      }
+      if (replayPrefs.enableRouteAnimation !== undefined) {
+        form.addField('replayEnableRouteAnimation',
+          replayPrefs.enableRouteAnimation ? 'true' : 'false')
+      }
     }
     // §4.1 + §4.3 — photo_N 作为文件字段，按 N 从 0 起连续
     for (let i = 0; i < photos.length; i++) {
