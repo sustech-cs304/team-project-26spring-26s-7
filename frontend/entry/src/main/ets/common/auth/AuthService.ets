@@ -114,7 +114,7 @@ export class AuthService {
     // 清空缓存，重新从 RDB 加载（避免被上次登录的华为数据污染）
     cachedEffectiveProfile = null;
     // 从 RDB 读取本地 profile
-    const local = await RdbHelper.getInstance().loadUserProfile();
+    const local = await RdbHelper.getInstance().loadUserProfile(user.uid);
     if (local && local.displayName) {
       cachedEffectiveProfile = {
         displayName: local.displayName,
@@ -137,6 +137,7 @@ export class AuthService {
           };
           // 写入 RDB 缓存
           await RdbHelper.getInstance().saveUserProfile(
+            user.uid,
             cloudProfile.nickname ?? '',
             cloudProfile.avatarCloudPath ?? '',
             cloudProfile.bio ?? ''
@@ -147,6 +148,7 @@ export class AuthService {
               const localPath = await CloudStorageService.downloadProfileAvatar(user.uid);
               // 用本地路径更新 RDB 和缓存
               await RdbHelper.getInstance().saveUserProfile(
+                user.uid,
                 cloudProfile.nickname ?? '',
                 localPath,
                 cloudProfile.bio ?? ''
@@ -176,7 +178,11 @@ export class AuthService {
       return cachedEffectiveProfile;
     }
     // 从 RDB 读取本地 profile
-    const local = await RdbHelper.getInstance().loadUserProfile();
+    const user = await AuthService.getCurrentUser();
+    if (!user) {
+      return null;
+    }
+    const local = await RdbHelper.getInstance().loadUserProfile(user.uid);
     if (local && local.displayName) {
       cachedEffectiveProfile = {
         displayName: local.displayName,
@@ -275,6 +281,7 @@ export class AuthService {
 
     // 3. 写本地 RDB（头像路径用本地沙箱路径，avatarCloudPath 后续上传成功再更新）
     await RdbHelper.getInstance().saveUserProfile(
+      uid,
       profile.displayName,
       profile.avatarPath,
       finalBio

@@ -16,7 +16,7 @@
 import { logger } from '../utils/Logger';
 import { PhotoPickerUtil } from '../utils/PhotoPickerUtil';
 import { TravelSpecialValues } from '../utils/Constants';
-import { CloudStorageService } from '../auth';
+import { AuthService, CloudStorageService } from '../auth';
 import { SyncManager } from '../sync/SyncManager';
 import { RdbHelper } from '../data/RdbHelper';
 import { TravelRepository } from '../data/TravelRepository';
@@ -43,15 +43,26 @@ export class RdbDataService implements IDataService {
     this.rdbHelper = RdbHelper.getInstance();
   }
 
+  private getOwnerUidFromPayload(payload: string): string {
+    try {
+      const parsed = JSON.parse(payload) as Record<string, string | number | boolean | string[]>;
+      const ownerUid = parsed.ownerUid;
+      return typeof ownerUid === 'string' ? ownerUid : '';
+    } catch (_) {
+      return '';
+    }
+  }
+
   private async enqueueSync(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
+    const ownerUid = this.getOwnerUidFromPayload(payload);
     // 在线时入队后立即 push 到云端（实现"在线即时同步"）。
     // 这条之前曾经是 Bug 1 的引信：离线 deleteTravel 把"删 travel + 重 upsert 子节点"
     // 一起塞进队列，重联网后只要任何一次写操作触发 enqueueSync 就会把整队列 drain，
     // 而当时 handleItem('travel','delete') 会无脑 deleteDirectoryRecursively(travels/<T>/)
     // 把孩子节点的图也一起干掉。Bug 1 的修复在 SyncManager 里：把那条 wipe 改成只删
     // 元数据 + 让 photoManifest 在子节点跨 travel 时保留旧路径。这里 auto-push 本身没问题。
-    await this.rdbHelper.removeSyncItems(entityType, entityId);
-    await this.rdbHelper.enqueueSyncItem(entityType, entityId, operation, payload);
+    await this.rdbHelper.removeSyncItems(entityType, entityId, ownerUid);
+    await this.rdbHelper.enqueueSyncItem(ownerUid, entityType, entityId, operation, payload);
     const isOnline = (AppStorage.get('networkOnline') as boolean) ?? false;
     if (isOnline) {
       void SyncManager.pushLocalNow();
@@ -59,16 +70,19 @@ export class RdbDataService implements IDataService {
   }
 
   private async enqueueSyncSilently(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
+    const ownerUid = this.getOwnerUidFromPayload(payload);
     // 仅入队，不触发 push。用于批量操作（deleteTravel 内对 affected 子节点的 upsert 等），
     // 在所有相关项都进队列后由调用方统一 push 一次，避免半途同步导致顺序错乱。
-    await this.rdbHelper.removeSyncItems(entityType, entityId);
-    await this.rdbHelper.enqueueSyncItem(entityType, entityId, operation, payload);
+    await this.rdbHelper.removeSyncItems(entityType, entityId, ownerUid);
+    await this.rdbHelper.enqueueSyncItem(ownerUid, entityType, entityId, operation, payload);
   }
 
   async getSyncStatus(): Promise<SyncStatus> {
-    const pendingItems = await this.rdbHelper.getPendingSyncQueueItems();
-    const lastPushTime = await this.rdbHelper.getSyncState('last_push_at');
-    const lastPullTime = await this.rdbHelper.getSyncState('last_pull_at');
+    const user = await AuthService.getCurrentUser();
+    const ownerUid = user?.uid ?? '';
+    const pendingItems = ownerUid.length > 0 ? await this.rdbHelper.getPendingSyncQueueItems(ownerUid) : [];
+    const lastPushTime = await this.rdbHelper.getSyncState('last_push_at', ownerUid);
+    const lastPullTime = await this.rdbHelper.getSyncState('last_pull_at', ownerUid);
     const status: SyncStatus = {
       lastSyncTime: Math.max(lastPushTime, lastPullTime),
       lastPushTime: lastPushTime,

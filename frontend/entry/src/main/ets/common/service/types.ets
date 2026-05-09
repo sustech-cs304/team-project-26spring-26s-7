@@ -173,6 +173,7 @@ export interface SyncStatus {
 
 export interface SyncQueueItem {
   id: string
+  ownerUid: string
   entityType: string
   entityId: string
   operation: string

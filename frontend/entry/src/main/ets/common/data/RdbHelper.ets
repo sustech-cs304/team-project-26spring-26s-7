@@ -33,6 +33,7 @@ export enum SensitivityLevel {
 
 /** 用户 profile 数据结构，对应 user_profile 表 */
 export interface UserProfileRow {
+  ownerUid: string;
   displayName: string;
   avatarPath: string;
   bio: string;
@@ -232,6 +233,7 @@ const SQL_MIGRATE_MEMORY_NODE_ORDER = `
 const SQL_CREATE_SYNC_QUEUE = `
   CREATE TABLE IF NOT EXISTS sync_queue(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    owner_uid TEXT NOT NULL DEFAULT '',
     entity_type TEXT NOT NULL,
     entity_id INTEGER NOT NULL,
     operation TEXT NOT NULL,
@@ -251,10 +253,19 @@ const SQL_CREATE_APP_SYNC_STATE = `
 const SQL_CREATE_USER_PROFILE = `
   CREATE TABLE IF NOT EXISTS user_profile(
     id INTEGER PRIMARY KEY,
+    owner_uid TEXT NOT NULL DEFAULT '',
     display_name TEXT DEFAULT '',
     avatar_path TEXT DEFAULT '',
     bio TEXT DEFAULT ''
   )
+`;
+
+const SQL_ADD_USER_PROFILE_OWNER_UID = `
+  ALTER TABLE user_profile ADD COLUMN owner_uid TEXT NOT NULL DEFAULT ''
+`;
+
+const SQL_ADD_SYNC_QUEUE_OWNER_UID = `
+  ALTER TABLE sync_queue ADD COLUMN owner_uid TEXT NOT NULL DEFAULT ''
 `;
 
 export class RdbHelper {
@@ -357,7 +368,9 @@ export class RdbHelper {
       SQL_ADD_MEMORY_NODE_DELETED_AT,
       SQL_ADD_MEMORY_NODE_LAST_SYNCED_AT,
       SQL_ADD_MEMORY_NODE_VERSION,
-      SQL_ADD_MEMORY_NODE_VISITED_AT
+      SQL_ADD_MEMORY_NODE_VISITED_AT,
+      SQL_ADD_USER_PROFILE_OWNER_UID,
+      SQL_ADD_SYNC_QUEUE_OWNER_UID
     ];
 
     for (let i = 0; i < optionalSchemaUpdates.length; i++) {
@@ -398,11 +411,14 @@ export class RdbHelper {
     return this.rdbStore;
   }
 
-  async getPendingSyncQueueItems(): Promise<SyncQueueItem[]> {
+  async getPendingSyncQueueItems(ownerUid?: string): Promise<SyncQueueItem[]> {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const store = await this.getStore();
       const predicates = new rdb.RdbPredicates('sync_queue');
+      if (ownerUid !== undefined) {
+        predicates.equalTo('owner_uid', ownerUid);
+      }
       predicates.orderByAsc('created_at');
       resultSet = await store.query(predicates);
       const items: SyncQueueItem[] = [];
@@ -410,6 +426,7 @@ export class RdbHelper {
         do {
           items.push({
             id: resultSet.getDouble(resultSet.getColumnIndex('id')).toString(),
+            ownerUid: resultSet.getString(resultSet.getColumnIndex('owner_uid')) ?? '',
             entityType: resultSet.getString(resultSet.getColumnIndex('entity_type')),
             entityId: resultSet.getDouble(resultSet.getColumnIndex('entity_id')).toString(),
             operation: resultSet.getString(resultSet.getColumnIndex('operation')),
@@ -432,18 +449,22 @@ export class RdbHelper {
     }
   }
 
-  async getLatestSyncTimestamp(): Promise<number> {
-    const lastPush = await this.getSyncState('last_push_at');
-    const lastPull = await this.getSyncState('last_pull_at');
+  async getLatestSyncTimestamp(ownerUid?: string): Promise<number> {
+    const lastPush = await this.getSyncState('last_push_at', ownerUid);
+    const lastPull = await this.getSyncState('last_pull_at', ownerUid);
     return Math.max(lastPush, lastPull);
   }
 
-  async getSyncState(key: string): Promise<number> {
+  private toScopedSyncKey(key: string, ownerUid?: string): string {
+    return ownerUid && ownerUid.length > 0 ? `${ownerUid}:${key}` : key;
+  }
+
+  async getSyncState(key: string, ownerUid?: string): Promise<number> {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const store = await this.getStore();
       const predicates = new rdb.RdbPredicates('app_sync_state');
-      predicates.equalTo('key', key);
+      predicates.equalTo('key', this.toScopedSyncKey(key, ownerUid));
       resultSet = await store.query(predicates);
       if (!resultSet.goToFirstRow()) {
         return 0;
@@ -462,25 +483,27 @@ export class RdbHelper {
     }
   }
 
-  async setSyncState(key: string, value: number): Promise<void> {
+  async setSyncState(key: string, value: number, ownerUid?: string): Promise<void> {
     const store = await this.getStore();
+    const scopedKey = this.toScopedSyncKey(key, ownerUid);
     const predicates = new rdb.RdbPredicates('app_sync_state');
-    predicates.equalTo('key', key);
+    predicates.equalTo('key', scopedKey);
     const resultSet = await store.query(predicates);
     try {
       if (resultSet.goToFirstRow()) {
         await store.update({ value: value.toString() }, predicates);
       } else {
-        await store.insert('app_sync_state', { key: key, value: value.toString() });
+        await store.insert('app_sync_state', { key: scopedKey, value: value.toString() });
       }
     } finally {
       resultSet.close();
     }
   }
 
-  async enqueueSyncItem(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
+  async enqueueSyncItem(ownerUid: string, entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
     const store = await this.getStore();
     await store.insert('sync_queue', {
+      owner_uid: ownerUid,
       entity_type: entityType,
       entity_id: Number(entityId),
       operation: operation,
@@ -490,17 +513,23 @@ export class RdbHelper {
     });
   }
 
-  async removeSyncItems(entityType: string, entityId: string): Promise<void> {
+  async removeSyncItems(entityType: string, entityId: string, ownerUid?: string): Promise<void> {
     const store = await this.getStore();
     const predicates = new rdb.RdbPredicates('sync_queue');
     predicates.equalTo('entity_type', entityType);
     predicates.equalTo('entity_id', Number(entityId));
+    if (ownerUid !== undefined) {
+      predicates.equalTo('owner_uid', ownerUid);
+    }
     await store.delete(predicates);
   }
 
-  async clearSyncQueue(): Promise<void> {
+  async clearSyncQueue(ownerUid?: string): Promise<void> {
     const store = await this.getStore();
     const predicates = new rdb.RdbPredicates('sync_queue');
+    if (ownerUid !== undefined) {
+      predicates.equalTo('owner_uid', ownerUid);
+    }
     await store.delete(predicates);
   }
 
@@ -522,26 +551,33 @@ export class RdbHelper {
     logger.info(TAG, 'wipeAllUserData done');
   }
 
-  /** 保存用户 profile 到 user_profile 表（id=1 的单行） */
-  async saveUserProfile(displayName: string, avatarPath: string, bio: string): Promise<void> {
-    logger.info(TAG, `saveUserProfile CALLED: displayName=${displayName}, avatarPath=${avatarPath}, bio=${bio}`);
+  /** 保存用户 profile 到 user_profile 表（按 owner_uid 隔离） */
+  async saveUserProfile(ownerUid: string, displayName: string, avatarPath: string, bio: string): Promise<void> {
+    if (!ownerUid || ownerUid.length === 0) {
+      throw new Error('saveUserProfile requires ownerUid');
+    }
+    logger.info(TAG, `saveUserProfile CALLED: ownerUid=${ownerUid}, displayName=${displayName}, avatarPath=${avatarPath}, bio=${bio}`);
     const store = await this.getStore();
     const predicates = new rdb.RdbPredicates('user_profile');
-    predicates.equalTo('id', 1);
+    predicates.equalTo('owner_uid', ownerUid);
     const resultSet = await store.query(predicates);
     try {
       if (resultSet.goToFirstRow()) {
         const rowId = resultSet.getLong(resultSet.getColumnIndex('id'));
         logger.info(TAG, `saveUserProfile: updating row id=${rowId}`);
+        const updatePredicates = new rdb.RdbPredicates('user_profile');
+        updatePredicates.equalTo('id', rowId);
+        updatePredicates.equalTo('owner_uid', ownerUid);
         await store.update({
+          owner_uid: ownerUid,
           display_name: displayName,
           avatar_path: avatarPath,
           bio: bio
-        }, predicates.equalTo('id', rowId));
+        }, updatePredicates);
       } else {
-        logger.info(TAG, `saveUserProfile: inserting new row with id=1`);
+        logger.info(TAG, `saveUserProfile: inserting new row for ownerUid=${ownerUid}`);
         await store.insert('user_profile', {
-          id: 1,
+          owner_uid: ownerUid,
           display_name: displayName,
           avatar_path: avatarPath,
           bio: bio
@@ -554,15 +590,18 @@ export class RdbHelper {
   }
 
   /** 从 user_profile 表加载 profile，返回 null 表示从未保存过 */
-  async loadUserProfile(): Promise<UserProfileRow | null> {
+  async loadUserProfile(ownerUid: string): Promise<UserProfileRow | null> {
+    if (!ownerUid || ownerUid.length === 0) {
+      return null;
+    }
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const store = await this.getStore();
       const predicates = new rdb.RdbPredicates('user_profile');
-      predicates.equalTo('id', 1);
+      predicates.equalTo('owner_uid', ownerUid);
       resultSet = await store.query(predicates);
       if (!resultSet.goToFirstRow()) {
-        logger.info(TAG, 'loadUserProfile: no row found, returning null');
+        logger.info(TAG, `loadUserProfile: no row found for ownerUid=${ownerUid}, returning null`);
         return null;
       }
       const displayName: string = resultSet.getString(resultSet.getColumnIndex('display_name')) ?? '';
@@ -572,8 +611,8 @@ export class RdbHelper {
         logger.info(TAG, 'loadUserProfile: row exists but all fields empty, returning null');
         return null;
       }
-      logger.info(TAG, `loadUserProfile SUCCESS: displayName=${displayName}, avatarPath=${avatarPath}, bio=${bio}`);
-      const row: UserProfileRow = { displayName: displayName, avatarPath: avatarPath, bio: bio };
+      logger.info(TAG, `loadUserProfile SUCCESS: ownerUid=${ownerUid}, displayName=${displayName}, avatarPath=${avatarPath}, bio=${bio}`);
+      const row: UserProfileRow = { ownerUid: ownerUid, displayName: displayName, avatarPath: avatarPath, bio: bio };
       return row;
     } catch (err) {
       logger.error(TAG, `loadUserProfile FAILED: ${JSON.stringify(err)}`);
@@ -586,12 +625,15 @@ export class RdbHelper {
   }
 
   /** 清除 user_profile */
-  async clearUserProfile(): Promise<void> {
+  async clearUserProfile(ownerUid: string): Promise<void> {
+    if (!ownerUid || ownerUid.length === 0) {
+      return;
+    }
     const store = await this.getStore();
     const predicates = new rdb.RdbPredicates('user_profile');
-    predicates.equalTo('id', 1);
+    predicates.equalTo('owner_uid', ownerUid);
     await store.delete(predicates);
-    logger.info(TAG, 'clearUserProfile done');
+    logger.info(TAG, `clearUserProfile done for ownerUid=${ownerUid}`);
   }
 
   isInitialized(): boolean {

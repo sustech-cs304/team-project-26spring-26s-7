@@ -24,15 +24,19 @@ export class SyncManager {
 
     SyncManager.syncing = true
     try {
-      let items = await RdbHelper.getInstance().getPendingSyncQueueItems()
+      const user = await AuthService.getCurrentUser()
+      if (!user) {
+        return
+      }
+      let items = await RdbHelper.getInstance().getPendingSyncQueueItems(user.uid)
       while (items.length > 0) {
         SyncManager.pendingRetry = false
         for (let i = 0; i < items.length; i++) {
           await SyncManager.handleItem(items[i])
         }
-        items = await RdbHelper.getInstance().getPendingSyncQueueItems()
+        items = await RdbHelper.getInstance().getPendingSyncQueueItems(user.uid)
       }
-      await RdbHelper.getInstance().setSyncState('last_push_at', Date.now())
+      await RdbHelper.getInstance().setSyncState('last_push_at', Date.now(), user.uid)
     } finally {
       SyncManager.syncing = false
       if (SyncManager.pendingRetry) {
@@ -49,9 +53,13 @@ export class SyncManager {
 
     SyncManager.syncing = true
     try {
-      await RdbHelper.getInstance().clearSyncQueue()
+      const user = await AuthService.getCurrentUser()
+      if (!user) {
+        return
+      }
+      await RdbHelper.getInstance().clearSyncQueue(user.uid)
       await SyncManager.replaceLocalWithCloud()
-      await RdbHelper.getInstance().setSyncState('last_pull_at', Date.now())
+      await RdbHelper.getInstance().setSyncState('last_pull_at', Date.now(), user.uid)
     } finally {
       SyncManager.syncing = false
     }
@@ -64,12 +72,16 @@ export class SyncManager {
 
     SyncManager.syncing = true
     try {
+      const user = await AuthService.getCurrentUser()
+      if (!user) {
+        return
+      }
       await SyncManager.syncAllLocalToCloud()
       // syncAllLocalToCloud 已对全量本地数据按当前状态推送到云端，
       // sync_queue 里残留的离线 CRUD 记录此时已被覆盖，全部清空以避免 pendingCount 永不归零，
       // 也避免下次任何手动调用 pushLocalNow 时把过期 payload 再推一次。
-      await RdbHelper.getInstance().clearSyncQueue()
-      await RdbHelper.getInstance().setSyncState('last_push_at', Date.now())
+      await RdbHelper.getInstance().clearSyncQueue(user.uid)
+      await RdbHelper.getInstance().setSyncState('last_push_at', Date.now(), user.uid)
     } finally {
       SyncManager.syncing = false
     }
@@ -82,9 +94,13 @@ export class SyncManager {
 
     SyncManager.syncing = true
     try {
-      await RdbHelper.getInstance().clearSyncQueue()
+      const user = await AuthService.getCurrentUser()
+      if (!user) {
+        return
+      }
+      await RdbHelper.getInstance().clearSyncQueue(user.uid)
       await SyncManager.replaceLocalWithCloud()
-      await RdbHelper.getInstance().setSyncState('last_pull_at', Date.now())
+      await RdbHelper.getInstance().setSyncState('last_pull_at', Date.now(), user.uid)
     } finally {
       SyncManager.syncing = false
     }
@@ -145,7 +161,7 @@ export class SyncManager {
         logger.warn(TAG, `Skip unsupported sync item: ${item.entityType}/${item.operation}`)
         return
       }
-      await RdbHelper.getInstance().removeSyncItems(item.entityType, item.entityId)
+      await RdbHelper.getInstance().removeSyncItems(item.entityType, item.entityId, item.ownerUid)
     } catch (err) {
       logger.error(TAG, `Failed to sync item ${item.id}: ${JSON.stringify(err)}`)
     }
