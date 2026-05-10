@@ -346,30 +346,16 @@ export struct NodeListView {
           .fontColor(AppColors.TEXT_PRIMARY)
           .layoutWeight(1)
 
-        if (this.nodes.length > 0) {
-          Button(this.isManageMode ? '完成' : '批量编辑')
-            .height(36)
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor(this.isManageMode ? AppColors.TEXT_PRIMARY : AppColors.PRIMARY)
-            .backgroundColor(this.isManageMode ? '#F3F4F6' : '#EAF4FF')
-            .onClick(() => {
-              if (this.isManageMode) {
-                this.exitManageMode()
-              } else {
-                this.enterManageMode()
-              }
-            })
-        }
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
 
-      Text('按时间回看每一次停留，把地点记忆串成可浏览的内容流。')
-        .fontSize(AppDimens.FONT_MD)
-        .fontColor(AppColors.TEXT_SECONDARY)
-        .lineHeight(22)
-        .margin({ top: 8 })
-        .width('100%')
+      // Text('按时间回看每一次停留，把地点记忆串成可浏览的内容流。')
+      //   .fontSize(AppDimens.FONT_MD)
+      //   .fontColor(AppColors.TEXT_SECONDARY)
+      //   .lineHeight(22)
+      //   .margin({ top: 8 })
+      //   .width('100%')
 
       Row({ space: 12 }) {
         Column() {
@@ -398,18 +384,45 @@ export struct NodeListView {
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
 
+      }
+      .width('100%')
+      .margin({ top: 18 })
+      .alignItems(VerticalAlign.Top)
+
+      Row({ space: 12 }) {
+        if (this.nodes.length > 0) {
+          Button(this.isManageMode ? '完成' : '批量编辑')
+            .layoutWeight(1)
+            .height(40)
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(this.isManageMode ? AppColors.TEXT_PRIMARY : AppColors.PRIMARY)
+            .backgroundColor(this.isManageMode ? '#F3F4F6' : '#EAF4FF')
+            .borderRadius(20)
+            .onClick(() => {
+              if (this.isManageMode) {
+                this.exitManageMode()
+              } else {
+                this.enterManageMode()
+              }
+            })
+        }
+
         if (this.isManageMode) {
           Button(this.selectedNodeIds.length === this.nodes.length ? '取消全选' : '全选')
-            .height(38)
+            .layoutWeight(1)
+            .height(40)
             .fontSize(AppDimens.FONT_SM)
             .fontColor(AppColors.PRIMARY)
             .backgroundColor('#EAF4FF')
+            .borderRadius(20)
             .onClick(() => this.toggleSelectAll())
         } else {
           Button('新建节点')
-            .height(38)
+            .layoutWeight(1)
+            .height(40)
             .fontSize(AppDimens.FONT_SM)
             .backgroundColor(AppColors.PRIMARY)
+            .borderRadius(20)
             .onClick(() => this.openNodeEdit())
         }
       }
