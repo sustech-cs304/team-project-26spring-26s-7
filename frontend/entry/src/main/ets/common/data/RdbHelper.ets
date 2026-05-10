@@ -270,6 +270,8 @@ const SQL_ADD_SYNC_QUEUE_OWNER_UID = `
 
 export class RdbHelper {
   private static instance: RdbHelper;
+  static predicatesFactory: ((table: string) => Object) | null = null;
+  static nowProvider: (() => number) | null = null;
   private rdbStore: rdb.RdbStore | undefined = undefined;
   private initialized: boolean = false;
   private appContext: common.Context | undefined = undefined;
@@ -279,6 +281,20 @@ export class RdbHelper {
 
   private toError(err: Object): Error {
     return new Error(JSON.stringify(err));
+  }
+
+  private static createPredicates(table: string): rdb.RdbPredicates {
+    if (RdbHelper.predicatesFactory) {
+      return RdbHelper.predicatesFactory(table) as rdb.RdbPredicates;
+    }
+    return new rdb.RdbPredicates(table);
+  }
+
+  private static now(): number {
+    if (RdbHelper.nowProvider) {
+      return RdbHelper.nowProvider();
+    }
+    return Date.now();
   }
 
   static getInstance(): RdbHelper {
@@ -415,7 +431,7 @@ export class RdbHelper {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const store = await this.getStore();
-      const predicates = new rdb.RdbPredicates('sync_queue');
+      const predicates = RdbHelper.createPredicates('sync_queue');
       if (ownerUid !== undefined) {
         predicates.equalTo('owner_uid', ownerUid);
       }
@@ -463,7 +479,7 @@ export class RdbHelper {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const store = await this.getStore();
-      const predicates = new rdb.RdbPredicates('app_sync_state');
+      const predicates = RdbHelper.createPredicates('app_sync_state');
       predicates.equalTo('key', this.toScopedSyncKey(key, ownerUid));
       resultSet = await store.query(predicates);
       if (!resultSet.goToFirstRow()) {
@@ -486,7 +502,7 @@ export class RdbHelper {
   async setSyncState(key: string, value: number, ownerUid?: string): Promise<void> {
     const store = await this.getStore();
     const scopedKey = this.toScopedSyncKey(key, ownerUid);
-    const predicates = new rdb.RdbPredicates('app_sync_state');
+    const predicates = RdbHelper.createPredicates('app_sync_state');
     predicates.equalTo('key', scopedKey);
     const resultSet = await store.query(predicates);
     try {
@@ -508,14 +524,14 @@ export class RdbHelper {
       entity_id: Number(entityId),
       operation: operation,
       payload: payload,
-      created_at: Date.now(),
+      created_at: RdbHelper.now(),
       retry_count: 0
     });
   }
 
   async removeSyncItems(entityType: string, entityId: string, ownerUid?: string): Promise<void> {
     const store = await this.getStore();
-    const predicates = new rdb.RdbPredicates('sync_queue');
+    const predicates = RdbHelper.createPredicates('sync_queue');
     predicates.equalTo('entity_type', entityType);
     predicates.equalTo('entity_id', Number(entityId));
     if (ownerUid !== undefined) {
@@ -526,7 +542,7 @@ export class RdbHelper {
 
   async clearSyncQueue(ownerUid?: string): Promise<void> {
     const store = await this.getStore();
-    const predicates = new rdb.RdbPredicates('sync_queue');
+    const predicates = RdbHelper.createPredicates('sync_queue');
     if (ownerUid !== undefined) {
       predicates.equalTo('owner_uid', ownerUid);
     }
@@ -541,7 +557,7 @@ export class RdbHelper {
     const store = await this.getStore();
     const tables = ['memory_nodes', 'travels', 'sync_queue', 'app_sync_state', 'user_profile'];
     for (let i = 0; i < tables.length; i++) {
-      const predicates = new rdb.RdbPredicates(tables[i]);
+      const predicates = RdbHelper.createPredicates(tables[i]);
       try {
         await store.delete(predicates);
       } catch (err) {
@@ -558,14 +574,14 @@ export class RdbHelper {
     }
     logger.info(TAG, `saveUserProfile CALLED: ownerUid=${ownerUid}, displayName=${displayName}, avatarPath=${avatarPath}, bio=${bio}`);
     const store = await this.getStore();
-    const predicates = new rdb.RdbPredicates('user_profile');
+    const predicates = RdbHelper.createPredicates('user_profile');
     predicates.equalTo('owner_uid', ownerUid);
     const resultSet = await store.query(predicates);
     try {
       if (resultSet.goToFirstRow()) {
         const rowId = resultSet.getLong(resultSet.getColumnIndex('id'));
         logger.info(TAG, `saveUserProfile: updating row id=${rowId}`);
-        const updatePredicates = new rdb.RdbPredicates('user_profile');
+        const updatePredicates = RdbHelper.createPredicates('user_profile');
         updatePredicates.equalTo('id', rowId);
         updatePredicates.equalTo('owner_uid', ownerUid);
         await store.update({
@@ -597,7 +613,7 @@ export class RdbHelper {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const store = await this.getStore();
-      const predicates = new rdb.RdbPredicates('user_profile');
+      const predicates = RdbHelper.createPredicates('user_profile');
       predicates.equalTo('owner_uid', ownerUid);
       resultSet = await store.query(predicates);
       if (!resultSet.goToFirstRow()) {
@@ -630,7 +646,7 @@ export class RdbHelper {
       return;
     }
     const store = await this.getStore();
-    const predicates = new rdb.RdbPredicates('user_profile');
+    const predicates = RdbHelper.createPredicates('user_profile');
     predicates.equalTo('owner_uid', ownerUid);
     await store.delete(predicates);
     logger.info(TAG, `clearUserProfile done for ownerUid=${ownerUid}`);
@@ -638,6 +654,20 @@ export class RdbHelper {
 
   isInitialized(): boolean {
     return this.initialized;
+  }
+
+  setStoreForTesting(store: Object): void {
+    this.rdbStore = store as rdb.RdbStore;
+    this.initialized = true;
+  }
+
+  resetForTesting(): void {
+    this.rdbStore = undefined;
+    this.initialized = false;
+    this.appContext = undefined;
+    this.initPromise = null;
+    RdbHelper.predicatesFactory = null;
+    RdbHelper.nowProvider = null;
   }
 
   async close(): Promise<void> {
