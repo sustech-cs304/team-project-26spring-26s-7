@@ -84,7 +84,7 @@ Started At: $(Get-Date -Format o)
                             @echo off
                             call "%DEVECO_OHPM%" install > "%CI_OUTPUT_DIR%\\logs\\install-dependencies.log" 2>&1
                             set "stage_exit=%ERRORLEVEL%"
-                            type "%CI_OUTPUT_DIR%\\logs\\install-dependencies.log"
+                            findstr /V /I /C:"ArkTS:WARN" /C:"Warning:" "%CI_OUTPUT_DIR%\\logs\\install-dependencies.log"
                             exit /b %stage_exit%
                         '''
                     }
@@ -101,7 +101,7 @@ Started At: $(Get-Date -Format o)
                             @echo off
                             powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1 --mode module -p module=entry@default assembleHap > "%CI_OUTPUT_DIR%\\logs\\compile.log" 2>&1
                             set "stage_exit=%ERRORLEVEL%"
-                            type "%CI_OUTPUT_DIR%\\logs\\compile.log"
+                            findstr /V /I /C:"ArkTS:WARN" /C:"Warning:" "%CI_OUTPUT_DIR%\\logs\\compile.log"
                             exit /b %stage_exit%
                         '''
                     }
@@ -118,7 +118,7 @@ Started At: $(Get-Date -Format o)
                             @echo off
                             powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1 test > "%CI_OUTPUT_DIR%\\logs\\test.log" 2>&1
                             set "stage_exit=%ERRORLEVEL%"
-                            type "%CI_OUTPUT_DIR%\\logs\\test.log"
+                            findstr /V /I /C:"ArkTS:WARN" /C:"Warning:" "%CI_OUTPUT_DIR%\\logs\\test.log"
                             exit /b %stage_exit%
                         '''
                     }
@@ -128,6 +128,17 @@ Started At: $(Get-Date -Format o)
                 always {
                     script {
                         echo 'Collecting test reports...'
+                        dir('frontend/entry/.test/default/intermediates/test/coverage_data') {
+                            bat '''
+                                if exist test_result.txt (
+                                    echo === Test Results ===
+                                    type test_result.txt
+                                    echo === End Test Results ===
+                                ) else (
+                                    echo WARNING: test_result.txt not found - tests may not have run
+                                )
+                            '''
+                        }
                         dir('frontend/entry/.test/default/outputs/test') {
                             archiveArtifacts artifacts: 'reports/**', allowEmptyArchive: true
                             powershell '''
