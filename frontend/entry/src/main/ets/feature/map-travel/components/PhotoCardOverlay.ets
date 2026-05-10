@@ -1,48 +1,51 @@
-import { AppDimens, AppColors } from '../../../common'
-import { ReplayNode } from '../../../common'
+import {
+  AppDimens,
+  ReplayFilterCatalog,
+  ReplayFilterId,
+  ReplayNode,
+  ReplayStyleKit,
+  ReplayStyleKitId,
+  ReplayStyleKitCatalog
+} from '../../../common'
 
-/**
- * 照片卡片展开覆盖层
- * 底部半屏模态框，展示大图轮播和完整文字笔记
- */
 @Component
 export struct PhotoCardOverlay {
   @State isVisible: boolean = false
   @State currentNode: ReplayNode | null = null
+  @Prop styleKit: ReplayStyleKit = ReplayStyleKitCatalog.getById(ReplayStyleKitCatalog.DEFAULT_ID)
+  @Prop filterId: ReplayFilterId = ReplayFilterId.NONE
+  @Prop useBlurOverlay: boolean = false
 
-  // 关闭回调
   onClose?: () => void
 
-  /**
-   * 显示覆盖层
-   * @param node 要展示的回放节点
-   */
+  private getFilterImageOpacity(): number {
+    return ReplayFilterCatalog.getById(this.filterId)
+      .imageOpacity
+  }
+
+  private getFilterOverlayColor(): string {
+    return ReplayFilterCatalog.getById(this.filterId)
+      .overlayColor
+  }
+
   show(node: ReplayNode): void {
     this.currentNode = node
     this.isVisible = true
   }
 
-  /**
-   * 隐藏覆盖层
-   */
   hide(): void {
     this.isVisible = false
-    // 延迟清空数据，等待动画完成
     setTimeout(() => {
       if (!this.isVisible) {
         this.currentNode = null
       }
     }, 300)
 
-    // 调用关闭回调
     if (this.onClose) {
       this.onClose()
     }
   }
 
-  /**
-   * 渲染照片轮播区域
-   */
   @Builder
   PhotoSwiper() {
     if (this.currentNode && this.currentNode.photos.length > 0) {
@@ -53,10 +56,16 @@ export struct PhotoCardOverlay {
               .width('100%')
               .height('100%')
               .objectFit(ImageFit.Contain)
+              .opacity(this.getFilterImageOpacity())
+
+            Column()
+              .width('100%')
+              .height('100%')
+              .backgroundColor(this.getFilterOverlayColor())
           }
           .width('100%')
           .height(250)
-          .backgroundColor('#F0F0F0')
+          .backgroundColor(this.styleKit.cardPhotoBackground)
         })
       }
       .width('100%')
@@ -70,36 +79,47 @@ export struct PhotoCardOverlay {
               .itemHeight(8)
               .selectedItemWidth(8)
               .selectedItemHeight(8)
-              .color('#FFFFFF80')
-              .selectedColor('#FFFFFF')
+              .color(this.styleKit.progressTrackColor)
+              .selectedColor(this.styleKit.progressBlockColor)
           : false
       )
       .borderRadius({ topLeft: 16, topRight: 16 })
     } else {
-      // 无照片占位符
       Column() {
         Text('📷')
           .fontSize(48)
         Text('暂无照片')
           .fontSize(AppDimens.FONT_MD)
-          .fontColor('#FFFFFF99')
+          .fontColor(this.styleKit.cardMutedColor)
           .margin({ top: 8 })
       }
       .width('100%')
       .height(250)
       .justifyContent(FlexAlign.Center)
-      .backgroundColor('#333333')
+      .backgroundColor(this.styleKit.cardPhotoBackground)
       .borderRadius({ topLeft: 16, topRight: 16 })
     }
+  }
+
+  private getOverlayBackground(): string {
+    if (!this.useBlurOverlay) {
+      return this.styleKit.overlayPanelBackground
+    }
+    if (this.styleKit.id === ReplayStyleKitCatalog.DEFAULT_ID) {
+      return 'rgba(255, 255, 255, 0.82)'
+    }
+    if (this.styleKit.id === ReplayStyleKitId.DARK_NIGHT) {
+      return 'rgba(13, 20, 32, 0.84)'
+    }
+    return 'rgba(249, 241, 228, 0.84)'
   }
 
   build() {
     if (this.isVisible && this.currentNode) {
       Stack() {
-        // 半透明遮罩背景
         Column() {
           Blank()
-            .backgroundColor('rgba(0, 0, 0, 0.5)')
+            .backgroundColor(this.styleKit.overlayMaskColor)
             .width('100%')
             .height('100%')
         }
@@ -107,49 +127,42 @@ export struct PhotoCardOverlay {
         .height('100%')
         .onClick(() => this.hide())
 
-        // 底部半屏卡片
         Column() {
-          // 顶部关闭指示条
           Row() {
             Blank()
               .width(40)
               .height(4)
-              .backgroundColor('#CCCCCC')
+              .backgroundColor(this.styleKit.controlMutedColor)
               .borderRadius(2)
           }
           .width('100%')
           .padding({ top: 12, bottom: 8 })
 
-          // 照片轮播
           this.PhotoSwiper()
 
-          // 标题
           Text(this.currentNode.title)
             .fontSize(AppDimens.FONT_LG)
             .fontWeight(FontWeight.Bold)
-            .fontColor(AppColors.TEXT_PRIMARY)
+            .fontColor(this.styleKit.overlayTextColor)
             .width('100%')
             .margin({ top: 16, bottom: 8 })
 
-          // 心情和标签行
           Row() {
-            // 心情
             if (this.currentNode.mood) {
               Text(this.currentNode.mood)
                 .fontSize(AppDimens.FONT_SM)
-                .fontColor('#FF6B6B')
-                .backgroundColor('#FF6B6B1A')
+                .fontColor(this.styleKit.moodTextColor)
+                .backgroundColor(this.styleKit.moodBackgroundColor)
                 .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                 .borderRadius(12)
             }
 
-            // 标签
             if (this.currentNode.tags.length > 0) {
               ForEach(this.currentNode.tags, (tag: string) => {
                 Text(tag)
                   .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.PRIMARY)
-                  .backgroundColor('#1890FF1A')
+                  .fontColor(this.styleKit.cardTagTextColor)
+                  .backgroundColor(this.styleKit.cardTagBackground)
                   .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                   .borderRadius(12)
                   .margin({ left: 6 })
@@ -158,12 +171,11 @@ export struct PhotoCardOverlay {
 
             Blank()
 
-            // 照片数量
             if (this.currentNode.photos.length > 0) {
               Text(`${this.currentNode.photos.length} 张`)
                 .fontSize(AppDimens.FONT_SM)
-                .fontColor(AppColors.TEXT_HINT)
-                .backgroundColor(AppColors.DIVIDER)
+                .fontColor(this.styleKit.overlaySecondaryTextColor)
+                .backgroundColor(this.styleKit.cardTagBackground)
                 .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                 .borderRadius(12)
             }
@@ -171,19 +183,17 @@ export struct PhotoCardOverlay {
           .width('100%')
           .margin({ bottom: 8 })
 
-          // 完整文字笔记（可滚动）
           Scroll() {
             Column() {
               Text(this.currentNode.note)
                 .fontSize(AppDimens.FONT_MD)
-                .fontColor(AppColors.TEXT_SECONDARY)
+                .fontColor(this.styleKit.overlaySecondaryTextColor)
                 .lineHeight(28)
                 .width('100%')
 
-              // 时间戳
               Text(this.formatTimestamp(this.currentNode.timestamp))
                 .fontSize(AppDimens.FONT_SM)
-                .fontColor(AppColors.TEXT_HINT)
+                .fontColor(this.styleKit.cardMutedColor)
                 .margin({ top: 16 })
             }
             .width('100%')
@@ -194,10 +204,11 @@ export struct PhotoCardOverlay {
         }
         .width('100%')
         .height('65%')
-        .backgroundColor(AppColors.CARD_BG)
+        .backgroundColor(this.getOverlayBackground())
+        .border({ width: 1, color: this.styleKit.overlayPanelBorderColor })
         .borderRadius({ topLeft: 20, topRight: 20 })
         .position({ x: 0, y: '35%' })
-        .shadow({ radius: 16, color: '#00000040', offsetY: -4 })
+        .shadow({ radius: 16, color: this.styleKit.shadowColor, offsetY: -4 })
       }
       .width('100%')
       .height('100%')
@@ -205,9 +216,6 @@ export struct PhotoCardOverlay {
     }
   }
 
-  /**
-   * 格式化时间戳为可读格式
-   */
   private formatTimestamp(timestamp: number): string {
     const date = new Date(timestamp)
     const year = date.getFullYear()

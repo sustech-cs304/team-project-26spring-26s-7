@@ -1,5 +1,5 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, AuthService } from '../../../common'
+import { AppColors, AppDimens, AuthService, ImageCensorService } from '../../../common'
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
@@ -20,6 +20,7 @@ struct ProfileEditPage {
   @State avatar: string = ''
   @State bio: string = ''
   @State isSaving: boolean = false
+  @State isCheckingAvatar: boolean = false
 
   aboutToAppear(): void {
     this.loadProfile()
@@ -49,11 +50,17 @@ struct ProfileEditPage {
   }
 
   private async handlePickAvatar(): Promise<void> {
+    if (this.isCheckingAvatar) {
+      promptAction.showToast({ message: '头像正在审核中，请稍候' })
+      return
+    }
+
     if (!this.isNetworkOnline()) {
       promptAction.showToast({ message: '当前无网络，无法更换头像' })
       return
     }
 
+    let candidatePath = ''
     try {
       const photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
       photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
@@ -76,6 +83,7 @@ struct ProfileEditPage {
 
         const fileName = `avatar_${Date.now()}.jpg`;
         const targetPath = `${sandboxDir}/${fileName}`;
+        candidatePath = targetPath;
 
         // 打开源文件并复制到沙箱
         const sourceFile = fs.openSync(uri, fs.OpenMode.READ_ONLY);
@@ -95,14 +103,59 @@ struct ProfileEditPage {
           fs.closeSync(targetFile);
         }
 
+        this.isCheckingAvatar = true;
+        promptAction.showToast({ message: '正在审核头像安全性...' });
+        const auditResult = await ImageCensorService.checkLocalImage(targetPath);
+        if (!auditResult.is_safe) {
+          this.deleteAvatarCandidate(targetPath);
+          this.showAvatarViolationDialog(auditResult.conclusion);
+          return;
+        }
+
         // 存储沙箱路径（不含 file:// 前缀，loadProfile 时统一加）
         this.avatar = targetPath;
         promptAction.showToast({ message: '头像已选择' });
       }
     } catch (err) {
+      if (candidatePath.length > 0) {
+        this.deleteAvatarCandidate(candidatePath);
+      }
       const error = err as BusinessError;
       hilog.warn(DOMAIN, TAG, `Avatar pick failed: ${error?.code ?? 'unknown'} - ${error?.message ?? error}`);
-      promptAction.showToast({ message: '选择头像失败，请重试' });
+      if ((err as Error).message === 'IMAGE_CENSOR_NETWORK_ERROR') {
+        AlertDialog.show({
+          title: '头像审核失败',
+          message: '图片安全审核服务暂不可用，请检查网络后重试。',
+          primaryButton: {
+            value: '我知道了',
+            action: () => {}
+          }
+        })
+      } else {
+        promptAction.showToast({ message: '选择头像失败，请重试' });
+      }
+    } finally {
+      this.isCheckingAvatar = false
+    }
+  }
+
+  private showAvatarViolationDialog(conclusion: string): void {
+    const detail = conclusion && conclusion.length > 0 ? `：${conclusion}` : ''
+    AlertDialog.show({
+      title: '图片违规',
+      message: `该头像未通过图片安全审核${detail}，请选择其他图片。`,
+      primaryButton: {
+        value: '我知道了',
+        action: () => {}
+      }
+    })
+  }
+
+  private deleteAvatarCandidate(path: string): void {
+    try {
+      fs.unlinkSync(path.startsWith('file://') ? path.substring(7) : path)
+    } catch (_) {
+      // Best effort cleanup for rejected or failed avatar candidates.
     }
   }
 
@@ -156,9 +209,9 @@ struct ProfileEditPage {
 
         Text('保存')
           .fontSize(AppDimens.FONT_MD)
-          .fontColor(this.isSaving ? AppColors.TEXT_HINT : AppColors.PRIMARY)
+          .fontColor(this.isSaving || this.isCheckingAvatar ? AppColors.TEXT_HINT : AppColors.PRIMARY)
           .padding(AppDimens.PADDING_MD)
-          .enabled(!this.isSaving)
+          .enabled(!this.isSaving && !this.isCheckingAvatar)
           .onClick(() => this.handleSave())
       }
       .width('100%')
@@ -191,6 +244,12 @@ struct ProfileEditPage {
                   Text('添加头像')
                     .fontSize(AppDimens.FONT_SM)
                     .fontColor(AppColors.TEXT_HINT)
+                    .margin({ top: 4 })
+                }
+                if (this.isCheckingAvatar) {
+                  Text('审核中')
+                    .fontSize(AppDimens.FONT_SM)
+                    .fontColor(AppColors.PRIMARY)
                     .margin({ top: 4 })
                 }
               }

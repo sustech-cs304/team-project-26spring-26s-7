@@ -105,8 +105,19 @@ export interface RouterParam {
   tags?: string[]
 }
 
+/** 路线级 Replay 配置 */
+export interface ReplayTripPreferences {
+  replayStyleKitId?: string
+  replayBgmId?: string
+  replayFilterId?: string
+  replayTransitionType?: string
+  replayEnableRipple?: boolean
+  replayEnableRouteAnimation?: boolean
+  replayEnableBlurOverlay?: boolean
+}
+
 /** 旅行路线 - 完整数据模型 */
-export interface Trip {
+export interface Trip extends ReplayTripPreferences {
   id: string
   name: string
   description?: string
@@ -162,6 +173,7 @@ export interface SyncStatus {
 
 export interface SyncQueueItem {
   id: string
+  ownerUid: string
   entityType: string
   entityId: string
   operation: string

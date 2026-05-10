@@ -65,6 +65,7 @@ AGENTS.md
 frontend/.codex_*/
 .codex_npm_cache_*
 frontend/.codex_npm_cache_*/
+.codex
 
 # module cache
 frontend/oh_modules/

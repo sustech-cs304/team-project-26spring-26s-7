@@ -1,7 +1,12 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
+import {
+  AppColors,
+  AppDimens,
+  RouterUrls,
+  getDataService
+} from '../../../common'
 import { RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
 
@@ -33,6 +38,8 @@ const DEFAULT_TRIP_CENTER: mapCommon.LatLng = {
 @Component
 export struct TripDetailPage {
   @StorageLink('appThemeVersion') themeVersion: number = 0
+  @State pageWidth: number = 0
+  @State pageHeight: number = 0
   @State tripName: string = ''
   @State dateRange: string = ''
   @State nodeCount: number = 0
@@ -55,6 +62,29 @@ export struct TripDetailPage {
   private routeMarkers: map.Marker[] = []
   private routePolyline?: RemovableOverlay
   private dataService = getDataService()
+
+  private clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max)
+  }
+
+  private updatePageSize(width: number, height: number): void {
+    if (width > 0) {
+      this.pageWidth = width
+    }
+    if (height > 0) {
+      this.pageHeight = height
+    }
+  }
+
+  private getRouteHeroHeight(): number {
+    const availableWidth = this.pageWidth > 0
+      ? Math.max(this.pageWidth - AppDimens.PADDING_MD * 2, 240)
+      : 360
+    const baseRatio = this.pageWidth >= 960 ? 0.22 : (this.pageWidth >= 640 ? 0.28 : 0.42)
+    const desiredHeight = availableWidth * baseRatio
+    const maxHeight = this.pageHeight > 0 ? Math.max(220, this.pageHeight * 0.34) : 320
+    return this.clamp(desiredHeight, 180, maxHeight)
+  }
 
   private bumpTravelDataVersion(): void {
     const version = (AppStorage.get('travelDataVersion') as number) || 0
@@ -229,7 +259,7 @@ export struct TripDetailPage {
   private handleDeleteTrip(): void {
     AlertDialog.show({
       title: '删除旅行',
-      message: '确定要删除「' + this.tripName + '」吗？此操作不可撤销。',
+      message: '确定要删除「' + this.tripName + '」吗？此操作不可撤销，但不会删除该旅行下的节点，这些节点会保留。',
       primaryButton: {
         value: '取消',
         action: () => {}
@@ -311,7 +341,7 @@ export struct TripDetailPage {
       .position({ x: 0, y: 0 })
     }
     .width('100%')
-    .height(232)
+    .height(this.getRouteHeroHeight())
     .borderRadius(24)
     .clip(true)
   }
@@ -521,7 +551,7 @@ export struct TripDetailPage {
                   .margin({ top: 12 })
               }
               .width('100%')
-              .height(232)
+              .height(this.getRouteHeroHeight())
               .justifyContent(FlexAlign.Center)
               .backgroundColor(AppColors.CARD_BG)
               .borderRadius(24)
@@ -618,13 +648,21 @@ export struct TripDetailPage {
               .shadow({ radius: 8, color: '#0000000D', offsetY: 3 })
             }
           }
+          .width('100%')
+          .constraintSize({ minHeight: '100%' })
+          .justifyContent(FlexAlign.Start)
+          .alignItems(HorizontalAlign.Start)
           .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12, bottom: 24 })
         }
         .layoutWeight(1)
       }
+      .justifyContent(FlexAlign.Start)
       .width('100%')
       .height('100%')
       .backgroundColor(AppColors.BACKGROUND)
+      .onAreaChange((_, value) => {
+        this.updatePageSize(Number(value.width), Number(value.height))
+      })
 
       // 右上角下拉菜单
       if (this.showMenu) {

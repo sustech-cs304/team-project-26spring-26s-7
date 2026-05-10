@@ -243,7 +243,7 @@ export struct TripListView {
               .padding(AppDimens.PADDING_MD)
               .shadow({ radius: 4, color: '#0000000D', offsetY: 2 })
             }
-          }, (trip: Trip) => trip.id)
+          }, (trip: Trip) => `${trip.id}-${trip.nodeIds.length}-${trip.totalDistance}`)
         }
         .layoutWeight(1)
         .width('100%')

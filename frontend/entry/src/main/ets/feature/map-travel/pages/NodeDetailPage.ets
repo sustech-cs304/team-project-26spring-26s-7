@@ -14,6 +14,8 @@ const TAG = 'NodeDetailPage'
 @Component
 export struct NodeDetailPage {
   @StorageLink('appThemeVersion') themeVersion: number = 0
+  @State pageWidth: number = 0
+  @State pageHeight: number = 0
   @State title: string = ''
   @State poiName: string = ''
   @State date: string = ''
@@ -31,6 +33,27 @@ export struct NodeDetailPage {
   @State showFullPhoto: boolean = false
 
   private dataService = getDataService()
+
+  private clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max)
+  }
+
+  private updatePageSize(width: number, height: number): void {
+    if (width > 0) {
+      this.pageWidth = width
+    }
+    if (height > 0) {
+      this.pageHeight = height
+    }
+  }
+
+  private getPhotoHeroHeight(): number {
+    const availableWidth = this.pageWidth > 0 ? this.pageWidth : 360
+    const baseRatio = this.pageWidth >= 960 ? 0.32 : (this.pageWidth >= 640 ? 0.4 : 0.72)
+    const desiredHeight = availableWidth * baseRatio
+    const maxHeight = this.pageHeight > 0 ? Math.max(260, this.pageHeight * 0.42) : 360
+    return this.clamp(desiredHeight, 200, maxHeight)
+  }
 
   private bumpTravelDataVersion(): void {
     const version = (AppStorage.get('travelDataVersion') as number) || 0
@@ -166,7 +189,7 @@ export struct NodeDetailPage {
           })
         }
         .width('100%')
-        .height(280)
+        .height(this.getPhotoHeroHeight())
         .index(this.selectedPhotoIndex)
         .loop(false)
         .autoPlay(false)
@@ -185,7 +208,7 @@ export struct NodeDetailPage {
             .margin({ top: 8 })
         }
         .width('100%')
-        .height(180)
+        .height(Math.max(160, this.getPhotoHeroHeight() * 0.64))
         .justifyContent(FlexAlign.Center)
         .backgroundColor('#F5F5F5')
       }
@@ -393,14 +416,20 @@ export struct NodeDetailPage {
             }
             .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 16 })
           }
+          .justifyContent(FlexAlign.Start)
+          .alignItems(HorizontalAlign.Start)
           .padding({ bottom: 24 })
         }
         .layoutWeight(1)
       }
     }
+    .justifyContent(FlexAlign.Start)
     .width('100%')
     .height('100%')
     .backgroundColor(AppColors.BACKGROUND)
+    .onAreaChange((_, value) => {
+      this.updatePageSize(Number(value.width), Number(value.height))
+    })
     .bindContentCover(this.showFullPhoto, this.buildFullPhotoViewer(), {
       modalTransition: undefined,
       onDisappear: () => { this.showFullPhoto = false }

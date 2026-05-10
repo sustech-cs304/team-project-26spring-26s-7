@@ -72,6 +72,28 @@ export interface ReplaceLink {
   sig: string
 }
 
+/** v1.0：publish 时把当前用户的回放偏好顺路上传，
+ *  让生成的 /sreplay 页面完整复刻发布者本机的视觉。所有字段都是 enum
+ *  value（小写字符串），与后端 share_service/models/publish.py 的白名单
+ *  完全对齐——任意一边新增 value 都要同步另一边。
+ *  全部字段都是可选；缺哪个后端就用哪个的 default。 */
+export interface ReplayPrefsForShare {
+  /** 'minimal_white' | 'dark_night' | 'vintage_film' */
+  styleKitId?: string
+  /** 'morning_chill_birds' | 'city_lights_lofi' | 'jazz_night'
+   *  | 'tropical_chill_travel' | 'cinematic_ambient' */
+  bgmId?: string
+  /** 'none' | 'film' | 'warm' | 'cool' | 'mono' */
+  filterId?: string
+  /** 'fade' | 'slide' | 'scale' */
+  transitionType?: string
+  enableBlurOverlay?: boolean
+  enableRouteAnimation?: boolean
+  /** v1.0.1：节点 marker 的波纹脉冲。frontend ReplayPreferencesState
+   *  里有这个字段，前端 H5 端做了实际可视实现（活跃 pin ::after 动画）。 */
+  enableRipple?: boolean
+}
+
 /** POST /api/v1/share/publish 完整响应（§4.4 / §4.5） */
 export interface SharePublishResponse {
   code: number
@@ -92,6 +114,13 @@ export interface ShareStatusOk {
   expiresAt: number
   remainingSeconds: number
   publishedAt: number
+}
+
+/** POST /api/v1/share/revoke-by-trip 响应 data 字段（v0.8） */
+export interface RevokeByTripOk {
+  tripId: string
+  /** 实际被这次撤销翻成 PRIVATE 的分享条数（已 revoked / 已自然过期的不算） */
+  revokedCount: number
 }
 
 /** 错误码（§4.5） */
@@ -129,5 +158,7 @@ export class ShareErrorCode {
   static readonly INVALID_EXPIRY: number = 40007
   static readonly RATE_LIMITED: number = 42901
   static readonly NOT_FOUND_OR_EXPIRED: number = 40401
+  /** v0.8: trip 改私密 → 该分享已被 owner 撤销 */
+  static readonly REVOKED_BY_OWNER_PRIVATE: number = 40402
   static readonly INTERNAL_ERROR: number = 50000
 }
