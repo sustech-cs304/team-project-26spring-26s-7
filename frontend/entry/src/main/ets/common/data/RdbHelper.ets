@@ -31,6 +31,14 @@ export enum SensitivityLevel {
   S4 = 'S4'
 }
 
+/** 用户 profile 数据结构，对应 user_profile 表 */
+export interface UserProfileRow {
+  ownerUid: string;
+  displayName: string;
+  avatarPath: string;
+  bio: string;
+}
+
 const DB_NAME = 'TravelPin.db';
 const DB_VERSION = 1;
 
@@ -55,7 +63,14 @@ const SQL_CREATE_TRAVELS = `
     sync_status TEXT NOT NULL DEFAULT 'local_only',
     deleted_at INTEGER DEFAULT 0,
     last_synced_at INTEGER DEFAULT 0,
-    version INTEGER NOT NULL DEFAULT 1
+    version INTEGER NOT NULL DEFAULT 1,
+    replay_style_kit_id TEXT DEFAULT '',
+    replay_bgm_id TEXT DEFAULT '',
+    replay_filter_id TEXT DEFAULT '',
+    replay_transition_type TEXT DEFAULT '',
+    replay_enable_ripple INTEGER DEFAULT 0,
+    replay_enable_route_animation INTEGER DEFAULT 0,
+    replay_enable_blur_overlay INTEGER DEFAULT 0
   )
 `;
 
@@ -109,6 +124,34 @@ const SQL_ADD_TRAVEL_LAST_SYNCED_AT = `
 
 const SQL_ADD_TRAVEL_VERSION = `
   ALTER TABLE travels ADD COLUMN version INTEGER NOT NULL DEFAULT 1
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_STYLE_KIT_ID = `
+  ALTER TABLE travels ADD COLUMN replay_style_kit_id TEXT DEFAULT ''
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_BGM_ID = `
+  ALTER TABLE travels ADD COLUMN replay_bgm_id TEXT DEFAULT ''
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_FILTER_ID = `
+  ALTER TABLE travels ADD COLUMN replay_filter_id TEXT DEFAULT ''
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_TRANSITION_TYPE = `
+  ALTER TABLE travels ADD COLUMN replay_transition_type TEXT DEFAULT ''
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_ENABLE_RIPPLE = `
+  ALTER TABLE travels ADD COLUMN replay_enable_ripple INTEGER DEFAULT 0
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_ENABLE_ROUTE_ANIMATION = `
+  ALTER TABLE travels ADD COLUMN replay_enable_route_animation INTEGER DEFAULT 0
+`;
+
+const SQL_ADD_TRAVEL_REPLAY_ENABLE_BLUR_OVERLAY = `
+  ALTER TABLE travels ADD COLUMN replay_enable_blur_overlay INTEGER DEFAULT 0
 `;
 
 const SQL_ADD_MEMORY_NODE_TITLE = `
@@ -179,6 +222,10 @@ const SQL_ADD_MEMORY_NODE_VERSION = `
   ALTER TABLE memory_nodes ADD COLUMN version INTEGER NOT NULL DEFAULT 1
 `;
 
+const SQL_ADD_MEMORY_NODE_VISITED_AT = `
+  ALTER TABLE memory_nodes ADD COLUMN visited_at INTEGER DEFAULT 0
+`;
+
 const SQL_MIGRATE_MEMORY_NODE_ORDER = `
   UPDATE memory_nodes SET node_order = "order" WHERE node_order = 0
 `;
@@ -186,6 +233,7 @@ const SQL_MIGRATE_MEMORY_NODE_ORDER = `
 const SQL_CREATE_SYNC_QUEUE = `
   CREATE TABLE IF NOT EXISTS sync_queue(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    owner_uid TEXT NOT NULL DEFAULT '',
     entity_type TEXT NOT NULL,
     entity_id INTEGER NOT NULL,
     operation TEXT NOT NULL,
@@ -200,6 +248,24 @@ const SQL_CREATE_APP_SYNC_STATE = `
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   )
+`;
+
+const SQL_CREATE_USER_PROFILE = `
+  CREATE TABLE IF NOT EXISTS user_profile(
+    id INTEGER PRIMARY KEY,
+    owner_uid TEXT NOT NULL DEFAULT '',
+    display_name TEXT DEFAULT '',
+    avatar_path TEXT DEFAULT '',
+    bio TEXT DEFAULT ''
+  )
+`;
+
+const SQL_ADD_USER_PROFILE_OWNER_UID = `
+  ALTER TABLE user_profile ADD COLUMN owner_uid TEXT NOT NULL DEFAULT ''
+`;
+
+const SQL_ADD_SYNC_QUEUE_OWNER_UID = `
+  ALTER TABLE sync_queue ADD COLUMN owner_uid TEXT NOT NULL DEFAULT ''
 `;
 
 export class RdbHelper {
@@ -236,23 +302,24 @@ export class RdbHelper {
       return;
     }
 
-    this.initPromise = (async () => {
-      try {
-        logger.info(TAG, `Initializing database v${DB_VERSION}...`);
-        this.rdbStore = await rdb.getRdbStore(context, STORE_CONFIG);
-        await this.createTables();
-        this.initialized = true;
-        logger.info(TAG, 'Database initialized successfully');
-      } catch (err) {
-        logger.error(TAG, `Database initialization failed: ${JSON.stringify(err)}`);
-        throw this.toError(err);
-      }
-    })();
+    // 创建初始化 promise 并等待其完全完成（包括所有内部 await）
+    this.initPromise = this.initDatabaseInner(context);
+    await this.initPromise;
+    this.initPromise = null;
+  }
 
+  private async initDatabaseInner(context: common.Context): Promise<void> {
     try {
-      await this.initPromise;
-    } finally {
-      this.initPromise = null;
+      logger.info(TAG, `Initializing database v${DB_VERSION}...`);
+      this.rdbStore = await rdb.getRdbStore(context, STORE_CONFIG);
+      await this.createTables();
+      this.initialized = true;
+      logger.info(TAG, 'Database initialized successfully, rdbStore is ready');
+    } catch (err) {
+      this.initialized = false;
+      this.rdbStore = undefined;
+      logger.error(TAG, `Database initialization failed: ${JSON.stringify(err)}`);
+      throw this.toError(err);
     }
   }
 
@@ -264,6 +331,7 @@ export class RdbHelper {
     await this.rdbStore.executeSql(SQL_CREATE_MEMORY_NODES);
     await this.rdbStore.executeSql(SQL_CREATE_SYNC_QUEUE);
     await this.rdbStore.executeSql(SQL_CREATE_APP_SYNC_STATE);
+    await this.rdbStore.executeSql(SQL_CREATE_USER_PROFILE);
     await this.ensureLatestSchema();
     logger.info(TAG, 'Tables created successfully');
   }
@@ -277,6 +345,13 @@ export class RdbHelper {
       SQL_ADD_TRAVEL_DELETED_AT,
       SQL_ADD_TRAVEL_LAST_SYNCED_AT,
       SQL_ADD_TRAVEL_VERSION,
+      SQL_ADD_TRAVEL_REPLAY_STYLE_KIT_ID,
+      SQL_ADD_TRAVEL_REPLAY_BGM_ID,
+      SQL_ADD_TRAVEL_REPLAY_FILTER_ID,
+      SQL_ADD_TRAVEL_REPLAY_TRANSITION_TYPE,
+      SQL_ADD_TRAVEL_REPLAY_ENABLE_RIPPLE,
+      SQL_ADD_TRAVEL_REPLAY_ENABLE_ROUTE_ANIMATION,
+      SQL_ADD_TRAVEL_REPLAY_ENABLE_BLUR_OVERLAY,
       SQL_ADD_MEMORY_NODE_TITLE,
       SQL_ADD_MEMORY_NODE_POI_NAME,
       SQL_ADD_MEMORY_NODE_DESCRIPTION,
@@ -292,7 +367,10 @@ export class RdbHelper {
       SQL_ADD_MEMORY_NODE_SYNC_STATUS,
       SQL_ADD_MEMORY_NODE_DELETED_AT,
       SQL_ADD_MEMORY_NODE_LAST_SYNCED_AT,
-      SQL_ADD_MEMORY_NODE_VERSION
+      SQL_ADD_MEMORY_NODE_VERSION,
+      SQL_ADD_MEMORY_NODE_VISITED_AT,
+      SQL_ADD_USER_PROFILE_OWNER_UID,
+      SQL_ADD_SYNC_QUEUE_OWNER_UID
     ];
 
     for (let i = 0; i < optionalSchemaUpdates.length; i++) {
@@ -333,11 +411,14 @@ export class RdbHelper {
     return this.rdbStore;
   }
 
-  async getPendingSyncQueueItems(): Promise<SyncQueueItem[]> {
+  async getPendingSyncQueueItems(ownerUid?: string): Promise<SyncQueueItem[]> {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const store = await this.getStore();
       const predicates = new rdb.RdbPredicates('sync_queue');
+      if (ownerUid !== undefined) {
+        predicates.equalTo('owner_uid', ownerUid);
+      }
       predicates.orderByAsc('created_at');
       resultSet = await store.query(predicates);
       const items: SyncQueueItem[] = [];
@@ -345,6 +426,7 @@ export class RdbHelper {
         do {
           items.push({
             id: resultSet.getDouble(resultSet.getColumnIndex('id')).toString(),
+            ownerUid: resultSet.getString(resultSet.getColumnIndex('owner_uid')) ?? '',
             entityType: resultSet.getString(resultSet.getColumnIndex('entity_type')),
             entityId: resultSet.getDouble(resultSet.getColumnIndex('entity_id')).toString(),
             operation: resultSet.getString(resultSet.getColumnIndex('operation')),
@@ -367,18 +449,22 @@ export class RdbHelper {
     }
   }
 
-  async getLatestSyncTimestamp(): Promise<number> {
-    const lastPush = await this.getSyncState('last_push_at');
-    const lastPull = await this.getSyncState('last_pull_at');
+  async getLatestSyncTimestamp(ownerUid?: string): Promise<number> {
+    const lastPush = await this.getSyncState('last_push_at', ownerUid);
+    const lastPull = await this.getSyncState('last_pull_at', ownerUid);
     return Math.max(lastPush, lastPull);
   }
 
-  async getSyncState(key: string): Promise<number> {
+  private toScopedSyncKey(key: string, ownerUid?: string): string {
+    return ownerUid && ownerUid.length > 0 ? `${ownerUid}:${key}` : key;
+  }
+
+  async getSyncState(key: string, ownerUid?: string): Promise<number> {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const store = await this.getStore();
       const predicates = new rdb.RdbPredicates('app_sync_state');
-      predicates.equalTo('key', key);
+      predicates.equalTo('key', this.toScopedSyncKey(key, ownerUid));
       resultSet = await store.query(predicates);
       if (!resultSet.goToFirstRow()) {
         return 0;
@@ -397,25 +483,27 @@ export class RdbHelper {
     }
   }
 
-  async setSyncState(key: string, value: number): Promise<void> {
+  async setSyncState(key: string, value: number, ownerUid?: string): Promise<void> {
     const store = await this.getStore();
+    const scopedKey = this.toScopedSyncKey(key, ownerUid);
     const predicates = new rdb.RdbPredicates('app_sync_state');
-    predicates.equalTo('key', key);
+    predicates.equalTo('key', scopedKey);
     const resultSet = await store.query(predicates);
     try {
       if (resultSet.goToFirstRow()) {
         await store.update({ value: value.toString() }, predicates);
       } else {
-        await store.insert('app_sync_state', { key: key, value: value.toString() });
+        await store.insert('app_sync_state', { key: scopedKey, value: value.toString() });
       }
     } finally {
       resultSet.close();
     }
   }
 
-  async enqueueSyncItem(entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
+  async enqueueSyncItem(ownerUid: string, entityType: string, entityId: string, operation: string, payload: string): Promise<void> {
     const store = await this.getStore();
     await store.insert('sync_queue', {
+      owner_uid: ownerUid,
       entity_type: entityType,
       entity_id: Number(entityId),
       operation: operation,
@@ -425,18 +513,137 @@ export class RdbHelper {
     });
   }
 
-  async removeSyncItems(entityType: string, entityId: string): Promise<void> {
+  async removeSyncItems(entityType: string, entityId: string, ownerUid?: string): Promise<void> {
     const store = await this.getStore();
     const predicates = new rdb.RdbPredicates('sync_queue');
     predicates.equalTo('entity_type', entityType);
     predicates.equalTo('entity_id', Number(entityId));
+    if (ownerUid !== undefined) {
+      predicates.equalTo('owner_uid', ownerUid);
+    }
     await store.delete(predicates);
   }
 
-  async clearSyncQueue(): Promise<void> {
+  async removeSyncItemById(id: string, ownerUid?: string): Promise<void> {
     const store = await this.getStore();
     const predicates = new rdb.RdbPredicates('sync_queue');
+    predicates.equalTo('id', Number(id));
+    if (ownerUid !== undefined) {
+      predicates.equalTo('owner_uid', ownerUid);
+    }
     await store.delete(predicates);
+  }
+
+  async clearSyncQueue(ownerUid?: string): Promise<void> {
+    const store = await this.getStore();
+    const predicates = new rdb.RdbPredicates('sync_queue');
+    if (ownerUid !== undefined) {
+      predicates.equalTo('owner_uid', ownerUid);
+    }
+    await store.delete(predicates);
+  }
+
+  /**
+   * 注销账号：清除本地所有用户数据。
+   * 不会重建数据库 schema，仅 truncate 各表。
+   */
+  async wipeAllUserData(): Promise<void> {
+    const store = await this.getStore();
+    const tables = ['memory_nodes', 'travels', 'sync_queue', 'app_sync_state', 'user_profile'];
+    for (let i = 0; i < tables.length; i++) {
+      const predicates = new rdb.RdbPredicates(tables[i]);
+      try {
+        await store.delete(predicates);
+      } catch (err) {
+        logger.error(TAG, `wipeAllUserData: failed to clear ${tables[i]}: ${JSON.stringify(err)}`);
+      }
+    }
+    logger.info(TAG, 'wipeAllUserData done');
+  }
+
+  /** 保存用户 profile 到 user_profile 表（按 owner_uid 隔离） */
+  async saveUserProfile(ownerUid: string, displayName: string, avatarPath: string, bio: string): Promise<void> {
+    if (!ownerUid || ownerUid.length === 0) {
+      throw new Error('saveUserProfile requires ownerUid');
+    }
+    logger.info(TAG, `saveUserProfile CALLED: ownerUid=${ownerUid}, displayName=${displayName}, avatarPath=${avatarPath}, bio=${bio}`);
+    const store = await this.getStore();
+    const predicates = new rdb.RdbPredicates('user_profile');
+    predicates.equalTo('owner_uid', ownerUid);
+    const resultSet = await store.query(predicates);
+    try {
+      if (resultSet.goToFirstRow()) {
+        const rowId = resultSet.getLong(resultSet.getColumnIndex('id'));
+        logger.info(TAG, `saveUserProfile: updating row id=${rowId}`);
+        const updatePredicates = new rdb.RdbPredicates('user_profile');
+        updatePredicates.equalTo('id', rowId);
+        updatePredicates.equalTo('owner_uid', ownerUid);
+        await store.update({
+          owner_uid: ownerUid,
+          display_name: displayName,
+          avatar_path: avatarPath,
+          bio: bio
+        }, updatePredicates);
+      } else {
+        logger.info(TAG, `saveUserProfile: inserting new row for ownerUid=${ownerUid}`);
+        await store.insert('user_profile', {
+          owner_uid: ownerUid,
+          display_name: displayName,
+          avatar_path: avatarPath,
+          bio: bio
+        });
+      }
+      logger.info(TAG, `saveUserProfile SUCCESS: displayName=${displayName}`);
+    } finally {
+      resultSet.close();
+    }
+  }
+
+  /** 从 user_profile 表加载 profile，返回 null 表示从未保存过 */
+  async loadUserProfile(ownerUid: string): Promise<UserProfileRow | null> {
+    if (!ownerUid || ownerUid.length === 0) {
+      return null;
+    }
+    let resultSet: rdb.ResultSet | undefined = undefined;
+    try {
+      const store = await this.getStore();
+      const predicates = new rdb.RdbPredicates('user_profile');
+      predicates.equalTo('owner_uid', ownerUid);
+      resultSet = await store.query(predicates);
+      if (!resultSet.goToFirstRow()) {
+        logger.info(TAG, `loadUserProfile: no row found for ownerUid=${ownerUid}, returning null`);
+        return null;
+      }
+      const displayName: string = resultSet.getString(resultSet.getColumnIndex('display_name')) ?? '';
+      const avatarPath: string = resultSet.getString(resultSet.getColumnIndex('avatar_path')) ?? '';
+      const bio: string = resultSet.getString(resultSet.getColumnIndex('bio')) ?? '';
+      if (!displayName && !avatarPath && !bio) {
+        logger.info(TAG, 'loadUserProfile: row exists but all fields empty, returning null');
+        return null;
+      }
+      logger.info(TAG, `loadUserProfile SUCCESS: ownerUid=${ownerUid}, displayName=${displayName}, avatarPath=${avatarPath}, bio=${bio}`);
+      const row: UserProfileRow = { ownerUid: ownerUid, displayName: displayName, avatarPath: avatarPath, bio: bio };
+      return row;
+    } catch (err) {
+      logger.error(TAG, `loadUserProfile FAILED: ${JSON.stringify(err)}`);
+      return null;
+    } finally {
+      if (resultSet) {
+        try { resultSet.close(); } catch (_) {}
+      }
+    }
+  }
+
+  /** 清除 user_profile */
+  async clearUserProfile(ownerUid: string): Promise<void> {
+    if (!ownerUid || ownerUid.length === 0) {
+      return;
+    }
+    const store = await this.getStore();
+    const predicates = new rdb.RdbPredicates('user_profile');
+    predicates.equalTo('owner_uid', ownerUid);
+    await store.delete(predicates);
+    logger.info(TAG, `clearUserProfile done for ownerUid=${ownerUid}`);
   }
 
   isInitialized(): boolean {

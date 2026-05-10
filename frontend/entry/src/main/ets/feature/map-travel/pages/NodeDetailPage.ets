@@ -13,6 +13,9 @@ const TAG = 'NodeDetailPage'
 @Entry
 @Component
 export struct NodeDetailPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
+  @State pageWidth: number = 0
+  @State pageHeight: number = 0
   @State title: string = ''
   @State poiName: string = ''
   @State date: string = ''
@@ -27,8 +30,30 @@ export struct NodeDetailPage {
   @State isLoading: boolean = false
   @State selectedPhotoIndex: number = 0
   @State pageVisible: boolean = false
+  @State showFullPhoto: boolean = false
 
   private dataService = getDataService()
+
+  private clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max)
+  }
+
+  private updatePageSize(width: number, height: number): void {
+    if (width > 0) {
+      this.pageWidth = width
+    }
+    if (height > 0) {
+      this.pageHeight = height
+    }
+  }
+
+  private getPhotoHeroHeight(): number {
+    const availableWidth = this.pageWidth > 0 ? this.pageWidth : 360
+    const baseRatio = this.pageWidth >= 960 ? 0.32 : (this.pageWidth >= 640 ? 0.4 : 0.72)
+    const desiredHeight = availableWidth * baseRatio
+    const maxHeight = this.pageHeight > 0 ? Math.max(260, this.pageHeight * 0.42) : 360
+    return this.clamp(desiredHeight, 200, maxHeight)
+  }
 
   private bumpTravelDataVersion(): void {
     const version = (AppStorage.get('travelDataVersion') as number) || 0
@@ -53,6 +78,9 @@ export struct NodeDetailPage {
 
   onPageHide(): void {
     this.pageVisible = false
+  }
+
+  onDisappear(): void {
   }
 
   private formatDate(timestamp: number): string {
@@ -83,7 +111,7 @@ export struct NodeDetailPage {
 
       this.title = node.title
       this.poiName = node.poiName
-      this.date = this.formatDate(node.createdAt)
+      this.date = this.formatDate(node.visitedAt || node.createdAt)
       this.mood = node.mood
       this.tags = node.tags
       this.content = node.content
@@ -145,14 +173,23 @@ export struct NodeDetailPage {
       if (this.photos.length > 0) {
         Swiper() {
           ForEach(this.photos, (photo: string, index: number) => {
-            Image(`${photo}?v=${this.photoRenderVersion}`)
-              .width('100%')
-              .height('100%')
-              .objectFit(ImageFit.Cover)
+            Stack() {
+              Image(`${photo}?v=${this.photoRenderVersion}`)
+                .width('100%')
+                .height('100%')
+                .objectFit(ImageFit.Contain)
+            }
+            .width('100%')
+            .height('100%')
+            .backgroundColor('#F0F0F0')
+            .onClick(() => {
+              this.selectedPhotoIndex = index
+              this.showFullPhoto = true
+            })
           })
         }
         .width('100%')
-        .height(280)
+        .height(this.getPhotoHeroHeight())
         .index(this.selectedPhotoIndex)
         .loop(false)
         .autoPlay(false)
@@ -163,16 +200,17 @@ export struct NodeDetailPage {
         // 无照片占位图
         Column() {
           Text('📷')
-            .fontSize(46)
+            .fontSize(32)
+            .opacity(0.35)
           Text('这条节点还没有照片')
             .fontSize(AppDimens.FONT_MD)
-            .fontColor('#E9F3FF')
+            .fontColor(AppColors.TEXT_HINT)
             .margin({ top: 8 })
         }
         .width('100%')
-        .height('100%')
+        .height(Math.max(160, this.getPhotoHeroHeight() * 0.64))
         .justifyContent(FlexAlign.Center)
-        .backgroundColor('#3C5C83')
+        .backgroundColor('#F5F5F5')
       }
 
       // 指示器 + 地点名称
@@ -180,7 +218,7 @@ export struct NodeDetailPage {
         Row() {
           Text(`${this.selectedPhotoIndex + 1} / ${this.photos.length}`)
             .fontSize(AppDimens.FONT_SM)
-            .fontColor(AppColors.CARD_BG)
+            .fontColor(AppColors.TEXT_ON_PRIMARY)
             .backgroundColor('#66000000')
             .padding({ left: 10, right: 10, top: 6, bottom: 6 })
             .borderRadius(14)
@@ -279,13 +317,11 @@ export struct NodeDetailPage {
         .margin({ top: 18 })
       }
 
-      Row() {
-        Text(this.date)
-          .fontSize(AppDimens.FONT_SM)
-          .fontColor(AppColors.TEXT_HINT)
-      }
-      .width('100%')
-      .margin({ top: 18 })
+      Text(this.date)
+        .fontSize(AppDimens.FONT_SM)
+        .fontColor(AppColors.TEXT_HINT)
+        .margin({ top: 18 })
+        .width('100%')
 
     }
     .width('100%')
@@ -380,13 +416,69 @@ export struct NodeDetailPage {
             }
             .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 16 })
           }
+          .justifyContent(FlexAlign.Start)
+          .alignItems(HorizontalAlign.Start)
           .padding({ bottom: 24 })
         }
         .layoutWeight(1)
       }
     }
+    .justifyContent(FlexAlign.Start)
     .width('100%')
     .height('100%')
     .backgroundColor(AppColors.BACKGROUND)
+    .onAreaChange((_, value) => {
+      this.updatePageSize(Number(value.width), Number(value.height))
+    })
+    .bindContentCover(this.showFullPhoto, this.buildFullPhotoViewer(), {
+      modalTransition: undefined,
+      onDisappear: () => { this.showFullPhoto = false }
+    })
+  }
+
+  @Builder
+  private buildFullPhotoViewer() {
+    Column() {
+      Row() {
+        Text('←')
+          .fontSize(AppDimens.FONT_XL)
+          .fontColor(Color.White)
+          .padding(AppDimens.PADDING_MD)
+          .onClick(() => { this.showFullPhoto = false })
+        Blank()
+        Text(`${this.selectedPhotoIndex + 1} / ${this.photos.length}`)
+          .fontSize(AppDimens.FONT_MD)
+          .fontColor(Color.White)
+          .padding(AppDimens.PADDING_MD)
+      }
+      .width('100%')
+      .height(56)
+
+      if (this.photos.length > 0) {
+        Swiper() {
+          ForEach(this.photos, (photo: string) => {
+            Stack() {
+              Image(`${photo}?v=${this.photoRenderVersion}`)
+                .width('100%')
+                .height('100%')
+                .objectFit(ImageFit.Contain)
+            }
+            .width('100%')
+            .height('100%')
+          })
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .index(this.selectedPhotoIndex)
+        .loop(false)
+        .autoPlay(false)
+        .onChange((index: number) => {
+          this.selectedPhotoIndex = index
+        })
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor('#000000')
   }
 }

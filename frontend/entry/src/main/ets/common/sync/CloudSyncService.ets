@@ -6,6 +6,8 @@ import type { Trip, MemoryNode } from '../service/types'
 import { TravelSpecialValues } from '../utils/Constants'
 import { CloudTravel } from './CloudTravel'
 import { CloudMemoryNode } from './CloudMemoryNode'
+import { CloudProfile } from './CloudProfile'
+import { TravelRepository } from '../data/TravelRepository'
 
 const DOMAIN = 0x0000
 const TAG = 'CloudSyncService'
@@ -26,6 +28,7 @@ interface TravelPayload {
   updatedAt: number
   deletedAt: number
   version: number
+  isPublic: number
 }
 
 interface NodePayload {
@@ -47,9 +50,51 @@ interface NodePayload {
   deletedAt: number
   version: number
   photoManifest: string
+  visitedAt: number
+}
+
+interface ProfilePayload {
+  ownerUid: string
+  cloudId: string
+  nickname: string
+  bio: string
+  avatarCloudPath: string
+  version: number
+  updatedAt: number
 }
 
 export class CloudSyncService {
+  /**
+   * 把 cloud_id 用 ownerUid 隔开，避免不同设备/账号的 local id 撞车。
+   * 旧格式 `travel_<localId>` / `node_<localId>` 已不安全：两个用户的 local id=5
+   * 会 upsert 到同一行，互相覆盖。新格式 `travel_<uid>_<localId>` / `node_<uid>_<localId>`
+   * 内嵌 uid 后天然不会冲突。
+   * 已有 cloud_id 的实体保留旧值（迁移成本），但下面的 hardDelete*ByCloudId 都会再加
+   * ownerUid 过滤条件，即使 cloud_id 历史撞车也只动自己的行。
+   */
+  static buildTravelCloudId(ownerUid: string, localId: string): string {
+    return ownerUid && ownerUid.length > 0 ? `travel_${ownerUid}_${localId}` : `travel_${localId}`
+  }
+
+  static buildNodeCloudId(ownerUid: string, localId: string): string {
+    return ownerUid && ownerUid.length > 0 ? `node_${ownerUid}_${localId}` : `node_${localId}`
+  }
+
+  /**
+   * 从 cloud_id 反推原始 localId（用于构造云端存储路径）：
+   *  - 旧格式 'travel_5' → '5'
+   *  - 新格式 'travel_<uid>_5' → '5'（取最后一个下划线之后的部分）
+   * 注意：跨设备同步时 localId 可能与当前设备的 RDB id 不一致，
+   *       但由于云端存储路径是 `users/<uid>/...` 用户隔离的，最坏情况只会动到自己用户下的错误目录。
+   */
+  static extractLocalIdFromCloudId(cloudId: string): string {
+    const lastUnderscore = cloudId.lastIndexOf('_')
+    if (lastUnderscore < 0 || lastUnderscore >= cloudId.length - 1) {
+      return cloudId
+    }
+    return cloudId.substring(lastUnderscore + 1)
+  }
+
   static async ensureReady(): Promise<boolean> {
     if (initialized && databaseZone !== null) {
       return true
@@ -58,7 +103,8 @@ export class CloudSyncService {
     try {
       cloudCommon.init({
         region: cloudCommon.CloudRegion.CHINA,
-        authProvider: auth.getAuthProvider()
+        authProvider: auth.getAuthProvider(),
+        databaseOptions: { schema: 'schema.json' }
       })
       databaseZone = cloudDatabase.zone(ZONE_NAME)
       initialized = true
@@ -79,10 +125,14 @@ export class CloudSyncService {
   }
 
   static async buildTravelPayload(travel: Trip): Promise<string> {
+    hilog.info(DOMAIN, TAG, `[buildTravelPayload] travel.id=${travel.id}, isPublic=${travel.isPublic}`)
+    const ownerUid = travel.ownerUid ?? ''
     const payload: TravelPayload = {
-      ownerUid: travel.ownerUid ?? '',
+      ownerUid: ownerUid,
       localId: travel.id,
-      cloudId: travel.cloudId && travel.cloudId.length > 0 ? travel.cloudId : `travel_${travel.id}`,
+      cloudId: travel.cloudId && travel.cloudId.length > 0
+        ? travel.cloudId
+        : CloudSyncService.buildTravelCloudId(ownerUid, travel.id),
       name: travel.name,
       coverPhoto: travel.coverPhoto ?? '',
       startDate: travel.startDate,
@@ -90,16 +140,21 @@ export class CloudSyncService {
       createdAt: travel.createdAt,
       updatedAt: travel.updatedAt,
       deletedAt: travel.deletedAt ?? 0,
-      version: travel.version ?? 1
+      version: travel.version ?? 1,
+      isPublic: travel.isPublic ? 1 : 0
     }
+    hilog.info(DOMAIN, TAG, `[buildTravelPayload] payload.isPublic=${payload.isPublic}, id=${travel.id}`)
     return JSON.stringify(payload)
   }
 
   static async buildNodePayload(node: MemoryNode): Promise<string> {
+    const ownerUid = node.ownerUid ?? ''
     const payload: NodePayload = {
-      ownerUid: node.ownerUid ?? '',
+      ownerUid: ownerUid,
       localId: node.id,
-      cloudId: node.cloudId && node.cloudId.length > 0 ? node.cloudId : `node_${node.id}`,
+      cloudId: node.cloudId && node.cloudId.length > 0
+        ? node.cloudId
+        : CloudSyncService.buildNodeCloudId(ownerUid, node.id),
       travelId: node.travelId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID ? '' : node.travelId,
       title: node.title,
       content: node.content,
@@ -114,7 +169,8 @@ export class CloudSyncService {
       updatedAt: node.updatedAt,
       deletedAt: node.deletedAt ?? 0,
       version: node.version ?? 1,
-      photoManifest: node.photoManifest ?? JSON.stringify(node.photos)
+      photoManifest: node.photoManifest && node.photoManifest.length > 2 ? node.photoManifest : '[]',
+      visitedAt: node.visitedAt ?? 0
     }
     return JSON.stringify(payload)
   }
@@ -126,7 +182,8 @@ export class CloudSyncService {
     }
 
     const data = JSON.parse(payload) as TravelPayload
-    const cloudId = data.cloudId || `travel_${data.localId}`
+    const cloudId = data.cloudId || CloudSyncService.buildTravelCloudId(data.ownerUid, data.localId)
+    hilog.info(DOMAIN, TAG, `[upsertTravel] isPublic=${data.isPublic}, cloudId=${cloudId}, name=${data.name}`)
     const travel = new CloudTravel()
     travel.cloudId = cloudId
     travel.ownerUid = data.ownerUid
@@ -138,7 +195,10 @@ export class CloudSyncService {
     travel.updatedAt = data.updatedAt
     travel.deletedAt = data.deletedAt
     travel.version = data.version
+    travel.isPublic = data.isPublic
+    hilog.info(DOMAIN, TAG, `[upsertTravel] travel.isPublic assigned=${travel.isPublic}`)
     await databaseZone.upsert(travel)
+    hilog.info(DOMAIN, TAG, `[upsertTravel] upsert completed for cloudId=${cloudId}`)
     return cloudId
   }
 
@@ -150,7 +210,7 @@ export class CloudSyncService {
 
     const data = JSON.parse(payload) as TravelPayload
     const travel = new CloudTravel()
-    travel.cloudId = data.cloudId || `travel_${data.localId}`
+    travel.cloudId = data.cloudId || CloudSyncService.buildTravelCloudId(data.ownerUid, data.localId)
     travel.deletedAt = data.deletedAt
     travel.updatedAt = data.deletedAt
     travel.version = Math.max(data.version, 999999)
@@ -164,13 +224,23 @@ export class CloudSyncService {
     }
 
     const data = JSON.parse(payload) as NodePayload
-    const cloudId = data.cloudId || `node_${data.localId}`
+    const cloudId = data.cloudId || CloudSyncService.buildNodeCloudId(data.ownerUid, data.localId)
     const node = new CloudMemoryNode()
     node.cloudId = cloudId
     node.ownerUid = data.ownerUid
-    node.travelCloudId = data.travelId.length > 0 && data.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
-      ? `travel_${data.travelId}`
-      : ''
+    // 父 travel 的外键引用：优先用本地 DB 里父 travel 已存在的 cloud_id，
+    // 这样旧数据（cloud_id='travel_<id>'）和新数据（cloud_id='travel_<uid>_<id>'）能共存，
+    // 不会因 FK 不匹配导致 replaceLocalWithCloud 找不到 localTravelId 而跳过节点。
+    if (data.travelId.length > 0 && data.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
+      const parentTravel = await new TravelRepository().getTravelById(data.travelId)
+      if (parentTravel && parentTravel.cloudId && parentTravel.cloudId.length > 0) {
+        node.travelCloudId = parentTravel.cloudId
+      } else {
+        node.travelCloudId = CloudSyncService.buildTravelCloudId(data.ownerUid, data.travelId)
+      }
+    } else {
+      node.travelCloudId = ''
+    }
     node.title = data.title
     node.content = data.content
     node.latitude = data.latitude
@@ -184,6 +254,7 @@ export class CloudSyncService {
     node.updatedAt = data.updatedAt
     node.deletedAt = data.deletedAt
     node.version = data.version
+    node.visitedAt = data.visitedAt
     await databaseZone.upsert(node)
     return cloudId
   }
@@ -196,23 +267,28 @@ export class CloudSyncService {
 
     const data = JSON.parse(payload) as NodePayload
     const node = new CloudMemoryNode()
-    node.cloudId = data.cloudId || `node_${data.localId}`
+    node.cloudId = data.cloudId || CloudSyncService.buildNodeCloudId(data.ownerUid, data.localId)
     node.deletedAt = data.deletedAt
     node.updatedAt = data.deletedAt
     node.version = Math.max(data.version, 999999)
     await databaseZone.upsert(node)
   }
 
-  static async hardDeleteTravelByCloudId(cloudId: string): Promise<void> {
+  /**
+   * 必须传 ownerUid：硬删除前再加一条 ownerUid 过滤，
+   * 防止历史 cloud_id 撞车把别的账号的行也删掉。
+   */
+  static async hardDeleteTravelByCloudId(cloudId: string, ownerUid: string): Promise<void> {
     const ready = await CloudSyncService.ensureReady()
-    if (!ready || databaseZone === null || cloudId.length === 0) {
+    if (!ready || databaseZone === null || cloudId.length === 0 || ownerUid.length === 0) {
+      hilog.warn(DOMAIN, TAG, `hardDeleteTravelByCloudId skipped: cloudId=${cloudId}, ownerUid=${ownerUid}`)
       return
     }
 
     const condition = new cloudDatabase.DatabaseQuery(CloudTravel)
-    condition.equalTo('cloudId', cloudId)
+    condition.equalTo('cloudId', cloudId).and().equalTo('ownerUid', ownerUid)
     const records = await databaseZone.query(condition)
-    hilog.info(DOMAIN, TAG, `Query travel delete target count=${records.length}, cloudId=${cloudId}`)
+    hilog.info(DOMAIN, TAG, `Query travel delete target count=${records.length}, cloudId=${cloudId}, ownerUid=${ownerUid}`)
     if (records.length <= 0) {
       return
     }
@@ -220,16 +296,17 @@ export class CloudSyncService {
     hilog.info(DOMAIN, TAG, `Hard deleted travel count=${deletedCount}, cloudId=${cloudId}`)
   }
 
-  static async hardDeleteMemoryNodeByCloudId(cloudId: string): Promise<void> {
+  static async hardDeleteMemoryNodeByCloudId(cloudId: string, ownerUid: string): Promise<void> {
     const ready = await CloudSyncService.ensureReady()
-    if (!ready || databaseZone === null || cloudId.length === 0) {
+    if (!ready || databaseZone === null || cloudId.length === 0 || ownerUid.length === 0) {
+      hilog.warn(DOMAIN, TAG, `hardDeleteMemoryNodeByCloudId skipped: cloudId=${cloudId}, ownerUid=${ownerUid}`)
       return
     }
 
     const condition = new cloudDatabase.DatabaseQuery(CloudMemoryNode)
-    condition.equalTo('cloudId', cloudId)
+    condition.equalTo('cloudId', cloudId).and().equalTo('ownerUid', ownerUid)
     const records = await databaseZone.query(condition)
-    hilog.info(DOMAIN, TAG, `Query memory node delete target count=${records.length}, cloudId=${cloudId}`)
+    hilog.info(DOMAIN, TAG, `Query memory node delete target count=${records.length}, cloudId=${cloudId}, ownerUid=${ownerUid}`)
     if (records.length <= 0) {
       return
     }
@@ -254,7 +331,7 @@ export class CloudSyncService {
         name: record.name ?? '',
         description: '',
         coverPhoto: record.coverPhotoObjectKey ?? '',
-        isPublic: false,
+        isPublic: (record.isPublic ?? 0) === 1,
         startDate: record.startDate ?? 0,
         endDate: record.endDate ?? 0,
         nodeIds: [],
@@ -307,10 +384,76 @@ export class CloudSyncService {
         deletedAt: record.deletedAt ?? 0,
         lastSyncedAt: Date.now(),
         version: record.version ?? 1,
-        photoManifest: record.photoManifest ?? ''
+        photoManifest: record.photoManifest ?? '',
+        visitedAt: record.visitedAt ?? 0
       }
       result.push(node)
     }
     return result
+  }
+
+  // ========== Profile ==========
+
+  static async upsertProfile(payload: string): Promise<string> {
+    const ready = await CloudSyncService.ensureReady()
+    if (!ready || databaseZone === null) {
+      throw new Error('云数据库未初始化')
+    }
+
+    const data = JSON.parse(payload) as ProfilePayload
+    const cloudId = data.cloudId || `profile_${data.ownerUid}`
+    hilog.info(DOMAIN, TAG, `upsertProfile: creating CloudProfile, cloudId=${cloudId}, className=${new CloudProfile().naturalbase_ClassName()}`)
+    const profile = new CloudProfile()
+    profile.cloudId = cloudId
+    profile.ownerUid = data.ownerUid
+    profile.nickname = data.nickname ?? undefined
+    profile.bio = data.bio ?? undefined
+    profile.avatarCloudPath = data.avatarCloudPath ?? undefined
+    profile.version = data.version ?? undefined
+    profile.updatedAt = data.updatedAt ?? undefined
+    hilog.info(DOMAIN, TAG, `upsertProfile: fields assigned, bio="${profile.bio}", nickname="${profile.nickname}"`)
+    try {
+      await databaseZone.upsert(profile)
+      hilog.info(DOMAIN, TAG, `upsertProfile done: cloudId=${cloudId}`)
+    } catch (err) {
+      const error = err as BusinessError
+      hilog.error(DOMAIN, TAG, `upsertProfile upsert FAILED: code=${error.code}, message=${error.message}, name=${error.name}`)
+      throw new Error(`个人资料保存失败(${error.code})，请重试`)
+    }
+    return cloudId
+  }
+
+  static async fetchProfile(ownerUid: string): Promise<CloudProfile | null> {
+    const ready = await CloudSyncService.ensureReady()
+    if (!ready || databaseZone === null) {
+      return null
+    }
+
+    const condition = new cloudDatabase.DatabaseQuery(CloudProfile)
+    condition.equalTo('ownerUid', ownerUid)
+    const records = await databaseZone.query(condition)
+    if (records.length <= 0) {
+      hilog.info(DOMAIN, TAG, `fetchProfile: no record for ownerUid=${ownerUid}`)
+      return null
+    }
+    hilog.info(DOMAIN, TAG, `fetchProfile: found record for ownerUid=${ownerUid}`)
+    return records[0] as CloudProfile
+  }
+
+  static async hardDeleteProfileByOwnerUid(ownerUid: string): Promise<void> {
+    const ready = await CloudSyncService.ensureReady()
+    if (!ready || databaseZone === null || !ownerUid) {
+      return
+    }
+
+    const condition = new cloudDatabase.DatabaseQuery(CloudProfile)
+    condition.equalTo('ownerUid', ownerUid)
+    const records = await databaseZone.query(condition)
+    hilog.info(DOMAIN, TAG, `hardDeleteProfile: count=${records.length}, ownerUid=${ownerUid}`)
+    if (records.length <= 0) {
+      return
+    }
+    await databaseZone.delete(records)
+    hilog.info(DOMAIN, TAG, `hardDeleteProfile: deleted count=${records.length}`)
   }
 }

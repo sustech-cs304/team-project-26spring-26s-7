@@ -13,8 +13,68 @@
       "value": "TravelPin"
     },
     {
+      "name": "app_name",
+      "value": "TravelPin"
+    },
+    {
       "name": "location_reason",
       "value": "用于在地图上记录您的旅行足迹和记忆节点位置"
+    },
+    {
+      "name": "media_reason",
+      "value": "用于选择头像和旅行照片"
+    },
+    {
+      "name": "internet_reason",
+      "value": "用于云端数据同步、地图加载和 AI 文案生成"
+    },
+    {
+      "name": "network_info_reason",
+      "value": "用于在无网络时切换为离线模式"
+    },
+    {
+      "name": "privacy_dialog_title",
+      "value": "服务协议与隐私政策"
+    },
+    {
+      "name": "privacy_dialog_content",
+      "value": "欢迎使用 TravelPin。在使用本应用前，请您仔细阅读《用户协议》和《隐私政策》。我们将通过隐私政策向您说明：\n\n• 我们如何收集、使用、存储和保护您的个人信息（包括位置、照片、账号信息等）\n• 您所享有的访问、更正、删除和注销账号等权利\n• 我们如何使用华为云服务进行数据同步\n• 我们如何使用 AI 服务对您选择上传的照片进行内容识别\n\n如您同意上述内容，请点击\"同意并继续\"开始使用。"
+    },
+    {
+      "name": "privacy_dialog_agree",
+      "value": "同意并继续"
+    },
+    {
+      "name": "privacy_dialog_disagree",
+      "value": "不同意并退出"
+    },
+    {
+      "name": "privacy_user_agreement",
+      "value": "用户协议"
+    },
+    {
+      "name": "privacy_policy",
+      "value": "隐私政策"
+    },
+    {
+      "name": "account_delete_title",
+      "value": "注销账号"
+    },
+    {
+      "name": "account_delete_warning",
+      "value": "注销账号将永久删除您的所有云端数据（旅行记录、照片、记忆节点等），此操作不可恢复。是否继续？"
+    },
+    {
+      "name": "account_delete_confirm",
+      "value": "确认注销"
+    },
+    {
+      "name": "account_delete_cancel",
+      "value": "取消"
+    },
+    {
+      "name": "account_delete_second_confirm",
+      "value": "我已知晓数据将被永久删除"
     }
   ]
 }

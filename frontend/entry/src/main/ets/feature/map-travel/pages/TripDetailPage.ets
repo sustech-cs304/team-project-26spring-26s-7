@@ -1,7 +1,12 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
+import {
+  AppColors,
+  AppDimens,
+  RouterUrls,
+  getDataService
+} from '../../../common'
 import { RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
 
@@ -32,6 +37,9 @@ const DEFAULT_TRIP_CENTER: mapCommon.LatLng = {
 @Entry
 @Component
 export struct TripDetailPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
+  @State pageWidth: number = 0
+  @State pageHeight: number = 0
   @State tripName: string = ''
   @State dateRange: string = ''
   @State nodeCount: number = 0
@@ -54,6 +62,29 @@ export struct TripDetailPage {
   private routeMarkers: map.Marker[] = []
   private routePolyline?: RemovableOverlay
   private dataService = getDataService()
+
+  private clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max)
+  }
+
+  private updatePageSize(width: number, height: number): void {
+    if (width > 0) {
+      this.pageWidth = width
+    }
+    if (height > 0) {
+      this.pageHeight = height
+    }
+  }
+
+  private getRouteHeroHeight(): number {
+    const availableWidth = this.pageWidth > 0
+      ? Math.max(this.pageWidth - AppDimens.PADDING_MD * 2, 240)
+      : 360
+    const baseRatio = this.pageWidth >= 960 ? 0.22 : (this.pageWidth >= 640 ? 0.28 : 0.42)
+    const desiredHeight = availableWidth * baseRatio
+    const maxHeight = this.pageHeight > 0 ? Math.max(220, this.pageHeight * 0.34) : 320
+    return this.clamp(desiredHeight, 180, maxHeight)
+  }
 
   private bumpTravelDataVersion(): void {
     const version = (AppStorage.get('travelDataVersion') as number) || 0
@@ -91,9 +122,10 @@ export struct TripDetailPage {
 
   private formatShortDate(timestamp: number): string {
     const date = new Date(timestamp)
+    const year = date.getFullYear().toString().slice(-2)
     const month = (date.getMonth() + 1).toString().padStart(2, '0')
     const day = date.getDate().toString().padStart(2, '0')
-    return `${month}.${day}`
+    return `${year}.${month}.${day}`
   }
 
   private formatDateRange(startDate: number, endDate: number): string {
@@ -108,7 +140,7 @@ export struct TripDetailPage {
     const trimmedContent = node.content.trim()
     return {
       id: node.id,
-      date: this.formatShortDate(node.createdAt),
+      date: this.formatShortDate((node.visitedAt && node.visitedAt > 0) ? node.visitedAt : node.createdAt),
       title: trimmedTitle.length > 0 ? trimmedTitle : (trimmedPlace.length > 0 ? trimmedPlace : '未命名节点'),
       place: trimmedPlace.length > 0 ? trimmedPlace : '未命名地点',
       summary: trimmedContent,
@@ -132,6 +164,8 @@ export struct TripDetailPage {
       }
 
       const nodes = await this.dataService.getNodesByTravelId(this.tripId)
+      // 防御性排序：确保一定按 nodeOrder 顺序展示
+      nodes.sort((a, b) => (a.nodeOrder ?? 0) - (b.nodeOrder ?? 0))
       this.tripName = trip.name
       this.dateRange = this.formatDateRange(trip.startDate, trip.endDate)
       this.nodeCount = nodes.length
@@ -225,7 +259,7 @@ export struct TripDetailPage {
   private handleDeleteTrip(): void {
     AlertDialog.show({
       title: '删除旅行',
-      message: '确定要删除「' + this.tripName + '」吗？此操作不可撤销。',
+      message: '确定要删除「' + this.tripName + '」吗？此操作不可撤销，但不会删除该旅行下的节点，这些节点会保留。',
       primaryButton: {
         value: '取消',
         action: () => {}
@@ -236,6 +270,50 @@ export struct TripDetailPage {
         action: () => {
           this.deleteCurrentTrip()
         }
+      }
+    })
+  }
+
+  private async makeTripPublicAndShare(): Promise<void> {
+    if (!this.tripId) {
+      return
+    }
+
+    try {
+      await this.dataService.updateTravel(this.tripId, { isPublic: true })
+      this.isPublic = true
+      this.bumpTravelDataVersion()
+      router.pushUrl({
+        url: RouterUrls.SHARE,
+        params: { tripId: this.tripId } as RouterParam
+      })
+    } catch (err) {
+      promptAction.showToast({ message: '设置为公开失败' })
+    }
+  }
+
+  private handleShareTrip(): void {
+    if (this.isPublic) {
+      router.pushUrl({
+        url: RouterUrls.SHARE,
+        params: { tripId: this.tripId } as RouterParam
+      })
+      return
+    }
+
+    AlertDialog.show({
+      title: '允许分享',
+      message: '是否设置当前旅行路线为“公开”以允许分享？',
+      primaryButton: {
+        value: '是',
+        action: () => {
+          void this.makeTripPublicAndShare()
+        }
+      },
+      secondaryButton: {
+        value: '否',
+        fontColor: AppColors.DANGER,
+        action: () => {}
       }
     })
   }
@@ -251,7 +329,7 @@ export struct TripDetailPage {
         Text(this.tripName || '旅行详情')
           .fontSize(26)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#FFFFFF')
+          .fontColor('#000000')
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
@@ -260,10 +338,10 @@ export struct TripDetailPage {
       .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG, top: 14, bottom: 14 })
       .backgroundColor('#00000055')
       .alignItems(HorizontalAlign.Start)
-      .position({ x: 0, y: 174 })
+      .position({ x: 0, y: 0 })
     }
     .width('100%')
-    .height(232)
+    .height(this.getRouteHeroHeight())
     .borderRadius(24)
     .clip(true)
   }
@@ -473,7 +551,7 @@ export struct TripDetailPage {
                   .margin({ top: 12 })
               }
               .width('100%')
-              .height(232)
+              .height(this.getRouteHeroHeight())
               .justifyContent(FlexAlign.Center)
               .backgroundColor(AppColors.CARD_BG)
               .borderRadius(24)
@@ -504,13 +582,11 @@ export struct TripDetailPage {
                   .layoutWeight(1)
                   .height(46)
                   .fontSize(AppDimens.FONT_MD)
-                  .backgroundColor('#FF8C00')
+                  .backgroundColor(this.isPublic ? '#FF8C00' : '#D8D8D8')
+                  .fontColor(this.isPublic ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
                   .borderRadius(16)
                   .onClick(() => {
-                    router.pushUrl({
-                      url: RouterUrls.SHARE,
-                      params: { tripId: this.tripId } as RouterParam
-                    })
+                    this.handleShareTrip()
                   })
               }
               .width('100%')
@@ -572,13 +648,21 @@ export struct TripDetailPage {
               .shadow({ radius: 8, color: '#0000000D', offsetY: 3 })
             }
           }
+          .width('100%')
+          .constraintSize({ minHeight: '100%' })
+          .justifyContent(FlexAlign.Start)
+          .alignItems(HorizontalAlign.Start)
           .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12, bottom: 24 })
         }
         .layoutWeight(1)
       }
+      .justifyContent(FlexAlign.Start)
       .width('100%')
       .height('100%')
       .backgroundColor(AppColors.BACKGROUND)
+      .onAreaChange((_, value) => {
+        this.updatePageSize(Number(value.width), Number(value.height))
+      })
 
       // 右上角下拉菜单
       if (this.showMenu) {

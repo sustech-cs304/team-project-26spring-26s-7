@@ -21,4 +21,5 @@ export class CloudMemoryNode extends cloudDatabase.DatabaseObject {
   public updatedAt: number | undefined
   public deletedAt: number | undefined
   public version: number | undefined
+  public visitedAt: number | undefined
 }

@@ -1,7 +1,14 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map, site } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
-import { AppColors, AppDimens, logger } from '../../../common'
+import {
+  AppColors,
+  AppDimens,
+  getStoredPreferredMapCenter,
+  logger,
+  requestCurrentLocation,
+  savePreferredMapCenter
+} from '../../../common'
 
 interface SearchLocation {
   name: string
@@ -32,6 +39,7 @@ interface SearchByTextResultLike {
 @Entry
 @Component
 struct LocationPickerPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State selectedLat: number = 0
   @State selectedLng: number = 0
   @State hasSelected: boolean = false
@@ -39,8 +47,9 @@ struct LocationPickerPage {
   @State searchKeyword: string = ''
   @State searchResults: SearchLocation[] = []
   @State isSearching: boolean = false
+  @State isLocating: boolean = false
 
-  private readonly defaultCenter: mapCommon.LatLng = { latitude: 22.55, longitude: 113.96 }
+  private readonly defaultCenter: mapCommon.LatLng = this.getInitialCenter()
   private searchToken: number = 0
 
   private mapOptions: mapCommon.MapOptions = {
@@ -57,7 +66,28 @@ struct LocationPickerPage {
     if (!err && controller) {
       this.mapController = controller
       this.setupMapClickListener()
+      await this.applyStoredCenter()
     }
+  }
+
+  private getInitialCenter(): mapCommon.LatLng {
+    const preferred = getStoredPreferredMapCenter()
+    return {
+      latitude: preferred.latitude,
+      longitude: preferred.longitude
+    }
+  }
+
+  private async applyStoredCenter(): Promise<void> {
+    if (!this.mapController || this.hasSelected) {
+      return
+    }
+    const preferred = getStoredPreferredMapCenter()
+    const cameraUpdate = map.newCameraPosition({
+      target: { latitude: preferred.latitude, longitude: preferred.longitude },
+      zoom: 12
+    })
+    this.mapController.animateCamera(cameraUpdate, 300)
   }
 
   private normalizeText(value: string): string {
@@ -68,7 +98,11 @@ struct LocationPickerPage {
     if (this.hasSelected) {
       return { latitude: this.selectedLat, longitude: this.selectedLng }
     }
-    return this.defaultCenter
+    const preferred = getStoredPreferredMapCenter()
+    return {
+      latitude: preferred.latitude,
+      longitude: preferred.longitude
+    }
   }
 
   private formatLocationLabel(name: string, address: string): string {
@@ -215,7 +249,7 @@ struct LocationPickerPage {
     await this.selectLocation(item.latitude, item.longitude, this.formatLocationLabel(item.name, item.address))
   }
 
-  private async selectLocation(latitude: number, longitude: number, label: string): Promise<void> {
+  private async selectLocation(latitude: number, longitude: number, label: string, animate: boolean = true): Promise<void> {
     this.selectedLat = latitude
     this.selectedLng = longitude
     this.poiName = label
@@ -245,11 +279,37 @@ struct LocationPickerPage {
       flat: false
     }
     this.currentMarker = await this.mapController.addMarker(markerOptions)
-    const cameraUpdate = map.newCameraPosition({
-      target: { latitude, longitude },
-      zoom: 14
-    })
-    this.mapController.animateCamera(cameraUpdate, 300)
+    if (animate) {
+      const cameraUpdate = map.newCameraPosition({
+        target: { latitude, longitude },
+        zoom: 14
+      })
+      this.mapController.animateCamera(cameraUpdate, 300)
+    }
+  }
+
+  private async recenterToCurrentLocation(): Promise<void> {
+    if (this.isLocating) {
+      return
+    }
+    const hostContext = this.getUIContext().getHostContext()
+    if (!hostContext) {
+      promptAction.showToast({ message: '当前无法获取页面上下文' })
+      return
+    }
+    this.isLocating = true
+    try {
+      const current = await requestCurrentLocation(hostContext)
+      if (!current) {
+        promptAction.showToast({ message: '定位失败，已保留当前地图位置' })
+        return
+      }
+      const label = `${current.latitude.toFixed(4)}, ${current.longitude.toFixed(4)}`
+      savePreferredMapCenter(current.latitude, current.longitude, '当前位置', 'device')
+      await this.selectLocation(current.latitude, current.longitude, label)
+    } finally {
+      this.isLocating = false
+    }
   }
 
   private setupMapClickListener(): void {
@@ -267,6 +327,7 @@ struct LocationPickerPage {
     AppStorage.setOrCreate('pickedLongitude', this.selectedLng)
     AppStorage.setOrCreate('pickedPoiName', this.poiName)
     AppStorage.setOrCreate('locationPicked', true)
+    savePreferredMapCenter(this.selectedLat, this.selectedLng, this.poiName, 'picked')
     router.back()
   }
 
@@ -304,7 +365,10 @@ struct LocationPickerPage {
           TextInput({ placeholder: '搜索地点名称', text: this.searchKeyword })
             .layoutWeight(1)
             .height(40)
-            .backgroundColor(AppColors.CARD_BG)
+            .fontColor(AppColors.INPUT_TEXT)
+            .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+            .caretColor(AppColors.INPUT_CARET)
+            .backgroundColor(AppColors.INPUT_BG)
             .borderRadius(20)
             .padding({ left: 14, right: 14 })
             .onChange((value: string) => this.handleSearchInputChange(value))
@@ -372,6 +436,20 @@ struct LocationPickerPage {
       .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12 })
       .position({ x: 0, y: 0 })
 
+      Column() {
+        Button(this.isLocating ? '定位中...' : '⌖')
+          .width(48)
+          .height(48)
+          .fontSize(this.isLocating ? AppDimens.FONT_SM : 24)
+          .fontColor(AppColors.PRIMARY)
+          .backgroundColor(AppColors.CARD_BG)
+          .borderRadius(24)
+          .shadow({ radius: 4, color: '#0000001A', offsetY: 2 })
+          .enabled(!this.isLocating)
+          .onClick(() => this.recenterToCurrentLocation())
+      }
+      .position({ x: '82%', y: '72%' })
+
       if (this.hasSelected) {
         Row() {
           Column() {
@@ -390,7 +468,7 @@ struct LocationPickerPage {
 
           Button('确认选点')
             .fontSize(AppDimens.FONT_MD)
-            .fontColor(AppColors.CARD_BG)
+            .fontColor(AppColors.TEXT_ON_PRIMARY)
             .backgroundColor(AppColors.PRIMARY)
             .borderRadius(AppDimens.RADIUS_SM)
             .height(40)

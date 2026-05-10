@@ -2,11 +2,13 @@ import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
+import { ShareService } from '../../social-share'
 
 interface TripNodeItem {
   id: string
   title: string
   poiName: string
+  visitedAt: number
   createdAt: number
   photoCount: number
   contentPreview: string
@@ -15,6 +17,7 @@ interface TripNodeItem {
 @Entry
 @Component
 export struct TripEditPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State tripId: string = ''
   @State title: string = ''
   @State isPublic: boolean = false
@@ -22,8 +25,13 @@ export struct TripEditPage {
   @State isLoading: boolean = false
   @State isSaving: boolean = false
   @State nodes: TripNodeItem[] = []
+  private orderDirty: boolean = false
+  // v0.8: 进入编辑页时记下原始 isPublic，保存时如果是 公开 → 私密
+  // 的过渡就发"关停所有分享"请求给后端
+  private originalIsPublic: boolean = false
 
   private dataService = getDataService()
+  private shareService: ShareService = new ShareService()
 
   private bumpTravelDataVersion(): void {
     const version = (AppStorage.get('travelDataVersion') as number) || 0
@@ -58,9 +66,9 @@ export struct TripEditPage {
       return '保存后即可继续向 Track 中添加节点'
     }
 
-    const sortedNodes = [...this.nodes].sort((left: TripNodeItem, right: TripNodeItem) => left.createdAt - right.createdAt)
-    const start = this.formatDate(sortedNodes[0].createdAt)
-    const end = this.formatDate(sortedNodes[sortedNodes.length - 1].createdAt)
+    const sortedNodes = [...this.nodes].sort((left: TripNodeItem, right: TripNodeItem) => left.visitedAt - right.visitedAt)
+    const start = this.formatDate(sortedNodes[0].visitedAt)
+    const end = this.formatDate(sortedNodes[sortedNodes.length - 1].visitedAt)
     return start === end ? start : `${start} ~ ${end}`
   }
 
@@ -69,6 +77,7 @@ export struct TripEditPage {
       id: node.id,
       title: node.title,
       poiName: node.poiName,
+      visitedAt: (node.visitedAt && node.visitedAt > 0) ? node.visitedAt : node.createdAt,
       createdAt: node.createdAt,
       photoCount: node.photos.length,
       contentPreview: node.content.trim().length > 0 ? node.content : '还没有补充正文'
@@ -83,6 +92,8 @@ export struct TripEditPage {
 
     try {
       const nodes = await this.dataService.getNodesByTravelId(this.tripId)
+      // 防御性排序：确保一定按 nodeOrder 顺序展示
+      nodes.sort((a, b) => (a.nodeOrder ?? 0) - (b.nodeOrder ?? 0))
       this.nodes = nodes.map((node: MemoryNode) => this.mapNode(node))
     } catch (_) {
       promptAction.showToast({ message: '加载 Track 节点失败' })
@@ -104,6 +115,7 @@ export struct TripEditPage {
 
       this.title = trip.name
       this.isPublic = trip.isPublic
+      this.originalIsPublic = trip.isPublic
       await this.loadNodesOnly()
     } catch (_) {
       promptAction.showToast({ message: '加载 Track 信息失败' })
@@ -131,7 +143,7 @@ export struct TripEditPage {
     })
   }
 
-  private async moveNode(index: number, offset: number): Promise<void> {
+  private moveNode(index: number, offset: number): void {
     const targetIndex = index + offset
     if (targetIndex < 0 || targetIndex >= this.nodes.length) {
       return
@@ -142,14 +154,28 @@ export struct TripEditPage {
     nextNodes[index] = nextNodes[targetIndex]
     nextNodes[targetIndex] = temp
     this.nodes = nextNodes
+    this.orderDirty = true
+  }
 
-    try {
-      await this.dataService.reorderNodes(this.tripId, nextNodes.map((item: TripNodeItem) => item.id))
-      this.bumpTravelDataVersion()
-    } catch (_) {
-      promptAction.showToast({ message: '节点排序失败' })
-      await this.loadNodesOnly()
-    }
+  /**
+   * v0.8：trip 改私密后异步告诉后端把这条 trip 的所有公开分享关停。
+   * 失败（网络断 / 后端挂）不影响 RDB 的隐私设置，所以这里 catch 并 toast
+   * 提示一下；正常情况下用户感知不到这个调用。
+   */
+  private revokeSharesAfterPrivacyToggle(tripId: string): void {
+    void (async (): Promise<void> => {
+      try {
+        const result = await this.shareService.revokeByTrip(tripId)
+        if (result.ok && result.data && result.data.revokedCount > 0) {
+          promptAction.showToast({
+            message: `已设为私密，关停了 ${result.data.revokedCount} 条公开分享`
+          })
+        }
+        // revokedCount === 0 时静默：用户可能本来就没分享过，不打扰
+      } catch (_) {
+        promptAction.showToast({ message: '隐私已生效，但关停旧分享失败，请稍后重试' })
+      }
+    })()
   }
 
   private async handleSave(): Promise<void> {
@@ -162,11 +188,22 @@ export struct TripEditPage {
     this.isSaving = true
     try {
       if (this.isEditMode && this.tripId.length > 0) {
+        if (this.orderDirty) {
+          await this.dataService.reorderNodes(this.tripId, this.nodes.map((item: TripNodeItem) => item.id))
+          this.orderDirty = false
+          await this.dataService.syncNodeOrdersToCloud(this.tripId)
+        }
         await this.dataService.updateTravel(this.tripId, {
           name: trimmedTitle,
           isPublic: this.isPublic
         })
         this.bumpTravelDataVersion()
+        // v0.8: 公开 → 私密 的过渡需要立刻关停该 trip 全部分享链接
+        // （fire-and-forget；网络失败不影响已写入本地的隐私设置）
+        if (this.originalIsPublic && !this.isPublic) {
+          this.revokeSharesAfterPrivacyToggle(this.tripId)
+        }
+        this.originalIsPublic = this.isPublic
         promptAction.showToast({ message: 'Track 已更新' })
         router.back()
         return
@@ -246,14 +283,14 @@ export struct TripEditPage {
       Row({ space: 10 }) {
         Text('私密')
           .fontSize(AppDimens.FONT_MD)
-          .fontColor(!this.isPublic ? AppColors.CARD_BG : AppColors.TEXT_SECONDARY)
+          .fontColor(!this.isPublic ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
           .backgroundColor(!this.isPublic ? '#A55B00' : AppColors.BACKGROUND)
           .padding({ left: 16, right: 16, top: 10, bottom: 10 })
           .borderRadius(18)
           .onClick(() => { this.isPublic = false })
         Text('公开')
           .fontSize(AppDimens.FONT_MD)
-          .fontColor(this.isPublic ? AppColors.CARD_BG : AppColors.TEXT_SECONDARY)
+          .fontColor(this.isPublic ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
           .backgroundColor(this.isPublic ? '#167D3E' : AppColors.BACKGROUND)
           .padding({ left: 16, right: 16, top: 10, bottom: 10 })
           .borderRadius(18)
@@ -339,7 +376,7 @@ export struct TripEditPage {
       .width('100%')
 
       Row() {
-        Text(`${this.formatDate(item.createdAt)} · ${item.photoCount} 张图`)
+        Text(`${this.formatDate(item.visitedAt)} · ${item.photoCount} 张图`)
           .fontSize(AppDimens.FONT_SM)
           .fontColor(AppColors.TEXT_HINT)
         Blank()
@@ -453,7 +490,10 @@ export struct TripEditPage {
               TextInput({ placeholder: '例如：清明杭州 City Walk', text: this.title })
                 .width('100%')
                 .margin({ top: 10 })
-                .backgroundColor(AppColors.BACKGROUND)
+                .fontColor(AppColors.INPUT_TEXT)
+                .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+                .caretColor(AppColors.INPUT_CARET)
+                .backgroundColor(AppColors.INPUT_BG)
                 .onChange((value: string) => { this.title = value })
             }
             .width('100%')

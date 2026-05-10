@@ -29,3 +29,4 @@ export type { SyncQueueItem } from '../service/types';
 // Repository 导出
 export { TravelRepository, CreateTravelInput, UpdateTravelInput } from './TravelRepository';
 export { MemoryNodeRepository, CreateNodeInput, UpdateNodeInput } from './MemoryNodeRepository';
+export { PhotoMetadataRepository } from './PhotoMetadataRepository';

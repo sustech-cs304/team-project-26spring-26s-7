@@ -1,6 +1,13 @@
 # Change Log
 
-**Last Updated**: 2026-04-16
+**Last Updated**: 2026-05-06
+
+---
+
+## 2026-05-06
+
+- [2026-05-06] - FIX - `feature/map-travel/pages/TripDetailPage.ets` - 私密路线分享入口改为灰态可点，点击后弹窗确认转公开；确认后先更新 `isPublic` 再跳转分享页
+- [2026-05-06] - FIX - `feature/social-share/pages/SharePage.ets` - 增加私密路线前端兜底，阻止直接进入分享页时绕过公开限制
 
 ---
 
@@ -422,3 +429,62 @@
 - [2026-04-09-14-30-00] - CREATE - memory/04_test_checklist.md - 测试清单文件初始化
 - [2026-04-09-14-50-00] - UPDATE - memory/04_test_checklist.md - 重构测试清单，增加 P0/P1/P2 优先级体系，聚焦 Feature 集成测试（29 个测试用例：P0=13, P1=10, P2=6）
 - [2026-04-09-14-50-30] - UPDATE - CLAUDE.md - 添加测试监督机制章节（测试通过标记规则、AI 监督责任、通过率追踪）
+
+---
+
+## 2026-05-06 (Codex 适配与 social-share 状态同步)
+
+- [2026-05-06-00-27-58] - CREATE - AGENTS.md - 新增 Codex 主入口，记录当前项目结构、social-share 上传流程、构建验证和 memory 维护规则
+- [2026-05-06-00-27-58] - UPDATE - CLAUDE.md - 改为 Claude 兼容入口，指向 AGENTS.md，保留 ArkTS MCP 提醒
+- [2026-05-06-00-27-58] - UPDATE - memory/01_project_state.md - 更新当前分支为 feature/social-share，记录 merge commit def52e1、social-share 模块 1 状态和 backend 契约
+- [2026-05-06-00-27-58] - UPDATE - memory/03_task_backlog.md - 增加 Codex 适配与 social-share 模块 1 合并记录，更新后续任务
+- [2026-05-06-00-27-58] - UPDATE - memory/04_test_checklist.md - 增加 social-share 图片打包发布流程 P0 测试项
+
+---
+
+## 2026-05-07 (Replay 增广 Phase 0)
+
+- [2026-05-07-15-35-00] - CREATE - common/replay/ReplayPreferences.ets - 新增 Replay 偏好 key、默认值和版本刷新封装
+- [2026-05-07-15-35-00] - CREATE - common/replay/ReplayStyleKit.ets - 新增 Replay 风格套件枚举与基础目录（Minimal White / Dark Night / Vintage Film）
+- [2026-05-07-15-35-00] - CREATE - common/replay/ReplayMusicCatalog.ets - 新增 Replay BGM 目录，先接入当前内置单曲 `South-East-Traveling.mp3`
+- [2026-05-07-15-35-00] - CREATE - common/replay/ReplayEffectOptions.ets - 新增滤镜、转场和特效默认配置骨架
+- [2026-05-07-15-35-00] - CREATE - feature/map-travel/components/ReplaySettingsSheet.ets - 新增 Replay 设置面板骨架，支持 Style / Music 两个 Tab
+- [2026-05-07-15-35-00] - UPDATE - common/index.ets - 导出 Replay 配置模型与目录
+- [2026-05-07-15-35-00] - UPDATE - feature/map-travel/index.ets - 导出 ReplaySettingsSheet 组件
+- [2026-05-07-15-35-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 接入 Replay 偏好初始化、右上角设置入口和设置面板显示；默认播放行为保持不变
+- [2026-05-07-15-35-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 通过（存在既有 ArkTS warnings，无新增阻塞错误）
+
+---
+
+## 2026-05-07 (Replay 增广 Phase 1 - 本地 RDB 持久化 + 多 BGM)
+
+- [2026-05-07-17-10-00] - UPDATE - common/service/types.ets - 新增 `ReplayTripPreferences`，并将路线级 Replay 配置字段并入 `Trip`
+- [2026-05-07-17-10-00] - UPDATE - common/service/IDataService.ets - 扩展 `CreateTravelInput` / `UpdateTravelInput` 的 Replay 字段，新增 `getTripReplayPreferences` 与 `updateTripReplayPreferences`
+- [2026-05-07-17-10-00] - UPDATE - common/data/RdbHelper.ets - 为 `travels` 表新增本地 Replay 配置列及迁移 SQL
+- [2026-05-07-17-10-00] - UPDATE - common/data/TravelRepository.ets - 读写 `replay_style_kit_id / replay_bgm_id / replay_filter_id / replay_transition_type`
+- [2026-05-07-17-10-00] - UPDATE - common/service/RdbDataService.ets - 新增本地路线级 Replay 配置查询与更新逻辑，跳过专门的云同步适配
+- [2026-05-07-17-10-00] - UPDATE - common/service/MockDataService.ets, DataServiceStub.ets - 对齐新的 Replay 路线配置接口
+- [2026-05-07-17-10-00] - UPDATE - common/replay/ReplayMusicCatalog.ets - 接入 5 首本地音乐素材并映射中文名称
+- [2026-05-07-17-10-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 进入页面时从当前路线读取本地 Replay 配置；切换音乐时即时重载播放器；切换风格/音乐时写回当前路线
+- [2026-05-07-17-10-00] - UPDATE - feature/map-travel/components/ReplaySettingsSheet.ets - 更新音乐页说明文案为“已接入即时切歌 + 本地数据库持久化”
+- [2026-05-07-17-10-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 通过（存在既有 ArkTS warnings，无新增阻塞错误）
+---
+
+## 2026-05-07 (Replay 澧炲箍 Phase 2 - Style Kit 鍙傛暟鍖?+ 璺嚎棰勮鎽樿)
+
+- [2026-05-07-21-25-00] - UPDATE - common/replay/ReplayStyleKit.ets - 灏?3 濂?Replay 椋庢牸浠庨€夐」鐩綍鎵╁睍涓哄彲鐩存帴渚涚粍浠朵娇鐢ㄧ殑瑙嗚 token
+- [2026-05-07-21-25-00] - UPDATE - feature/map-travel/components/ReplayPhotoCard.ets, ReplayProgressBar.ets, PhotoCardOverlay.ets - 鍗＄墖銆佽繘搴︽潯鍜岃鎯呭眰鏀逛负璇诲彇 style kit锛屽幓鎺夌‖缂栫爜鐧藉簳钃濊壊
+- [2026-05-07-21-25-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 鎺ュ叆褰撳墠 style kit 鐘舵€侊紝搴曢儴鎺у埗鏍忋€佸崱鐗囥€佸睆钂欑粺涓€璇诲彇 Replay 椋庢牸
+- [2026-05-07-21-25-00] - UPDATE - feature/map-travel/components/ReplaySettingsSheet.ets - Style Tab 绔嬪嵆鐢熸晥锛屽苟鎵╁睍涓哄悗缁?Effects / Transition 鍏ュ彛
+- [2026-05-07-21-25-00] - UPDATE - feature/map-travel/pages/TripDetailPage.ets - 鏂板鈥滃洖鏀鹃璁锯€濇憳瑕佸崱鐗囷紝杩涘叆 Replay 鍓嶅彲鏌ョ湅椋庢牸銆侀煶涔愩€佹护闀溿€佽浆鍦?
+- [2026-05-07-21-25-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 閫氳繃锛堝瓨鍦ㄦ棦鏈?ArkTS warnings锛屾棤鏂板闃诲閿欒锛?
+## 2026-05-07 (Replay 澧炲箍 Phase 3 - Effects 鍙鍖栧弽棣?)
+
+- [2026-05-07-21-45-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 鏂板褰撳墠婊ら暅 / 娉㈢汗 / 鐜荤拑璇︽儏灞傜殑灞忓箷鍐呯姸鎬佹爣绛撅紝姣忔璁剧疆鏇存敼鍚庡彲鐩存帴鍙嶉
+- [2026-05-07-21-45-00] - UPDATE - feature/map-travel/pages/TripDetailPage.ets - 鈥滃洖鏀鹃璁锯€濆崱鐗囨柊澧炵壒鏁堟憳瑕侊紝鍙湪杩涘叆 Replay 鍓嶇湅鍒版槸鍚﹀紑鍚妭鐐规尝绾规垨鐜荤拑璇︽儏灞?
+- [2026-05-07-21-45-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 閫氳繃锛堝瓨鍦ㄦ棦鏈?ArkTS warnings锛屾棤鏂板闃诲閿欒锛?
+## 2026-05-07 (Replay 澧炲箍 Phase 4 - 鎵嬪姩璺宠浆杞満瀵归綈)
+
+- [2026-05-07-22-05-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 灏嗕笂涓€鑺傜偣 / 涓嬩竴鑺傜偣 / 杩涘害鏉¤烦杞殑鍗＄墖鍒囨崲绾冲叆鍚岀竴濂?fade/slide/scale 杞満锛岄伩鍏嶆墜鍔ㄥ垏鎹㈡椂鐨勭獊鍏?
+- [2026-05-07-22-05-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 鍦ㄥ洖鏀鹃〉鍙充笂瑙掔姸鎬佹爣绛句腑澧炲姞褰撳墠杞満妯″紡锛屼究浜庢墜鍔ㄥ洖褰掑拰鐗规晥鑱斿姩楠岃瘉
+- [2026-05-07-22-05-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 閫氳繃锛堝瓨鍦ㄦ棦鏈?ArkTS warnings锛屾棤鏂板闃诲閿欒锛?

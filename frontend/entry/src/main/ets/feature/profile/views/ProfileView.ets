@@ -1,12 +1,21 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, AuthService, RouterUrls, RdbDataService, SyncManager } from '../../../common'
+import { common } from '@kit.AbilityKit'
+import {
+  AppColors,
+  AppDimens,
+  AuthService,
+  RouterUrls,
+  RdbDataService,
+  SyncManager,
+  ConsentManager
+} from '../../../common'
 
 /**
  * 个人中心 Tab 内容视图
- * 用户信息、同步状态、设置入口
  */
 @Component
 export struct ProfileView {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State displayName: string = 'TravelPin 用户'
   @State avatarUrl: string = ''
   @State avatarLoadFailed: boolean = false
@@ -17,13 +26,48 @@ export struct ProfileView {
   @State lastPullTime: string = '未下载'
   @State pendingCount: number = 0
   @State isSyncing: boolean = false
-  @State exifStrip: boolean = true
+  /** 上传 AI 云端打标签前自动剥 EXIF：当前实现已在 ImageSanitizer 中强制开启，UI 仅展示状态 */
+  @State exifStripAlwaysOn: boolean = true
+  /** AI 云端打标签开关，绑定 ConsentManager 持久化的同意状态 */
+  @StorageLink('aiCloudTaggingEnabled') aiCloudTaggingEnabled: boolean = false
   @State wifiOnlySync: boolean = true
+  @Watch('onShareLinkExpiryChanged')
+  @StorageLink('shareLinkExpiryDays') shareLinkExpiryDays: number = 7
   @State shareLinkExpiry: string = '7 天'
   @StorageLink('networkJustReconnected') networkJustReconnected: boolean = false
+  @Watch('onTabRefresh')
+  @StorageLink('tabRefreshToken') tabRefreshToken: number = 0
+  @StorageLink('activeTabIndex') activeTabIndex: number = 0
 
   aboutToAppear(): void {
-    this.loadAuthStatus()
+    this.syncShareLinkExpiryFromStorage()
+    void this.loadAuthStatus()
+    const uiContext = this.getUIContext()
+    const ctx = uiContext.getHostContext() as common.UIAbilityContext
+    if (ctx) {
+      ConsentManager.ensureLoaded(ctx)
+    }
+  }
+
+  onPageShow(): void {
+    this.syncShareLinkExpiryFromStorage()
+    void this.loadAuthStatus()
+  }
+
+  private onTabRefresh(): void {
+    if (this.activeTabIndex === 3) {
+      this.syncShareLinkExpiryFromStorage()
+      void this.loadAuthStatus()
+    }
+  }
+
+  private syncShareLinkExpiryFromStorage(): void {
+    const days = AppStorage.get<number>('shareLinkExpiryDays') ?? 7
+    this.shareLinkExpiry = `${days} 天`
+  }
+
+  private onShareLinkExpiryChanged(): void {
+    this.shareLinkExpiry = `${this.shareLinkExpiryDays} 天`
   }
 
   private formatSyncTime(timestamp: number): string {
@@ -48,10 +92,19 @@ export struct ProfileView {
 
   private async loadAuthStatus(): Promise<void> {
     try {
+      const effective = await AuthService.getEffectiveProfile()
+      if (effective) {
+        this.displayName = effective.displayName
+        this.avatarUrl = effective.avatarUrl
+        this.avatarLoadFailed = false
+      } else {
+        const status = await AuthService.getAuthStatus()
+        this.displayName = status.user?.displayName ?? 'TravelPin 用户'
+        this.avatarUrl = status.user?.avatarUrl ?? ''
+        this.avatarLoadFailed = false
+      }
+
       const status = await AuthService.getAuthStatus()
-      this.displayName = status.user?.displayName ?? 'TravelPin 用户'
-      this.avatarUrl = status.user?.avatarUrl ?? ''
-      this.avatarLoadFailed = false
       this.loginStatusText = status.isLoggedIn ? '华为账号已登录' : '未登录'
       this.cloudStatusText = status.cloudStatusText
 
@@ -87,11 +140,11 @@ export struct ProfileView {
       const partialFailure = AppStorage.get('syncPartialFailure') as boolean
       const failedCount = AppStorage.get('syncFailedNodeCount') as number
       if (partialFailure && failedCount > 0) {
-        promptAction.showToast({ message: `下载完成，${failedCount} 个节点图片下载失败` })
+        promptAction.showToast({ message: `下载完成，但有 ${failedCount} 个节点图片下载失败` })
       } else {
         promptAction.showToast({ message: '云端数据下载完成' })
       }
-    } catch (err) {
+    } catch (_) {
       promptAction.showToast({ message: '云端数据下载失败，请重试' })
     } finally {
       this.isSyncing = false
@@ -101,7 +154,7 @@ export struct ProfileView {
   private handleLogout(): void {
     AlertDialog.show({
       title: '退出登录',
-      message: '退出后本地数据不会丢失，但需要重新登录才能同步。',
+      message: '退出后本地数据不会丢失，但需要重新登录后才能继续同步。',
       primaryButton: {
         value: '取消',
         action: () => {}
@@ -122,21 +175,107 @@ export struct ProfileView {
     })
   }
 
+  private handleDeleteAccount(): void {
+    // 第一步：风险提示
+    AlertDialog.show({
+      title: '注销账号',
+      message: '注销账号将永久删除您的所有云端数据（旅行记录、照片、记忆节点等），此操作不可恢复。是否继续？',
+      primaryButton: {
+        value: '取消',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '我已知晓，继续',
+        fontColor: AppColors.DANGER,
+        action: () => this.confirmDeleteAccount()
+      }
+    })
+  }
+
+  private confirmDeleteAccount(): void {
+    // 第二步：最终确认
+    AlertDialog.show({
+      title: '最终确认',
+      message: '请再次确认注销账号。点击确认后将立即开始删除数据，此操作不可撤销。',
+      primaryButton: {
+        value: '取消',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '确认注销',
+        fontColor: AppColors.DANGER,
+        action: () => { void this.performDeleteAccount() }
+      }
+    })
+  }
+
+  private async performDeleteAccount(): Promise<void> {
+    if (this.isSyncing) {
+      promptAction.showToast({ message: '同步进行中，请稍后再试' })
+      return
+    }
+    this.isSyncing = true
+    try {
+      promptAction.showToast({ message: '正在注销账号，请稍候…' })
+      await AuthService.deleteAccount()
+      const uiContext = this.getUIContext()
+      const ctx = uiContext.getHostContext() as common.UIAbilityContext
+      if (ctx) {
+        await ConsentManager.clearAllConsents(ctx)
+      }
+      promptAction.showToast({ message: '账号已注销' })
+      router.replaceUrl({ url: RouterUrls.LOGIN })
+    } catch (err) {
+      promptAction.showToast({ message: '注销失败，请检查网络后重试' })
+    } finally {
+      this.isSyncing = false
+    }
+  }
+
   private showPrivacySettings(): void {
+    const cloudOn = this.aiCloudTaggingEnabled
+    const message =
+      `📷 EXIF 自动剥离：始终开启\n` +
+      `任何离开本设备的照片副本都会先去掉 GPS、相机型号等敏感字段，原图保留在本机。\n\n` +
+      `🤖 AI 云端识别画面内容：${cloudOn ? '已开启' : '已关闭'}\n` +
+      (cloudOn
+        ? '生成文案时，会把首张照片以剥离 EXIF 后的副本上传至 Qwen-VL 模型，让模型直接看图写文案，推理结束云端立即删除。\n首次上传前会单独询问。'
+        : '当前仅使用端侧 EXIF / OCR 元数据生成文案，照片本体不会上传。\n开启后第一次生成时会再次确认是否同意上传。') +
+      `\n\n点击下方按钮可切换 AI 云端识别开关。`
     AlertDialog.show({
       title: '隐私与安全',
-      message: `EXIF 元数据自动剥离：${this.exifStrip ? '已开启' : '已关闭'}\n\n所有照片在上传或分享前会自动移除位置、设备等敏感信息。\n\nAI 文案仅使用文本元数据，不会上传照片到云端。`,
-      confirm: {
+      message: message,
+      primaryButton: {
+        value: cloudOn ? '关闭云端识别' : '开启云端识别',
+        action: () => this.toggleCloudTagging()
+      },
+      secondaryButton: {
         value: '关闭',
         action: () => {}
       }
     })
   }
 
+  private async toggleCloudTagging(): Promise<void> {
+    const uiContext = this.getUIContext()
+    const ctx = uiContext.getHostContext() as common.UIAbilityContext
+    if (!ctx) {
+      promptAction.showToast({ message: '无法获取应用上下文' })
+      return
+    }
+    const next = !this.aiCloudTaggingEnabled
+    await ConsentManager.setCloudTaggingEnabled(ctx, next)
+    promptAction.showToast({
+      message: next ? '已开启 AI 云端识别' : '已关闭 AI 云端识别'
+    })
+  }
+
   private showStorageSettings(): void {
     AlertDialog.show({
       title: '流量与存储',
-      message: `仅 Wi-Fi 同步：${this.wifiOnlySync ? '已开启' : '已关闭'}\n\n开启后，蜂窝网络下仅加载缩略图，照片原图和批量同步将延迟到 Wi-Fi 环境下进行。`,
+      message:
+        `仅 Wi-Fi 同步：${this.wifiOnlySync ? '已开启' : '已关闭'}\n\n` +
+        '开启后，蜂窝网络下仅加载缩略图，原图和批量同步会延后到 Wi-Fi 环境执行。',
       confirm: {
         value: '关闭',
         action: () => {}
@@ -147,11 +286,11 @@ export struct ProfileView {
   private showExpirySettings(): void {
     ActionSheet.show({
       title: '分享链接默认有效期',
-      message: '选择通过链接分享旅行时的默认有效期',
+      message: '选择通过链接分享路线时的默认有效期。',
       sheets: [
-        { title: '1 天', action: () => { this.shareLinkExpiry = '1 天' } },
-        { title: '7 天', action: () => { this.shareLinkExpiry = '7 天' } },
-        { title: '30 天', action: () => { this.shareLinkExpiry = '30 天' } },
+        { title: '1 天', action: () => { this.shareLinkExpiryDays = 1 } },
+        { title: '7 天', action: () => { this.shareLinkExpiryDays = 7 } },
+        { title: '30 天', action: () => { this.shareLinkExpiryDays = 30 } },
       ]
     })
   }
@@ -159,7 +298,10 @@ export struct ProfileView {
   private showAbout(): void {
     AlertDialog.show({
       title: '关于 TravelPin',
-      message: 'TravelPin v1.0.0\n\n基于 HarmonyOS 的地理位置旅行日记应用\n\n南方科技大学 · 软件工程 · 第 7 组',
+      message:
+        'TravelPin v1.0.0\n\n' +
+        '基于 HarmonyOS 的地理位置旅行日记应用。\n\n' +
+        '南方科技大学 软件工程课程 第 7 组',
       confirm: {
         value: '关闭',
         action: () => {}
@@ -191,14 +333,17 @@ export struct ProfileView {
     .onClick(action)
   }
 
+  private resolveAvatarUrl(url: string): string {
+    return url && (url.startsWith('file://') || url.startsWith('http')) ? url : `file://${url}`
+  }
+
   build() {
     Scroll() {
       Column() {
-        // 用户信息卡片
         Row() {
           Column() {
             if (this.avatarUrl.length > 0 && !this.avatarLoadFailed) {
-              Image(this.avatarUrl)
+              Image(this.resolveAvatarUrl(this.avatarUrl))
                 .width(56)
                 .height(56)
                 .borderRadius(28)
@@ -230,7 +375,6 @@ export struct ProfileView {
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
 
-          // 编辑按钮
           Text('编辑')
             .fontSize(AppDimens.FONT_SM)
             .fontColor(AppColors.PRIMARY)
@@ -243,10 +387,9 @@ export struct ProfileView {
         .padding(AppDimens.PADDING_LG)
         .backgroundColor(AppColors.CARD_BG)
 
-        // 同步状态卡片
         Column() {
           Row() {
-            Text('☁️ 同步状态')
+            Text('同步状态')
               .fontSize(AppDimens.FONT_MD)
               .fontWeight(FontWeight.Medium)
               .fontColor(AppColors.TEXT_PRIMARY)
@@ -262,7 +405,7 @@ export struct ProfileView {
 
           if (this.networkJustReconnected) {
             Row() {
-              Text('网络已恢复，如有必要，请先点击同步再进行其他操作，否则可能导致数据丢失')
+              Text('网络已恢复，离线期间的更改不会自动同步，请手动点击同步按钮上传到云端。')
                 .fontSize(AppDimens.FONT_SM)
                 .fontColor(AppColors.TEXT_PRIMARY)
                 .layoutWeight(1)
@@ -306,23 +449,23 @@ export struct ProfileView {
             .alignItems(HorizontalAlign.Start)
             .layoutWeight(1)
 
-          Row() {
-            Button(this.isSyncing ? '上传中...' : '上传本地')
-              .height(32)
-              .fontSize(AppDimens.FONT_SM)
-              .backgroundColor(AppColors.PRIMARY)
-              .enabled(!this.isSyncing)
-              .onClick(() => { void this.runPushSync() })
+            Row() {
+              Button(this.isSyncing ? '上传中...' : '上传本地')
+                .height(32)
+                .fontSize(AppDimens.FONT_SM)
+                .backgroundColor(AppColors.PRIMARY)
+                .enabled(!this.isSyncing)
+                .onClick(() => { void this.runPushSync() })
 
-            Button(this.isSyncing ? '下载中...' : '下载云端')
-              .height(32)
-              .fontSize(AppDimens.FONT_SM)
-              .backgroundColor(AppColors.SUCCESS)
-              .enabled(!this.isSyncing)
-              .margin({ left: 8 })
-              .onClick(() => { void this.runPullSync() })
-          }
-          .margin({ top: 12 })
+              Button(this.isSyncing ? '下载中...' : '下载云端')
+                .height(32)
+                .fontSize(AppDimens.FONT_SM)
+                .backgroundColor(AppColors.SUCCESS)
+                .enabled(!this.isSyncing)
+                .margin({ left: 8 })
+                .onClick(() => { void this.runPullSync() })
+            }
+            .margin({ top: 12 })
           }
           .width('100%')
           .margin({ top: 12 })
@@ -333,20 +476,27 @@ export struct ProfileView {
         .backgroundColor(AppColors.CARD_BG)
         .borderRadius(AppDimens.RADIUS_MD)
 
-        // 设置列表
         Column() {
-          Text('⚙️ 设置')
+          Text('设置')
             .fontSize(AppDimens.FONT_MD)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppColors.TEXT_PRIMARY)
             .padding({ left: AppDimens.PADDING_MD, top: AppDimens.PADDING_MD, bottom: 8 })
             .width('100%')
 
-          this.settingItem('隐私与安全', this.exifStrip ? 'EXIF 剥离已开启' : '', () => this.showPrivacySettings())
+          this.settingItem(
+            '隐私与安全',
+            this.aiCloudTaggingEnabled ? '云端识别 已开启 · EXIF 自动剥离' : 'EXIF 自动剥离 · 云端识别 已关闭',
+            () => this.showPrivacySettings()
+          )
           Divider().color(AppColors.DIVIDER)
           this.settingItem('流量与存储', this.wifiOnlySync ? '仅 Wi-Fi' : '', () => this.showStorageSettings())
           Divider().color(AppColors.DIVIDER)
           this.settingItem('分享链接默认有效期', this.shareLinkExpiry, () => this.showExpirySettings())
+          Divider().color(AppColors.DIVIDER)
+          this.settingItem('用户协议', '', () => router.pushUrl({ url: RouterUrls.USER_AGREEMENT }))
+          Divider().color(AppColors.DIVIDER)
+          this.settingItem('隐私政策', '', () => router.pushUrl({ url: RouterUrls.PRIVACY_POLICY }))
           Divider().color(AppColors.DIVIDER)
           this.settingItem('关于 TravelPin', 'v1.0.0', () => this.showAbout())
         }
@@ -354,7 +504,6 @@ export struct ProfileView {
         .backgroundColor(AppColors.CARD_BG)
         .borderRadius(AppDimens.RADIUS_MD)
 
-        // 退出登录
         Text('退出登录')
           .fontSize(AppDimens.FONT_MD)
           .fontColor(AppColors.DANGER)
@@ -363,8 +512,19 @@ export struct ProfileView {
           .height(52)
           .backgroundColor(AppColors.CARD_BG)
           .borderRadius(AppDimens.RADIUS_MD)
-          .margin({ top: 24, bottom: 24 })
+          .margin({ top: 24 })
           .onClick(() => this.handleLogout())
+
+        Text('注销账号')
+          .fontSize(AppDimens.FONT_MD)
+          .fontColor(AppColors.DANGER)
+          .textAlign(TextAlign.Center)
+          .width('100%')
+          .height(52)
+          .backgroundColor(AppColors.CARD_BG)
+          .borderRadius(AppDimens.RADIUS_MD)
+          .margin({ top: 12, bottom: 24 })
+          .onClick(() => this.handleDeleteAccount())
       }
       .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD })
     }

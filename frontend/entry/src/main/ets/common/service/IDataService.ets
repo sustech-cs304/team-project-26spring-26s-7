@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import type { Trip, MemoryNode } from './types';
+import type { Trip, MemoryNode, ReplayTripPreferences } from './types';
 
 /**
  * 创建旅行输入参数（不包含 id, createdAt, updatedAt）
@@ -27,6 +27,13 @@ export interface CreateTravelInput {
   endDate: number;
   nodeIds: string[];
   totalDistance: number;
+  replayStyleKitId?: string;
+  replayBgmId?: string;
+  replayFilterId?: string;
+  replayTransitionType?: string;
+  replayEnableRipple?: boolean;
+  replayEnableRouteAnimation?: boolean;
+  replayEnableBlurOverlay?: boolean;
 }
 
 /**
@@ -41,6 +48,13 @@ export interface UpdateTravelInput {
   endDate?: number;
   nodeIds?: string[];
   totalDistance?: number;
+  replayStyleKitId?: string;
+  replayBgmId?: string;
+  replayFilterId?: string;
+  replayTransitionType?: string;
+  replayEnableRipple?: boolean;
+  replayEnableRouteAnimation?: boolean;
+  replayEnableBlurOverlay?: boolean;
 }
 
 /**
@@ -56,6 +70,7 @@ export interface CreateNodeInput {
   photos: string[];
   mood: string;
   tags: string[];
+  visitedAt?: number;
 }
 
 /**
@@ -71,6 +86,7 @@ export interface UpdateNodeInput {
   photos?: string[];
   mood?: string;
   tags?: string[];
+  visitedAt?: number;
 }
 
 /**
@@ -108,6 +124,16 @@ export interface IDataService {
   updateTravel(travelId: string, data: UpdateTravelInput): Promise<Trip>;
 
   /**
+   * 获取单条路线的本地 Replay 配置
+   */
+  getTripReplayPreferences(travelId: string): Promise<ReplayTripPreferences>;
+
+  /**
+   * 仅更新单条路线的本地 Replay 配置，不进入云同步逻辑
+   */
+  updateTripReplayPreferences(travelId: string, data: ReplayTripPreferences): Promise<ReplayTripPreferences>;
+
+  /**
    * 删除旅行
    */
   deleteTravel(travelId: string): Promise<void>;
@@ -140,7 +166,18 @@ export interface IDataService {
   deleteNode(nodeId: string): Promise<void>;
 
   /**
-   * 重新排序节点
+   * 重新排序节点（仅更新本地数据库）
    */
   reorderNodes(travelId: string, nodeIds: string[]): Promise<void>;
+
+  /**
+   * 将指定旅行下所有节点的 nodeOrder 同步到云端
+   * 应在 TripEditPage 点击保存时调用
+   */
+  syncNodeOrdersToCloud(travelId: string): Promise<void>;
+
+  /**
+   * 修改节点的 visitedAt 后，按 visitedAt ASC 重排该路线所有节点的 nodeOrder，并同步到云
+   */
+  sortNodesByVisitedAt(travelId: string): Promise<void>;
 }

@@ -1,5 +1,5 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
+import { AppColors, AppDimens, RouterUrls, TravelSpecialValues, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
 import type { Trip } from '../../../common'
 import { PhotoSelector } from '../components/PhotoSelector'
@@ -13,6 +13,7 @@ const QUICK_TRIP_NAME_MAX_LENGTH: number = 40
 @Entry
 @Component
 export struct NodeEditPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State title: string = ''
   @State content: string = ''
   @State poiName: string = '点击选择位置'
@@ -31,6 +32,9 @@ export struct NodeEditPage {
   @State showQuickTripCreator: boolean = false
   @State quickTripName: string = ''
   @State isCreatingQuickTrip: boolean = false
+  @State visitedAt: number = 0
+  @State tempVisitedAt: number = 0
+  @State showDatePicker: boolean = false
 
   private dataService = getDataService()
 
@@ -72,6 +76,24 @@ export struct NodeEditPage {
       this.hasPickedLocation = true
       AppStorage.setOrCreate('locationPicked', false)
     }
+
+    const aiApplied = AppStorage.get('aiCopyApplied') as boolean
+    if (aiApplied) {
+      const aiContent = (AppStorage.get('aiCopyContent') as string) || ''
+      if (aiContent.length > 0) {
+        if (this.content.trim().length > 0) {
+          this.content = this.content + '\n' + aiContent
+        } else {
+          this.content = aiContent
+        }
+        if (this.content.length > NODE_CONTENT_MAX_LENGTH) {
+          this.content = this.content.slice(0, NODE_CONTENT_MAX_LENGTH)
+          promptAction.showToast({ message: `内容已截断至${NODE_CONTENT_MAX_LENGTH}字上限` })
+        }
+      }
+      AppStorage.setOrCreate('aiCopyApplied', false)
+      AppStorage.setOrCreate('aiCopyContent', '')
+    }
   }
 
   private async loadAvailableTrips(): Promise<void> {
@@ -79,10 +101,8 @@ export struct NodeEditPage {
       const trips = await this.dataService.getAllTravels()
       this.availableTrips = trips
 
-      // For create mode, default to latest trip when user does not choose.
-      if (!this.isEditMode && this.tripId.length === 0 && trips.length > 0) {
-        this.tripId = trips[0].id
-      }
+      // For edit mode, restore the trip selection.
+      // For create mode, do NOT auto-assign - user must explicitly choose or leave as "未分类"
     } catch (_) {
       this.availableTrips = []
     }
@@ -105,7 +125,7 @@ export struct NodeEditPage {
       return '当前旅行'
     }
     if (this.availableTrips.length === 0) {
-      return '无可选旅行（保存时自动创建）'
+      return '不关联任何旅行'
     }
     return '请选择旅行'
   }
@@ -128,6 +148,7 @@ export struct NodeEditPage {
       this.latitude = node.latitude
       this.longitude = node.longitude
       this.hasPickedLocation = true
+      this.visitedAt = node.visitedAt ?? 0
       await this.loadAvailableTrips()
     } catch (_) {
       promptAction.showToast({ message: '加载节点数据失败' })
@@ -141,25 +162,13 @@ export struct NodeEditPage {
 
     const existingTrips = await this.dataService.getAllTravels()
     if (existingTrips.length > 0) {
-      // Default to latest trip when user did not choose.
+      // User explicitly selected a trip
       this.tripId = existingTrips[0].id
       return this.tripId
     }
 
-    const now = Date.now()
-    const createdTrip = await this.dataService.createTravel({
-      name: `新旅行 ${this.formatDate(now)}`,
-      description: '',
-      coverPhoto: '',
-      isPublic: false,
-      startDate: now,
-      endDate: now,
-      nodeIds: [],
-      totalDistance: 0
-    })
-    this.tripId = createdTrip.id
-    await this.loadAvailableTrips()
-    return this.tripId
+    // No trips exist - use uncategorized instead of auto-creating a new trip
+    return TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
   }
 
   private async handleSave(): Promise<void> {
@@ -189,7 +198,7 @@ export struct NodeEditPage {
           : poiValue
 
       if (this.isEditMode && this.nodeId.length > 0) {
-        await this.dataService.updateNode(this.nodeId, {
+        const updatedNode = await this.dataService.updateNode(this.nodeId, {
           travelId: targetTripId,
           title: trimmedTitle,
           content: this.content,
@@ -198,8 +207,13 @@ export struct NodeEditPage {
           poiName: resolvedPoiName,
           photos: this.photos,
           mood: this.mood,
-          tags: this.tags
+          tags: this.tags,
+          visitedAt: this.visitedAt
         })
+        // visitedAt 修改后重排（仅对已关联旅行的节点生效）
+        if (updatedNode && updatedNode.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
+          await this.dataService.sortNodesByVisitedAt(updatedNode.travelId)
+        }
         promptAction.showToast({ message: '记忆已更新' })
       } else {
         await this.dataService.createNode({
@@ -211,7 +225,8 @@ export struct NodeEditPage {
           poiName: resolvedPoiName,
           photos: this.photos,
           mood: this.mood,
-          tags: this.tags
+          tags: this.tags,
+          visitedAt: this.visitedAt > 0 ? this.visitedAt : Date.now()
         })
         promptAction.showToast({ message: '记忆已保存' })
       }
@@ -225,12 +240,24 @@ export struct NodeEditPage {
   }
 
   private handleNavigateToAI(): void {
+    const poiValue = this.poiName.trim()
+    const safePoiName =
+      (poiValue === '点击选择位置' || poiValue === '获取位置中...' || poiValue.length === 0)
+        ? '' : poiValue
     router.pushUrl({
       url: RouterUrls.AI_COPY,
       params: {
+        nodeId: this.nodeId,
+        tripId: this.tripId,
+        poiName: safePoiName,
+        latitude: this.latitude,
+        longitude: this.longitude,
+        photos: this.photos,
+        mood: this.mood,
+        tags: this.tags,
         defaultPrompt: this.content,
         defaultTitle: this.title
-      }
+      } as RouterParam
     })
   }
 
@@ -249,6 +276,11 @@ export struct NodeEditPage {
 
   private chooseTrip(trip: Trip): void {
     this.tripId = trip.id
+    this.closeTripSelector()
+  }
+
+  private selectNoTrip(): void {
+    this.tripId = TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
     this.closeTripSelector()
   }
 
@@ -385,6 +417,59 @@ export struct NodeEditPage {
     return '正文会在达到上限后自动停止输入'
   }
 
+  @Builder
+  private buildDatePickerDialog() {
+    Stack({ alignContent: Alignment.Bottom }) {
+      Column()
+        .width('100%')
+        .height('100%')
+        .backgroundColor('#88000000')
+        .onClick(() => { this.showDatePicker = false })
+
+      Column() {
+        Row() {
+          Text('取消')
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor(AppColors.TEXT_SECONDARY)
+            .onClick(() => { this.showDatePicker = false })
+          Blank()
+          Text('到访日期')
+            .fontSize(AppDimens.FONT_LG)
+            .fontWeight(FontWeight.Medium)
+          Blank()
+          Text('确定')
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor(AppColors.PRIMARY)
+            .onClick(() => {
+              this.showDatePicker = false
+              this.visitedAt = this.tempVisitedAt
+            })
+        }
+        .width('100%')
+        .padding({ left: 20, right: 20, top: 16, bottom: 12 })
+
+        Divider()
+          .color(AppColors.BACKGROUND)
+
+        DatePicker({
+          start: new Date('2000-1-1'),
+          end: new Date(),
+          selected: new Date(this.tempVisitedAt)
+        })
+          .width('100%')
+          .padding({ left: 16, right: 16 })
+          .onDateChange((value: Date) => {
+            this.tempVisitedAt = new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime()
+          })
+      }
+      .width('100%')
+      .backgroundColor(AppColors.CARD_BG)
+      .borderRadius({ topLeft: 20, topRight: 20 })
+    }
+    .width('100%')
+    .height('100%')
+  }
+
   build() {
     Stack() {
       Column() {
@@ -484,7 +569,10 @@ export struct NodeEditPage {
                 .onChange((value: string) => { this.updateTitle(value) })
                 .maxLength(NODE_TITLE_MAX_LENGTH)
                 .margin({ top: 8 })
-                .backgroundColor(AppColors.BACKGROUND)
+                .fontColor(AppColors.INPUT_TEXT)
+                .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+                .caretColor(AppColors.INPUT_CARET)
+                .backgroundColor(AppColors.INPUT_BG)
                 .border({
                   width: 1,
                   color: this.getTitleBorderColor()
@@ -520,7 +608,10 @@ export struct NodeEditPage {
                 .maxLength(NODE_CONTENT_MAX_LENGTH)
                 .height(120)
                 .margin({ top: 8 })
-                .backgroundColor(AppColors.BACKGROUND)
+                .fontColor(AppColors.INPUT_TEXT)
+                .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+                .caretColor(AppColors.INPUT_CARET)
+                .backgroundColor(AppColors.INPUT_BG)
                 .border({
                   width: 1,
                   color: this.getContentBorderColor()
@@ -611,7 +702,7 @@ export struct NodeEditPage {
                 ForEach(['旅行', '美食', '风景', '打卡', '日常'], (tag: string) => {
                   Text(`#${tag}`)
                     .fontSize(AppDimens.FONT_SM)
-                    .fontColor(this.tags.includes(tag) ? AppColors.CARD_BG : AppColors.PRIMARY)
+                    .fontColor(this.tags.includes(tag) ? AppColors.TEXT_ON_PRIMARY : AppColors.PRIMARY)
                     .backgroundColor(this.tags.includes(tag) ? AppColors.PRIMARY : AppColors.PRIMARY + '15')
                     .padding({ left: 12, right: 12, top: 6, bottom: 6 })
                     .borderRadius(20)
@@ -629,10 +720,41 @@ export struct NodeEditPage {
             }
             .width('100%')
             .padding(AppDimens.PADDING_MD)
-            .margin({ top: 12, bottom: 24 })
+            .margin({ top: 12 })
             .backgroundColor(AppColors.CARD_BG)
             .borderRadius(AppDimens.RADIUS_SM)
             .alignItems(HorizontalAlign.Start)
+
+            // 到访日期
+            Row() {
+              Text('📅')
+                .fontSize(18)
+              Column() {
+                Text('到访日期')
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(AppColors.TEXT_PRIMARY)
+                Text(this.visitedAt > 0 ? this.formatDate(this.visitedAt) : '未设置，默认记录创建时间')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_HINT)
+                  .margin({ top: 4 })
+              }
+              .margin({ left: 8 })
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Start)
+              Text('选择日期 >')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.PRIMARY)
+            }
+            .width('100%')
+            .padding(AppDimens.PADDING_MD)
+            .margin({ top: 12, bottom: 24 })
+            .backgroundColor(AppColors.CARD_BG)
+            .borderRadius(AppDimens.RADIUS_SM)
+            .onClick(() => {
+              this.tempVisitedAt = this.visitedAt > 0 ? this.visitedAt : Date.now()
+              this.showDatePicker = true
+            })
           }
           .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12 })
         }
@@ -692,7 +814,10 @@ export struct NodeEditPage {
                       : value
                   })
                   .maxLength(QUICK_TRIP_NAME_MAX_LENGTH)
-                  .backgroundColor(AppColors.CARD_BG)
+                  .fontColor(AppColors.INPUT_TEXT)
+                  .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+                  .caretColor(AppColors.INPUT_CARET)
+                  .backgroundColor(AppColors.INPUT_BG)
                   .borderRadius(16)
                 Row() {
                   Text(`${this.quickTripName.length}/${QUICK_TRIP_NAME_MAX_LENGTH}`)
@@ -703,13 +828,13 @@ export struct NodeEditPage {
                     .height(34)
                     .fontSize(AppDimens.FONT_SM)
                     .fontColor(AppColors.TEXT_SECONDARY)
-                    .backgroundColor(AppColors.CARD_BG)
+                    .backgroundColor(AppColors.BACKGROUND)
                     .borderRadius(17)
                     .onClick(() => this.cancelQuickTripCreator())
                   Button(this.isCreatingQuickTrip ? '创建中...' : '创建')
                     .height(34)
                     .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.CARD_BG)
+                    .fontColor(AppColors.TEXT_ON_PRIMARY)
                     .backgroundColor(AppColors.PRIMARY)
                     .borderRadius(17)
                     .margin({ left: 8 })
@@ -740,7 +865,7 @@ export struct NodeEditPage {
                 Button('新建旅行')
                   .height(38)
                   .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.CARD_BG)
+                  .fontColor(AppColors.TEXT_ON_PRIMARY)
                   .backgroundColor(AppColors.PRIMARY)
                   .borderRadius(19)
                   .margin({ top: 14 })
@@ -753,6 +878,47 @@ export struct NodeEditPage {
             } else {
               Scroll() {
                 Column() {
+                  // 不归类选项（始终显示）
+                  Row() {
+                    Column() {
+                      Text('不关联任何旅行')
+                        .fontSize(AppDimens.FONT_MD)
+                        .fontWeight(FontWeight.Medium)
+                        .fontColor(AppColors.TEXT_PRIMARY)
+                        .width('100%')
+                      Text('节点将显示在地图「未分类」分组中')
+                        .fontSize(AppDimens.FONT_SM)
+                        .fontColor(AppColors.TEXT_HINT)
+                        .margin({ top: 4 })
+                    }
+                    .layoutWeight(1)
+                    .alignItems(HorizontalAlign.Start)
+
+                    if (this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
+                      Text('已选')
+                        .fontSize(AppDimens.FONT_SM)
+                        .fontColor(AppColors.PRIMARY)
+                        .fontWeight(FontWeight.Medium)
+                        .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+                        .backgroundColor(AppColors.PRIMARY + '12')
+                        .borderRadius(12)
+                    }
+                  }
+                  .width('100%')
+                  .padding({ left: 14, right: 14, top: 14, bottom: 14 })
+                  .margin({ bottom: 10 })
+                  .backgroundColor(
+                    this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
+                      ? AppColors.PRIMARY + '10'
+                      : AppColors.BACKGROUND
+                  )
+                  .borderRadius(18)
+                  .border({
+                    width: this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID ? 1 : 0,
+                    color: this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID ? AppColors.PRIMARY + '55' : 'transparent'
+                  })
+                  .onClick(() => this.selectNoTrip())
+
                   ForEach(this.availableTrips, (trip: Trip) => {
                     Row() {
                       Column() {
@@ -796,7 +962,7 @@ export struct NodeEditPage {
                 .width('100%')
               }
               .width('100%')
-              .height(this.getTripSelectorListHeight())
+              .height(this.getTripSelectorListHeight() + 78)
             }
           }
           .width('100%')
@@ -815,5 +981,8 @@ export struct NodeEditPage {
     .width('100%')
     .height('100%')
     .backgroundColor(AppColors.BACKGROUND)
+    .bindContentCover(this.showDatePicker, this.buildDatePickerDialog(), {
+      onDisappear: () => { this.showDatePicker = false }
+    })
   }
 }

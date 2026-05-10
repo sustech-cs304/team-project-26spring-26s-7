@@ -16,9 +16,25 @@
 // Common Layer 统一导出入口
 
 // Utils 导出
-export { AppColors, AppDimens, RouterUrls, TravelSpecialValues } from './utils/Constants';
+export { AppColors, AppDimens, AppTheme, RouterUrls, TravelSpecialValues, DEFAULT_MAP_LATITUDE, DEFAULT_MAP_LONGITUDE } from './utils/Constants';
+export type { ThemePalette } from './utils/Constants';
 export { logger } from './utils/Logger';
 export { PhotoPickerUtil } from './utils/PhotoPickerUtil';
+export {
+  getDefaultMapCenter,
+  getStoredPreferredMapCenter,
+  hasStoredPreferredMapCenter,
+  isValidMapCenter,
+  requestCurrentLocation,
+  resolveMapCenterFromNodes,
+  savePreferredMapCenter,
+  setMapCurrentLocationError,
+  setMapCurrentLocationPending
+} from './utils/MapLocationPreference';
+export type { MapCenter, MapPreferenceSource, MapPreferenceState } from './utils/MapLocationPreference';
+export { ImageSanitizer } from './utils/ImageSanitizer';
+export { ConsentManager, KEY_AI_CLOUD_TAGGING_ENABLED, KEY_AI_CLOUD_TAGGING_PROMPTED } from './utils/ConsentManager';
+export { CrashReporter } from './utils/CrashReporter';
 
 // Auth 导出
 export { AuthService, CloudStorageService } from './auth';
@@ -30,11 +46,13 @@ export type { AuthUser } from './auth';
 export { RdbHelper, SensitivityLevel } from './data/index';
 export { TravelRepository } from './data/index';
 export { MemoryNodeRepository } from './data/index';
+export { PhotoMetadataRepository } from './data/index';
 
 // Service Layer 类型导出
 export type {
   MemoryNode,
   Trip,
+  ReplayTripPreferences,
   SyncStatus,
   CopywritingRequest,
   ShareInfo,
@@ -63,3 +81,32 @@ export { CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput 
 
 // 配置导出
 export { getDataService } from './ServiceConfig';
+
+// API Layer 导出
+export { HttpClient, HttpResponse } from './api/index';
+export { AiGatewayClient, ImageCopyRequest, ImagesCopyRequest } from './api/index';
+export { AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION } from './api/index';
+export { ImageCensorService, ImageCensorResult } from './api/index';
+export { MultipartFormData, VisionLLMClient, VisionLLMRequest, VisionLLMResponse } from './api/index';
+
+// AI Layer 导出
+export { LocalImageTagger } from './ai/index';
+export { MetadataAggregator } from './ai/index';
+export {
+  PhotoMetadata,
+  JourneyMetadata,
+  AiCopyRequest,
+  AiCopyResponse,
+  AiCopyResponseData,
+  VisualKitResult
+} from './ai/index';
+
+// Replay config 导出
+export { ReplayPreferences } from './replay/ReplayPreferences';
+export type { ReplayPreferencesState } from './replay/ReplayPreferences';
+export { ReplayStyleKitCatalog, ReplayStyleKitId } from './replay/ReplayStyleKit';
+export type { ReplayStyleKit, ReplayStyleKitOption } from './replay/ReplayStyleKit';
+export { ReplayMusicCatalog, ReplayBgmId } from './replay/ReplayMusicCatalog';
+export type { ReplayMusicOption } from './replay/ReplayMusicCatalog';
+export { ReplayFilterId, ReplayFilterCatalog, ReplayTransitionType, ReplayTransitionCatalog, ReplayEffectsDefaults } from './replay/ReplayEffectOptions';
+export type { ReplayFilterOption, ReplayTransitionOption, ReplayEffectsState } from './replay/ReplayEffectOptions';

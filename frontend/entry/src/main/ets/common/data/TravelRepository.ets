@@ -33,6 +33,13 @@ export interface CreateTravelInput {
   startDate: number;
   endDate: number;
   sensitivity?: string;
+  replayStyleKitId?: string;
+  replayBgmId?: string;
+  replayFilterId?: string;
+  replayTransitionType?: string;
+  replayEnableRipple?: boolean;
+  replayEnableRouteAnimation?: boolean;
+  replayEnableBlurOverlay?: boolean;
 }
 
 /**
@@ -45,6 +52,13 @@ export interface UpdateTravelInput {
   startDate?: number;
   endDate?: number;
   sensitivity?: string;
+  replayStyleKitId?: string;
+  replayBgmId?: string;
+  replayFilterId?: string;
+  replayTransitionType?: string;
+  replayEnableRipple?: boolean;
+  replayEnableRouteAnimation?: boolean;
+  replayEnableBlurOverlay?: boolean;
 }
 
 interface NodePhotoData {
@@ -107,6 +121,13 @@ export class TravelRepository {
     const deletedAtIdx = resultSet.getColumnIndex('deleted_at');
     const lastSyncedAtIdx = resultSet.getColumnIndex('last_synced_at');
     const versionIdx = resultSet.getColumnIndex('version');
+    const replayStyleKitIdIdx = resultSet.getColumnIndex('replay_style_kit_id');
+    const replayBgmIdIdx = resultSet.getColumnIndex('replay_bgm_id');
+    const replayFilterIdIdx = resultSet.getColumnIndex('replay_filter_id');
+    const replayTransitionTypeIdx = resultSet.getColumnIndex('replay_transition_type');
+    const replayEnableRippleIdx = resultSet.getColumnIndex('replay_enable_ripple');
+    const replayEnableRouteAnimationIdx = resultSet.getColumnIndex('replay_enable_route_animation');
+    const replayEnableBlurOverlayIdx = resultSet.getColumnIndex('replay_enable_blur_overlay');
 
     const trip: Trip = {
       id: resultSet.getDouble(idIdx).toString(),
@@ -125,7 +146,15 @@ export class TravelRepository {
       syncStatus: syncStatusIdx >= 0 ? (resultSet.getString(syncStatusIdx) ?? 'local_only') : 'local_only',
       deletedAt: deletedAtIdx >= 0 ? resultSet.getDouble(deletedAtIdx) : 0,
       lastSyncedAt: lastSyncedAtIdx >= 0 ? resultSet.getDouble(lastSyncedAtIdx) : 0,
-      version: versionIdx >= 0 ? resultSet.getDouble(versionIdx) : 1
+      version: versionIdx >= 0 ? resultSet.getDouble(versionIdx) : 1,
+      replayStyleKitId: replayStyleKitIdIdx >= 0 ? (resultSet.getString(replayStyleKitIdIdx) ?? '') : '',
+      replayBgmId: replayBgmIdIdx >= 0 ? (resultSet.getString(replayBgmIdIdx) ?? '') : '',
+      replayFilterId: replayFilterIdIdx >= 0 ? (resultSet.getString(replayFilterIdIdx) ?? '') : '',
+      replayTransitionType: replayTransitionTypeIdx >= 0 ? (resultSet.getString(replayTransitionTypeIdx) ?? '') : '',
+      replayEnableRipple: replayEnableRippleIdx >= 0 ? resultSet.getDouble(replayEnableRippleIdx) === 1 : false,
+      replayEnableRouteAnimation: replayEnableRouteAnimationIdx >= 0 ?
+        resultSet.getDouble(replayEnableRouteAnimationIdx) === 1 : false,
+      replayEnableBlurOverlay: replayEnableBlurOverlayIdx >= 0 ? resultSet.getDouble(replayEnableBlurOverlayIdx) === 1 : false
     };
     return trip;
   }
@@ -185,8 +214,10 @@ export class TravelRepository {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const store = await this.getRdbStore();
+      const ownerUid = await this.getOwnerUid();
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'travel id'));
+      predicates.equalTo('owner_uid', ownerUid);
       predicates.equalTo('deleted_at', 0);
       resultSet = await store.query(predicates);
       let trip: Trip | undefined = undefined;
@@ -221,7 +252,14 @@ export class TravelRepository {
         'sync_status': 'pending_create',
         'deleted_at': 0,
         'last_synced_at': 0,
-        'version': 1
+        'version': 1,
+        'replay_style_kit_id': travel.replayStyleKitId ?? '',
+        'replay_bgm_id': travel.replayBgmId ?? '',
+        'replay_filter_id': travel.replayFilterId ?? '',
+        'replay_transition_type': travel.replayTransitionType ?? '',
+        'replay_enable_ripple': travel.replayEnableRipple ? 1 : 0,
+        'replay_enable_route_animation': travel.replayEnableRouteAnimation ? 1 : 0,
+        'replay_enable_blur_overlay': travel.replayEnableBlurOverlay ? 1 : 0
       };
       const rowId = await store.insert(TABLE_NAME, valueBucket);
       logger.info(TAG, `Created travel: ${travel.name}, id=${rowId}`);
@@ -262,8 +300,30 @@ export class TravelRepository {
       if (travel.sensitivity !== undefined) {
         valueBucket['sensitivity'] = travel.sensitivity;
       }
+      if (travel.replayStyleKitId !== undefined) {
+        valueBucket['replay_style_kit_id'] = travel.replayStyleKitId;
+      }
+      if (travel.replayBgmId !== undefined) {
+        valueBucket['replay_bgm_id'] = travel.replayBgmId;
+      }
+      if (travel.replayFilterId !== undefined) {
+        valueBucket['replay_filter_id'] = travel.replayFilterId;
+      }
+      if (travel.replayTransitionType !== undefined) {
+        valueBucket['replay_transition_type'] = travel.replayTransitionType;
+      }
+      if (travel.replayEnableRipple !== undefined) {
+        valueBucket['replay_enable_ripple'] = travel.replayEnableRipple ? 1 : 0;
+      }
+      if (travel.replayEnableRouteAnimation !== undefined) {
+        valueBucket['replay_enable_route_animation'] = travel.replayEnableRouteAnimation ? 1 : 0;
+      }
+      if (travel.replayEnableBlurOverlay !== undefined) {
+        valueBucket['replay_enable_blur_overlay'] = travel.replayEnableBlurOverlay ? 1 : 0;
+      }
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'travel id'));
+      predicates.equalTo('owner_uid', currentTrip.ownerUid);
       const affectedRows = await store.update(valueBucket, predicates);
       logger.info(TAG, `Updated travel ${id}, affected=${affectedRows}`);
       return affectedRows > 0;
@@ -290,6 +350,7 @@ export class TravelRepository {
       };
       const nodePredicates = new rdb.RdbPredicates('memory_nodes');
       nodePredicates.equalTo('travel_id', travelId);
+      nodePredicates.equalTo('owner_uid', currentTrip.ownerUid);
       nodePredicates.equalTo('deleted_at', 0);
       const currentNodesResultSet = await store.query(nodePredicates);
       const nodePhotosMap: Map<number, NodePhotoData> = new Map();
@@ -324,6 +385,7 @@ export class TravelRepository {
         };
         const restorePhotoPredicates = new rdb.RdbPredicates('memory_nodes');
         restorePhotoPredicates.equalTo('id', nodeId);
+        restorePhotoPredicates.equalTo('owner_uid', currentTrip.ownerUid);
         await store.update(restorePhotoValues, restorePhotoPredicates);
         logger.info(TAG, `[debug] softDeleteTravel after move nodeId=${nodeId}, photos=${nodePhotoData.photos}, photoManifest=${restorePhotoValues.photo_manifest}`);
       }
@@ -336,6 +398,7 @@ export class TravelRepository {
       };
       const travelPredicates = new rdb.RdbPredicates(TABLE_NAME);
       travelPredicates.equalTo('id', travelId);
+      travelPredicates.equalTo('owner_uid', currentTrip.ownerUid);
       travelPredicates.equalTo('deleted_at', 0);
       const affectedRows = await store.update(travelValues, travelPredicates);
       logger.info(TAG, `Soft deleted travel ${id}, affected=${affectedRows}`);
@@ -350,8 +413,10 @@ export class TravelRepository {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const store = await this.getRdbStore();
+      const ownerUid = await this.getOwnerUid();
       const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('cloud_id', cloudId);
+      predicates.equalTo('owner_uid', ownerUid);
       resultSet = await store.query(predicates);
       if (!resultSet.goToFirstRow()) {
         return null;
@@ -374,13 +439,16 @@ export class TravelRepository {
     };
     const predicates = new rdb.RdbPredicates(TABLE_NAME);
     predicates.equalTo('id', this.toDbId(id, 'travel id'));
+    predicates.equalTo('owner_uid', await this.getOwnerUid());
     await store.update(valueBucket, predicates);
   }
 
   async upsertFromCloud(travel: Trip): Promise<void> {
     const store = await this.getRdbStore();
+    const ownerUid = travel.ownerUid ?? '';
     const predicates = new rdb.RdbPredicates(TABLE_NAME);
     predicates.equalTo('cloud_id', travel.cloudId ?? '');
+    predicates.equalTo('owner_uid', ownerUid);
     const resultSet = await store.query(predicates);
     const valueBucket: rdb.ValuesBucket = {
       name: travel.name,
@@ -395,13 +463,22 @@ export class TravelRepository {
       deleted_at: travel.deletedAt ?? 0,
       last_synced_at: Date.now(),
       version: travel.version ?? 1,
-      sensitivity: 'S1'
+      sensitivity: 'S1',
+      is_public: travel.isPublic ? 1 : 0,
+      replay_style_kit_id: travel.replayStyleKitId ?? '',
+      replay_bgm_id: travel.replayBgmId ?? '',
+      replay_filter_id: travel.replayFilterId ?? '',
+      replay_transition_type: travel.replayTransitionType ?? '',
+      replay_enable_ripple: travel.replayEnableRipple ? 1 : 0,
+      replay_enable_route_animation: travel.replayEnableRouteAnimation ? 1 : 0,
+      replay_enable_blur_overlay: travel.replayEnableBlurOverlay ? 1 : 0
     };
 
     try {
       if (resultSet.goToFirstRow()) {
         const updatePredicates = new rdb.RdbPredicates(TABLE_NAME);
         updatePredicates.equalTo('cloud_id', travel.cloudId ?? '');
+        updatePredicates.equalTo('owner_uid', ownerUid);
         await store.update(valueBucket, updatePredicates);
       } else {
         await store.insert(TABLE_NAME, valueBucket);
@@ -420,6 +497,7 @@ export class TravelRepository {
     };
     const predicates = new rdb.RdbPredicates(TABLE_NAME);
     predicates.equalTo('cloud_id', cloudId);
+    predicates.equalTo('owner_uid', await this.getOwnerUid());
     await store.update(valueBucket, predicates);
   }
 
@@ -427,14 +505,29 @@ export class TravelRepository {
     try {
       const store = await this.getRdbStore();
       const travelId = this.toDbId(id, 'travel id');
+      const ownerUid = await this.getOwnerUid();
+      let lookupResultSet: rdb.ResultSet | undefined = undefined;
+      try {
+        const lookupPredicates = new rdb.RdbPredicates(TABLE_NAME);
+        lookupPredicates.equalTo('id', travelId);
+        lookupPredicates.equalTo('owner_uid', ownerUid);
+        lookupResultSet = await store.query(lookupPredicates);
+        if (!lookupResultSet.goToFirstRow()) {
+          throw new Error(`Travel not found: ${id}`);
+        }
+      } finally {
+        this.closeResultSet(lookupResultSet);
+      }
       // Explicitly delete child nodes first, then delete travel.
       // This works even if FK cascade is not enabled by runtime.
       const nodePredicates = new rdb.RdbPredicates('memory_nodes');
       nodePredicates.equalTo('travel_id', travelId);
+      nodePredicates.equalTo('owner_uid', ownerUid);
       await store.delete(nodePredicates);
 
       const travelPredicates = new rdb.RdbPredicates(TABLE_NAME);
       travelPredicates.equalTo('id', travelId);
+      travelPredicates.equalTo('owner_uid', ownerUid);
       const affectedRows = await store.delete(travelPredicates);
       if (affectedRows <= 0) {
         throw new Error(`Travel not found: ${id}`);

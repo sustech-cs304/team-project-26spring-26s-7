@@ -1,0 +1,80 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "TravelPin main module"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "TravelPin travel journal"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "TravelPin"
+    },
+    {
+      "name": "app_name",
+      "value": "TravelPin"
+    },
+    {
+      "name": "location_reason",
+      "value": "Used to record your travel route and the location of memory nodes on the map"
+    },
+    {
+      "name": "media_reason",
+      "value": "Used to select profile pictures and travel photos"
+    },
+    {
+      "name": "internet_reason",
+      "value": "Used for cloud data sync, map loading, and AI-generated captions"
+    },
+    {
+      "name": "network_info_reason",
+      "value": "Used to switch to offline mode when no network is available"
+    },
+    {
+      "name": "privacy_dialog_title",
+      "value": "Service Agreement & Privacy Policy"
+    },
+    {
+      "name": "privacy_dialog_content",
+      "value": "Welcome to TravelPin. Before using this app, please carefully read the User Agreement and Privacy Policy. The Privacy Policy explains:\n\n• How we collect, use, store, and protect your personal information (including location, photos, account info)\n• Your rights to access, correct, delete, and deactivate your account\n• How we use Huawei Cloud services for data synchronization\n• How we use AI services to recognize content in photos you choose to upload\n\nIf you agree, tap \"Agree and Continue\" to start using the app."
+    },
+    {
+      "name": "privacy_dialog_agree",
+      "value": "Agree and Continue"
+    },
+    {
+      "name": "privacy_dialog_disagree",
+      "value": "Decline and Exit"
+    },
+    {
+      "name": "privacy_user_agreement",
+      "value": "User Agreement"
+    },
+    {
+      "name": "privacy_policy",
+      "value": "Privacy Policy"
+    },
+    {
+      "name": "account_delete_title",
+      "value": "Delete Account"
+    },
+    {
+      "name": "account_delete_warning",
+      "value": "Deleting your account will permanently remove all your cloud data (travels, photos, memory nodes). This action cannot be undone. Continue?"
+    },
+    {
+      "name": "account_delete_confirm",
+      "value": "Confirm Deletion"
+    },
+    {
+      "name": "account_delete_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "account_delete_second_confirm",
+      "value": "I understand my data will be permanently deleted"
+    }
+  ]
+}

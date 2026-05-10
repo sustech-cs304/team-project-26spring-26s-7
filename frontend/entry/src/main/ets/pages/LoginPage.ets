@@ -8,6 +8,7 @@ import { AuthService, RouterUrls, AppColors, AppDimens } from '../common'
 @Entry
 @Component
 struct LoginPage {
+  @StorageLink('appThemeVersion') themeVersion: number = 0
   @State isLoggingIn: boolean = false
 
   private async handleHuaweiLogin(): Promise<void> {
@@ -19,6 +20,8 @@ struct LoginPage {
     try {
       const hostContext = this.getUIContext().getHostContext() as common.UIAbilityContext
       await AuthService.signInWithHuaweiID(hostContext)
+      // 登录后立即触发 restoreSession，把云端 profile 拉到 RDB 缓存
+      await AuthService.restoreSession()
       promptAction.showToast({ message: '登录成功，云存储已连接' })
       router.replaceUrl({ url: RouterUrls.MAIN })
     } catch (err) {

@@ -3,6 +3,8 @@
     "pages/Index",
     "pages/LoginPage",
     "pages/MainPage",
+    "pages/UserAgreementPage",
+    "pages/PrivacyPolicyPage",
     "feature/map-travel/pages/NodeEditPage",
     "feature/map-travel/pages/NodeDetailPage",
     "feature/map-travel/pages/TripEditPage",
@@ -11,6 +13,7 @@
     "feature/map-travel/pages/LocationPickerPage",
     "feature/social-share/pages/SharePage",
     "feature/ai-copy/pages/AiCopyPage",
+    "feature/ai-copy/pages/VisionLLMPage",
     "feature/profile/pages/ProfileEditPage"
   ]
 }
