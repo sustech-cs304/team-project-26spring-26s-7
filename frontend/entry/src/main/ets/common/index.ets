@@ -97,3 +97,8 @@ export {
   AiCopyResponseData,
   VisualKitResult
 } from './ai/index';
+
+// Offline Map 导出
+export { OfflineMapStore } from './utils/OfflineMapStore';
+export { OfflineMapService } from './service/OfflineMapService';
+export type { PetalMapsLaunchResult } from './service/OfflineMapService';

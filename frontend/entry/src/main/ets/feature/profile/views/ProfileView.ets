@@ -7,7 +7,8 @@ import {
   RouterUrls,
   RdbDataService,
   SyncManager,
-  ConsentManager
+  ConsentManager,
+  OfflineMapService
 } from '../../../common'
 
 /**
@@ -238,6 +239,48 @@ export struct ProfileView {
     })
   }
 
+  private showOfflineMapGuide(): void {
+    const launchAndMark = async () => {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const result = await OfflineMapService.getInstance().openPetalMapsForDownload(context)
+      if (result.notInstalled) {
+        AlertDialog.show({
+          title: '未找到花瓣地图',
+          message:
+            '离线地图需要先通过花瓣地图下载数据。\n请从华为应用市场安装花瓣地图后重试。\n\n' +
+            '安装后进入 我的 → 离线地图 → 地图资源管理 → 地区列表，\n下载"全球基础包"和常用城市地图。\n\n' +
+            '本应用使用华为 Map Kit，下载完成后断网时地图会自动可用。'
+        })
+        return
+      }
+      if (!result.launched) {
+        promptAction.showToast({ message: '跳转失败，请稍后重试' })
+        return
+      }
+      try {
+        await OfflineMapService.getInstance().markAsDownloaded(context)
+      } catch (_) {}
+    }
+    AlertDialog.show({
+      title: '离线地图下载',
+      message:
+        '本应用使用华为 Map Kit，在手机已下载离线地图时会自动优先加载本地数据。\n\n' +
+        '操作步骤：\n' +
+        '1. 点击下方"确定"跳转至花瓣地图\n' +
+        '2. 依次进入 我的 → 离线地图 → 地图资源管理 → 地区列表\n' +
+        '3. 先下载"全球基础包"，再按需下载常用城市的离线地图包\n' +
+        '4. 完成后返回本应用即可',
+      primaryButton: {
+        value: '确定，去下载',
+        action: () => { launchAndMark() }
+      },
+      secondaryButton: {
+        value: '取消',
+        action: () => {}
+      }
+    })
+  }
+
   private showAbout(): void {
     AlertDialog.show({
       title: '关于 TravelPin',
@@ -436,6 +479,8 @@ export struct ProfileView {
           this.settingItem('流量与存储', this.wifiOnlySync ? '仅 Wi-Fi' : '', () => this.showStorageSettings())
           Divider().color(AppColors.DIVIDER)
           this.settingItem('分享链接默认有效期', this.shareLinkExpiry, () => this.showExpirySettings())
+          Divider().color(AppColors.DIVIDER)
+          this.settingItem('离线地图', '下载全球基础包', () => this.showOfflineMapGuide())
           Divider().color(AppColors.DIVIDER)
           this.settingItem('关于 TravelPin', 'v1.0.0', () => this.showAbout())
         }

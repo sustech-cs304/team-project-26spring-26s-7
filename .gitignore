@@ -77,3 +77,4 @@ frontend/.idea/
 # package
 package-lock.json
 package.json
+frontend/build-profile.json5
