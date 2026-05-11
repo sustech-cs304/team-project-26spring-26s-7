@@ -18,7 +18,11 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    echo '=== Stage: Checkout ==='
+                    echo ''
+                    echo '╔════════════════════════════════════════════════════════════════╗'
+                    echo '║                   Stage: Checkout                            ║'
+                    echo '╚════════════════════════════════════════════════════════════════╝'
+                    echo ''
                     checkout scm
                 }
             }
@@ -27,12 +31,18 @@ pipeline {
         stage('Prepare Outputs') {
             steps {
                 script {
-                    echo '=== Stage: Prepare Outputs ==='
+                    echo ''
+                    echo '╔════════════════════════════════════════════════════════════════╗'
+                    echo '║               Stage: Prepare Outputs                         ║'
+                    echo '╚════════════════════════════════════════════════════════════════╝'
+                    echo ''
                     def artifactRoot = env.LOCAL_ARTIFACT_ROOT?.trim()
                     if (!artifactRoot) {
                         artifactRoot = env.LOCAL_ARTIFACT_ROOT_DEFAULT
                     }
                     env.CI_OUTPUT_DIR = "${artifactRoot}\\build-${env.BUILD_NUMBER}"
+                    echo "Output directory: ${env.CI_OUTPUT_DIR}"
+                    echo ''
                     powershell '''
                         $dirs = @(
                           $env:CI_OUTPUT_DIR,
@@ -53,7 +63,7 @@ Build URL: $env:BUILD_URL
 Workspace: $env:WORKSPACE
 Git Branch: $env:GIT_BRANCH
 Started At: $(Get-Date -Format o)
-"@ | Set-Content -Path (Join-Path $env:CI_OUTPUT_DIR 'meta\\build-info.txt')
+"@ | Set-Content -Path (Join-Path $env:CI_OUTPUT_DIR 'meta\\build-info.txt') | Out-Null
                     '''
                 }
             }
@@ -62,7 +72,11 @@ Started At: $(Get-Date -Format o)
         stage('Clean') {
             steps {
                 script {
-                    echo '=== Stage: Clean ==='
+                    echo ''
+                    echo '╔════════════════════════════════════════════════════════════════╗'
+                    echo '║                    Stage: Clean                               ║'
+                    echo '╚════════════════════════════════════════════════════════════════╝'
+                    echo ''
                     dir('frontend') {
                         bat '''
                             if exist entry\\build rmdir /s /q entry\\build
@@ -78,13 +92,17 @@ Started At: $(Get-Date -Format o)
         stage('Install Dependencies') {
             steps {
                 script {
-                    echo '=== Stage: Install Dependencies ==='
+                    echo ''
+                    echo '╔════════════════════════════════════════════════════════════════╗'
+                    echo '║            Stage: Install Dependencies                       ║'
+                    echo '╚════════════════════════════════════════════════════════════════╝'
+                    echo ''
                     dir('frontend') {
                         bat '''
                             @echo off
                             call "%DEVECO_OHPM%" install > "%CI_OUTPUT_DIR%\\logs\\install-dependencies.log" 2>&1
                             set "stage_exit=%ERRORLEVEL%"
-                            findstr /V /I /C:"ArkTS:WARN" /C:"Warning:" "%CI_OUTPUT_DIR%\\logs\\install-dependencies.log"
+                            findstr /V /I /C:"ArkTS:WARN" /C:"Warning:" /C:"Switching off type checks" /C:"Function may throw exceptions" /C:"has been deprecated" /C:"is not supported on all devices" "%CI_OUTPUT_DIR%\\logs\\install-dependencies.log"
                             exit /b %stage_exit%
                         '''
                     }
@@ -95,13 +113,17 @@ Started At: $(Get-Date -Format o)
         stage('Compile') {
             steps {
                 script {
-                    echo '=== Stage: Compile ==='
+                    echo ''
+                    echo '╔════════════════════════════════════════════════════════════════╗'
+                    echo '║                    Stage: Compile                             ║'
+                    echo '╚════════════════════════════════════════════════════════════════╝'
+                    echo ''
                     dir('frontend') {
                         bat '''
                             @echo off
                             powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1 --mode module -p module=entry@default assembleHap > "%CI_OUTPUT_DIR%\\logs\\compile.log" 2>&1
                             set "stage_exit=%ERRORLEVEL%"
-                            findstr /V /I /C:"ArkTS:WARN" /C:"Warning:" "%CI_OUTPUT_DIR%\\logs\\compile.log"
+                            findstr /V /I /C:"ArkTS:WARN" /C:"Warning:" /C:"Switching off type checks" /C:"Function may throw exceptions" /C:"has been deprecated" /C:"is not supported on all devices" /C:"@Entry decorator" "%CI_OUTPUT_DIR%\\logs\\compile.log"
                             exit /b %stage_exit%
                         '''
                     }
@@ -112,13 +134,17 @@ Started At: $(Get-Date -Format o)
         stage('Test') {
             steps {
                 script {
-                    echo '=== Stage: Test ==='
+                    echo ''
+                    echo '╔════════════════════════════════════════════════════════════════╗'
+                    echo '║                     Stage: Test                               ║'
+                    echo '╚════════════════════════════════════════════════════════════════╝'
+                    echo ''
                     dir('frontend') {
                         bat '''
                             @echo off
                             powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1 test > "%CI_OUTPUT_DIR%\\logs\\test.log" 2>&1
                             set "stage_exit=%ERRORLEVEL%"
-                            findstr /V /I /C:"ArkTS:WARN" /C:"Warning:" "%CI_OUTPUT_DIR%\\logs\\test.log"
+                            findstr /V /I /C:"ArkTS:WARN" /C:"Warning:" /C:"Switching off type checks" /C:"Function may throw exceptions" /C:"has been deprecated" /C:"is not supported on all devices" /C:"@Entry decorator" "%CI_OUTPUT_DIR%\\logs\\test.log"
                             exit /b %stage_exit%
                         '''
                     }
@@ -127,16 +153,48 @@ Started At: $(Get-Date -Format o)
             post {
                 always {
                     script {
-                        echo 'Collecting test reports...'
+                        echo ''
+                        echo '------------------------------------------------------------'
+                        echo '  Collecting and Processing Test Reports'
+                        echo '------------------------------------------------------------'
+                        echo ''
                         dir('frontend/entry/.test/default/intermediates/test/coverage_data') {
-                            bat '''
-                                if exist test_result.txt (
-                                    echo === Test Results ===
-                                    type test_result.txt
-                                    echo === End Test Results ===
-                                ) else (
-                                    echo WARNING: test_result.txt not found - tests may not have run
-                                )
+                            powershell '''
+                                $resultFile = "test_result.txt"
+                                if (Test-Path $resultFile) {
+                                    Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+                                    Write-Host "║                      TEST RESULTS                             ║" -ForegroundColor Cyan
+                                    Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+
+                                    $lines = Get-Content $resultFile | Where-Object {
+                                        $_ -notmatch "@Entry decorator" -and
+                                        $_ -notmatch "recommended way to export struct" -and
+                                        $_ -notmatch "ACE Engine error in component preview"
+                                    }
+                                    $currentClass = ""
+                                    foreach ($line in $lines) {
+                                        if ($line -match '^class=(.+)$') {
+                                            if ($currentClass -ne "") { Write-Host "" }
+                                            $currentClass = $matches[1]
+                                            Write-Host "  [$currentClass]" -ForegroundColor Yellow
+                                        } elseif ($line -match '^test=(.+)$') {
+                                            $testName = $matches[1]
+                                        } elseif ($line -match '^result=(.+)$') {
+                                            $result = $matches[1]
+                                            $color = if ($result -eq "Success") { "Green" } else { "Red" }
+                                            Write-Host "    [$testName]: $result" -ForegroundColor $color
+                                        } elseif ($line -match '^Tests run:') {
+                                            Write-Host ""
+                                            Write-Host "  $line" -ForegroundColor Cyan
+                                        }
+                                    }
+                                    Write-Host ""
+                                    Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+                                    Write-Host "║                     END TEST RESULTS                          ║" -ForegroundColor Cyan
+                                    Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+                                } else {
+                                    Write-Host "WARNING: test_result.txt not found - tests may not have run" -ForegroundColor Yellow
+                                }
                             '''
                         }
                         dir('frontend/entry/.test/default/outputs/test') {
@@ -145,7 +203,7 @@ Started At: $(Get-Date -Format o)
                                 $sourceRoot = (Get-Location).Path
                                 $reportRoot = Join-Path $env:CI_OUTPUT_DIR 'reports\\test'
                                 New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
-                                Copy-Item -Path (Join-Path $sourceRoot 'reports\\*') -Destination $reportRoot -Recurse -Force
+                                Copy-Item -Path (Join-Path $sourceRoot 'reports\\*') -Destination $reportRoot -Recurse -Force -ErrorAction SilentlyContinue
                             '''
                         }
                         dir('frontend/entry/.test/default/intermediates/test') {
@@ -154,11 +212,11 @@ Started At: $(Get-Date -Format o)
                                 $sourceRoot = (Get-Location).Path
                                 $coverageRoot = Join-Path $env:CI_OUTPUT_DIR 'reports\\coverage'
                                 New-Item -ItemType Directory -Path $coverageRoot -Force | Out-Null
-                                Get-ChildItem -Path $sourceRoot -File -Filter *.json | ForEach-Object {
-                                  Copy-Item $_.FullName (Join-Path $coverageRoot $_.Name) -Force
+                                Get-ChildItem -Path $sourceRoot -File -Filter *.json -ErrorAction SilentlyContinue | ForEach-Object {
+                                  Copy-Item $_.FullName (Join-Path $coverageRoot $_.Name) -Force -ErrorAction SilentlyContinue | Out-Null
                                 }
                                 if (Test-Path (Join-Path $sourceRoot 'coverage_data')) {
-                                  Copy-Item -Path (Join-Path $sourceRoot 'coverage_data') -Destination $coverageRoot -Recurse -Force
+                                  Copy-Item -Path (Join-Path $sourceRoot 'coverage_data') -Destination $coverageRoot -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
                                 }
                             '''
                         }
@@ -170,13 +228,17 @@ Started At: $(Get-Date -Format o)
         stage('Archive') {
             steps {
                 script {
-                    echo '=== Stage: Archive ==='
+                    echo ''
+                    echo '╔════════════════════════════════════════════════════════════════╗'
+                    echo '║                    Stage: Archive                             ║'
+                    echo '╚════════════════════════════════════════════════════════════════╝'
+                    echo ''
                     dir('frontend/entry/build/default/outputs/default') {
                         archiveArtifacts artifacts: '*.hap', fingerprint: true
                         powershell '''
                             $packageRoot = Join-Path $env:CI_OUTPUT_DIR 'packages'
-                            Get-ChildItem -File | Where-Object { $_.Extension -eq '.hap' -or $_.Name -eq 'pack.info' } | ForEach-Object {
-                              Copy-Item $_.FullName (Join-Path $packageRoot $_.Name) -Force
+                            Get-ChildItem -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.hap' -or $_.Name -eq 'pack.info' } | ForEach-Object {
+                              Copy-Item $_.FullName (Join-Path $packageRoot $_.Name) -Force -ErrorAction SilentlyContinue | Out-Null
                             }
                         '''
                     }
@@ -187,12 +249,16 @@ Started At: $(Get-Date -Format o)
         stage('Metrics') {
             steps {
                 script {
-                    echo '=== Stage: Collect Metrics ==='
+                    echo ''
+                    echo '╔════════════════════════════════════════════════════════════════╗'
+                    echo '║               Stage: Collect Metrics                          ║'
+                    echo '╚════════════════════════════════════════════════════════════════╝'
+                    echo ''
                     dir('frontend/entry/src/main/ets') {
                         powershell '''
                             $metricsPath = Join-Path $env:CI_OUTPUT_DIR 'metrics\\summary.txt'
                             $sourceFiles = Get-ChildItem -Recurse -File -Filter *.ets
-                            $lineCount = ($sourceFiles | Get-Content | Measure-Object -Line).Lines
+                            $lineCount = ($sourceFiles | Get-Content | Measure-Object -Line | Select-Object -ExpandProperty Lines)
                             $fileCount = $sourceFiles.Count
                             $complexity = 0
 
@@ -226,7 +292,7 @@ Dependencies:
 $dependencies
 "@
 
-                            $summary | Tee-Object -FilePath $metricsPath
+                            $summary | Tee-Object -FilePath $metricsPath | Out-Null
                         '''
                     }
                 }
@@ -237,30 +303,47 @@ $dependencies
     post {
         always {
             script {
-                echo '=== Pipeline Completed ==='
+                echo ''
+                echo '╔════════════════════════════════════════════════════════════════╗'
+                echo '║                    PIPELINE COMPLETED                          ║'
+                echo '╚════════════════════════════════════════════════════════════════╝'
+                echo ''
                 echo "Build Status: ${currentBuild.currentResult}"
+                echo ''
                 env.CI_BUILD_RESULT = currentBuild.currentResult
                 powershell '''
                     $metaRoot = Join-Path $env:CI_OUTPUT_DIR 'meta'
                     @"
 Build Status: $env:CI_BUILD_RESULT
 Finished At: $(Get-Date -Format o)
-"@ | Set-Content -Path (Join-Path $metaRoot 'build-result.txt')
+"@ | Set-Content -Path (Join-Path $metaRoot 'build-result.txt') | Out-Null
 
-                    Get-ChildItem -Recurse -File $env:CI_OUTPUT_DIR |
+                    Get-ChildItem -Recurse -File $env:CI_OUTPUT_DIR -ErrorAction SilentlyContinue |
                       Select-Object FullName, Length, LastWriteTime |
-                      Out-File -FilePath (Join-Path $metaRoot 'artifact-manifest.txt')
+                      Out-File -FilePath (Join-Path $metaRoot 'artifact-manifest.txt') | Out-Null
                 '''
             }
         }
         success {
             script {
-                echo "Build SUCCESS! Local outputs: ${env.CI_OUTPUT_DIR}"
+                echo ''
+                echo '╔════════════════════════════════════════════════════════════════╗'
+                echo '║  BUILD SUCCESS!                                               ║'
+                echo '║  Local outputs:                                               ║'
+                echo "║  ${env.CI_OUTPUT_DIR}                 ║"
+                echo '╚════════════════════════════════════════════════════════════════╝'
+                echo ''
             }
         }
         failure {
             script {
-                echo "Build FAILED! Local outputs: ${env.CI_OUTPUT_DIR}"
+                echo ''
+                echo '╔════════════════════════════════════════════════════════════════╗'
+                echo '║  BUILD FAILED!                                                ║'
+                echo '║  Local outputs:                                               ║'
+                echo "║  ${env.CI_OUTPUT_DIR}                 ║"
+                echo '╚════════════════════════════════════════════════════════════════╝'
+                echo ''
             }
         }
     }
