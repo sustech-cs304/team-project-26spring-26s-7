@@ -40,6 +40,24 @@ export interface SystemSharePayload {
 }
 
 /**
+ * v1.1：海报（图片）分享载荷。把后端 /share/{code}/poster.jpg 写到 app
+ * cacheDir 后调用 share() — 接收方 app 看到的是一张图，图上印着扫描可
+ * 跳转到分享链接的 QR 码。
+ *
+ * fileUri      —— 必填，本地文件 URI，格式 'file:///data/storage/...'
+ *                 调用方需先把 poster bytes 写到沙箱再传入；
+ *                 SystemShareService 不负责写文件。
+ * title / description / thumbnail —— 同 SystemSharePayload，作为 SharedRecord
+ *                                    的字段；微信/QQ 显示卡片时可能用到。
+ */
+export interface SystemShareImagePayload {
+  fileUri: string
+  title: string
+  description: string
+  thumbnail?: Uint8Array
+}
+
+/**
  * 系统分享适配层 —— 包住 `@kit.ShareKit.systemShare`。
  *
  * 设计目标：
@@ -112,6 +130,52 @@ export class SystemShareService {
       const code = be && be.code !== undefined ? be.code : 'n/a'
       const msg = be && be.message ? be.message : JSON.stringify(e)
       logger.error(TAG, `systemShare failed: code=${code} message=${msg}`)
+      return false
+    }
+  }
+
+  /**
+   * v1.1：调起系统分享面板，分享一张图片（带 QR 码的海报）。
+   *
+   * 与 share()（hyperlink）相对的另一条路。设计用于微信以外的目标：
+   * 接收方看到的是图本身，图上印着扫码跳转的 QR — 比依赖 og:meta 渲染
+   * 链接卡片更稳。
+   *
+   * 大致流程：
+   *   1. 调用方先把 poster bytes 写到 app cacheDir（一般是
+   *      `${ctx.cacheDir}/poster-{shortCode}.jpg`）
+   *   2. 传入 `file://${absPath}` 作为 fileUri
+   *   3. 系统面板里 receiver app（微信/QQ/微博/相册...）以图片形式接收
+   *
+   * @returns true 系统面板成功打开；false 失败（调用方走兜底）
+   */
+  static async shareImage(
+    ctx: common.UIAbilityContext,
+    payload: SystemShareImagePayload
+  ): Promise<boolean> {
+    const hasThumb = payload.thumbnail !== undefined && payload.thumbnail.byteLength > 0
+    logger.info(TAG, `shareImage() uri=${payload.fileUri} title="${payload.title}" thumb=${hasThumb ? payload.thumbnail!.byteLength + 'B' : 'no'}`)
+    try {
+      // general.image 是图片标准 UTD；'uri' 字段（非 'content'）指向本地文件
+      const data = new systemShare.SharedData({
+        utd: 'general.image',
+        uri: payload.fileUri,
+        title: payload.title,
+        description: payload.description,
+        thumbnail: payload.thumbnail,
+      })
+      const controller = new systemShare.ShareController(data)
+      await controller.show(ctx, {
+        previewMode: systemShare.SharePreviewMode.DETAIL,
+        selectionMode: systemShare.SelectionMode.SINGLE,
+      })
+      logger.info(TAG, 'shareImage panel shown successfully')
+      return true
+    } catch (e) {
+      const be = e as BusinessError
+      const code = be && be.code !== undefined ? be.code : 'n/a'
+      const msg = be && be.message ? be.message : JSON.stringify(e)
+      logger.error(TAG, `shareImage failed: code=${code} message=${msg}`)
       return false
     }
   }

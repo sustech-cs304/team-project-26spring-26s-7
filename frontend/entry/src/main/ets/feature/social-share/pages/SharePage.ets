@@ -8,7 +8,8 @@ import { ShareErrorMapper } from '../services/ShareErrorMapper'
 import { SharePhoto, ShareService } from '../services/ShareService'
 import { SharePhotoBatchResult, SharePhotoHelper } from '../services/SharePhotoHelper'
 import { SharePreflight } from '../services/SharePreflight'
-import { SystemShareService, SystemSharePayload } from '../services/SystemShareService'
+import { SystemShareService, SystemSharePayload, SystemShareImagePayload } from '../services/SystemShareService'
+import { fileIo as fs } from '@kit.CoreFileKit'
 import {
   ReplaceLink,
   ReplayPrefsForShare,
@@ -74,6 +75,9 @@ export struct SharePage {
   private sharePlatforms: SharePlatform[] = [
     new SharePlatform('W', '微信'),
     new SharePlatform('Q', 'QQ'),
+    // v1.1：海报分享 — 后端合成带 QR 的图，转发给微信/QQ/微博/邮件，
+    // 接收方扫码就能跳到分享链接，绕过国内对 trycloudflare 域的卡片渲染拒绝
+    new SharePlatform('P', '海报'),
     new SharePlatform('C', '复制链接'),
   ]
 
@@ -407,6 +411,10 @@ export struct SharePage {
       await this.handleCopyLink()
       return
     }
+    if (platform === '海报') {
+      await this.handleShareAsPoster()
+      return
+    }
     // 微信 / QQ / 其它：先尝试系统分享面板（让 OS 把 URL + 标题 + 摘要 +
     // 缩略图字节投递给目标 app）。
     //
@@ -448,6 +456,65 @@ export struct SharePage {
 
   private retry(): void {
     void this.publishShare()
+  }
+
+  /**
+   * v1.1：分享海报。
+   *
+   * 流程：
+   *   1. 拉取后端合成的 750×1334 JPG（含 QR + 封面 + 标题 + 路线预览）
+   *   2. 写到 app cacheDir，得到 `file://${absPath}` URI
+   *   3. systemShare with general.image UTD
+   *
+   * 用户在面板选微信/QQ/微博/邮件等任意 app 接收 — 都能直接看图，扫码跳回
+   * /s/{code}。绕过国内对 trycloudflare 域名的链接卡片渲染拒绝。
+   *
+   * 任意一步失败 → toast 提示，不再走兜底（毕竟"复制链接"按钮就是兜底）。
+   */
+  private async handleShareAsPoster(): Promise<void> {
+    if (!this.lastLink) {
+      promptAction.showToast({ message: '请等链接生成后再分享海报' })
+      return
+    }
+    const link = this.lastLink
+    const ctx = getContext(this) as common.UIAbilityContext
+    promptAction.showToast({ message: '正在生成海报…', duration: 1500 })
+
+    const bytes = await this.shareService.fetchPoster(
+      link.shortCode, link.expirySec, link.sig)
+    if (!bytes || bytes.byteLength === 0) {
+      promptAction.showToast({ message: '海报生成失败，请重试' })
+      return
+    }
+
+    // 把字节写到沙箱 cacheDir；同 shortCode 重复分享会覆盖同一文件
+    const filePath = `${ctx.cacheDir}/poster-${link.shortCode}.jpg`
+    try {
+      const file = fs.openSync(
+        filePath,
+        fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE | fs.OpenMode.TRUNC
+      )
+      fs.writeSync(file.fd, bytes.buffer)
+      fs.closeSync(file)
+    } catch (e) {
+      promptAction.showToast({
+        message: `海报保存失败：${JSON.stringify(e)}`
+      })
+      return
+    }
+
+    const payload: SystemShareImagePayload = {
+      fileUri: `file://${filePath}`,
+      title: this.currentTripName
+        ? `${this.currentTripName} - TravelPin`
+        : 'TravelPin 分享',
+      description: this.buildShareDescription(),
+      thumbnail: bytes,    // 复用海报字节做面板预览，避免再请求 cover
+    }
+    const ok = await SystemShareService.shareImage(ctx, payload)
+    if (!ok) {
+      promptAction.showToast({ message: '系统分享面板未能打开，请重试' })
+    }
   }
 
   /**

@@ -80,6 +80,9 @@ export class ShareEndpoints {
   /** Trip 改私密时关停其全部分享: POST /api/v1/share/revoke-by-trip */
   static readonly REVOKE_BY_TRIP: string = `/api/${API_VERSION}/share/revoke-by-trip`
 
+  /** v1.1 分享海报（JPG，带 QR 跳转回 /s/{code}）: GET /share/{code}/poster.jpg?t=&s= */
+  static readonly POSTER_PREFIX: string = `/share`
+
   /** 旧字段名（保留以避免破坏其他引用） */
   static readonly VERIFY: string = `/api/${API_VERSION}/share`
 }
