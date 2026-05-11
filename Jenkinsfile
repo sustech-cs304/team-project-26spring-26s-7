@@ -12,6 +12,11 @@ pipeline {
         DEVECO_NODE = 'C:\\Apps\\DevEco Studio\\tools\\node\\node.exe'
         DEVECO_OHPM = 'C:\\Apps\\DevEco Studio\\tools\\ohpm\\bin\\ohpm.bat'
         LOCAL_ARTIFACT_ROOT_DEFAULT = 'D:\\Mydata\\1University\\3Junior\\Software_Engineering\\project\\frontendv1\\team-project-26spring-26s-7\\ci-artifacts'
+        ANSI_RESET = '[0m'
+        ANSI_GREEN = '[32m'
+        ANSI_RED = '[31m'
+        ANSI_YELLOW = '[33m'
+        ANSI_CYAN = '[36m'
     }
 
     stages {
@@ -24,6 +29,26 @@ pipeline {
                     echo '╚════════════════════════════════════════════════════════════════╝'
                     echo ''
                     checkout scm
+                }
+            }
+            post {
+                success {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_GREEN}✓ CHECKOUT COMPLETED SUCCESSFULLY${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
+                failure {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_RED}✗ CHECKOUT FAILED${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
                 }
             }
         }
@@ -67,6 +92,27 @@ Started At: $(Get-Date -Format o)
                     '''
                 }
             }
+            post {
+                success {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_GREEN}✓ OUTPUT DIRECTORIES PREPARED SUCCESSFULLY${ANSI_RESET}"
+                        echo "${ANSI_GREEN}  Location: ${env.CI_OUTPUT_DIR}${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
+                failure {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_RED}✗ OUTPUT PREPARATION FAILED${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
+            }
         }
 
         stage('Clean') {
@@ -84,6 +130,26 @@ Started At: $(Get-Date -Format o)
                             if exist oh_modules rmdir /s /q oh_modules
                             if exist entry\\oh_modules rmdir /s /q entry\\oh_modules
                         '''
+                    }
+                }
+            }
+            post {
+                success {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_GREEN}✓ CLEAN COMPLETED SUCCESSFULLY${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
+                failure {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_RED}✗ CLEAN FAILED${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
                     }
                 }
             }
@@ -108,6 +174,27 @@ Started At: $(Get-Date -Format o)
                     }
                 }
             }
+            post {
+                success {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_GREEN}✓ DEPENDENCIES INSTALLED SUCCESSFULLY${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
+                failure {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_RED}✗ DEPENDENCY INSTALLATION FAILED${ANSI_RESET}"
+                        echo "${ANSI_YELLOW}  Check log: ${env.CI_OUTPUT_DIR}\\logs\\install-dependencies.log${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
+            }
         }
 
         stage('Compile') {
@@ -126,6 +213,28 @@ Started At: $(Get-Date -Format o)
                             findstr /V /I /C:"ArkTS:WARN" /C:"Warning:" /C:"Switching off type checks" /C:"Function may throw exceptions" /C:"has been deprecated" /C:"is not supported on all devices" /C:"@Entry decorator" "%CI_OUTPUT_DIR%\\logs\\compile.log"
                             exit /b %stage_exit%
                         '''
+                    }
+                }
+            }
+            post {
+                success {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_GREEN}✓ COMPILATION COMPLETED SUCCESSFULLY${ANSI_RESET}"
+                        echo "${ANSI_GREEN}  HAP package generated${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
+                failure {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_RED}✗ COMPILATION FAILED${ANSI_RESET}"
+                        echo "${ANSI_YELLOW}  Check log: ${env.CI_OUTPUT_DIR}\\logs\\compile.log${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
                     }
                 }
             }
@@ -172,6 +281,9 @@ Started At: $(Get-Date -Format o)
                                         $_ -notmatch "ACE Engine error in component preview"
                                     }
                                     $currentClass = ""
+                                    $totalTests = 0
+                                    $passedTests = 0
+                                    $failedTests = 0
                                     foreach ($line in $lines) {
                                         if ($line -match '^class=(.+)$') {
                                             if ($currentClass -ne "") { Write-Host "" }
@@ -181,6 +293,8 @@ Started At: $(Get-Date -Format o)
                                             $testName = $matches[1]
                                         } elseif ($line -match '^result=(.+)$') {
                                             $result = $matches[1]
+                                            $totalTests++
+                                            if ($result -eq "Success") { $passedTests++ } else { $failedTests++ }
                                             $color = if ($result -eq "Success") { "Green" } else { "Red" }
                                             Write-Host "    [$testName]: $result" -ForegroundColor $color
                                         } elseif ($line -match '^Tests run:') {
@@ -222,6 +336,25 @@ Started At: $(Get-Date -Format o)
                         }
                     }
                 }
+                success {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_GREEN}✓ TESTS PASSED${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
+                failure {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_RED}✗ TESTS FAILED${ANSI_RESET}"
+                        echo "${ANSI_YELLOW}  Check test results above for details${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
             }
         }
 
@@ -241,6 +374,27 @@ Started At: $(Get-Date -Format o)
                               Copy-Item $_.FullName (Join-Path $packageRoot $_.Name) -Force -ErrorAction SilentlyContinue | Out-Null
                             }
                         '''
+                    }
+                }
+            }
+            post {
+                success {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_GREEN}✓ ARTIFACTS ARCHIVED SUCCESSFULLY${ANSI_RESET}"
+                        echo "${ANSI_GREEN}  Location: ${env.CI_OUTPUT_DIR}\\packages${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
+                failure {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_RED}✗ ARCHIVE FAILED${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
                     }
                 }
             }
@@ -297,6 +451,27 @@ $dependencies
                     }
                 }
             }
+            post {
+                success {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_GREEN}✓ METRICS COLLECTED SUCCESSFULLY${ANSI_RESET}"
+                        echo "${ANSI_GREEN}  Location: ${env.CI_OUTPUT_DIR}\\metrics${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
+                failure {
+                    script {
+                        echo ''
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo "${ANSI_RED}✗ METRICS COLLECTION FAILED${ANSI_RESET}"
+                        echo "${ANSI_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${ANSI_RESET}"
+                        echo ''
+                    }
+                }
+            }
         }
     }
 
@@ -304,11 +479,12 @@ $dependencies
         always {
             script {
                 echo ''
-                echo '╔════════════════════════════════════════════════════════════════╗'
-                echo '║                    PIPELINE COMPLETED                          ║'
-                echo '╚════════════════════════════════════════════════════════════════╝'
+                echo "${ANSI_CYAN}╔════════════════════════════════════════════════════════════════╗${ANSI_RESET}"
+                echo "${ANSI_CYAN}║                    PIPELINE COMPLETED                          ║${ANSI_RESET}"
+                echo "${ANSI_CYAN}╚════════════════════════════════════════════════════════════════╝${ANSI_RESET}"
                 echo ''
-                echo "Build Status: ${currentBuild.currentResult}"
+                def statusColor = currentBuild.currentResult == 'SUCCESS' ? ANSI_GREEN : ANSI_RED
+                echo "${statusColor}Build Status: ${currentBuild.currentResult}${ANSI_RESET}"
                 echo ''
                 env.CI_BUILD_RESULT = currentBuild.currentResult
                 powershell '''
@@ -327,22 +503,22 @@ Finished At: $(Get-Date -Format o)
         success {
             script {
                 echo ''
-                echo '╔════════════════════════════════════════════════════════════════╗'
-                echo '║  BUILD SUCCESS!                                               ║'
-                echo '║  Local outputs:                                               ║'
-                echo "║  ${env.CI_OUTPUT_DIR}                 ║"
-                echo '╚════════════════════════════════════════════════════════════════╝'
+                echo "${ANSI_CYAN}╔════════════════════════════════════════════════════════════════╗${ANSI_RESET}"
+                echo "${ANSI_GREEN}║  ✓ BUILD SUCCESS!                                            ║${ANSI_RESET}"
+                echo "${ANSI_GREEN}║  Local outputs:                                              ║${ANSI_RESET}"
+                echo "${ANSI_GREEN}║  ${env.CI_OUTPUT_DIR}                 ║${ANSI_RESET}"
+                echo "${ANSI_CYAN}╚════════════════════════════════════════════════════════════════╝${ANSI_RESET}"
                 echo ''
             }
         }
         failure {
             script {
                 echo ''
-                echo '╔════════════════════════════════════════════════════════════════╗'
-                echo '║  BUILD FAILED!                                                ║'
-                echo '║  Local outputs:                                               ║'
-                echo "║  ${env.CI_OUTPUT_DIR}                 ║"
-                echo '╚════════════════════════════════════════════════════════════════╝'
+                echo "${ANSI_CYAN}╔════════════════════════════════════════════════════════════════╗${ANSI_RESET}"
+                echo "${ANSI_RED}║  ✗ BUILD FAILED!                                             ║${ANSI_RESET}"
+                echo "${ANSI_RED}║  Local outputs:                                              ║${ANSI_RESET}"
+                echo "${ANSI_RED}║  ${env.CI_OUTPUT_DIR}                 ║${ANSI_RESET}"
+                echo "${ANSI_CYAN}╚════════════════════════════════════════════════════════════════╝${ANSI_RESET}"
                 echo ''
             }
         }
