@@ -77,7 +77,12 @@ function Normalize-ConsoleText {
         [System.Text.RegularExpressions.RegexOptions]::Singleline
     )
 
-    return [regex]::Replace($textWithoutNotes, [regex]::Escape("$escape[") + '[0-9;]*[A-Za-z]', '')
+    $textWithoutAnsi = [regex]::Replace($textWithoutNotes, [regex]::Escape("$escape[") + '[0-9;]*[A-Za-z]', '')
+
+    # Removing Jenkins/Hvigor control sequences can leave hundreds of empty lines.
+    $normalizedNewlines = $textWithoutAnsi -replace "`r`n", "`n" -replace "`r", "`n"
+    $collapsedBlankRuns = [regex]::Replace($normalizedNewlines, "(?:`n[ `t]*){3,}", "`n`n")
+    return $collapsedBlankRuns -replace "`n", [Environment]::NewLine
 }
 
 function Start-JenkinsBuild {
