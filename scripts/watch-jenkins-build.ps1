@@ -117,10 +117,22 @@ $lastQueueMessage = $null
 $lastBuildState = $null
 $logRoot = Resolve-LogDirectory -Directory $LogDir
 $resolvedMetadataPath = Resolve-OptionalFilePath -Path $MetadataPath
+$sessionLogPath = Join-Path $logRoot 'session.log'
 
 New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
+[System.IO.File]::WriteAllText(
+    $sessionLogPath,
+    @(
+        "Jenkins job: $JobName"
+        "Base URL: $BaseUrl"
+        "Session started at: $(Get-Date -Format o)"
+        'Status: initializing'
+        ''
+    ) -join [Environment]::NewLine
+)
 
 Write-Status "Triggering Jenkins job '$JobName' at $jobUrl"
+Add-Content -Path $sessionLogPath -Value "Status: triggering build request" -Encoding UTF8
 $queueLocation = Start-JenkinsBuild -Url "$jobUrl/build" -User $Username -Token $ApiToken
 
 if ($queueLocation.StartsWith('/')) {
@@ -129,6 +141,7 @@ if ($queueLocation.StartsWith('/')) {
 
 $queueApiUrl = $queueLocation.TrimEnd('/') + '/api/json'
 Write-Status "Queued build: $queueLocation"
+Add-Content -Path $sessionLogPath -Value "Queue location: $queueLocation" -Encoding UTF8
 
 while (-not $buildNumber) {
     if ((Get-Date) -gt $deadline) {
@@ -165,6 +178,8 @@ $header = @(
     ''
 ) -join [Environment]::NewLine
 [System.IO.File]::WriteAllText($logPath, $header)
+Add-Content -Path $sessionLogPath -Value "Build number: $buildNumber" -Encoding UTF8
+Add-Content -Path $sessionLogPath -Value "Build log: $logPath" -Encoding UTF8
 
 if ($resolvedMetadataPath) {
     $metadataDir = Split-Path -Parent $resolvedMetadataPath
@@ -183,6 +198,7 @@ if ($resolvedMetadataPath) {
 
 Write-Status "Streaming build #$buildNumber"
 Write-Status "Log file: $logPath"
+Add-Content -Path $sessionLogPath -Value "Status: streaming build output" -Encoding UTF8
 
 while ($true) {
     if ((Get-Date) -gt $deadline) {
@@ -225,6 +241,8 @@ while ($true) {
     }
 
     Write-Status "Build #$buildNumber finished with status $($buildInfo.result)"
+    Add-Content -Path $sessionLogPath -Value "Finished at: $(Get-Date -Format o)" -Encoding UTF8
+    Add-Content -Path $sessionLogPath -Value "Result: $($buildInfo.result)" -Encoding UTF8
 
     if ($buildInfo.result -ne 'SUCCESS') {
         exit 1
