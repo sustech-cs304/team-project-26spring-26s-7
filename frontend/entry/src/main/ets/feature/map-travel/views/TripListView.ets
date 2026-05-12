@@ -3,11 +3,14 @@ import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../commo
 import { RouterParam } from '../../../common'
 import type { Trip } from '../../../common'
 
+/**
+ * 旅行列表 Tab 内容视图
+ * 展示所有 Track，并提供查看 / 编辑双入口
+ */
 @Component
 export struct TripListView {
   @StorageLink('appThemeVersion') themeVersion: number = 0
   @State trips: Trip[] = []
-  @State searchKeyword: string = ''
   @State isLoading: boolean = false
   @Watch('onTravelDataVersionChange')
   @StorageLink('travelDataVersion') travelDataVersion: number = 0
@@ -43,33 +46,6 @@ export struct TripListView {
     const start = this.formatDate(startDate)
     const end = this.formatDate(endDate)
     return start === end ? start : `${start} ~ ${end}`
-  }
-
-  private getTripDescription(trip: Trip): string {
-    const description = trip.description ?? ''
-    return description.length > 0 ? description : '用这条 Track 串起路线、节点顺序和分享范围。'
-  }
-
-  private normalizeSearchKeyword(value: string): string {
-    return value.trim().toLowerCase()
-  }
-
-  private getFilteredTrips(): Trip[] {
-    const keyword = this.normalizeSearchKeyword(this.searchKeyword)
-    if (keyword.length === 0) {
-      return this.trips
-    }
-
-    return this.trips.filter((trip: Trip) => {
-      const searchFields: string[] = [
-        trip.name,
-        trip.description ?? '',
-        this.getVisibilityLabel(trip),
-        this.formatDateRange(trip.startDate, trip.endDate)
-      ]
-
-      return searchFields.some((field: string) => field.toLowerCase().indexOf(keyword) >= 0)
-    })
   }
 
   private async loadTrips(): Promise<void> {
@@ -113,44 +89,6 @@ export struct TripListView {
     return trip.isPublic ? '#E8F5E9' : '#FFF4E5'
   }
 
-  @Builder
-  private buildSearchInput() {
-    Row({ space: 8 }) {
-      TextInput({ placeholder: '搜索旅行名称', text: this.searchKeyword })
-        .layoutWeight(1)
-        .fontColor(AppColors.INPUT_TEXT)
-        .placeholderColor(AppColors.INPUT_PLACEHOLDER)
-        .caretColor(AppColors.INPUT_CARET)
-        .backgroundColor('#00000000')
-        .onChange((value: string) => {
-          this.searchKeyword = value
-        })
-
-      if (this.searchKeyword.length > 0) {
-        Button() {
-          Text('×')
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(AppColors.TEXT_HINT)
-        }
-        .width(28)
-        .height(28)
-        .padding(0)
-        .backgroundColor('#F0F1F4')
-        .borderRadius(14)
-        .onClick(() => {
-          this.searchKeyword = ''
-        })
-      }
-    }
-    .width('100%')
-    .margin({ top: 16 })
-    .padding({ left: 12, right: 10 })
-    .backgroundColor(AppColors.INPUT_BG)
-    .borderRadius(22)
-    .alignItems(VerticalAlign.Center)
-  }
-
   build() {
     Column() {
       Column() {
@@ -159,7 +97,6 @@ export struct TripListView {
           .fontWeight(FontWeight.Bold)
           .fontColor(AppColors.TEXT_PRIMARY)
           .width('100%')
-
         Text('按旅行维度组织路线、节点和分享范围。')
           .fontSize(AppDimens.FONT_MD)
           .fontColor(AppColors.TEXT_SECONDARY)
@@ -188,8 +125,6 @@ export struct TripListView {
         }
         .width('100%')
         .margin({ top: 18 })
-
-        this.buildSearchInput()
       }
       .width('100%')
       .padding(AppDimens.PADDING_LG)
@@ -229,23 +164,9 @@ export struct TripListView {
         .width('100%')
         .layoutWeight(1)
         .justifyContent(FlexAlign.Center)
-      } else if (this.getFilteredTrips().length === 0) {
-        Column() {
-          Text('没有找到匹配的旅行')
-            .fontSize(AppDimens.FONT_LG)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(AppColors.TEXT_PRIMARY)
-          Text('试试更换关键词，或者检查旅行名称和描述')
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor(AppColors.TEXT_HINT)
-            .margin({ top: 8 })
-        }
-        .width('100%')
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
       } else {
         List({ space: 12 }) {
-          ForEach(this.getFilteredTrips(), (trip: Trip) => {
+          ForEach(this.trips, (trip: Trip) => {
             ListItem() {
               Column() {
                 Row() {
@@ -274,7 +195,9 @@ export struct TripListView {
                 }
                 .width('100%')
 
-                Text(this.getTripDescription(trip))
+                Text(trip.description && trip.description.length > 0
+                  ? trip.description
+                  : '用这条 Track 串起路线、节点顺序和分享范围。')
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.TEXT_SECONDARY)
                   .lineHeight(20)
@@ -282,14 +205,14 @@ export struct TripListView {
                   .margin({ top: 14 })
 
                 Row() {
-                  Text(`📍 ${trip.nodeIds.length} 个节点`)
+                  Text('📍 ' + trip.nodeIds.length + ' 个节点')
                     .fontSize(AppDimens.FONT_SM)
                     .fontColor(AppColors.TEXT_SECONDARY)
-                  Text(`路 ${trip.totalDistance} km`)
+                  Text('· ' + trip.totalDistance + ' km')
                     .fontSize(AppDimens.FONT_SM)
                     .fontColor(AppColors.TEXT_SECONDARY)
                     .margin({ left: 8 })
-                  Text(`路 ${trip.isPublic ? '所有人可查看' : '仅自己可查看'}`)
+                  Text('· ' + (trip.isPublic ? '所有人可查看' : '仅自己可查看'))
                     .fontSize(AppDimens.FONT_SM)
                     .fontColor(AppColors.TEXT_HINT)
                     .margin({ left: 8 })
