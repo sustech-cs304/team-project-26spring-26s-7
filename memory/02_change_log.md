@@ -1,8 +1,13 @@
 # Change Log
 
-**Last Updated**: 2026-05-10
+**Last Updated**: 2026-05-12
 
 ---
+
+## 2026-05-12
+
+- [2026-05-12] - CI - `ci-smoke.txt` - Added a no-op text marker so a push to `test/ci-cd` can trigger the GitHub Actions Jenkins bridge without affecting application logic
+- [2026-05-12] - CI - `test/ci-cd` - Pushed a smoke-test commit to verify the GitHub Actions workflow trigger path
 
 ## 2026-05-10
 
