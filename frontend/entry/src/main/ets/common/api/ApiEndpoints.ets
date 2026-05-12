@@ -15,47 +15,62 @@
 
 /**
  * API 端点常量定义
- * TODO: 后端开发同事需配置实际服务器地址
- */
-
-/**
- * API 基础地址 — 自建分享服务（FastAPI + cloudflared 临时隧道）
  *
- * 隧道说明：trycloudflare 免费域名，进程不死域名稳定，重启进程会换域名。
- * 上线后替换为正式 https 域名（如 https://share.travelpin.app）。
+ * 后端架构（2026-05-12 起）：4 个后端服务统一挂在 audit.itsmappin.top
+ * 单一域名下，由华为云 ECS (139.159.143.195) 上的 nginx 做路径路由。
+ * 全程 HTTPS，符合应用上架合规与 HarmonyOS 默认禁止明文 HTTP 的要求。
  *
- * 后端实现路径：/data2/cse12310817/backend/share_service/
- * 后端契约文档：references/documents/social-share/分享系统 API 规范.md
+ * 后端部署物 / 路由表：Backend_ItsMapPin/deploy/DEPLOY_HUAWEI_CLOUD.md
  */
-export const API_BASE_URL: string = 'https://surprise-seekers-toxic-applies.trycloudflare.com'
 
 /**
- * VisionLLM 服务地址
- * 上架前：换成正式 HTTPS 域名 + CA 证书
+ * 统一 BASE —— 切换 ICP 备案前/后只改这一行：
  *
- * 2026-05-10 起后端切到 SiliconFlow Cloud（Qwen3.5-4B 文本 + Qwen3-VL-8B-Instruct 图片），
- * 入口仍是 OpenAI 兼容协议、同一组端点，客户端无需协议改动。
- * 隧道是 cloudflared quick tunnel；进程不死域名稳定，重启会换域名（同 share_service 同上注释）。
+ *   阶段 1（备案审核中，正在用）：'https://audit.itsmappin.top:8443'
+ *   阶段 2（备案下来后改成）：    'https://audit.itsmappin.top'
+ *
+ * 为什么是 8443：华为云对未备案域名只拦默认 Web 端口 80/443，非标端口不拦。
+ * SSL 证书签的是域名跟端口无关，所以测试期间也能正常 TLS 握手。
+ *
+ * 切换步骤（ICP 通过后）：
+ *   1. 后端跑 Backend_ItsMapPin/deploy/scripts/enable-production.sh
+ *   2. 改下面这一行为 'https://audit.itsmappin.top'
+ *   3. 重新打包前端
  */
-export const VISION_LLM_BASE_URL: string = 'https://dryer-declined-resistance-liability.trycloudflare.com'
+const AUDIT_BASE: string = 'https://audit.itsmappin.top:8443'
 
 /**
- * VisionLLM Bearer token（已迁移到 AiTokenManager 运行时申领，见 Tier 2.2）
- * 上架包不再硬编码，通过 share_service /api/v1/auth/issue_ai_token 下发
- * /health 端点不需要 token，其他端点缺/错 token 返回 401
+ * 分享服务 base —— 与 nginx /api/* 路由对接
+ * 配合后端实际端点 /api/v1/share/publish、/api/v1/share/{code}/status 等
  */
+export const API_BASE_URL: string = AUDIT_BASE
 
 /**
- * 敏感词过滤服务
- * TODO(release): 上架前替换为正式 HTTPS 域名（HarmonyOS 默认禁止明文 HTTP）
+ * VisionLLM 服务 base —— 与 nginx /v1/* 路由对接
+ *
+ * 后端走 SiliconFlow Cloud relay（Qwen3.5-4B 文本 + Qwen3-VL-8B-Instruct 图片），
+ * 入口保持 OpenAI 兼容协议，端点仍是 /v1/chat/completions、/v1/chat/completions/image。
+ *
+ * Bearer token 由 share_service /api/v1/auth/issue_ai_token 运行时下发，
+ * 见 AiTokenManager.ets；不再硬编码到客户端。
  */
-export const CONTENT_FILTER_BASE_URL: string = 'http://172.18.35.215:9100'
+export const VISION_LLM_BASE_URL: string = AUDIT_BASE
 
 /**
- * 图片内容审核服务（百度智能云代理）
- * TODO(release): 上架前替换为正式 HTTPS 域名
+ * 敏感词过滤服务 base
+ *
+ * 路径带 /filter 前缀，nginx 这层 rewrite 去掉再转给后端。
+ * 客户端拼出来的 URL 形如 https://audit.itsmappin.top:8443/filter/check
  */
-export const IMAGE_CENSOR_BASE_URL: string = 'http://172.18.35.215:9200'
+export const CONTENT_FILTER_BASE_URL: string = AUDIT_BASE + '/filter'
+
+/**
+ * 图片内容审核服务（百度智能云代理）base
+ *
+ * 路径带 /censor 前缀，nginx rewrite 去掉再转给后端。
+ * 客户端拼出来的 URL 形如 https://audit.itsmappin.top:8443/censor/check
+ */
+export const IMAGE_CENSOR_BASE_URL: string = AUDIT_BASE + '/censor'
 
 /** API 版本号 */
 export const API_VERSION: string = 'v1'
