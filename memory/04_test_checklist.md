@@ -403,3 +403,8 @@ describe('RdbHelperTest', () => {
 - [x] T-MN-I1-001: `MemoryNodeRepository.createNode()` appends new nodes to the next `node_order` slot for the target travel.
 - [x] T-MN-I1-002: `MemoryNodeRepository.updateNode()` moves a node to a different travel, preserves cloud-backed update semantics, and appends the node after the target travel's tail order.
 - [x] T-MN-I1-003: `MemoryNodeRepository.reorderNodes()` rewrites `node_order` and marks each node as `pending_reorder`.
+
+## 2026-05-13 CI Daemon Follow-up
+
+- [~] T-CI-004: Local script verification confirmed `frontend/build.ps1 --help` still works outside CI after the no-daemon fallback change.
+- [ ] T-CI-005: Re-run Jenkins compile and test stages and confirm the `frontend/build.ps1` CI fallback prevents hvigor daemon `ECONNREFUSED 127.0.0.1:45000` failures in `build-66` style runs.
