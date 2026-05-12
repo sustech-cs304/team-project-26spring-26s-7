@@ -20,6 +20,9 @@ temp/
 .ci-logs/
 .ci-tmps/
 ci-artifacts/
+__pycache__/
+*.pyc
+*.log
 
 # ========================
 # OS generated
@@ -81,6 +84,13 @@ frontend/.idea/
 !**/requirements.txt
 !backend/**/requirements.txt
 !backend/ci/ci-requirements.txt
+.env
+.env.*
+!backend/picture-check/.env.production.example
+agc-apiclient-*.json
+backend/picture-check/.venv/
+backend/picture-check/logs/
+backend/picture-check/secure/
 
 # package
 package-lock.json
