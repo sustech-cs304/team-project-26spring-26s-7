@@ -1,3 +1,0 @@
-CI smoke test marker for GitHub Actions.
-This file is intentionally small and has no runtime effect.
-Second smoke run marker for the retriggered CI test.
