@@ -412,41 +412,93 @@ Started At: $(Get-Date -Format o)
                         powershell '''
                             $metricsPath = Join-Path $env:CI_OUTPUT_DIR 'metrics\\summary.txt'
                             $sourceFiles = Get-ChildItem -Recurse -File -Filter *.ets
-                            $lineCount = ($sourceFiles | Get-Content | Measure-Object -Line | Select-Object -ExpandProperty Lines)
                             $fileCount = $sourceFiles.Count
-                            $complexity = 0
 
-                            foreach ($file in $sourceFiles) {
-                                $content = Get-Content -Path $file.FullName -Raw
-                                $decisionPoints = 0
-                                $decisionPoints += ([regex]::Matches($content, '\\bif\\b')).Count
-                                $decisionPoints += ([regex]::Matches($content, '\\bfor\\b')).Count
-                                $decisionPoints += ([regex]::Matches($content, '\\bwhile\\b')).Count
-                                $decisionPoints += ([regex]::Matches($content, '\\bcatch\\b')).Count
-                                $decisionPoints += ([regex]::Matches($content, '\\bcase\\b')).Count
-                                $decisionPoints += ([regex]::Matches($content, '\\?')).Count
-                                $decisionPoints += ([regex]::Matches($content, '&&|\\|\\|')).Count
-                                $complexity += (1 + $decisionPoints)
+                            function Strip-CommentsAndStrings {
+                                param([string]$Text)
+                                # Remove single-line comments
+                                $t = [regex]::Replace($Text, '//.*', '')
+                                # Remove multi-line comments
+                                $t = [regex]::Replace($t, '/\\*[\\s\\S]*?\\*/', '')
+                                # Remove string literals (single and double quoted)
+                                $t = [regex]::Replace($t, "\'[^']*\'", '')
+                                $t = [regex]::Replace($t, '"(?:[^"\\\\]|\\\\.)*"', '')
+                                return $t
                             }
 
+                            $totalLoc = 0
+                            $totalBlank = 0
+                            $totalComment = 0
+                            $totalComplexity = 0
+                            $fileDetails = @()
+
+                            foreach ($file in $sourceFiles) {
+                                $raw = Get-Content -Path $file.FullName -Raw
+                                if (-not $raw) { continue }
+                                $lines = $raw -split '\\r?\\n'
+                                $loc = 0; $blank = 0; $comment = 0
+                                foreach ($ln in $lines) {
+                                    $trimmed = $ln.Trim()
+                                    if ($trimmed -eq '') { $blank++; continue }
+                                    if ($trimmed.StartsWith('//')) { $comment++; continue }
+                                    $loc++
+                                }
+
+                                $stripped = Strip-CommentsAndStrings $raw
+                                $dp = 0
+                                $dp += ([regex]::Matches($stripped, '\\bif\\b')).Count
+                                $dp += ([regex]::Matches($stripped, '\\bfor\\b')).Count
+                                $dp += ([regex]::Matches($stripped, '\\bwhile\\b')).Count
+                                $dp += ([regex]::Matches($stripped, '\\bcatch\\b')).Count
+                                $dp += ([regex]::Matches($stripped, '\\bcase\\b')).Count
+                                $dp += ([regex]::Matches($stripped, '(?<!\\?)\\?(?![.?])')).Count
+                                $dp += ([regex]::Matches($stripped, '&&|\\|\\|')).Count
+                                $cc = 1 + $dp
+
+                                $totalLoc += $loc
+                                $totalBlank += $blank
+                                $totalComment += $comment
+                                $totalComplexity += $cc
+
+                                $relPath = $file.FullName.Replace("$PWD\\", '')
+                                $fileDetails += [pscustomobject]@{
+                                    File = $relPath
+                                    LOC = $loc
+                                    Complexity = $cc
+                                    Lines = $lines.Count
+                                }
+                            }
+
+                            $avgComplexity = if ($fileCount -gt 0) { [math]::Round($totalComplexity / $fileCount, 1) } else { 0 }
+                            $hotFiles = $fileDetails | Sort-Object Complexity -Descending | Select-Object -First 10
+
                             $dependencyFile = Join-Path $PWD '..\\..\\..\\oh-package.json5'
-                            $dependencies = Get-Content $dependencyFile -Raw
+                            $dependencies = if (Test-Path $dependencyFile) { Get-Content $dependencyFile -Raw } else { '(not found)' }
 
-                            $summary = @"
-Lines of Code:
-$lineCount
+                            $sb = [System.Text.StringBuilder]::new()
+                            [void]$sb.AppendLine("=== Code Metrics Summary ===")
+                            [void]$sb.AppendLine("")
+                            [void]$sb.AppendLine("Source Files:          $fileCount")
+                            [void]$sb.AppendLine("Lines of Code (LOC):   $totalLoc")
+                            [void]$sb.AppendLine("Blank Lines:           $totalBlank")
+                            [void]$sb.AppendLine("Comment Lines:         $totalComment")
+                            [void]$sb.AppendLine("Total Lines:           $($totalLoc + $totalBlank + $totalComment)")
+                            [void]$sb.AppendLine("")
+                            [void]$sb.AppendLine("Cyclomatic Complexity (total): $totalComplexity")
+                            [void]$sb.AppendLine("Cyclomatic Complexity (avg):   $avgComplexity")
+                            [void]$sb.AppendLine("")
+                            [void]$sb.AppendLine("--- Top 10 Most Complex Files ---")
+                            foreach ($f in $hotFiles) {
+                                $bar = '#' * [math]::Min($f.Complexity, 50)
+                                [void]$sb.AppendLine("  $($f.Complexity.ToString().PadLeft(4))  $bar  $($f.File) ($($f.LOC) LOC)")
+                            }
+                            [void]$sb.AppendLine("")
+                            [void]$sb.AppendLine("--- Dependencies ---")
+                            [void]$sb.AppendLine($dependencies)
 
-Number of Source Files:
-$fileCount
-
-Cyclomatic Complexity (Approximate):
-$complexity
-
-Dependencies:
-$dependencies
-"@
-
-                            $summary | Tee-Object -FilePath $metricsPath | Out-Null
+                            $summary = $sb.ToString()
+                            Write-Host $summary
+                            $summary | Set-Content -Path $metricsPath -Encoding UTF8
                         '''
                     }
                 }
