@@ -64,6 +64,7 @@ jobs:
           name: ci-logs-run-${{ github.run_number }}
           path: .ci-logs
           if-no-files-found: warn
+          include-hidden-files: true
 
       - name: Upload Jenkins artifacts
         if: always() && steps.paths.outputs.artifact_dir != ''
