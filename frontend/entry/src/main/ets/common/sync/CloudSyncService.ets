@@ -12,6 +12,7 @@ import { TravelRepository } from '../data/TravelRepository'
 const DOMAIN = 0x0000
 const TAG = 'CloudSyncService'
 const ZONE_NAME = 'TravelPinZone'
+const MAX_CLOUD_ID_PROBE_COUNT = 10000
 
 let initialized: boolean = false
 let databaseZone: cloudDatabase.DatabaseZone | null = null
@@ -78,6 +79,75 @@ export class CloudSyncService {
 
   static buildNodeCloudId(ownerUid: string, localId: string): string {
     return ownerUid && ownerUid.length > 0 ? `node_${ownerUid}_${localId}` : `node_${localId}`
+  }
+
+  private static nextCloudId(candidate: string): string {
+    const lastUnderscore = candidate.lastIndexOf('_')
+    if (lastUnderscore < 0 || lastUnderscore >= candidate.length - 1) {
+      return `${candidate}_1`
+    }
+
+    const suffix = candidate.substring(lastUnderscore + 1)
+    const suffixNumber = Number(suffix)
+    if (!Number.isInteger(suffixNumber)) {
+      return `${candidate}_1`
+    }
+
+    return `${candidate.substring(0, lastUnderscore + 1)}${suffixNumber + 1}`
+  }
+
+  private static async travelCloudIdExists(cloudId: string): Promise<boolean> {
+    if (databaseZone === null || cloudId.length === 0) {
+      return false
+    }
+    const condition = new cloudDatabase.DatabaseQuery(CloudTravel)
+    condition.equalTo('cloudId', cloudId)
+    const records = await databaseZone.query(condition)
+    return records.length > 0
+  }
+
+  private static async nodeCloudIdExists(cloudId: string): Promise<boolean> {
+    if (databaseZone === null || cloudId.length === 0) {
+      return false
+    }
+    const condition = new cloudDatabase.DatabaseQuery(CloudMemoryNode)
+    condition.equalTo('cloudId', cloudId)
+    const records = await databaseZone.query(condition)
+    return records.length > 0
+  }
+
+  private static async resolveAvailableTravelCloudId(data: TravelPayload): Promise<string> {
+    if (data.cloudId && data.cloudId.length > 0) {
+      return data.cloudId
+    }
+
+    let cloudId = CloudSyncService.buildTravelCloudId(data.ownerUid, data.localId)
+    for (let i = 0; i < MAX_CLOUD_ID_PROBE_COUNT; i++) {
+      if (!(await CloudSyncService.travelCloudIdExists(cloudId))) {
+        return cloudId
+      }
+      const nextCloudId = CloudSyncService.nextCloudId(cloudId)
+      hilog.warn(DOMAIN, TAG, `[resolveAvailableTravelCloudId] cloudId collision: ${cloudId} -> ${nextCloudId}`)
+      cloudId = nextCloudId
+    }
+    throw new Error(`No available travel cloudId after ${MAX_CLOUD_ID_PROBE_COUNT} probes`)
+  }
+
+  private static async resolveAvailableNodeCloudId(data: NodePayload): Promise<string> {
+    if (data.cloudId && data.cloudId.length > 0) {
+      return data.cloudId
+    }
+
+    let cloudId = CloudSyncService.buildNodeCloudId(data.ownerUid, data.localId)
+    for (let i = 0; i < MAX_CLOUD_ID_PROBE_COUNT; i++) {
+      if (!(await CloudSyncService.nodeCloudIdExists(cloudId))) {
+        return cloudId
+      }
+      const nextCloudId = CloudSyncService.nextCloudId(cloudId)
+      hilog.warn(DOMAIN, TAG, `[resolveAvailableNodeCloudId] cloudId collision: ${cloudId} -> ${nextCloudId}`)
+      cloudId = nextCloudId
+    }
+    throw new Error(`No available memory node cloudId after ${MAX_CLOUD_ID_PROBE_COUNT} probes`)
   }
 
   /**
@@ -182,7 +252,7 @@ export class CloudSyncService {
     }
 
     const data = JSON.parse(payload) as TravelPayload
-    const cloudId = data.cloudId || CloudSyncService.buildTravelCloudId(data.ownerUid, data.localId)
+    const cloudId = await CloudSyncService.resolveAvailableTravelCloudId(data)
     hilog.info(DOMAIN, TAG, `[upsertTravel] isPublic=${data.isPublic}, cloudId=${cloudId}, name=${data.name}`)
     const travel = new CloudTravel()
     travel.cloudId = cloudId
@@ -224,7 +294,7 @@ export class CloudSyncService {
     }
 
     const data = JSON.parse(payload) as NodePayload
-    const cloudId = data.cloudId || CloudSyncService.buildNodeCloudId(data.ownerUid, data.localId)
+    const cloudId = await CloudSyncService.resolveAvailableNodeCloudId(data)
     const node = new CloudMemoryNode()
     node.cloudId = cloudId
     node.ownerUid = data.ownerUid
