@@ -534,6 +534,7 @@ Started At: $(Get-Date -Format o)
                             $summary = $sb.ToString()
                             Write-Host $summary
                             $summary | Set-Content -Path $metricsPath -Encoding UTF8
+                            exit 0
                         '''
                     }
                 }
