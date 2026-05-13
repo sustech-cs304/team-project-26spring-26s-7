@@ -532,14 +532,14 @@ Started At: $(Get-Date -Format o)
 
                                     # Distinguish real methods from ArkUI component calls
                                     $matchText = $fm.Value
-                                    $hasModifier = $matchText -match '(?:private|public|protected|static|async)\s'
+                                    $hasModifier = $matchText -match '(?:private|public|protected|static|async)\\s'
                                     $hasReturnType = $false
-                                    $hasDecorator = $matchText -match '@\w+\s'
+                                    $hasDecorator = $matchText -match '@\\w+\\s'
                                     $searchFrom = $fm.Index + $fm.Length
                                     $openBrace = $raw.IndexOf('{', $searchFrom)
                                     if ($openBrace -gt $fm.Index) {
                                         $sigText = $raw.Substring($fm.Index, $openBrace - $fm.Index + 1)
-                                        $hasReturnType = $sigText -match '\)\s*:\s*\S'
+                                        $hasReturnType = $sigText -match '\\)\\s*:\\s*\\S'
                                     }
                                     if (-not $hasModifier -and -not $hasReturnType -and -not $hasDecorator -and $fnName -notin $lifecycleMethods) {
                                         continue
