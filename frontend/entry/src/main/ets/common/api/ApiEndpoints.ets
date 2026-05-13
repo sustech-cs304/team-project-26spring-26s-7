@@ -32,8 +32,12 @@ export const API_BASE_URL: string = 'https://surprise-seekers-toxic-applies.tryc
 /**
  * VisionLLM 服务地址
  * 上架前：换成正式 HTTPS 域名 + CA 证书
+ *
+ * 2026-05-10 起后端切到 SiliconFlow Cloud（Qwen3.5-4B 文本 + Qwen3-VL-8B-Instruct 图片），
+ * 入口仍是 OpenAI 兼容协议、同一组端点，客户端无需协议改动。
+ * 隧道是 cloudflared quick tunnel；进程不死域名稳定，重启会换域名（同 share_service 同上注释）。
  */
-export const VISION_LLM_BASE_URL: string = 'https://rap-provide-eve-strap.trycloudflare.com'
+export const VISION_LLM_BASE_URL: string = 'https://dryer-declined-resistance-liability.trycloudflare.com'
 
 /**
  * VisionLLM Bearer token（已迁移到 AiTokenManager 运行时申领，见 Tier 2.2）
@@ -75,6 +79,9 @@ export class ShareEndpoints {
 
   /** Trip 改私密时关停其全部分享: POST /api/v1/share/revoke-by-trip */
   static readonly REVOKE_BY_TRIP: string = `/api/${API_VERSION}/share/revoke-by-trip`
+
+  /** v1.1 分享海报（JPG，带 QR 跳转回 /s/{code}）: GET /share/{code}/poster.jpg?t=&s= */
+  static readonly POSTER_PREFIX: string = `/share`
 
   /** 旧字段名（保留以避免破坏其他引用） */
   static readonly VERIFY: string = `/api/${API_VERSION}/share`

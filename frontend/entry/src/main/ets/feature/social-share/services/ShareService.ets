@@ -223,6 +223,44 @@ export class ShareService {
   }
 
   /**
+   * v1.1：拉取后端合成的分享海报（JPG，含 QR + 封面 + 标题 + 路线预览）。
+   *
+   * 后端首次请求时合成 750×1334 海报并落盘到 cache/{code}/poster.jpg，
+   * 同 shortCode 后续请求直接走磁盘缓存。本方法返回的 Uint8Array 用于
+   * 写到 app 沙箱（cacheDir）再通过 systemShare 的 general.image UTD 投递。
+   *
+   * 失败（网络/超时/sig 错）一律返回 undefined，调用方走"复制链接"兜底。
+   */
+  async fetchPoster(
+    shortCode: string,
+    expirySec: number,
+    sig: string,
+  ): Promise<Uint8Array | undefined> {
+    const url = `${this.baseUrl}${ShareEndpoints.POSTER_PREFIX}/${shortCode}/poster.jpg?t=${expirySec}&s=${sig}`
+    logger.info(TAG, `GET ${url}`)
+    const httpReq = http.createHttp()
+    try {
+      const resp = await httpReq.request(url, {
+        method: http.RequestMethod.GET,
+        readTimeout: 8000,
+        connectTimeout: 8000,
+        expectDataType: http.HttpDataType.ARRAY_BUFFER,
+      })
+      if (resp.responseCode === 200 && resp.result instanceof ArrayBuffer) {
+        return new Uint8Array(resp.result as ArrayBuffer)
+      }
+      logger.warn(TAG, `fetchPoster non-200: ${resp.responseCode}`)
+      return undefined
+    } catch (e) {
+      const be = e as BusinessError
+      logger.error(TAG, `fetchPoster failed: ${be?.message ?? JSON.stringify(e)}`)
+      return undefined
+    } finally {
+      httpReq.destroy()
+    }
+  }
+
+  /**
    * 关停某 trip 的全部分享 — 当用户把 trip 从公开切换到私密时调用。
    * 调用 POST /api/v1/share/revoke-by-trip (v0.8)。
    *

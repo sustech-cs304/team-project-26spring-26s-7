@@ -101,6 +101,10 @@ export {
   VisualKitResult
 } from './ai/index';
 
+// Offline Map 导出
+export { OfflineMapStore } from './utils/OfflineMapStore';
+export { OfflineMapService } from './service/OfflineMapService';
+export type { PetalMapsLaunchResult } from './service/OfflineMapService';
 // Replay config 导出
 export { ReplayPreferences } from './replay/ReplayPreferences';
 export type { ReplayPreferencesState } from './replay/ReplayPreferences';

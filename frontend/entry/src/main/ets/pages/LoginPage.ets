@@ -1,6 +1,6 @@
 import { common } from '@kit.AbilityKit'
 import { router, promptAction } from '@kit.ArkUI'
-import { AuthService, RouterUrls, AppColors, AppDimens } from '../common'
+import { AuthService, RouterUrls, AppColors, AppDimens, SyncManager } from '../common'
 
 /**
  * P-Login 登录页 — 华为账号一键登录
@@ -10,6 +10,7 @@ import { AuthService, RouterUrls, AppColors, AppDimens } from '../common'
 struct LoginPage {
   @StorageLink('appThemeVersion') themeVersion: number = 0
   @State isLoggingIn: boolean = false
+  @State loginProgressText: string = ''
 
   private async handleHuaweiLogin(): Promise<void> {
     if (this.isLoggingIn) {
@@ -17,18 +18,34 @@ struct LoginPage {
     }
 
     this.isLoggingIn = true
+    this.loginProgressText = '正在登录...'
     try {
       const hostContext = this.getUIContext().getHostContext() as common.UIAbilityContext
       await AuthService.signInWithHuaweiID(hostContext)
       // 登录后立即触发 restoreSession，把云端 profile 拉到 RDB 缓存
       await AuthService.restoreSession()
-      promptAction.showToast({ message: '登录成功，云存储已连接' })
+      this.loginProgressText = '正在拉取云端数据...'
+      const syncCompleted = await this.pullCloudAfterLogin()
+      promptAction.showToast({
+        message: syncCompleted ? '登录成功，云端数据已同步' : '登录成功，云端同步失败，可稍后手动下载'
+      })
       router.replaceUrl({ url: RouterUrls.MAIN })
     } catch (err) {
       const error = err as Error
       promptAction.showToast({ message: error.message || '登录失败，请重试' })
     } finally {
       this.isLoggingIn = false
+      this.loginProgressText = ''
+    }
+  }
+
+  private async pullCloudAfterLogin(): Promise<boolean> {
+    try {
+      await SyncManager.pullAllCloudToLocal()
+      AppStorage.setOrCreate('networkJustReconnected', false)
+      return true
+    } catch (_) {
+      return false
     }
   }
 
@@ -55,13 +72,30 @@ struct LoginPage {
 
       // 登录按钮区域
       Column() {
-        Button(this.isLoggingIn ? '登录中...' : '华为账号一键登录')
+        Button(this.isLoggingIn ? '处理中...' : '华为账号一键登录')
           .width('80%')
           .height(48)
           .fontSize(AppDimens.FONT_LG)
           .backgroundColor(AppColors.PRIMARY)
           .enabled(!this.isLoggingIn)
           .onClick(() => this.handleHuaweiLogin())
+
+        Row() {
+          if (this.isLoggingIn) {
+            LoadingProgress()
+              .width(18)
+              .height(18)
+              .color(AppColors.PRIMARY)
+            Text(this.loginProgressText)
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.TEXT_SECONDARY)
+              .margin({ left: 8 })
+          }
+        }
+        .width('80%')
+        .height(28)
+        .justifyContent(FlexAlign.Center)
+        .margin({ top: 10 })
 
         Text('登录即代表同意《用户协议》和《隐私政策》')
           .fontSize(AppDimens.FONT_SM)
