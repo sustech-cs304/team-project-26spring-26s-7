@@ -408,11 +408,6 @@ Started At: $(Get-Date -Format o)
                     echo '║               Stage: Collect Metrics                          ║'
                     echo '╚════════════════════════════════════════════════════════════════╝'
                     echo ''
-                    powershell '''
-                        pip install lizard 2>&1 | Select-Object -Last 1
-                        $hasLizard = $null -ne (Get-Command python -ErrorAction SilentlyContinue)
-                        if ($hasLizard) { $hasLizard = (python -m lizard --version 2>&1) -match '\\d' }
-                    '''
                     dir('frontend/entry/src/main/ets') {
                         powershell '''
                             $ErrorActionPreference = 'Continue'
@@ -420,43 +415,42 @@ Started At: $(Get-Date -Format o)
                             $sourceFiles = Get-ChildItem -Recurse -File -Filter *.ets
                             $fileCount = $sourceFiles.Count
 
+                            # --- lizard setup (suppress stderr to avoid Jenkins NativeCommandError) ---
+                            $hasLizard = $false
+                            try {
+                                $pipOut = pip install lizard 2>&1 | Out-Null
+                                $verCheck = python -m lizard --version 2>&1
+                                if ($verCheck -match '\\d') { $hasLizard = $true }
+                            } catch { $hasLizard = $false }
+
                             # --- NLOC via lizard ---
                             $lizardNloc = 0
                             $lizardAvgCcn = 0.0
                             $lizardFunCnt = 0
                             $lizardFileDetails = @()
-                            $hasLizard = $false
-                            try {
-                                $fileList = ($sourceFiles | ForEach-Object { $_.FullName }) -join '" "'
-                                $lizardRaw = python -m lizard $sourceFiles.FullName --language ts 2>&1 | Out-String
-                                if ($LASTEXITCODE -eq 0) { $hasLizard = $true }
-                            } catch { $hasLizard = $false }
 
                             if ($hasLizard) {
-                                $lizardLines = $lizardRaw -split '\\r?\\n'
-                                foreach ($line in $lizardLines) {
-                                    if ($line -match '^\\s*(\\d+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\d+)\\s+(.+)') {
-                                        $fnNloc = [int]$Matches[1]
-                                        $fnCcn = [int]$Matches[2]
-                                        $fnTokens = [int]$Matches[3]
-                                        $fnParams = [int]$Matches[4]
-                                        $fnLen = [int]$Matches[5]
-                                        $fnLoc = $Matches[6]
-                                        $lizardFileDetails += [pscustomobject]@{
-                                            NLOC = $fnNloc
-                                            CCN = $fnCcn
-                                            Token = $fnTokens
-                                            Params = $fnParams
-                                            Length = $fnLen
-                                            Location = $fnLoc
+                                try {
+                                    $lizardRaw = python -m lizard $sourceFiles.FullName --language ts 2>&1 | Out-String
+                                    $lizardLines = $lizardRaw -split '\\r?\\n'
+                                    foreach ($line in $lizardLines) {
+                                        if ($line -match '^\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(.+)') {
+                                            $lizardFileDetails += [pscustomobject]@{
+                                                NLOC = [int]$Matches[1]
+                                                CCN = [int]$Matches[2]
+                                                Token = [int]$Matches[3]
+                                                Params = [int]$Matches[4]
+                                                Length = [int]$Matches[5]
+                                                Location = $Matches[6]
+                                            }
                                         }
                                     }
-                                }
-                                $lizardFunCnt = $lizardFileDetails.Count
-                                if ($lizardFunCnt -gt 0) {
-                                    $lizardNloc = ($lizardFileDetails | Measure-Object -Property NLOC -Sum).Sum
-                                    $lizardAvgCcn = [math]::Round(($lizardFileDetails | Measure-Object -Property CCN -Average).Average, 2)
-                                }
+                                    $lizardFunCnt = $lizardFileDetails.Count
+                                    if ($lizardFunCnt -gt 0) {
+                                        $lizardNloc = ($lizardFileDetails | Measure-Object -Property NLOC -Sum).Sum
+                                        $lizardAvgCcn = [math]::Round(($lizardFileDetails | Measure-Object -Property CCN -Average).Average, 2)
+                                    }
+                                } catch { $hasLizard = $false }
                             }
 
                             # --- Regex-based file-level CCN (covers struct methods lizard misses) ---
