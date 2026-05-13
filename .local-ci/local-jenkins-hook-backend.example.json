@@ -1,0 +1,11 @@
+{
+  "enabled": false,
+  "jenkinsBaseUrl": "http://139.159.143.195:8080",
+  "jobName": "team-project-backend-ci",
+  "usernameEnvVar": "JENKINS_USERNAME",
+  "apiTokenEnvVar": "JENKINS_API_TOKEN",
+  "logDir": ".ci-logs",
+  "metadataPath": ".ci-logs/latest-local-backend-run.json",
+  "pollIntervalSeconds": 2,
+  "timeoutSeconds": 1800
+}

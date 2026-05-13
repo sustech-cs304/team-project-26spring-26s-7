@@ -74,8 +74,22 @@ frontend/.idea/
 
 # text file
 *.txt
+# … but DO track CI requirements + backend service requirements
+!**/requirements.txt
+!backend/**/requirements.txt
+!backend/ci/ci-requirements.txt
 
 # package
 package-lock.json
 package.json
 frontend/build-profile.json5
+
+# ========================
+# Backend CI 本地状态（runner-only, never tracked）
+# ========================
+backend/.ci-venv/
+backend/build-artifacts/
+build-artifacts/
+.ci-logs/
+.local-ci/local-jenkins-hook-backend.json
+.local-ci/local-jenkins-hook.json
