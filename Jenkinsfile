@@ -415,83 +415,174 @@ Started At: $(Get-Date -Format o)
                             $sourceFiles = Get-ChildItem -Recurse -File -Filter *.ets
                             $fileCount = $sourceFiles.Count
 
-                            # --- lizard setup (suppress stderr to avoid Jenkins NativeCommandError) ---
+                            # --- lizard for NLOC only ---
+                            $lizardNloc = 0
                             $hasLizard = $false
                             try {
-                                $pipOut = pip install lizard 2>&1 | Out-Null
-                                $verCheck = python -m lizard --version 2>&1
-                                if ($verCheck -match '\\d') { $hasLizard = $true }
+                                pip install lizard 2>&1 | Out-Null
+                                $lizardRaw = python -m lizard $sourceFiles.FullName --language ts 2>&1 | Out-String
+                                if ($lizardRaw -match 'Total nloc') { $hasLizard = $true }
                             } catch { $hasLizard = $false }
-
-                            # --- NLOC via lizard ---
-                            $lizardNloc = 0
-                            $lizardAvgCcn = 0.0
-                            $lizardFunCnt = 0
-                            $lizardFileDetails = @()
-
                             if ($hasLizard) {
-                                try {
-                                    $lizardRaw = python -m lizard $sourceFiles.FullName --language ts 2>&1 | Out-String
-                                    $lizardLines = $lizardRaw -split '\\r?\\n'
-                                    foreach ($line in $lizardLines) {
-                                        if ($line -match '^\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(.+)') {
-                                            $lizardFileDetails += [pscustomobject]@{
-                                                NLOC = [int]$Matches[1]
-                                                CCN = [int]$Matches[2]
-                                                Token = [int]$Matches[3]
-                                                Params = [int]$Matches[4]
-                                                Length = [int]$Matches[5]
-                                                Location = $Matches[6]
-                                            }
-                                        }
+                                foreach ($line in ($lizardRaw -split '\\r?\\n')) {
+                                    if ($line -match '^\\s*(\\d+)\\s+\\S+\\s+\\S+\\s+\\S+\\s+\\d+\\s+.*\\.ets$') {
+                                        $lizardNloc += [int]$Matches[1]
                                     }
-                                    $lizardFunCnt = $lizardFileDetails.Count
-                                    if ($lizardFunCnt -gt 0) {
-                                        $lizardNloc = ($lizardFileDetails | Measure-Object -Property NLOC -Sum).Sum
-                                        $lizardAvgCcn = [math]::Round(($lizardFileDetails | Measure-Object -Property CCN -Average).Average, 2)
-                                    }
-                                } catch { $hasLizard = $false }
+                                }
                             }
 
-                            # --- Regex-based file-level CCN (covers struct methods lizard misses) ---
+                            # --- Helper: strip comments and string literals ---
                             function Strip-CommentsAndStrings {
                                 param([string]$Text)
                                 $t = [regex]::Replace($Text, '//.*', '')
                                 $t = [regex]::Replace($t, '/\\*[\\s\\S]*?\\*/', '')
                                 $t = [regex]::Replace($t, "\\'[^']*\\'", '')
                                 $t = [regex]::Replace($t, '"(?:[^"\\\\]|\\\\.)*"', '')
+                                $t = [regex]::Replace($t, '`(?:[^`\\\\]|\\\\.)*`', '')
                                 return $t
                             }
 
-                            $totalComplexity = 0
+                            # --- Helper: find matching } for a { at $OpenPos, skipping strings/comments ---
+                            function Find-MatchingBrace {
+                                param([string]$Text, [int]$OpenPos)
+                                $depth = 0
+                                $i = $OpenPos
+                                $len = $Text.Length
+                                while ($i -lt $len) {
+                                    $c = $Text[$i]
+                                    if ($c -eq '\\"' -or $c -eq "\\'") { $i += 2; continue }
+                                    if ($c -eq '"' -or $c -eq "'") {
+                                        $q = $c; $i++
+                                        while ($i -lt $len -and $Text[$i] -ne $q) {
+                                            if ($Text[$i] -eq '\\') { $i++ }
+                                            $i++
+                                        }
+                                        $i++; continue
+                                    }
+                                    if ($c -eq '`') {
+                                        $i++
+                                        while ($i -lt $len -and $Text[$i] -ne '`') {
+                                            if ($Text[$i] -eq '\\') { $i++ }
+                                            $i++
+                                        }
+                                        $i++; continue
+                                    }
+                                    if ($c -eq '/' -and ($i+1) -lt $len -and $Text[$i+1] -eq '/') {
+                                        while ($i -lt $len -and $Text[$i] -ne "`n") { $i++ }
+                                        continue
+                                    }
+                                    if ($c -eq '/' -and ($i+1) -lt $len -and $Text[$i+1] -eq '*') {
+                                        $i += 2
+                                        while ($i -lt $len -and -not ($Text[$i] -eq '*' -and ($i+1) -lt $len -and $Text[$i+1] -eq '/')) { $i++ }
+                                        $i += 2; continue
+                                    }
+                                    if ($c -eq '{') { $depth++ }
+                                    elseif ($c -eq '}') {
+                                        $depth--
+                                        if ($depth -eq 0) { return $i }
+                                    }
+                                    $i++
+                                }
+                                return -1
+                            }
+
+                            # --- Helper: count decision points in stripped text ---
+                            function Get-DecisionPoints {
+                                param([string]$Text)
+                                $dp = 0
+                                $dp += ([regex]::Matches($Text, '\\bif\\b')).Count
+                                $dp += ([regex]::Matches($Text, '\\bfor\\b')).Count
+                                $dp += ([regex]::Matches($Text, '\\bwhile\\b')).Count
+                                $dp += ([regex]::Matches($Text, '\\bcatch\\b')).Count
+                                $dp += ([regex]::Matches($Text, '\\bcase\\b')).Count
+                                $dp += ([regex]::Matches($Text, '(?<!\\?)\\?(?![.?])')).Count
+                                $dp += ([regex]::Matches($Text, '&&|\\|\\|')).Count
+                                return $dp
+                            }
+
+                            # --- Per-function and per-file analysis ---
+                            $controlFlowKw = @('if','for','while','switch','catch','class','struct','interface','enum','constructor','return','throw','new','typeof','instanceof','delete','void','with')
+                            $lifecycleMethods = @('build','aboutToAppear','aboutToDisappear','onPageShow','onPageHide','onBackPress','onActive','onInactive','onDestroy')
+                            $declPattern = '(?m)^\\s*(?:@\\w+\\s*)?(?:(?:private|public|protected)\\s+)?(?:static\\s+)?(?:async\\s+)?(\\w+)\\s*\\('
+
+                            $allFunctions = @()
                             $fileDetails = @()
+
                             foreach ($file in $sourceFiles) {
                                 $raw = Get-Content -Path $file.FullName -Raw
                                 if (-not $raw) { continue }
                                 $lineCount = ($raw -split '\\r?\\n').Count
-
-                                $stripped = Strip-CommentsAndStrings $raw
-                                $dp = 0
-                                $dp += ([regex]::Matches($stripped, '\\bif\\b')).Count
-                                $dp += ([regex]::Matches($stripped, '\\bfor\\b')).Count
-                                $dp += ([regex]::Matches($stripped, '\\bwhile\\b')).Count
-                                $dp += ([regex]::Matches($stripped, '\\bcatch\\b')).Count
-                                $dp += ([regex]::Matches($stripped, '\\bcase\\b')).Count
-                                $dp += ([regex]::Matches($stripped, '(?<!\\?)\\?(?![.?])')).Count
-                                $dp += ([regex]::Matches($stripped, '&&|\\|\\|')).Count
-                                $cc = 1 + $dp
-
-                                $totalComplexity += $cc
                                 $relPath = $file.FullName.Replace("$PWD\\", '')
+
+                                # File-level CCN
+                                $stripped = Strip-CommentsAndStrings $raw
+                                $fileDp = Get-DecisionPoints $stripped
+                                $fileCc = 1 + $fileDp
                                 $fileDetails += [pscustomobject]@{
                                     File = $relPath
                                     TotalLines = $lineCount
-                                    Complexity = $cc
+                                    Complexity = $fileCc
+                                }
+
+                                # Function-level CCN via brace matching
+                                $funcMatches = [regex]::Matches($raw, $declPattern)
+                                foreach ($fm in $funcMatches) {
+                                    $fnName = $fm.Groups[1].Value
+                                    if ($fnName -in $controlFlowKw) { continue }
+
+                                    # Distinguish real methods from ArkUI component calls
+                                    $matchText = $fm.Value
+                                    $hasModifier = $matchText -match '(?:private|public|protected|static|async)\s'
+                                    $hasReturnType = $false
+                                    $hasDecorator = $matchText -match '@\w+\s'
+                                    $searchFrom = $fm.Index + $fm.Length
+                                    $openBrace = $raw.IndexOf('{', $searchFrom)
+                                    if ($openBrace -gt $fm.Index) {
+                                        $sigText = $raw.Substring($fm.Index, $openBrace - $fm.Index + 1)
+                                        $hasReturnType = $sigText -match '\)\s*:\s*\S'
+                                    }
+                                    if (-not $hasModifier -and -not $hasReturnType -and -not $hasDecorator -and $fnName -notin $lifecycleMethods) {
+                                        continue
+                                    }
+
+                                    if ($openBrace -eq -1) { continue }
+                                    $matchLineNum = ($raw.Substring(0, $fm.Index) -split '\\r?\\n').Count
+                                    $braceLineNum = ($raw.Substring(0, $openBrace) -split '\\r?\\n').Count
+                                    if ([math]::Abs($braceLineNum - $matchLineNum) -gt 2) { continue }
+                                    $between = $raw.Substring($fm.Index, [math]::Min($openBrace - $fm.Index + 1, $raw.Length - $fm.Index))
+                                    if ($between.Contains(';')) { continue }
+
+                                    $closeBrace = Find-MatchingBrace $raw $openBrace
+                                    if ($closeBrace -eq -1) { continue }
+
+                                    $body = $raw.Substring($openBrace, $closeBrace - $openBrace + 1)
+                                    $strippedBody = Strip-CommentsAndStrings $body
+                                    $fnDp = Get-DecisionPoints $strippedBody
+                                    $fnCc = 1 + $fnDp
+
+                                    $startLine = ($raw.Substring(0, $openBrace) -split '\\r?\\n').Count
+                                    $endLine = ($raw.Substring(0, $closeBrace + 1) -split '\\r?\\n').Count
+                                    $fnNloc = ($strippedBody -split '\\r?\\n' | Where-Object { $_.Trim() -ne '' }).Count
+
+                                    $allFunctions += [pscustomobject]@{
+                                        Name = $fnName
+                                        CCN = $fnCc
+                                        NLOC = $fnNloc
+                                        StartLine = $startLine
+                                        EndLine = $endLine
+                                        File = $relPath
+                                    }
                                 }
                             }
 
-                            $avgComplexity = if ($fileCount -gt 0) { [math]::Round($totalComplexity / $fileCount, 1) } else { 0 }
+                            $totalFileCcn = ($fileDetails | Measure-Object -Property Complexity -Sum).Sum
+                            $avgFileCcn = if ($fileCount -gt 0) { [math]::Round($totalFileCcn / $fileCount, 1) } else { 0 }
                             $hotFiles = $fileDetails | Sort-Object Complexity -Descending | Select-Object -First 10
+
+                            $totalFnCcn = ($allFunctions | Measure-Object -Property CCN -Sum).Sum
+                            $fnCount = $allFunctions.Count
+                            $avgFnCcn = if ($fnCount -gt 0) { [math]::Round($totalFnCcn / $fnCount, 2) } else { 0 }
+                            $hotFns = $allFunctions | Sort-Object CCN -Descending | Select-Object -First 10
 
                             $dependencyFile = Join-Path $PWD '..\\..\\..\\oh-package.json5'
                             $dependencies = if (Test-Path $dependencyFile) { Get-Content $dependencyFile -Raw } else { '(not found)' }
@@ -503,29 +594,30 @@ Started At: $(Get-Date -Format o)
                             [void]$sb.AppendLine("Source Files (.ets):       $fileCount")
                             if ($hasLizard) {
                                 [void]$sb.AppendLine("NLOC (lizard):             $lizardNloc")
-                                [void]$sb.AppendLine("Functions detected:        $lizardFunCnt  (note: lizard may miss ArkTS struct methods)")
-                                [void]$sb.AppendLine("Avg CCN per function:      $lizardAvgCcn")
                             } else {
                                 [void]$sb.AppendLine("NLOC (lizard):             (lizard unavailable)")
                             }
+                            [void]$sb.AppendLine("Functions detected:        $fnCount  (PowerShell brace-matched)")
                             [void]$sb.AppendLine("")
-                            [void]$sb.AppendLine("File-level CCN (regex, covers all code incl. struct methods):")
-                            [void]$sb.AppendLine("  Total CCN:               $totalComplexity")
-                            [void]$sb.AppendLine("  Avg CCN per file:        $avgComplexity")
+                            [void]$sb.AppendLine("File-level CCN (regex):")
+                            [void]$sb.AppendLine("  Total CCN:               $totalFileCcn")
+                            [void]$sb.AppendLine("  Avg CCN per file:        $avgFileCcn")
                             [void]$sb.AppendLine("")
-                            [void]$sb.AppendLine("--- Top 10 Most Complex Files (regex CCN) ---")
+                            [void]$sb.AppendLine("Function-level CCN (PowerShell, per-function):")
+                            [void]$sb.AppendLine("  Total functions:         $fnCount")
+                            [void]$sb.AppendLine("  Total CCN:               $totalFnCcn")
+                            [void]$sb.AppendLine("  Avg CCN per function:    $avgFnCcn")
+                            [void]$sb.AppendLine("")
+                            [void]$sb.AppendLine("--- Top 10 Most Complex Files ---")
                             foreach ($f in $hotFiles) {
                                 $bar = '#' * [math]::Min($f.Complexity, 50)
                                 [void]$sb.AppendLine("  $($f.Complexity.ToString().PadLeft(4))  $bar  $($f.File) ($($f.TotalLines) lines)")
                             }
-                            if ($hasLizard -and $lizardFunCnt -gt 0) {
-                                [void]$sb.AppendLine("")
-                                [void]$sb.AppendLine("--- Top 10 Most Complex Functions (lizard) ---")
-                                $hotFns = $lizardFileDetails | Sort-Object CCN -Descending | Select-Object -First 10
-                                foreach ($fn in $hotFns) {
-                                    $bar = '#' * [math]::Min($fn.CCN, 50)
-                                    [void]$sb.AppendLine("  $($fn.CCN.ToString().PadLeft(4))  $bar  $($fn.Location)")
-                                }
+                            [void]$sb.AppendLine("")
+                            [void]$sb.AppendLine("--- Top 10 Most Complex Functions ---")
+                            foreach ($fn in $hotFns) {
+                                $bar = '#' * [math]::Min($fn.CCN, 50)
+                                [void]$sb.AppendLine("  $($fn.CCN.ToString().PadLeft(4))  $bar  $($fn.Name)@L$($fn.StartLine)-$($fn.EndLine) $($fn.File) ($($fn.NLOC) NLOC)")
                             }
                             [void]$sb.AppendLine("")
                             [void]$sb.AppendLine("--- Dependencies ---")
