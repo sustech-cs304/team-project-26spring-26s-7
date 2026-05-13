@@ -18,6 +18,7 @@ tmp/
 Temp/
 temp/
 .ci-logs/
+.ci-tmps/
 ci-artifacts/
 
 # ========================
