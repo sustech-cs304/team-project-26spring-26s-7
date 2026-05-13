@@ -425,7 +425,7 @@ Started At: $(Get-Date -Format o)
                             } catch { $hasLizard = $false }
                             if ($hasLizard) {
                                 foreach ($line in ($lizardRaw -split '\\r?\\n')) {
-                                    if ($line -match '^\\s*(\\d+)\\s+\\S+\\s+\\S+\\s+\\S+\\s+\\d+\\s+.*\\.ets$') {
+                                    if ($line -match '^\\s*(\\d+)\\s+\\S+\\s+\\S+\\s+\\S+\\s+\\d+\\s+.*\\.ets$' -and $line -notmatch '@') {
                                         $lizardNloc += [int]$Matches[1]
                                     }
                                 }
@@ -509,7 +509,7 @@ Started At: $(Get-Date -Format o)
                             $fileDetails = @()
 
                             foreach ($file in $sourceFiles) {
-                                $raw = Get-Content -Path $file.FullName -Raw
+                                $raw = Get-Content -Path $file.FullName -Raw -Encoding UTF8
                                 if (-not $raw) { continue }
                                 $lineCount = ($raw -split '\\r?\\n').Count
                                 $relPath = $file.FullName.Replace("$PWD\\", '')
@@ -585,7 +585,7 @@ Started At: $(Get-Date -Format o)
                             $hotFns = $allFunctions | Sort-Object CCN -Descending | Select-Object -First 10
 
                             $dependencyFile = Join-Path $PWD '..\\..\\..\\oh-package.json5'
-                            $dependencies = if (Test-Path $dependencyFile) { Get-Content $dependencyFile -Raw } else { '(not found)' }
+                            $dependencies = if (Test-Path $dependencyFile) { Get-Content $dependencyFile -Raw -Encoding UTF8 } else { '(not found)' }
 
                             # --- Build report ---
                             $sb = [System.Text.StringBuilder]::new()
