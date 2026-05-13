@@ -3,7 +3,7 @@ import { authentication } from '@kit.AccountKit';
 import { buffer, util } from '@kit.ArkTS';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import auth from '@hw-agconnect/auth';
+import auth, { SignInResult } from '@hw-agconnect/auth';
 import { CloudStorageService } from './CloudStorageService';
 import { RdbHelper } from '../data/RdbHelper';
 import { ContentFilterService } from '../api/ContentFilterService';
@@ -342,7 +342,15 @@ export class AuthService {
     loginRequest.idTokenSignAlgorithm = authentication.IdTokenSignAlgorithm.PS256;
 
     const controller = new authentication.AuthenticationController(hostContext);
-    const response = await controller.executeRequest(loginRequest) as authentication.LoginWithHuaweiIDResponse;
+    hilog.info(DOMAIN, TAG, `signInWithHuaweiID: execute AccountKit request, state=${loginRequest.state}`);
+    let response: authentication.LoginWithHuaweiIDResponse;
+    try {
+      response = await controller.executeRequest(loginRequest) as authentication.LoginWithHuaweiIDResponse;
+    } catch (err) {
+      const error = err as BusinessError;
+      hilog.error(DOMAIN, TAG, `signInWithHuaweiID: AccountKit failed, code=${error.code}, message=${error.message}`);
+      throw new Error(error.message);
+    }
 
     if (response.state && response.state !== loginRequest.state) {
       throw new Error('登录态校验失败，请重试');
@@ -355,10 +363,21 @@ export class AuthService {
       throw new Error('未获取到授权码，请重试');
     }
 
-    const signInResult = await auth.signIn({
-      credentialInfo: { kind: 'hwid' },
-      autoCreateUser: true
-    });
+    hilog.info(DOMAIN, TAG, `signInWithHuaweiID: AccountKit success, authCodeLength=${credential.authorizationCode.length}, hasUnionId=${credential.unionID !== undefined && credential.unionID.length > 0}, hasOpenId=${credential.openID !== undefined && credential.openID.length > 0}, hasIdToken=${credential.idToken !== undefined && credential.idToken.length > 0}`);
+
+    let signInResult: SignInResult;
+    try {
+      hilog.info(DOMAIN, TAG, 'signInWithHuaweiID: start AGC auth.signIn');
+      signInResult = await auth.signIn({
+        credentialInfo: { kind: 'hwid' },
+        autoCreateUser: true
+      });
+      hilog.info(DOMAIN, TAG, 'signInWithHuaweiID: AGC auth.signIn success');
+    } catch (err) {
+      const error = err as BusinessError;
+      hilog.error(DOMAIN, TAG, `signInWithHuaweiID: AGC auth.signIn failed, code=${error.code}, message=${error.message}`);
+      throw new Error(error.message);
+    }
 
     const agcUser = signInResult.getUser();
     let displayName = agcUser.getDisplayName() ?? 'TravelPin 用户';
