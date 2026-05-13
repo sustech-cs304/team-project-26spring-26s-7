@@ -408,41 +408,73 @@ Started At: $(Get-Date -Format o)
                     echo '║               Stage: Collect Metrics                          ║'
                     echo '╚════════════════════════════════════════════════════════════════╝'
                     echo ''
+                    powershell '''
+                        pip install lizard 2>&1 | Select-Object -Last 1
+                        $hasLizard = $null -ne (Get-Command python -ErrorAction SilentlyContinue)
+                        if ($hasLizard) { $hasLizard = (python -m lizard --version 2>&1) -match '\\d' }
+                    '''
                     dir('frontend/entry/src/main/ets') {
                         powershell '''
+                            $ErrorActionPreference = 'Continue'
                             $metricsPath = Join-Path $env:CI_OUTPUT_DIR 'metrics\\summary.txt'
                             $sourceFiles = Get-ChildItem -Recurse -File -Filter *.ets
                             $fileCount = $sourceFiles.Count
 
+                            # --- NLOC via lizard ---
+                            $lizardNloc = 0
+                            $lizardAvgCcn = 0.0
+                            $lizardFunCnt = 0
+                            $lizardFileDetails = @()
+                            $hasLizard = $false
+                            try {
+                                $fileList = ($sourceFiles | ForEach-Object { $_.FullName }) -join '" "'
+                                $lizardRaw = python -m lizard $sourceFiles.FullName --language ts 2>&1 | Out-String
+                                if ($LASTEXITCODE -eq 0) { $hasLizard = $true }
+                            } catch { $hasLizard = $false }
+
+                            if ($hasLizard) {
+                                $lizardLines = $lizardRaw -split '\\r?\\n'
+                                foreach ($line in $lizardLines) {
+                                    if ($line -match '^\\s*(\\d+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\d+)\\s+(.+)') {
+                                        $fnNloc = [int]$Matches[1]
+                                        $fnCcn = [int]$Matches[2]
+                                        $fnTokens = [int]$Matches[3]
+                                        $fnParams = [int]$Matches[4]
+                                        $fnLen = [int]$Matches[5]
+                                        $fnLoc = $Matches[6]
+                                        $lizardFileDetails += [pscustomobject]@{
+                                            NLOC = $fnNloc
+                                            CCN = $fnCcn
+                                            Token = $fnTokens
+                                            Params = $fnParams
+                                            Length = $fnLen
+                                            Location = $fnLoc
+                                        }
+                                    }
+                                }
+                                $lizardFunCnt = $lizardFileDetails.Count
+                                if ($lizardFunCnt -gt 0) {
+                                    $lizardNloc = ($lizardFileDetails | Measure-Object -Property NLOC -Sum).Sum
+                                    $lizardAvgCcn = [math]::Round(($lizardFileDetails | Measure-Object -Property CCN -Average).Average, 2)
+                                }
+                            }
+
+                            # --- Regex-based file-level CCN (covers struct methods lizard misses) ---
                             function Strip-CommentsAndStrings {
                                 param([string]$Text)
-                                # Remove single-line comments
                                 $t = [regex]::Replace($Text, '//.*', '')
-                                # Remove multi-line comments
                                 $t = [regex]::Replace($t, '/\\*[\\s\\S]*?\\*/', '')
-                                # Remove string literals (single and double quoted)
-                                $t = [regex]::Replace($t, "\'[^']*\'", '')
+                                $t = [regex]::Replace($t, "\\'[^']*\\'", '')
                                 $t = [regex]::Replace($t, '"(?:[^"\\\\]|\\\\.)*"', '')
                                 return $t
                             }
 
-                            $totalLoc = 0
-                            $totalBlank = 0
-                            $totalComment = 0
                             $totalComplexity = 0
                             $fileDetails = @()
-
                             foreach ($file in $sourceFiles) {
                                 $raw = Get-Content -Path $file.FullName -Raw
                                 if (-not $raw) { continue }
-                                $lines = $raw -split '\\r?\\n'
-                                $loc = 0; $blank = 0; $comment = 0
-                                foreach ($ln in $lines) {
-                                    $trimmed = $ln.Trim()
-                                    if ($trimmed -eq '') { $blank++; continue }
-                                    if ($trimmed.StartsWith('//')) { $comment++; continue }
-                                    $loc++
-                                }
+                                $lineCount = ($raw -split '\\r?\\n').Count
 
                                 $stripped = Strip-CommentsAndStrings $raw
                                 $dp = 0
@@ -455,17 +487,12 @@ Started At: $(Get-Date -Format o)
                                 $dp += ([regex]::Matches($stripped, '&&|\\|\\|')).Count
                                 $cc = 1 + $dp
 
-                                $totalLoc += $loc
-                                $totalBlank += $blank
-                                $totalComment += $comment
                                 $totalComplexity += $cc
-
                                 $relPath = $file.FullName.Replace("$PWD\\", '')
                                 $fileDetails += [pscustomobject]@{
                                     File = $relPath
-                                    LOC = $loc
+                                    TotalLines = $lineCount
                                     Complexity = $cc
-                                    Lines = $lines.Count
                                 }
                             }
 
@@ -475,22 +502,36 @@ Started At: $(Get-Date -Format o)
                             $dependencyFile = Join-Path $PWD '..\\..\\..\\oh-package.json5'
                             $dependencies = if (Test-Path $dependencyFile) { Get-Content $dependencyFile -Raw } else { '(not found)' }
 
+                            # --- Build report ---
                             $sb = [System.Text.StringBuilder]::new()
                             [void]$sb.AppendLine("=== Code Metrics Summary ===")
                             [void]$sb.AppendLine("")
-                            [void]$sb.AppendLine("Source Files:          $fileCount")
-                            [void]$sb.AppendLine("Lines of Code (LOC):   $totalLoc")
-                            [void]$sb.AppendLine("Blank Lines:           $totalBlank")
-                            [void]$sb.AppendLine("Comment Lines:         $totalComment")
-                            [void]$sb.AppendLine("Total Lines:           $($totalLoc + $totalBlank + $totalComment)")
+                            [void]$sb.AppendLine("Source Files (.ets):       $fileCount")
+                            if ($hasLizard) {
+                                [void]$sb.AppendLine("NLOC (lizard):             $lizardNloc")
+                                [void]$sb.AppendLine("Functions detected:        $lizardFunCnt  (note: lizard may miss ArkTS struct methods)")
+                                [void]$sb.AppendLine("Avg CCN per function:      $lizardAvgCcn")
+                            } else {
+                                [void]$sb.AppendLine("NLOC (lizard):             (lizard unavailable)")
+                            }
                             [void]$sb.AppendLine("")
-                            [void]$sb.AppendLine("Cyclomatic Complexity (total): $totalComplexity")
-                            [void]$sb.AppendLine("Cyclomatic Complexity (avg):   $avgComplexity")
+                            [void]$sb.AppendLine("File-level CCN (regex, covers all code incl. struct methods):")
+                            [void]$sb.AppendLine("  Total CCN:               $totalComplexity")
+                            [void]$sb.AppendLine("  Avg CCN per file:        $avgComplexity")
                             [void]$sb.AppendLine("")
-                            [void]$sb.AppendLine("--- Top 10 Most Complex Files ---")
+                            [void]$sb.AppendLine("--- Top 10 Most Complex Files (regex CCN) ---")
                             foreach ($f in $hotFiles) {
                                 $bar = '#' * [math]::Min($f.Complexity, 50)
-                                [void]$sb.AppendLine("  $($f.Complexity.ToString().PadLeft(4))  $bar  $($f.File) ($($f.LOC) LOC)")
+                                [void]$sb.AppendLine("  $($f.Complexity.ToString().PadLeft(4))  $bar  $($f.File) ($($f.TotalLines) lines)")
+                            }
+                            if ($hasLizard -and $lizardFunCnt -gt 0) {
+                                [void]$sb.AppendLine("")
+                                [void]$sb.AppendLine("--- Top 10 Most Complex Functions (lizard) ---")
+                                $hotFns = $lizardFileDetails | Sort-Object CCN -Descending | Select-Object -First 10
+                                foreach ($fn in $hotFns) {
+                                    $bar = '#' * [math]::Min($fn.CCN, 50)
+                                    [void]$sb.AppendLine("  $($fn.CCN.ToString().PadLeft(4))  $bar  $($fn.Location)")
+                                }
                             }
                             [void]$sb.AppendLine("")
                             [void]$sb.AppendLine("--- Dependencies ---")
