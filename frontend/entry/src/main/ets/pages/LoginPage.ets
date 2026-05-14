@@ -1,6 +1,11 @@
 import { common } from '@kit.AbilityKit'
 import { router, promptAction } from '@kit.ArkUI'
+import { BusinessError } from '@kit.BasicServicesKit'
+import { hilog } from '@kit.PerformanceAnalysisKit'
 import { AuthService, RouterUrls, AppColors, AppDimens, SyncManager } from '../common'
+
+const DOMAIN = 0x0000
+const TAG = 'LoginPage'
 
 /**
  * P-Login 登录页 — 华为账号一键登录
@@ -21,9 +26,12 @@ struct LoginPage {
     this.loginProgressText = '正在登录...'
     try {
       const hostContext = this.getUIContext().getHostContext() as common.UIAbilityContext
+      hilog.info(DOMAIN, TAG, 'handleHuaweiLogin: start')
       await AuthService.signInWithHuaweiID(hostContext)
+      hilog.info(DOMAIN, TAG, 'handleHuaweiLogin: signInWithHuaweiID done')
       // 登录后立即触发 restoreSession，把云端 profile 拉到 RDB 缓存
       await AuthService.restoreSession()
+      hilog.info(DOMAIN, TAG, 'handleHuaweiLogin: restoreSession done')
       this.loginProgressText = '正在拉取云端数据...'
       const syncCompleted = await this.pullCloudAfterLogin()
       promptAction.showToast({
@@ -32,6 +40,8 @@ struct LoginPage {
       router.replaceUrl({ url: RouterUrls.MAIN })
     } catch (err) {
       const error = err as Error
+      const businessError = err as BusinessError
+      hilog.error(DOMAIN, TAG, `handleHuaweiLogin failed, code=${businessError.code}, message=${error.message}`)
       promptAction.showToast({ message: error.message || '登录失败，请重试' })
     } finally {
       this.isLoggingIn = false

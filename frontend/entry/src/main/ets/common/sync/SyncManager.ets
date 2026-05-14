@@ -197,9 +197,11 @@ export class SyncManager {
         // 子节点（已迁到 UNCATEGORIZED）的图片仍然在 travels/<T>/nodes/<N>/ 下被引用，不能动。
         await CloudSyncService.hardDeleteTravelByCloudId(cloudId, user.uid)
       } else {
-        await CloudSyncService.upsertTravel(payload)
+        const finalCloudId = await CloudSyncService.upsertTravel(payload)
+        travel.cloudId = finalCloudId
       }
-      await travelRepo.updateSyncMetadata(travel.id, cloudId, 'synced', Date.now())
+      const syncedTravelCloudId = travel.cloudId && travel.cloudId.length > 0 ? travel.cloudId : cloudId
+      await travelRepo.updateSyncMetadata(travel.id, syncedTravelCloudId, 'synced', Date.now())
     }
 
     for (let i = 0; i < localNodes.length; i++) {
@@ -222,13 +224,15 @@ export class SyncManager {
         }
         await CloudSyncService.hardDeleteMemoryNodeByCloudId(cloudId, user.uid)
       } else {
-        await CloudSyncService.upsertMemoryNode(payload)
+        const finalCloudId = await CloudSyncService.upsertMemoryNode(payload)
+        node.cloudId = finalCloudId
         await SyncManager.syncNodePhotosForUpload(node)
         // 上传照片后 photoManifest 已更新，重新 upsert 以写入正确的云端路径
         const updatedPayload = await CloudSyncService.buildNodePayload(node)
         await CloudSyncService.upsertMemoryNode(updatedPayload)
       }
-      await nodeRepo.updateSyncMetadata(node.id, cloudId, 'synced', Date.now())
+      const syncedNodeCloudId = node.cloudId && node.cloudId.length > 0 ? node.cloudId : cloudId
+      await nodeRepo.updateSyncMetadata(node.id, syncedNodeCloudId, 'synced', Date.now())
     }
 
     for (let i = 0; i < cloudTravels.length; i++) {
