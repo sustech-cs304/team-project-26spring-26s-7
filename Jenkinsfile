@@ -505,6 +505,7 @@ Started At: $(Get-Date -Format o)
                             $lifecycleMethods = @('build','aboutToAppear','aboutToDisappear','onPageShow','onPageHide','onBackPress','onActive','onInactive','onDestroy')
                             $declPattern = '(?m)^\\s*(?:@\\w+\\s*)?(?:(?:private|public|protected)\\s+)?(?:static\\s+)?(?:async\\s+)?(\\w+)\\s*\\('
 
+                            $totalLoc = 0
                             $allFunctions = @()
                             $fileDetails = @()
 
@@ -512,6 +513,7 @@ Started At: $(Get-Date -Format o)
                                 $raw = Get-Content -Path $file.FullName -Raw -Encoding UTF8
                                 if (-not $raw) { continue }
                                 $lineCount = ($raw -split '\\r?\\n').Count
+                                $totalLoc += $lineCount
                                 $relPath = $file.FullName.Replace("$PWD\\", '')
 
                                 # File-level CCN
@@ -592,8 +594,11 @@ Started At: $(Get-Date -Format o)
                             [void]$sb.AppendLine("=== Code Metrics Summary ===")
                             [void]$sb.AppendLine("")
                             [void]$sb.AppendLine("Source Files (.ets):       $fileCount")
+                            [void]$sb.AppendLine("LOC  (total lines):        $totalLoc")
                             if ($hasLizard) {
                                 [void]$sb.AppendLine("NLOC (lizard):             $lizardNloc")
+                                $density = if ($totalLoc -gt 0) { [math]::Round(($totalLoc - $lizardNloc) / $totalLoc * 100, 1) } else { 0 }
+                                [void]$sb.AppendLine("Comment/Blank density:     $density%")
                             } else {
                                 [void]$sb.AppendLine("NLOC (lizard):             (lizard unavailable)")
                             }
@@ -611,7 +616,7 @@ Started At: $(Get-Date -Format o)
                             [void]$sb.AppendLine("--- Top 10 Most Complex Files ---")
                             foreach ($f in $hotFiles) {
                                 $bar = '#' * [math]::Min($f.Complexity, 50)
-                                [void]$sb.AppendLine("  $($f.Complexity.ToString().PadLeft(4))  $bar  $($f.File) ($($f.TotalLines) lines)")
+                                [void]$sb.AppendLine("  $($f.Complexity.ToString().PadLeft(4))  $bar  $($f.File) ($($f.TotalLines) LOC)")
                             }
                             [void]$sb.AppendLine("")
                             [void]$sb.AppendLine("--- Top 10 Most Complex Functions ---")
