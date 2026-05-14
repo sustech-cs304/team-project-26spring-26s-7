@@ -156,3 +156,46 @@ Once test/backend-ci is green, **before merging**:
      filter (backend/ci/**). Touching this file proves a doc-only edit can
      fan out to both Jenkinses without affecting runtime behavior. -->
 
+## I. 这次后端 CI 搭建的 journey & 后人指南
+
+本仓库后端 CI 是从独立的 `Zmjjeff7/Backend_ItsMapPin` 试验仓搬过来的。完整架构、
+两套 Jenkins 的分工、已知陷阱见
+[`references/documents/ci-cd-architecture.md`](../../references/documents/ci-cd-architecture.md)。
+这里只列搭建过程中**踩过的坑**给后人备查。
+
+### 调通用的痕迹（git log 上 `trigger:` 开头的 empty commit）
+
+调通这套 CI 一共留了若干 `trigger: ...` 开头的空提交（`--allow-empty`），保留作
+调试可追溯记录而非 force-push 抹除。**它们都是 CI 实验，不是业务变更**，git log
+扫到时直接忽略。
+
+| 阶段 | 在哪里 | 干嘛 |
+|---|---|---|
+| 后端 Jenkins 走 webhook 直触 | `Backend_ItsMapPin` repo | `fb993e0` / `b00730e` —— 分支过滤 `*/test/ci-cd` → `*/main` 切换时 SCM polling 基线错位，必须 manual Build Now 一次重建 |
+| 后端 Jenkins commit status 接通 | `Backend_ItsMapPin` repo | `7d1010a` / `01c1433` —— PAT scope `repo:status` 够用，但插件 `GitHubCommitStatusSetter` 要求 `repo` 完整 scope；解法是绕开插件直接 `curl POST /statuses/{sha}` |
+| 后端 CI 迁移到 team-project | 本仓库 | `6e0d7ec` —— 暴露前端 GH Action `branches:` 只列 `test/ci-cd` 不监听 main 的 bug |
+| 前端 Jenkins 重建后链路验证 | 本仓库 | `cf50fef` —— Jenkins 重建后 API token 必须同步刷新到 GitHub `JENKINS_API_TOKEN` secret |
+| upload-artifact ECONNRESET 修 | 本仓库 | `b0e0775` —— actions-runner 必须用显式 `.env` `http_proxy=` 走本地代理，不能靠 .NET DefaultWebProxy 的隐式探测 |
+
+### 后人改 CI 必读
+
+1. **不要 force-push 到 main**。share 分支历史 = 团队全员的本地状态，rewrite
+   等于给所有人挖坑
+2. 改完 Jenkinsfile 后**先在 test 分支验证一遍**再 PR 合 main，不然挂在 main 上
+   要修很尴尬
+3. `Lightweight checkout` 这个勾 Jenkins job → Pipeline 里默认是勾的，**取消勾选**，
+   private repo 上它会静默失败
+4. PyPI 走华为云 `repo.huaweicloud.com` 内网镜像（已写死在 Jenkinsfile env 中），
+   迁移到其它机房记得改
+5. 后端 Jenkins 上 SSH key 是按"仓库"区分的（一个 `Backend_ItsMapPin`、一个
+   team-project），增加新仓库要单独生成 deploy key + Jenkins credential
+
+### 测试覆盖率（本仓库 share-service 真测）
+
+| Stage | Pass rate | Coverage |
+|---|---|---|
+| share-service pytest | **111 / 111 passed** | **94%** |
+| ai-relay / sensitive-filter / picture-check | smoke import 通过 | — |
+
+业务测试覆盖率 metric 落在 `/var/lib/jenkins/ci-artifacts/team-project-backend/build-N/reports/coverage-share-service-html/` —— 每次成功 build 都会更新一份。
+
