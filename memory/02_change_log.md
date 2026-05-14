@@ -528,3 +528,4 @@
 - [2026-05-13-02-05-00] - UPDATE - frontend/build.ps1 - default Jenkins and CI invocations to `--no-daemon` unless an explicit daemon flag is provided, to avoid recurring hvigor `ECONNREFUSED 127.0.0.1:45000` failures in compile and test stages after Jenkinsfile rollbacks.
 - [2026-05-14-16-45-00] - UPDATE - documents/ - reorganize project documents into design, deployment, features, planning, and testing categories; add `documents/README.md` as the directory index.
 - [2026-05-14-16-55-00] - MOVE - LLM-SERVER-API-SPEC.md -> documents/features/ai-copy/llm-server-api-spec.md - place the AI copy LLM server API specification under the feature-specific document set.
+- [2026-05-14-17-35-00] - UPDATE - final-report-team26s-7.md - refresh the Part II metrics and CI/CD pipeline report using build-11 metrics, pipeline configuration links, and available CI screenshots.

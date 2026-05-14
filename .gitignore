@@ -100,3 +100,4 @@ backend/.ci-venv/
 backend/build-artifacts/
 build-artifacts/
 .ci-logs/
+.be-ci-artifacts/
