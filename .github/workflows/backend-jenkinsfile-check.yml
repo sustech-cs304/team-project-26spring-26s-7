@@ -1,0 +1,84 @@
+name: Backend Jenkinsfile Check
+
+# Mirrors the frontend's CI-config safety net (.github/workflows/jenkinsfile-check.yml,
+# which lives separately and triggers Windows-based Jenkins for the frontend).
+# This workflow only catches obvious breakage in the BACKEND CI scaffolding
+# BEFORE backend Jenkins (on root@139.159.143.195:8080) runs against it.
+# Kept dependency-free so it always works on GitHub-hosted runners and doesn't
+# need Jenkins creds.
+
+on:
+  push:
+    branches:
+      - test/backend-ci
+      - test/ci-cd
+      - main
+    paths:
+      - 'backend/Jenkinsfile'
+      - 'backend/ci/**'
+      - '.local-ci/local-jenkins-hook-backend.example.json'
+      - '.github/workflows/backend-jenkinsfile-check.yml'
+  pull_request:
+    paths:
+      - 'backend/Jenkinsfile'
+      - 'backend/ci/**'
+      - '.local-ci/local-jenkins-hook-backend.example.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-jenkinsfile-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-jenkinsfile-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Structural sanity checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail=0
+          check() { if [ -e "$1" ]; then echo "  ok  $1"; else echo "  MISS $1"; fail=1; fi; }
+          echo "==== required files ===="
+          check backend/Jenkinsfile
+          check backend/ci/ci-requirements.txt
+          check backend/ci/ruff.toml
+          check backend/ci/smoke_imports.py
+          check .local-ci/local-jenkins-hook-backend.example.json
+          check .github/workflows/backend-jenkinsfile-check.yml
+          echo "==== expected requirements.txt files ===="
+          for s in ai-relay sensitive-filter picture-check share-service; do
+              check "backend/$s/requirements.txt"
+          done
+          echo "==== Jenkinsfile basic syntax markers ===="
+          grep -q '^pipeline {'         backend/Jenkinsfile || { echo "  MISS pipeline { ... } block"; fail=1; }
+          grep -q "stage('Checkout')"   backend/Jenkinsfile || { echo "  MISS Checkout stage"; fail=1; }
+          grep -q "stage('Test')"       backend/Jenkinsfile || { echo "  MISS Test stage"; fail=1; }
+          grep -q "stage('Archive')"    backend/Jenkinsfile || { echo "  MISS Archive stage"; fail=1; }
+          [ "$fail" -eq 0 ] && echo "OK" || { echo "FAIL"; exit 1; }
+
+      - name: Validate ruff config and smoke_imports.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet 'ruff==0.6.9'
+          ruff check --config backend/ci/ruff.toml --no-cache backend/ci/smoke_imports.py
+          python3 -c "import tomllib; tomllib.loads(open('backend/ci/ruff.toml').read())"
+
+      - name: Validate hook config schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          cfg = json.load(open('.local-ci/local-jenkins-hook-backend.example.json'))
+          for k in ('enabled','jenkinsBaseUrl','jobName','usernameEnvVar','apiTokenEnvVar'):
+              assert k in cfg, f'missing key: {k}'
+          assert cfg['enabled'] is False, 'example config must default to enabled=false'
+          print('backend hook config OK:', cfg['jobName'], 'at', cfg['jenkinsBaseUrl'])
+          PY
