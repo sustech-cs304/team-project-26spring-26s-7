@@ -599,8 +599,8 @@ Started At: $(Get-Date -Format o)
                                     $raw = Get-Content $ohFile -Raw -Encoding UTF8
                                     $json = $raw -replace '//.*', '' -replace ',(\\s*[}\\]])', '$1'
                                     $obj = $json | ConvertFrom-Json
-                                    if ($obj.dependencies) { $feRuntime.AddRange(@($obj.dependencies.PSObject.Properties.Name)) }
-                                    if ($obj.devDependencies) { $feDev.AddRange(@($obj.devDependencies.PSObject.Properties.Name)) }
+                                    if ($obj.dependencies) { $feRuntime.AddRange([string[]]@($obj.dependencies.PSObject.Properties.Name)) }
+                                    if ($obj.devDependencies) { $feDev.AddRange([string[]]@($obj.devDependencies.PSObject.Properties.Name)) }
                                 }
                             }
                             $feRuntime = $feRuntime | Sort-Object -Unique
