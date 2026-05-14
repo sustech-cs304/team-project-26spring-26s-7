@@ -22,6 +22,7 @@ export struct NodeListView {
 
   @StorageLink('appThemeVersion') themeVersion: number = 0
   @State nodes: NodeFeedItem[] = []
+  @State searchKeyword: string = ''
   @State availableTrips: Trip[] = []
   @State totalTripCount: number = 0
   @State isLoading: boolean = false
@@ -42,6 +43,9 @@ export struct NodeListView {
   }
 
   private onTravelDataVersionChange(): void {
+    if (this.isBulkOperating) {
+      return
+    }
     this.loadNodes()
   }
 
@@ -71,7 +75,7 @@ export struct NodeListView {
     if (trimmed.length > 0) {
       return trimmed
     }
-    return poiName.length > 0 ? `在 ${poiName} 留下的一段记忆` : '还没有补充正文'
+    return poiName.length > 0 ? `在 ${poiName} 留下的一段记忆` : '还没有补充内容'
   }
 
   private mapNodeToFeedItem(node: MemoryNode, trip: Trip): NodeFeedItem {
@@ -115,6 +119,72 @@ export struct NodeListView {
       lastSyncedAt: 0,
       version: 1
     }
+  }
+
+  private normalizeSearchKeyword(value: string): string {
+    return value.trim().toLowerCase()
+  }
+
+  private getFilteredNodes(): NodeFeedItem[] {
+    const keyword = this.normalizeSearchKeyword(this.searchKeyword)
+    if (keyword.length === 0) {
+      return this.nodes
+    }
+
+    return this.nodes.filter((item: NodeFeedItem) => {
+      const searchFields: string[] = [
+        item.title,
+        item.poiName,
+        item.content,
+        item.tripName
+      ]
+
+      return searchFields.some((field: string) => field.toLowerCase().indexOf(keyword) >= 0)
+    })
+  }
+
+  private isAllFilteredNodesSelected(): boolean {
+    const filteredNodes = this.getFilteredNodes()
+    return filteredNodes.length > 0 &&
+      filteredNodes.every((item: NodeFeedItem) => this.isNodeSelected(item.id))
+  }
+
+  @Builder
+  private buildSearchInput() {
+    Row({ space: 8 }) {
+      TextInput({ placeholder: '搜索节点、地点或旅行', text: this.searchKeyword })
+        .layoutWeight(1)
+        .fontColor(AppColors.INPUT_TEXT)
+        .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+        .caretColor(AppColors.INPUT_CARET)
+        .backgroundColor('#00000000')
+        .onChange((value: string) => {
+          this.searchKeyword = value
+        })
+
+      if (this.searchKeyword.length > 0) {
+        Button() {
+          Text('×')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(AppColors.TEXT_HINT)
+        }
+        .width(28)
+        .height(28)
+        .padding(0)
+        .backgroundColor('#F0F1F4')
+        .borderRadius(14)
+        .onClick(() => {
+          this.searchKeyword = ''
+        })
+      }
+    }
+    .width('100%')
+    .margin({ top: 16 })
+    .padding({ left: 12, right: 10 })
+    .backgroundColor(AppColors.INPUT_BG)
+    .borderRadius(22)
+    .alignItems(VerticalAlign.Center)
   }
 
   private async loadNodes(): Promise<void> {
@@ -195,16 +265,22 @@ export struct NodeListView {
   }
 
   private toggleSelectAll(): void {
-    if (this.selectedNodeIds.length === this.nodes.length) {
+    const filteredNodes = this.getFilteredNodes()
+    if (filteredNodes.length === 0) {
+      return
+    }
+
+    if (this.isAllFilteredNodesSelected()) {
       this.exitManageMode()
       return
     }
+
     this.isManageMode = true
-    this.selectedNodeIds = this.nodes.map((item: NodeFeedItem) => item.id)
+    this.selectedNodeIds = filteredNodes.map((item: NodeFeedItem) => item.id)
   }
 
   private getSelectedCountText(): string {
-    return `已选 ${this.selectedNodeIds.length} 个节点`
+    return `已选择 ${this.selectedNodeIds.length} 个节点`
   }
 
   private getBulkTripSelectorListHeight(): number {
@@ -233,7 +309,7 @@ export struct NodeListView {
     this.showBulkTripSelector = false
   }
 
-  private applyLocalTripInfoToSelectedNodes(travelId: string): void {
+  private applyLocalTripInfoToSelectedNodes(travelId: string, selectedIds: string[]): void {
     let nextTripName: string = TravelSpecialValues.UNCATEGORIZED_TRAVEL_NAME
     let nextTripIsPublic: boolean = false
 
@@ -245,7 +321,6 @@ export struct NodeListView {
       }
     }
 
-    const selectedIds = [...this.selectedNodeIds]
     this.nodes = this.nodes.map((item: NodeFeedItem) => {
       if (selectedIds.indexOf(item.id) < 0) {
         return item
@@ -272,16 +347,19 @@ export struct NodeListView {
     this.isBulkOperating = true
     try {
       const selectedIds = this.selectedNodeIds.slice()
-      for (const nodeId of this.selectedNodeIds) {
-        await this.dataService.updateNode(nodeId, { travelId })
-      }
-      this.applyLocalTripInfoToSelectedNodes(travelId)
+      this.applyLocalTripInfoToSelectedNodes(travelId, selectedIds)
       this.selectedNodeIds = selectedIds
-      this.closeBulkTripSelector()
+      this.showBulkTripSelector = false
+      for (const nodeId of selectedIds) {
+        await this.dataService.updateNode(nodeId, { travelId })
+        this.bumpTravelDataVersion()
+      }
       this.bumpTravelDataVersion()
       promptAction.showToast({ message: '批量加入旅行成功' })
       this.exitManageMode()
+      await this.loadNodes()
     } catch (_) {
+      await this.loadNodes()
       promptAction.showToast({ message: '批量加入旅行失败' })
     } finally {
       this.isBulkOperating = false
@@ -340,31 +418,9 @@ export struct NodeListView {
           .fontWeight(FontWeight.Bold)
           .fontColor(AppColors.TEXT_PRIMARY)
           .layoutWeight(1)
-
-        if (this.nodes.length > 0) {
-          Button(this.isManageMode ? '完成' : '批量编辑')
-            .height(36)
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor(this.isManageMode ? AppColors.TEXT_PRIMARY : AppColors.PRIMARY)
-            .backgroundColor(this.isManageMode ? '#F3F4F6' : '#EAF4FF')
-            .onClick(() => {
-              if (this.isManageMode) {
-                this.exitManageMode()
-              } else {
-                this.enterManageMode()
-              }
-            })
-        }
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
-
-      Text('按时间回看每一次停留，把地点记忆串成可浏览的内容流。')
-        .fontSize(AppDimens.FONT_MD)
-        .fontColor(AppColors.TEXT_SECONDARY)
-        .lineHeight(22)
-        .margin({ top: 8 })
-        .width('100%')
 
       Row({ space: 12 }) {
         Column() {
@@ -392,19 +448,47 @@ export struct NodeListView {
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
+      }
+      .width('100%')
+      .margin({ top: 18 })
+      .alignItems(VerticalAlign.Top)
+
+      this.buildSearchInput()
+
+      Row({ space: 12 }) {
+        if (this.nodes.length > 0) {
+          Button(this.isManageMode ? '完成' : '批量编辑')
+            .layoutWeight(1)
+            .height(40)
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(this.isManageMode ? AppColors.TEXT_PRIMARY : AppColors.PRIMARY)
+            .backgroundColor(this.isManageMode ? '#F3F4F6' : '#EAF4FF')
+            .borderRadius(20)
+            .onClick(() => {
+              if (this.isManageMode) {
+                this.exitManageMode()
+              } else {
+                this.enterManageMode()
+              }
+            })
+        }
 
         if (this.isManageMode) {
-          Button(this.selectedNodeIds.length === this.nodes.length ? '取消全选' : '全选')
-            .height(38)
+          Button(this.isAllFilteredNodesSelected() ? '取消全选' : '全选')
+            .layoutWeight(1)
+            .height(40)
             .fontSize(AppDimens.FONT_SM)
             .fontColor(AppColors.PRIMARY)
             .backgroundColor('#EAF4FF')
+            .borderRadius(20)
             .onClick(() => this.toggleSelectAll())
         } else {
           Button('新建节点')
-            .height(38)
+            .layoutWeight(1)
+            .height(40)
             .fontSize(AppDimens.FONT_SM)
             .backgroundColor(AppColors.PRIMARY)
+            .borderRadius(20)
             .onClick(() => this.openNodeEdit())
         }
       }
@@ -447,7 +531,7 @@ export struct NodeListView {
           }
         }
         .width(28)
-        .height(92)
+        .height(108)
         .alignContent(Alignment.Center)
       }
 
@@ -469,8 +553,8 @@ export struct NodeListView {
           .backgroundColor('#F5F5F5')
         }
       }
-      .width(92)
-      .height(92)
+      .width(108)
+      .height(108)
       .borderRadius(AppDimens.RADIUS_MD)
       .clip(true)
       .margin({ left: this.isManageMode ? 8 : 0 })
@@ -510,19 +594,28 @@ export struct NodeListView {
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
 
+        Text(`${this.formatDate(item.createdAt)} ${this.formatTime(item.createdAt)}`)
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_HINT)
+          .width('100%')
+          .margin({ top: 10 })
+
         Row() {
-          Text(`${this.formatDate(item.createdAt)} ${this.formatTime(item.createdAt)}`)
+          Text('所属旅行')
             .fontSize(AppDimens.FONT_SM)
             .fontColor(AppColors.TEXT_HINT)
-          Text(`· ${item.tripName}`)
+
+          Text(item.tripName)
             .fontSize(AppDimens.FONT_SM)
             .fontColor(AppColors.PRIMARY)
+            .layoutWeight(1)
             .margin({ left: 8 })
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
         }
         .width('100%')
-        .margin({ top: 10 })
+        .margin({ top: 4 })
+        .alignItems(VerticalAlign.Center)
       }
       .layoutWeight(1)
       .margin({ left: 12 })
@@ -576,7 +669,7 @@ export struct NodeListView {
             .fontSize(20)
             .fontWeight(FontWeight.Bold)
             .fontColor(AppColors.TEXT_PRIMARY)
-          Text(`把已选 ${this.selectedNodeIds.length} 个节点归到同一个旅行中`)
+          Text(`把已选的 ${this.selectedNodeIds.length} 个节点归到同一个旅行中`)
             .fontSize(AppDimens.FONT_SM)
             .fontColor(AppColors.TEXT_HINT)
             .margin({ top: 6 })
@@ -648,7 +741,7 @@ export struct NodeListView {
           Text('还没有可选旅行')
             .fontSize(AppDimens.FONT_MD)
             .fontColor(AppColors.TEXT_PRIMARY)
-          Text('你也可以先把这些节点放到“未分类”里。')
+          Text('也可以先把这些节点放到“未分类”里。')
             .fontSize(AppDimens.FONT_SM)
             .fontColor(AppColors.TEXT_HINT)
             .margin({ top: 8 })
@@ -688,7 +781,7 @@ export struct NodeListView {
               .fontSize(AppDimens.FONT_LG)
               .fontWeight(FontWeight.Medium)
               .fontColor(AppColors.TEXT_PRIMARY)
-            Text('从地图或这里开始，记录你的第一个地点记忆。')
+            Text('从地图或这里开始，记录你的第一条地点记忆。')
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.TEXT_HINT)
               .margin({ top: 8 })
@@ -700,20 +793,34 @@ export struct NodeListView {
           .width('100%')
           .layoutWeight(1)
           .justifyContent(FlexAlign.Center)
+        } else if (this.getFilteredNodes().length === 0) {
+          Column() {
+            Text('没有找到匹配的节点')
+              .fontSize(AppDimens.FONT_LG)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(AppColors.TEXT_PRIMARY)
+            Text('试试搜索节点标题、地点、内容或所属旅行')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.TEXT_HINT)
+              .margin({ top: 8 })
+          }
+          .width('100%')
+          .layoutWeight(1)
+          .justifyContent(FlexAlign.Center)
         } else {
           List({ space: 12 }) {
-            ForEach(this.nodes, (item: NodeFeedItem) => {
+            ForEach(this.getFilteredNodes(), (item: NodeFeedItem) => {
               ListItem() {
                 this.buildNodeCard(item)
               }
-            }, (item: NodeFeedItem) => item.id)
+            }, (item: NodeFeedItem) => `${item.id}-${item.travelId}-${item.tripName}`)
           }
           .layoutWeight(1)
           .width('100%')
           .padding({ top: 16, bottom: 8 })
         }
 
-        if (this.isManageMode && this.nodes.length > 0) {
+        if (this.isManageMode && this.getFilteredNodes().length > 0) {
           this.buildBulkActionBar()
         }
       }

@@ -540,6 +540,16 @@ export class RdbHelper {
     await store.delete(predicates);
   }
 
+  async removeSyncItemById(id: string, ownerUid?: string): Promise<void> {
+    const store = await this.getStore();
+    const predicates = new rdb.RdbPredicates('sync_queue');
+    predicates.equalTo('id', Number(id));
+    if (ownerUid !== undefined) {
+      predicates.equalTo('owner_uid', ownerUid);
+    }
+    await store.delete(predicates);
+  }
+
   async clearSyncQueue(ownerUid?: string): Promise<void> {
     const store = await this.getStore();
     const predicates = RdbHelper.createPredicates('sync_queue');

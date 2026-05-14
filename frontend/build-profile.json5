@@ -17,13 +17,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "../certificates/test.cer",
+          "certpath": "../certificates/release.cer",
           "keyAlias": "test",
-          "keyPassword": "0000001D9D97F6A51B2FFF73BE04841673F39B6772B06A3CC6D66E42B7773BE7701FA9F1CF197C5E2DEDC9CB0F",
-          "profile": "../certificates/testDebug.p7b",
+          "keyPassword": "0000001DF99CCCFA09744784FD7DD8E0E93C08C1A00562E0EF0E6F7A199D2F09E579BA8392FE42EF4B08921270",
+          "profile": "../certificates/release_testRelease.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "../certificates/1.p12",
-          "storePassword": "0000001D9B99496D0876490AC0F17E3AD27E0681769544FA2ED78530CF1FD5B378BA21850DDA153258EE6FE015"
+          "storePassword": "0000001DCCE5DE315776F3C3A9105EF05355F0C5B2243B11E6CBFFD08025C1A0E318B9EA09A436878772D07722"
         }
       },
       {

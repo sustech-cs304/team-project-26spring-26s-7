@@ -8,7 +8,8 @@ import { ShareErrorMapper } from '../services/ShareErrorMapper'
 import { SharePhoto, ShareService } from '../services/ShareService'
 import { SharePhotoBatchResult, SharePhotoHelper } from '../services/SharePhotoHelper'
 import { SharePreflight } from '../services/SharePreflight'
-import { SystemShareService, SystemSharePayload } from '../services/SystemShareService'
+import { SystemShareService, SystemSharePayload, SystemShareImagePayload } from '../services/SystemShareService'
+import { fileIo as fs } from '@kit.CoreFileKit'
 import {
   ReplaceLink,
   ReplayPrefsForShare,
@@ -74,6 +75,9 @@ export struct SharePage {
   private sharePlatforms: SharePlatform[] = [
     new SharePlatform('W', '微信'),
     new SharePlatform('Q', 'QQ'),
+    // v1.1：海报分享 — 后端合成带 QR 的图，转发给微信/QQ/微博/邮件，
+    // 接收方扫码就能跳到分享链接，绕过国内对 trycloudflare 域的卡片渲染拒绝
+    new SharePlatform('P', '海报'),
     new SharePlatform('C', '复制链接'),
   ]
 
@@ -83,6 +87,12 @@ export struct SharePage {
       this.currentTripId = params.tripId
     }
     this.syncSelectedExpiryFromStorage()
+    // v1.0.5：开始读盘加载用户的回放偏好（fire-and-forget，不阻塞 UI）。
+    // publishShare 里会再 await 一次防止刚开页面立即点分享的 race。
+    const ctxEarly = getContext(this) as common.UIAbilityContext
+    if (ctxEarly) {
+      void ReplayPreferences.ensureLoaded(ctxEarly)
+    }
     void this.publishShare()
   }
 
@@ -154,6 +164,12 @@ export struct SharePage {
       // 顺路上传，让 /sreplay 页面与发布者本机的视觉风格保持一致。
       // ReplayPreferencesState 字段名 / 值都是 ArkTS enum 字符串 value，与
       // ReplayPrefsForShare wire 字段一一对应。
+      // v1.0.5：兜底再 await 一次 ensureLoaded —— aboutToAppear 是 fire-and-forget，
+      // "刚进 SharePage 立即点分享"那条路径可能磁盘还没读完。
+      const ctxForPrefs = getContext(this) as common.UIAbilityContext
+      if (ctxForPrefs) {
+        await ReplayPreferences.ensureLoaded(ctxForPrefs)
+      }
       const replayState = ReplayPreferences.getState()
       const replayPrefs: ReplayPrefsForShare = {
         styleKitId: replayState.styleKitId,
@@ -395,17 +411,28 @@ export struct SharePage {
       await this.handleCopyLink()
       return
     }
+    if (platform === '海报') {
+      await this.handleShareAsPoster()
+      return
+    }
     // 微信 / QQ / 其它：先尝试系统分享面板（让 OS 把 URL + 标题 + 摘要 +
-    // 缩略图字节投递给目标 app）。微信会主动 fetch 后端 v0.7 的 OG meta 渲染
-    // 卡片，QQ 不会主动抓 — 必须靠 thumbnail 字节才能出卡片预览。
+    // 缩略图字节投递给目标 app）。
+    //
+    // 注意：实测过的情况——
+    // 微信和 QQ 卡片标题/摘要直接来自 SystemSharePayload.title/description，
+    //   它们**不**会回头去 scrape URL 的 og:meta。所以服务端把 og:description
+    //   写得再丰富，对系统分享面板的卡片也没用，必须在这里把摘要构造好。
+    // 微信用户**手动粘贴 URL** 时会回去 fetch og:meta（那条路 og:description
+    //   是有用的）；这两条路要分别建好。
     const ctx = getContext(this) as common.UIAbilityContext
     const thumbnail = await this.fetchCoverThumbnail()
+    const description = this.buildShareDescription()
     const payload: SystemSharePayload = {
       url: this.shareUrl,
       title: this.currentTripName
         ? `${this.currentTripName} - TravelPin`
         : 'TravelPin 分享',
-      description: this.copyText,
+      description,
       thumbnail,
     }
     const ok = await SystemShareService.share(ctx, payload)
@@ -429,6 +456,119 @@ export struct SharePage {
 
   private retry(): void {
     void this.publishShare()
+  }
+
+  /**
+   * v1.1：分享海报。
+   *
+   * 流程：
+   *   1. 拉取后端合成的 750×1334 JPG（含 QR + 封面 + 标题 + 路线预览）
+   *   2. 写到 app cacheDir，得到 `file://${absPath}` URI
+   *   3. systemShare with general.image UTD
+   *
+   * 用户在面板选微信/QQ/微博/邮件等任意 app 接收 — 都能直接看图，扫码跳回
+   * /s/{code}。绕过国内对 trycloudflare 域名的链接卡片渲染拒绝。
+   *
+   * 任意一步失败 → toast 提示，不再走兜底（毕竟"复制链接"按钮就是兜底）。
+   */
+  private async handleShareAsPoster(): Promise<void> {
+    if (!this.lastLink) {
+      promptAction.showToast({ message: '请等链接生成后再分享海报' })
+      return
+    }
+    const link = this.lastLink
+    const ctx = getContext(this) as common.UIAbilityContext
+    promptAction.showToast({ message: '正在生成海报…', duration: 1500 })
+
+    const bytes = await this.shareService.fetchPoster(
+      link.shortCode, link.expirySec, link.sig)
+    if (!bytes || bytes.byteLength === 0) {
+      promptAction.showToast({ message: '海报生成失败，请重试' })
+      return
+    }
+
+    // 把字节写到沙箱 cacheDir；同 shortCode 重复分享会覆盖同一文件
+    const filePath = `${ctx.cacheDir}/poster-${link.shortCode}.jpg`
+    try {
+      const file = fs.openSync(
+        filePath,
+        fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE | fs.OpenMode.TRUNC
+      )
+      fs.writeSync(file.fd, bytes.buffer)
+      fs.closeSync(file)
+    } catch (e) {
+      promptAction.showToast({
+        message: `海报保存失败：${JSON.stringify(e)}`
+      })
+      return
+    }
+
+    const payload: SystemShareImagePayload = {
+      fileUri: `file://${filePath}`,
+      title: this.currentTripName
+        ? `${this.currentTripName} - TravelPin`
+        : 'TravelPin 分享',
+      description: this.buildShareDescription(),
+      thumbnail: bytes,    // 复用海报字节做面板预览，避免再请求 cover
+    }
+    const ok = await SystemShareService.shareImage(ctx, payload)
+    if (!ok) {
+      promptAction.showToast({ message: '系统分享面板未能打开，请重试' })
+    }
+  }
+
+  /**
+   * v1.0.3：根据 cachedReq 的 trip 数据构造分享卡片摘要。
+   *
+   * 微信 / QQ 系统分享面板**不**会回头读 og:meta，它就直接用
+   * SystemSharePayload.description 渲染卡片副标题。所以这里得把卡片该
+   * 看到的"几个节点 / 多远 / 路线 / mood"都串好。
+   *
+   * 输出形如：
+   *   "5 节点 · 12.5km  上海外滩 → 南京西路 → 静安寺  #惬意"
+   * 与后端 _build_share_description 字段顺序对齐（手动粘贴 URL 时微信
+   * 走 og:meta 的那条路，看到的也是同样格式，体验一致）。
+   *
+   * 字段缺省的兜底：没有 cachedReq → "TravelPin 旅行回放"。
+   */
+  private buildShareDescription(): string {
+    const req = this.cachedReq
+    if (!req || req.nodes.length === 0) {
+      return 'TravelPin 旅行回放'
+    }
+    const parts: string[] = []
+    // ① 节点数 + 总距离
+    const chip: string[] = []
+    chip.push(`${req.nodes.length} 节点`)
+    if (req.totalDistance > 0) {
+      chip.push(`${req.totalDistance.toFixed(1)}km`)
+    }
+    parts.push(chip.join(' · '))
+
+    // ② 路线预览：前 3 个节点 POI / title，超 8 字省略
+    const names: string[] = []
+    const limit = Math.min(3, req.nodes.length)
+    for (let i = 0; i < limit; i++) {
+      const n = req.nodes[i]
+      let name = (n.poiName || n.title || '').trim()
+      if (name.length === 0) continue
+      if (name.length > 8) name = name.substring(0, 8) + '…'
+      names.push(name)
+    }
+    if (names.length > 0) {
+      let preview = names.join(' → ')
+      if (req.nodes.length > 3) preview += ' → …'
+      parts.push(preview)
+    }
+
+    // ③ 首节点 mood
+    let mood = (req.nodes[0].mood || '').trim()
+    if (mood.length > 6) mood = mood.substring(0, 6)
+    if (mood.length > 0) {
+      parts.push(`#${mood}`)
+    }
+
+    return parts.join('  ')
   }
 
   /**
