@@ -586,8 +586,41 @@ Started At: $(Get-Date -Format o)
                             $avgFnCcn = if ($fnCount -gt 0) { [math]::Round($totalFnCcn / $fnCount, 2) } else { 0 }
                             $hotFns = $allFunctions | Sort-Object CCN -Descending | Select-Object -First 10
 
-                            $dependencyFile = Join-Path $PWD '..\\..\\..\\oh-package.json5'
-                            $dependencies = if (Test-Path $dependencyFile) { Get-Content $dependencyFile -Raw -Encoding UTF8 } else { '(not found)' }
+                            # --- Collect dependencies ---
+                            $feRuntime = [System.Collections.Generic.List[string]]::new()
+                            $feDev = [System.Collections.Generic.List[string]]::new()
+
+                            $ohFiles = @(
+                                (Join-Path $PWD '..\\..\\..\\..\\oh-package.json5'),
+                                (Join-Path $PWD '..\\..\\..\\oh-package.json5')
+                            )
+                            foreach ($ohFile in $ohFiles) {
+                                if (Test-Path $ohFile) {
+                                    $raw = Get-Content $ohFile -Raw -Encoding UTF8
+                                    $json = $raw -replace '//.*', '' -replace ',(\s*[}\]])', '$1'
+                                    $obj = $json | ConvertFrom-Json
+                                    if ($obj.dependencies) { $feRuntime.AddRange(@($obj.dependencies.PSObject.Properties.Name)) }
+                                    if ($obj.devDependencies) { $feDev.AddRange(@($obj.devDependencies.PSObject.Properties.Name)) }
+                                }
+                            }
+                            $feRuntime = $feRuntime | Sort-Object -Unique
+                            $feDev = $feDev | Sort-Object -Unique
+
+                            $bePackages = [System.Collections.Generic.List[string]]::new()
+                            $backendDir = Join-Path $PWD '..\\..\\..\\..\\..\\..\\backend'
+                            if (Test-Path $backendDir) {
+                                Get-ChildItem -Path $backendDir -Filter 'requirements.txt' -Recurse -Depth 1 | ForEach-Object {
+                                    Get-Content $_.FullName -Encoding UTF8 | ForEach-Object {
+                                        $line = $_.Trim()
+                                        if ($line -and $line -notmatch '^\s*#') {
+                                            $name = ($line -split '[><=;@\[]')[0].Trim()
+                                            if ($name) { $bePackages.Add($name) }
+                                        }
+                                    }
+                                }
+                            }
+                            $bePackages = $bePackages | Sort-Object -Unique
+                            $totalDeps = $feRuntime.Count + $feDev.Count + $bePackages.Count
 
                             # --- Build report ---
                             $sb = [System.Text.StringBuilder]::new()
@@ -626,7 +659,23 @@ Started At: $(Get-Date -Format o)
                             }
                             [void]$sb.AppendLine("")
                             [void]$sb.AppendLine("--- Dependencies ---")
-                            [void]$sb.AppendLine($dependencies)
+                            [void]$sb.AppendLine("Frontend (oh-package.json5):")
+                            [void]$sb.AppendLine("  Runtime dependencies: $($feRuntime.Count)")
+                            if ($feRuntime.Count -gt 0) {
+                                [void]$sb.AppendLine("    $($feRuntime -join ', ')")
+                            }
+                            [void]$sb.AppendLine("  Dev dependencies: $($feDev.Count)")
+                            if ($feDev.Count -gt 0) {
+                                [void]$sb.AppendLine("    $($feDev -join ', ')")
+                            }
+                            [void]$sb.AppendLine("")
+                            [void]$sb.AppendLine("Backend (requirements.txt, unique across services):")
+                            [void]$sb.AppendLine("  Python packages: $($bePackages.Count)")
+                            if ($bePackages.Count -gt 0) {
+                                [void]$sb.AppendLine("    $($bePackages -join ', ')")
+                            }
+                            [void]$sb.AppendLine("")
+                            [void]$sb.AppendLine("Total unique dependencies: $totalDeps")
 
                             $summary = $sb.ToString()
                             Write-Host $summary
