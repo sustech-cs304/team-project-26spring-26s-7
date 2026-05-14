@@ -607,7 +607,7 @@ Started At: $(Get-Date -Format o)
                             $feDev = $feDev | Sort-Object -Unique
 
                             $bePackages = [System.Collections.Generic.List[string]]::new()
-                            $backendDir = Join-Path $PWD '..\\..\\..\\..\\..\\..\\backend'
+                            $backendDir = Join-Path $PWD '..\\..\\..\\..\\..\\backend'
                             if (Test-Path $backendDir) {
                                 Get-ChildItem -Path $backendDir -Filter 'requirements.txt' -Recurse -Depth 1 | ForEach-Object {
                                     Get-Content $_.FullName -Encoding UTF8 | ForEach-Object {
