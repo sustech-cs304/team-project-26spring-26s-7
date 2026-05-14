@@ -151,3 +151,8 @@ Once test/backend-ci is green, **before merging**:
 - Switch this job's branch filter from `*/test/backend-ci` to `*/main`
 - Merge `test/backend-ci` → `main` via PR
 - Verify the merged commit on main triggers BOTH frontend and backend builds
+
+<!-- ci-trigger-marker: this line exists to validate the backend GH Action paths
+     filter (backend/ci/**). Touching this file proves a doc-only edit can
+     fan out to both Jenkinses without affecting runtime behavior. -->
+
