@@ -597,7 +597,7 @@ Started At: $(Get-Date -Format o)
                             foreach ($ohFile in $ohFiles) {
                                 if (Test-Path $ohFile) {
                                     $raw = Get-Content $ohFile -Raw -Encoding UTF8
-                                    $json = $raw -replace '//.*', '' -replace ',(\s*[}\]])', '$1'
+                                    $json = $raw -replace '//.*', '' -replace ',(\\s*[}\\]])', '$1'
                                     $obj = $json | ConvertFrom-Json
                                     if ($obj.dependencies) { $feRuntime.AddRange(@($obj.dependencies.PSObject.Properties.Name)) }
                                     if ($obj.devDependencies) { $feDev.AddRange(@($obj.devDependencies.PSObject.Properties.Name)) }
@@ -612,8 +612,8 @@ Started At: $(Get-Date -Format o)
                                 Get-ChildItem -Path $backendDir -Filter 'requirements.txt' -Recurse -Depth 1 | ForEach-Object {
                                     Get-Content $_.FullName -Encoding UTF8 | ForEach-Object {
                                         $line = $_.Trim()
-                                        if ($line -and $line -notmatch '^\s*#') {
-                                            $name = ($line -split '[><=;@\[]')[0].Trim()
+                                        if ($line -and $line -notmatch '^\\s*#') {
+                                            $name = ($line -split '[><=;@\\[]')[0].Trim()
                                             if ($name) { $bePackages.Add($name) }
                                         }
                                     }
