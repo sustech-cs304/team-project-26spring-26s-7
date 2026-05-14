@@ -72,6 +72,22 @@ export class ShareService {
     this.timeout = timeout
   }
 
+  protected createFormData(): MultipartFormData {
+    return new MultipartFormData()
+  }
+
+  protected async sendRequest(
+    url: string,
+    options: http.HttpRequestOptions
+  ): Promise<http.HttpResponse> {
+    const httpReq = http.createHttp()
+    try {
+      return await httpReq.request(url, options)
+    } finally {
+      httpReq.destroy()
+    }
+  }
+
   /**
    * 发布分享 — 调用 POST /api/v1/share/publish
    *
@@ -109,7 +125,7 @@ export class ShareService {
       return errResult(40001, 'INVALID_PHOTO_COUNT', msg)
     }
 
-    const form = new MultipartFormData()
+    const form = this.createFormData()
     // §4.2 — tripData 作为文本字段（JSON 字符串）
     form.addField('tripData', JSON.stringify(trip))
     // §4.1 — 过期时长。expiryMinutes 优先于 expiryHours（与后端约定一致）
@@ -160,7 +176,6 @@ export class ShareService {
     const url = `${this.baseUrl}${ShareEndpoints.PUBLISH}`
     logger.info(TAG, `POST ${url} (${photos.length} photos, ${trip.nodes.length} nodes)`)
 
-    const httpReq = http.createHttp()
     try {
       const body = await form.build()
       const options: http.HttpRequestOptions = {
@@ -171,7 +186,7 @@ export class ShareService {
         expectDataType: http.HttpDataType.OBJECT,
         extraData: body,
       }
-      const resp = await httpReq.request(url, options)
+      const resp = await this.sendRequest(url, options)
       logger.info(TAG, `Response status: ${resp.responseCode}`)
 
       const parsed = parseEnvelope<SharePublishOk>(resp.result)
@@ -188,8 +203,6 @@ export class ShareService {
       const msg = `Network error: ${be?.message ?? JSON.stringify(e)}`
       logger.error(TAG, msg)
       return errResult(0, 'NETWORK_ERROR', msg)
-    } finally {
-      httpReq.destroy()
     }
   }
 
@@ -200,7 +213,6 @@ export class ShareService {
     const url = `${this.baseUrl}${ShareEndpoints.STATUS_PREFIX}/${shortCode}/status`
     logger.info(TAG, `GET ${url}`)
 
-    const httpReq = http.createHttp()
     try {
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.GET,
@@ -208,7 +220,7 @@ export class ShareService {
         connectTimeout: HttpTimeout.DEFAULT,
         expectDataType: http.HttpDataType.OBJECT,
       }
-      const resp = await httpReq.request(url, options)
+      const resp = await this.sendRequest(url, options)
       const parsed = parseEnvelope<ShareStatusOk>(resp.result)
       if (parsed.code === 0 && parsed.data) {
         return okResult(parsed.data)
@@ -217,8 +229,6 @@ export class ShareService {
     } catch (e) {
       const be = e as BusinessError
       return errResult(0, 'NETWORK_ERROR', be?.message ?? JSON.stringify(e))
-    } finally {
-      httpReq.destroy()
     }
   }
 
@@ -274,7 +284,6 @@ export class ShareService {
     const url = `${this.baseUrl}${ShareEndpoints.REVOKE_BY_TRIP}`
     logger.info(TAG, `POST ${url} tripId=${tripId}`)
 
-    const httpReq = http.createHttp()
     try {
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
@@ -284,7 +293,7 @@ export class ShareService {
         expectDataType: http.HttpDataType.OBJECT,
         extraData: JSON.stringify({ tripId }),
       }
-      const resp = await httpReq.request(url, options)
+      const resp = await this.sendRequest(url, options)
       const parsed = parseEnvelope<RevokeByTripOk>(resp.result)
       if (resp.responseCode === 200 && parsed.code === 0 && parsed.data) {
         logger.info(TAG, `revoked ${parsed.data.revokedCount} shares for trip=${tripId}`)
@@ -298,8 +307,6 @@ export class ShareService {
       const msg = `Network error: ${be?.message ?? JSON.stringify(e)}`
       logger.warn(TAG, msg)
       return errResult(0, 'NETWORK_ERROR', msg)
-    } finally {
-      httpReq.destroy()
     }
   }
 }

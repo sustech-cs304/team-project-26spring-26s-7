@@ -345,3 +345,66 @@ describe('RdbHelperTest', () => {
 - [ ] T-RP4-004: 鎷栧姩杩涘害鏉¤烦鍒版柊鑺傜偣鏃讹紝鍗＄墖鍏ュ満/鍑哄満鍔ㄧ敾涓庢寜閽烦杞畬鍏ㄤ竴鑷?
 - [ ] T-RP4-005: 鍙充笂瑙掔姸鎬佹爣绛句細鏄剧ず褰撳墠杞満妯″紡锛屼究浜庢墜鍔ㄦ祴璇曟牳瀵?
 - [ ] T-RP4-006: 鎾斁銆佹殏鍋溿€佸垏鏂伴煶涔愩€佸睍寮€鐓х墖璇︽儏灞傜瓑鍘熸湁琛屼负鏃犲洖褰?
+## 2026-05-10 Social Share / Common Unit Tests
+
+- [x] `frontend/build.ps1 test` 宸叉墽琛屽苟閫氳繃锛?026-05-10锛?
+- [x] T-SS-U1-001: `SharePreflight.validatePublish()` 鎷︽埅绌鸿妭鐐?
+- [x] T-SS-U1-002: `SharePreflight.validatePublish()` 鎷︽埅闈炴硶 expiry
+- [x] T-SS-U1-003: `SharePreflight.validatePublish()` 鎷︽埅 `photoCount` 涓嶄竴鑷?
+- [x] T-SS-U1-004: `SharePreflight.validatePublish()` 浼樺厛鎷︽埅 `CLOUD_ONLY_PHOTO`
+- [x] T-SS-U1-005: `SharePreflight.validatePublish()` 鎷︽埅 `LOCAL_PHOTO_MISSING`
+- [x] T-SS-U1-006: `SharePreflight.validatePublish()` 鍦?0 photo 鍚堟硶璇锋眰涓嬮€氳繃
+- [x] T-SS-U2-001: `ShareErrorMapper.formatPreflight()` 杩斿洖甯?detail 鐨勪簯绔?photo 鎻愮ず
+- [x] T-SS-U2-002: `ShareErrorMapper.formatPublishResult()` 杩斿洖甯?detail 鐨?invalid expiry 鎻愮ず
+- [x] T-SS-U2-003: `ShareErrorMapper` 淇濈暀閫氱敤 preflight `message/detail`
+- [x] T-SS-U2-004: `ShareErrorMapper` 淇濈暀闈?500 閫氱敤 publish `message/detail`
+- [x] T-COM-U1-001: `MultipartFormData.getContentType()` 鍖呭惈 multipart boundary
+- [x] T-COM-U1-002: `MultipartFormData.build()` 鍦ㄦ枃鏈瓧娈典笅鍙墽琛?smoke锛堜笉鎶涘紓甯革級
+## 2026-05-10 Social Share / Common Unit Tests Update
+
+- [x] T-SS-U3-001: `SharePhotoHelper.toSharePhotos()` 杩囨护 `users/...` 涓?`cloud://...` cloud-only 寮曠敤
+- [x] T-SS-U3-002: `SharePhotoHelper.toSharePhotos()` 杩囨护缂哄け鐨勬湰鍦拌矾寰?
+- [x] T-SS-U3-003: `SharePhotoHelper.toSharePhotos()` 蹇界暐绌鸿矾寰勬潯鐩?
+- [x] T-SS-U4-001: `ShareService.publish()` 鍦?photoCount 涓嶄竴鑷存椂鍦ㄥ鎴风鎻愬墠澶辫触
+- [x] T-SS-U4-002: `ShareService.publish()` 浼樺厛浣跨敤 `expiryMinutes`
+- [x] T-SS-U4-003: `ShareService.publish()` 姝ｇ‘鎼哄甫 `replaceShortCode / replaceExpiry / replaceSig`
+- [x] T-SS-U4-004: `ShareService.publish()` 姝ｇ‘鎼哄甫 replay prefs 瀛楁
+- [x] T-SS-U4-005: `ShareService.publish()` 鎸夐『搴忔瀯閫?`photo_0 / photo_1`
+- [x] T-SS-U4-006: `ShareService.publish()` 姝ｇ‘瑙ｆ瀽鍚庣閿欒 envelope
+- [x] T-SS-U4-007: `ShareService.publish()` 缃戠粶寮傚父鏄犲皠涓?`NETWORK_ERROR`
+- [x] T-SS-U4-008: `ShareService.status()` 姝ｇ‘瑙ｆ瀽鎴愬姛 envelope
+- [x] T-SS-U4-009: `ShareService.revokeByTrip()` 姝ｇ‘瑙ｆ瀽鎴愬姛 envelope
+
+## 2026-05-10 Social Share Light Integration Update
+
+- [x] T-SS-I1-001: `SharePhotoHelper.prepareSharePhotos()` reports `CLOUD_ONLY_PHOTO`, `LOCAL_PHOTO_MISSING`, and `PHOTO_SANITIZE_FAILED` in one batch and keeps the sanitized success path.
+- [x] T-SS-I1-002: `SharePhotoHelper.toSanitizedSharePhotos()` returns JPEG upload files with `cleanupPath` preserved for later cleanup.
+- [x] T-SS-I1-003: `SharePhotoHelper.cleanupTemporaryPhotos()` only deletes entries that actually carry `cleanupPath`.
+
+## 2026-05-10 RdbHelper Light Integration Update
+
+- [x] T-RDB-I1-001: `RdbHelper.getStore()` throws before initialization and keeps `isInitialized()` false.
+- [x] T-RDB-I1-002: `RdbHelper.setSyncState()` / `getSyncState()` writes, overwrites, and scopes sync state by `ownerUid`.
+- [x] T-RDB-I1-003: `RdbHelper.enqueueSyncItem()` / `getPendingSyncQueueItems()` / `removeSyncItems()` preserve created-at ordering and owner filtering.
+- [x] T-RDB-I1-004: `RdbHelper.wipeAllUserData()` clears `memory_nodes`, `travels`, `sync_queue`, `app_sync_state`, and `user_profile`.
+
+## 2026-05-10 ShareService Boundary Test Update
+
+- [x] T-SS-U4-010: `ShareService.publish()` falls back to `expiryHours` when `expiryMinutes` is not provided.
+- [x] T-SS-U4-011: `ShareService.publish()` omits replace fields when `replace.shortCode` is empty and leaves replay fields absent when replay prefs are not provided.
+- [x] T-SS-U4-012: `ShareService.publish()` keeps stable `photo_0` / `photo_1` / `photo_2` ordering for three uploaded files.
+- [x] T-SS-U4-013: `ShareService.status()` maps non-zero error envelopes into `ok=false` results with backend error codes/messages preserved.
+
+## 2026-05-10 Repository Light Integration Update
+
+- [x] T-TR-I1-001: `TravelRepository.createTravel()` persists owner-scoped travel rows and replay preference fields that can be read back through `getTravelById()` and `getAllTravels()`.
+- [x] T-TR-I1-002: `TravelRepository.updateTravel()` switches cloud-backed rows to `pending_update`, bumps `version`, and updates `updated_at`.
+- [x] T-TR-I1-003: `TravelRepository.deleteTravel()` deletes child `memory_nodes` rows before removing the parent travel row.
+- [x] T-MN-I1-001: `MemoryNodeRepository.createNode()` appends new nodes to the next `node_order` slot for the target travel.
+- [x] T-MN-I1-002: `MemoryNodeRepository.updateNode()` moves a node to a different travel, preserves cloud-backed update semantics, and appends the node after the target travel's tail order.
+- [x] T-MN-I1-003: `MemoryNodeRepository.reorderNodes()` rewrites `node_order` and marks each node as `pending_reorder`.
+
+## 2026-05-13 CI Daemon Follow-up
+
+- [~] T-CI-004: Local script verification confirmed `frontend/build.ps1 --help` still works outside CI after the no-daemon fallback change.
+- [ ] T-CI-005: Re-run Jenkins compile and test stages and confirm the `frontend/build.ps1` CI fallback prevents hvigor daemon `ECONNREFUSED 127.0.0.1:45000` failures in `build-66` style runs.

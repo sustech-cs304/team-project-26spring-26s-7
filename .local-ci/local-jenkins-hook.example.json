@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "jenkinsBaseUrl": "http://127.0.0.1:8081",
+  "jobName": "travelpin-ci",
+  "usernameEnvVar": "JENKINS_USERNAME",
+  "apiTokenEnvVar": "JENKINS_API_TOKEN",
+  "logDir": ".ci-logs",
+  "metadataPath": ".ci-logs/latest-local-run.json"
+}

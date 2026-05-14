@@ -1,0 +1,75 @@
+name: Jenkinsfile Check
+
+on:
+  push:
+    branches:
+      - test/ci-cd
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jenkinsfile-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  jenkinsfile-check:
+    runs-on:
+      - self-hosted
+      - windows
+    env:
+      JENKINS_BASE_URL: http://127.0.0.1:8081
+      JENKINS_JOB_NAME: travelpin-ci
+      LOCAL_CI_ARTIFACT_ROOT: D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\ci-artifacts
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger Jenkins job and stream logs
+        shell: powershell
+        env:
+          JENKINS_USERNAME: ${{ secrets.JENKINS_USERNAME }}
+          JENKINS_API_TOKEN: ${{ secrets.JENKINS_API_TOKEN }}
+        run: |
+          ./scripts/watch-jenkins-build.ps1 `
+            -BaseUrl $env:JENKINS_BASE_URL `
+            -JobName $env:JENKINS_JOB_NAME `
+            -Username $env:JENKINS_USERNAME `
+            -ApiToken $env:JENKINS_API_TOKEN `
+            -LogDir '.ci-logs' `
+            -MetadataPath '.ci-logs/latest-run.json'
+
+      - name: Resolve artifact paths
+        if: always()
+        id: paths
+        shell: powershell
+        run: |
+          $metadataPath = Join-Path $PWD '.ci-logs/latest-run.json'
+          if (-not (Test-Path $metadataPath)) {
+            "build_number=" >> $env:GITHUB_OUTPUT
+            "artifact_dir=" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          $metadata = Get-Content $metadataPath -Raw | ConvertFrom-Json
+          $artifactDir = Join-Path $env:LOCAL_CI_ARTIFACT_ROOT ("build-{0}" -f $metadata.buildNumber)
+
+          "build_number=$($metadata.buildNumber)" >> $env:GITHUB_OUTPUT
+          "artifact_dir=$artifactDir" >> $env:GITHUB_OUTPUT
+
+      - name: Upload Jenkins logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-logs-run-${{ github.run_number }}
+          path: .ci-logs
+          if-no-files-found: warn
+          include-hidden-files: true
+
+      - name: Upload Jenkins artifacts
+        if: always() && steps.paths.outputs.artifact_dir != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-artifacts-build-${{ steps.paths.outputs.build_number }}
+          path: ${{ steps.paths.outputs.artifact_dir }}
+          if-no-files-found: warn

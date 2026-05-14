@@ -17,6 +17,9 @@ backend/cc4backend.md
 tmp/
 Temp/
 temp/
+.ci-logs/
+.ci-tmps/
+ci-artifacts/
 
 # ========================
 # OS generated
@@ -82,6 +85,12 @@ frontend/.idea/
 # package
 package-lock.json
 package.json
+
+# local CI hook config — keep .example.json templates tracked, ignore everything else
+.local-ci/*
+!.local-ci/local-jenkins-hook.example.json
+!.local-ci/local-jenkins-hook-backend.example.json
+
 frontend/build-profile.json5
 
 # ========================
@@ -91,5 +100,3 @@ backend/.ci-venv/
 backend/build-artifacts/
 build-artifacts/
 .ci-logs/
-.local-ci/local-jenkins-hook-backend.json
-.local-ci/local-jenkins-hook.json
