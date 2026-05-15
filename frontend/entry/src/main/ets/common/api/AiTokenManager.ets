@@ -1,149 +1,226 @@
-/**
- * AI 子服务 token 管理器（运行时获取，非硬编码）。
- *
- * 设计：
- * - 登录用户调用 share_service 的 POST /api/v1/auth/issue_ai_token，
- *   一次性领取 vision/filter/censor 三套 token，按 expires_in 缓存。
- * - 缓存命中直接返回；过期或缺失则重新申领。
- * - 申领失败时降级到 fallback dev token，保证 debug 包不直接挂掉
- *   （release 上架前后端必须配齐 AI_*_TOKEN，不会走到 fallback）。
- *
- * 鉴权方式：
- * - 当前 share_service 开启 ALLOW_DEV_UID_HEADER=1，发 X-Dev-Uid 即可。
- * - 上架时后端关掉该开关，前端需要切换到 Bearer <agc_id_token>，参见 Tier 2.3。
- */
-import { http } from '@kit.NetworkKit';
-import { hilog } from '@kit.PerformanceAnalysisKit';
-import { BusinessError } from '@kit.BasicServicesKit';
+import { http } from '@kit.NetworkKit'
+import { hilog } from '@kit.PerformanceAnalysisKit'
+import { BusinessError } from '@kit.BasicServicesKit'
+import auth from '@hw-agconnect/auth'
 
-import { API_BASE_URL } from './ApiEndpoints';
-import { AuthService } from '../auth/AuthService';
+import { API_BASE_URL, IMAGE_CENSOR_BASE_URL } from './ApiEndpoints'
+import { AppSessionManager } from '../auth/AppSessionManager'
 
-const DOMAIN = 0x0000;
-const TAG = 'AiTokenManager';
+const DOMAIN = 0x0000
+const TAG = 'AiTokenManager'
+const EXPIRY_LEEWAY_SEC = 60
 
-/** Tier 2.2 完成前的兜底 token；上架前后端不允许走到这里 */
-const FALLBACK_DEV_TOKEN = 'DEV_05436de19d4ad0029b4d722b9288167b';
-
-interface IssueResp {
-  vision_token?: string;
-  filter_token?: string;
-  censor_token?: string;
-  issued_at?: number;
-  expires_in?: number;
+interface AuditIssueResp {
+  filter_token?: string
+  censor_token?: string
+  issued_at?: number
+  expires_in?: number
 }
 
-interface CachedTokens {
-  vision: string;
-  filter: string;
-  censor: string;
-  /** 本地时间戳（秒），到此点视为过期 */
-  expiresAt: number;
+interface CachedAuditTokens {
+  filter: string
+  censor: string
+  expiresAt: number
 }
 
-let cached: CachedTokens | null = null;
-let inflight: Promise<CachedTokens> | null = null;
+interface AiIssueResp {
+  vision_token?: string
+  issued_at?: number
+  expires_in?: number
+}
 
-/** 提前 60s 视为过期，避免边界请求被服务端拒绝 */
-const EXPIRY_LEEWAY_SEC = 60;
+interface CachedVisionToken {
+  token: string
+  expiresAt: number
+}
 
-async function fetchTokens(): Promise<CachedTokens> {
-  const user = await AuthService.getCurrentUser();
-  if (!user) {
-    hilog.warn(DOMAIN, TAG, 'no current user, falling back to dev token');
-    return makeFallback();
+function stringifyHttpResult(result: Object | string | ArrayBuffer | undefined): string {
+  if (result === undefined || result === null) {
+    return ''
   }
-
-  const url = `${API_BASE_URL}/api/v1/auth/issue_ai_token`;
-  const httpReq = http.createHttp();
+  if (typeof result === 'string') {
+    return result
+  }
   try {
-    const options: http.HttpRequestOptions = {
+    return JSON.stringify(result)
+  } catch (_) {
+    return String(result)
+  }
+}
+
+const FALLBACK_DEV_TOKEN = 'DEV_05436de19d4ad0029b4d722b9288167b'
+let auditCached: CachedAuditTokens | null = null
+let auditInflight: Promise<CachedAuditTokens> | null = null
+let visionCached: CachedVisionToken | null = null
+let visionInflight: Promise<CachedVisionToken> | null = null
+
+async function fetchAuditTokens(): Promise<CachedAuditTokens> {
+  let appSessionToken = await AppSessionManager.getToken()
+  if (!appSessionToken) {
+    appSessionToken = await AppSessionManager.refreshFromAgcAuth()
+  }
+  if (!appSessionToken) {
+    throw new Error('AUDIT_AUTH_REQUIRED')
+  }
+  const httpReq = http.createHttp()
+
+  try {
+    const response = await httpReq.request(`${IMAGE_CENSOR_BASE_URL}/api/v1/auth/issue_audit_token`, {
       method: http.RequestMethod.POST,
       header: {
         'Content-Type': 'application/json',
-        // 当前后端 ALLOW_DEV_UID_HEADER=1，用此头免登录 token
-        'X-Dev-Uid': user.uid,
+        'Authorization': `Bearer ${appSessionToken}`
       },
-      readTimeout: 10_000,
-      connectTimeout: 10_000,
+      readTimeout: 10000,
+      connectTimeout: 10000,
       expectDataType: http.HttpDataType.OBJECT,
-      extraData: '',
-    };
-    const resp = await httpReq.request(url, options);
-    if (resp.responseCode !== 200) {
-      hilog.warn(DOMAIN, TAG, `issue_ai_token http ${resp.responseCode}, fallback`);
-      return makeFallback();
+      extraData: JSON.stringify({})
+    })
+
+    if (response.responseCode !== 200 && response.responseCode !== 201) {
+      hilog.error(DOMAIN, TAG, `issue_audit_token failed: HTTP ${response.responseCode}, body=${stringifyHttpResult(response.result)}`)
+      throw new Error('AUDIT_TOKEN_REQUEST_FAILED')
     }
-    const body = resp.result as IssueResp;
-    if (!body || !body.vision_token || !body.filter_token || !body.censor_token) {
-      hilog.warn(DOMAIN, TAG, 'issue_ai_token resp missing fields, fallback');
-      return makeFallback();
+
+    const body = response.result as AuditIssueResp
+    if (!body || !body.filter_token || !body.censor_token) {
+      hilog.error(DOMAIN, TAG, `issue_audit_token invalid response: ${stringifyHttpResult(response.result)}`)
+      throw new Error('AUDIT_TOKEN_INVALID_RESPONSE')
     }
-    const ttl = body.expires_in ?? 1800;
-    const issued = body.issued_at ?? Math.floor(Date.now() / 1000);
+
+    const ttl = body.expires_in ?? 1800
+    const issued = body.issued_at ?? Math.floor(Date.now() / 1000)
     return {
-      vision: body.vision_token,
       filter: body.filter_token,
       censor: body.censor_token,
-      expiresAt: issued + ttl - EXPIRY_LEEWAY_SEC,
-    };
-  } catch (e) {
-    const be = e as BusinessError;
-    hilog.warn(DOMAIN, TAG, `issue_ai_token failed: ${be?.message ?? JSON.stringify(e)}, fallback`);
-    return makeFallback();
+      expiresAt: issued + ttl - EXPIRY_LEEWAY_SEC
+    }
+  } catch (err) {
+    const be = err as BusinessError
+    hilog.error(DOMAIN, TAG, `issue_audit_token error: ${be?.message ?? JSON.stringify(err)}`)
+    throw err as Error
   } finally {
-    httpReq.destroy();
+    httpReq.destroy()
   }
 }
 
-function makeFallback(): CachedTokens {
-  return {
-    vision: FALLBACK_DEV_TOKEN,
-    filter: FALLBACK_DEV_TOKEN,
-    censor: FALLBACK_DEV_TOKEN,
-    expiresAt: Math.floor(Date.now() / 1000) + 60, // 1 分钟后重试，避免雪崩
-  };
-}
+async function getAuditTokens(): Promise<CachedAuditTokens> {
+  const now = Math.floor(Date.now() / 1000)
+  if (auditCached && auditCached.expiresAt > now) {
+    return auditCached
+  }
 
-async function getTokens(): Promise<CachedTokens> {
-  const now = Math.floor(Date.now() / 1000);
-  if (cached && cached.expiresAt > now) {
-    return cached;
+  if (auditInflight) {
+    return auditInflight
   }
-  if (inflight) {
-    return inflight;
-  }
-  // fetchTokens 内部已经 try/catch 所有异常并降级到 fallback，不会 throw；
-  // 这里只用 try/finally 保证 inflight 被清理。
-  const p: Promise<CachedTokens> = fetchTokens();
-  inflight = p;
+
+  const promise = fetchAuditTokens()
+  auditInflight = promise
   try {
-    const t: CachedTokens = await p;
-    cached = t;
-    return t;
+    const tokens = await promise
+    auditCached = tokens
+    return tokens
   } finally {
-    inflight = null;
+    auditInflight = null
+  }
+}
+
+function makeVisionFallback(): CachedVisionToken {
+  return {
+    token: FALLBACK_DEV_TOKEN,
+    expiresAt: Math.floor(Date.now() / 1000) + 60
+  }
+}
+
+async function fetchVisionToken(): Promise<CachedVisionToken> {
+  let uid = ''
+  try {
+    const user = await auth.getCurrentUser()
+    uid = user?.getUid() ?? ''
+  } catch (err) {
+    hilog.warn(DOMAIN, TAG, `get AGC user failed for vision token: ${JSON.stringify(err)}`)
+  }
+
+  if (!uid) {
+    return makeVisionFallback()
+  }
+
+  const httpReq = http.createHttp()
+  try {
+    const response = await httpReq.request(`${API_BASE_URL}/api/v1/auth/issue_ai_token`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'Content-Type': 'application/json',
+        'X-Dev-Uid': uid
+      },
+      readTimeout: 10000,
+      connectTimeout: 10000,
+      expectDataType: http.HttpDataType.OBJECT,
+      extraData: ''
+    })
+
+    if (response.responseCode !== 200 && response.responseCode !== 201) {
+      hilog.warn(DOMAIN, TAG, `issue_ai_token http ${response.responseCode}, fallback`)
+      return makeVisionFallback()
+    }
+
+    const body = response.result as AiIssueResp
+    if (!body || !body.vision_token) {
+      hilog.warn(DOMAIN, TAG, 'issue_ai_token missing vision_token, fallback')
+      return makeVisionFallback()
+    }
+
+    const ttl = body.expires_in ?? 1800
+    const issued = body.issued_at ?? Math.floor(Date.now() / 1000)
+    return {
+      token: body.vision_token,
+      expiresAt: issued + ttl - EXPIRY_LEEWAY_SEC
+    }
+  } catch (err) {
+    const be = err as BusinessError
+    hilog.warn(DOMAIN, TAG, `issue_ai_token error: ${be?.message ?? JSON.stringify(err)}, fallback`)
+    return makeVisionFallback()
+  } finally {
+    httpReq.destroy()
+  }
+}
+
+async function getVisionTokenCached(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000)
+  if (visionCached && visionCached.expiresAt > now) {
+    return visionCached.token
+  }
+
+  if (visionInflight) {
+    return (await visionInflight).token
+  }
+
+  const promise = fetchVisionToken()
+  visionInflight = promise
+  try {
+    const token = await promise
+    visionCached = token
+    return token.token
+  } finally {
+    visionInflight = null
   }
 }
 
 export class AiTokenManager {
-  /** 拿 ai-service (Qwen-VL) 用的 Bearer token */
   static async getVisionToken(): Promise<string> {
-    return (await getTokens()).vision;
+    return getVisionTokenCached()
   }
 
-  /** 拿敏感词过滤服务用的 Bearer token */
   static async getFilterToken(): Promise<string> {
-    return (await getTokens()).filter;
+    return (await getAuditTokens()).filter
   }
 
-  /** 拿百度图片审核代理用的 Bearer token */
   static async getCensorToken(): Promise<string> {
-    return (await getTokens()).censor;
+    return (await getAuditTokens()).censor
   }
 
-  /** 强制清缓存（如收到 401，应用应清缓存重试一次） */
   static invalidate(): void {
-    cached = null;
+    auditCached = null
+    visionCached = null
   }
 }

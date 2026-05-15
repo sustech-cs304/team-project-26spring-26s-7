@@ -57,12 +57,12 @@ export const API_BASE_URL: string = AUDIT_BASE
 export const VISION_LLM_BASE_URL: string = AUDIT_BASE
 
 /**
- * 敏感词过滤服务 base
+ * 个人资料文本审核 base
  *
- * 路径带 /filter 前缀，nginx 这层 rewrite 去掉再转给后端。
- * 客户端拼出来的 URL 形如 https://audit.itsmappin.top:8443/filter/check
+ * 当前昵称/签名审核走 sensitive-check 的 /text_check，
+ * 对外路径带 /censor 前缀，nginx rewrite 后转给后端。
  */
-export const CONTENT_FILTER_BASE_URL: string = AUDIT_BASE + '/filter'
+export const CONTENT_FILTER_BASE_URL: string = AUDIT_BASE + '/censor'
 
 /**
  * 图片内容审核服务（百度智能云代理）base

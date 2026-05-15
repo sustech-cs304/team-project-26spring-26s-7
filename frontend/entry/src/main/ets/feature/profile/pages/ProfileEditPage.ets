@@ -21,6 +21,7 @@ struct ProfileEditPage {
   @State bio: string = ''
   @State isSaving: boolean = false
   @State isCheckingAvatar: boolean = false
+  @State saveProgressText: string = ''
 
   aboutToAppear(): void {
     this.loadProfile()
@@ -171,6 +172,7 @@ struct ProfileEditPage {
     }
 
     this.isSaving = true
+    this.saveProgressText = '正在审核并保存资料...'
 
     try {
       await AuthService.saveLocalProfile({
@@ -189,6 +191,7 @@ struct ProfileEditPage {
       promptAction.showToast({ message: error.message || '保存失败，请重试' });
     } finally {
       this.isSaving = false
+      this.saveProgressText = ''
     }
   }
 
@@ -218,6 +221,23 @@ struct ProfileEditPage {
       .height(56)
       .backgroundColor(AppColors.CARD_BG)
 
+      if (this.isSaving) {
+        Row() {
+          LoadingProgress()
+            .width(18)
+            .height(18)
+            .color(AppColors.PRIMARY)
+          Text(this.saveProgressText)
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_SECONDARY)
+            .margin({ left: 8 })
+        }
+        .width('100%')
+        .height(40)
+        .justifyContent(FlexAlign.Center)
+        .backgroundColor(AppColors.CARD_BG)
+      }
+
       // 表单内容
       Scroll() {
         Column() {
@@ -231,33 +251,47 @@ struct ProfileEditPage {
             Row() {
               // 头像预览 / 添加按钮
               Column() {
-                if (this.avatar) {
-                  Image(this.avatar.startsWith('file://') || this.avatar.startsWith('http')
-                    ? this.avatar : `file://${this.avatar}`)
-                    .width(80)
-                    .height(80)
-                    .borderRadius(40)
-                } else {
-                  Text('+')
-                    .fontSize(32)
-                    .fontColor(AppColors.TEXT_HINT)
-                  Text('添加头像')
-                    .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.TEXT_HINT)
-                    .margin({ top: 4 })
+                Column() {
+                  if (this.avatar) {
+                    Image(this.avatar.startsWith('file://') || this.avatar.startsWith('http')
+                      ? this.avatar : `file://${this.avatar}`)
+                      .width(80)
+                      .height(80)
+                      .borderRadius(40)
+                  } else {
+                    Text('+')
+                      .fontSize(32)
+                      .fontColor(AppColors.TEXT_HINT)
+                    Text('添加头像')
+                      .fontSize(AppDimens.FONT_SM)
+                      .fontColor(AppColors.TEXT_HINT)
+                      .margin({ top: 4 })
+                  }
                 }
+                .width(80)
+                .height(80)
+                .backgroundColor(AppColors.BACKGROUND)
+                .borderRadius(40)
+                .justifyContent(FlexAlign.Center)
+
                 if (this.isCheckingAvatar) {
-                  Text('审核中')
-                    .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.PRIMARY)
-                    .margin({ top: 4 })
+                  Row() {
+                    LoadingProgress()
+                      .width(16)
+                      .height(16)
+                      .color(AppColors.PRIMARY)
+                    Text('正在审核头像...')
+                      .fontSize(AppDimens.FONT_SM)
+                      .fontColor(AppColors.PRIMARY)
+                      .margin({ left: 6 })
+                  }
+                  .margin({ top: 8 })
+                  .justifyContent(FlexAlign.Center)
                 }
               }
-              .width(80)
-              .height(80)
-              .backgroundColor(AppColors.BACKGROUND)
-              .borderRadius(40)
+              .width(140)
               .justifyContent(FlexAlign.Center)
+              .alignItems(HorizontalAlign.Center)
               .onClick(() => this.handlePickAvatar())
             }
             .margin({ top: 8 })
