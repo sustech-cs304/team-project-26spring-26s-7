@@ -1,0 +1,35 @@
+[Unit]
+Description=ItsMapPin Share & Publish Service (FastAPI + SQLite)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=itsmappin
+Group=itsmappin
+WorkingDirectory=/opt/itsmappin/Backend_ItsMapPin/share-service
+EnvironmentFile=/opt/itsmappin/Backend_ItsMapPin/.env
+Environment=PYTHONUNBUFFERED=1
+# DB_PATH 默认走数据卷下的稳定路径，不要写在工作目录里
+Environment=DB_PATH=/var/lib/itsmappin/share.db
+
+ExecStart=/opt/itsmappin/Backend_ItsMapPin/share-service/.venv/bin/uvicorn \
+    share_service.main:app \
+    --host 127.0.0.1 --port 8001 \
+    --proxy-headers --forwarded-allow-ips=127.0.0.1
+
+Restart=always
+RestartSec=5
+StartLimitInterval=300
+StartLimitBurst=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/itsmappin /var/log/itsmappin /opt/itsmappin/Backend_ItsMapPin/share-service/share_service/cache
+StandardOutput=append:/var/log/itsmappin/share-service.log
+StandardError=append:/var/log/itsmappin/share-service.err
+
+[Install]
+WantedBy=multi-user.target

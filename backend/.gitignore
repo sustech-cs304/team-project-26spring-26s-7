@@ -1,0 +1,30 @@
+# 凭证
+.env
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+
+# venv
+.venv/
+venv/
+
+# 运行时
+logs/
+*.log
+*.pid
+
+# share-service 数据库（用户数据）
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store
+*.swp

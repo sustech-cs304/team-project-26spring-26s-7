@@ -1,0 +1,41 @@
+[Unit]
+Description=ItsMapPin AI Relay (SiliconFlow proxy, OpenAI-compat)
+After=network-online.target sensitive-filter.service
+Wants=network-online.target sensitive-filter.service
+
+[Service]
+Type=simple
+User=itsmappin
+Group=itsmappin
+WorkingDirectory=/opt/itsmappin/Backend_ItsMapPin/ai-relay
+EnvironmentFile=/opt/itsmappin/Backend_ItsMapPin/.env
+Environment=PYTHONUNBUFFERED=1
+# 防止 HTTP_PROXY 污染本机调用
+Environment=NO_PROXY=127.0.0.1,localhost
+# SF_KEY / AI_SERVICE_API_KEYS / AI_SERVICE_RATE_LIMIT_PER_MIN 由 EnvironmentFile 注入
+
+ExecStart=/opt/itsmappin/Backend_ItsMapPin/.venv/bin/python siliconflow_relay.py \
+    --server-host 127.0.0.1 \
+    --server-port 8000 \
+    --api-keys ${AI_SERVICE_API_KEYS} \
+    --rate-limit-per-min ${AI_SERVICE_RATE_LIMIT_PER_MIN} \
+    --max-question-chars ${AI_SERVICE_MAX_QUESTION_CHARS} \
+    --siliconflow-key ${SF_KEY} \
+    --sensitive-filter-url http://127.0.0.1:9100
+
+Restart=always
+RestartSec=5
+StartLimitInterval=300
+StartLimitBurst=5
+
+# 加固
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/itsmappin
+StandardOutput=append:/var/log/itsmappin/ai-relay.log
+StandardError=append:/var/log/itsmappin/ai-relay.err
+
+[Install]
+WantedBy=multi-user.target
