@@ -3,6 +3,8 @@ import { common } from '@kit.AbilityKit'
 import { http } from '@kit.NetworkKit'
 import { pasteboard } from '@kit.BasicServicesKit'
 import { image } from '@kit.ImageKit'
+import { hilog } from '@kit.PerformanceAnalysisKit'
+import { fileIo as fs, fileUri } from '@kit.CoreFileKit'
 import { AppColors, AppDimens, getDataService, ReplayPreferences, RouterParam, SharePlatform } from '../../../common'
 import type { MemoryNode, Trip } from '../../../common'
 import { ShareErrorMapper } from '../services/ShareErrorMapper'
@@ -10,7 +12,6 @@ import { SharePhoto, ShareService } from '../services/ShareService'
 import { SharePhotoBatchResult, SharePhotoHelper } from '../services/SharePhotoHelper'
 import { SharePreflight } from '../services/SharePreflight'
 import { SystemShareService, SystemSharePayload, SystemShareImagePayload } from '../services/SystemShareService'
-import { fileIo as fs } from '@kit.CoreFileKit'
 import {
   ReplaceLink,
   ReplayPrefsForShare,
@@ -22,6 +23,9 @@ import {
 const KIND_RDB: string = 'rdb'
 const KIND_DEMO: string = 'demo'
 const KIND_ERROR: string = 'error'
+
+const POSTER_DOMAIN: number = 0x0000
+const POSTER_TAG: string = 'SharePoster'
 
 interface TripResolution {
   kind: string
@@ -50,6 +54,7 @@ export struct SharePage {
   @State shareUrl: string = ''
   @State copyText: string = ''
   @State isLoading: boolean = true
+  @State loadingMessage: string = '正在生成分享链接...'
   @State errorMsg: string = ''
   @State currentTripName: string = ''
   @State selectedExpiryIdx: number = 2
@@ -116,6 +121,7 @@ export struct SharePage {
   }
 
   private async publishShare(): Promise<void> {
+    this.loadingMessage = '正在生成分享链接...'
     this.isLoading = true
     this.errorMsg = ''
     this.shareUrl = ''
@@ -479,16 +485,29 @@ export struct SharePage {
     }
     const link = this.lastLink
     const ctx = getContext(this) as common.UIAbilityContext
-    promptAction.showToast({ message: '正在生成海报…', duration: 1500 })
 
-    const bytes = await this.shareService.fetchPoster(
-      link.shortCode, link.expirySec, link.sig)
+    // 用 isLoading + 动态文案持续显示进度（toast 1.5s 会消失，看不见后续步骤）
+    this.loadingMessage = '正在生成海报...'
+    this.isLoading = true
+    promptAction.showToast({ message: '正在生成海报…', duration: 1500 })
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step1: fetchPoster code=${link.shortCode}`)
+
+    let bytes: Uint8Array | undefined
+    try {
+      bytes = await this.shareService.fetchPoster(
+        link.shortCode, link.expirySec, link.sig)
+    } catch (e) {
+      hilog.error(POSTER_DOMAIN, POSTER_TAG, `fetchPoster threw: ${JSON.stringify(e)}`)
+    }
     if (!bytes || bytes.byteLength === 0) {
-      promptAction.showToast({ message: '海报生成失败，请重试' })
+      hilog.error(POSTER_DOMAIN, POSTER_TAG, `fetchPoster returned empty`)
+      this.isLoading = false
+      promptAction.showToast({ message: '海报生成失败，请检查网络后重试' })
       return
     }
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step2: got ${bytes.byteLength}B`)
 
-    // 把字节写到沙箱 cacheDir；同 shortCode 重复分享会覆盖同一文件
+    // 把字节写到沙箱 cacheDir
     const filePath = `${ctx.cacheDir}/poster-${link.shortCode}.jpg`
     try {
       const file = fs.openSync(
@@ -498,25 +517,41 @@ export struct SharePage {
       fs.writeSync(file.fd, bytes.buffer)
       fs.closeSync(file)
     } catch (e) {
+      hilog.error(POSTER_DOMAIN, POSTER_TAG, `write file failed: ${JSON.stringify(e)}`)
+      this.isLoading = false
       promptAction.showToast({
         message: `海报保存失败：${JSON.stringify(e)}`
       })
       return
     }
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step3: wrote to ${filePath}`)
 
-    // shareImage 主体是 fileUri（系统按 URI 投递）；thumbnail 只用来在分享面板里做小预览。
-    // 海报字节本身 ~167KB，加上其他 IPC payload 易超上限（systemShare IPC 实测 200KB），
-    // 所以用 ImageKit 把缩略图压到 ≤ ~30KB 再传。
+    // Share Kit 接收方 app 需要规范的 URI，不能裸 file://${absPath}
+    let shareUri = ''
+    try {
+      shareUri = fileUri.getUriFromPath(filePath)
+    } catch (e) {
+      hilog.error(POSTER_DOMAIN, POSTER_TAG, `getUriFromPath failed: ${JSON.stringify(e)}, fallback to manual file://`)
+      shareUri = `file://${filePath}`
+    }
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step4: uri=${shareUri}`)
+
+    // 缩略图 ≤ 100KB，避免 IPC 超限
     const thumb = await this.shrinkBytesForIpc(bytes)
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step5: thumb=${thumb?.byteLength ?? 0}B`)
+
     const payload: SystemShareImagePayload = {
-      fileUri: `file://${filePath}`,
+      fileUri: shareUri,
       title: this.currentTripName
         ? `${this.currentTripName} - TravelPin`
         : 'TravelPin 分享',
       description: this.buildShareDescription(),
       thumbnail: thumb,
     }
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step6: calling shareImage`)
     const ok = await SystemShareService.shareImage(ctx, payload)
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step7: shareImage returned ${ok}`)
+    this.isLoading = false
     if (!ok) {
       promptAction.showToast({ message: '系统分享面板未能打开，请重试' })
     }
@@ -739,7 +774,7 @@ export struct SharePage {
             if (this.isLoading) {
               Row() {
                 LoadingProgress().width(20).height(20)
-                Text('正在生成分享链接...')
+                Text(this.loadingMessage)
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.TEXT_HINT)
                   .margin({ left: 8 })

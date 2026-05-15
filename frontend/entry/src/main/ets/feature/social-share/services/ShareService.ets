@@ -249,7 +249,8 @@ export class ShareService {
     try {
       const resp = await httpReq.request(url, {
         method: http.RequestMethod.GET,
-        readTimeout: 8000,
+        // 首次合成 PIL 处理 + 网络往返，给到 30s；命中 cache 后毫秒级
+        readTimeout: 30000,
         connectTimeout: 8000,
         expectDataType: http.HttpDataType.ARRAY_BUFFER,
       })
