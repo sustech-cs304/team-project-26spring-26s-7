@@ -2,6 +2,7 @@ import { router, promptAction } from '@kit.ArkUI'
 import { common } from '@kit.AbilityKit'
 import { http } from '@kit.NetworkKit'
 import { pasteboard } from '@kit.BasicServicesKit'
+import { image } from '@kit.ImageKit'
 import { AppColors, AppDimens, getDataService, ReplayPreferences, RouterParam, SharePlatform } from '../../../common'
 import type { MemoryNode, Trip } from '../../../common'
 import { ShareErrorMapper } from '../services/ShareErrorMapper'
@@ -503,13 +504,17 @@ export struct SharePage {
       return
     }
 
+    // shareImage 主体是 fileUri（系统按 URI 投递）；thumbnail 只用来在分享面板里做小预览。
+    // 海报字节本身 ~167KB，加上其他 IPC payload 易超上限（systemShare IPC 实测 200KB），
+    // 所以用 ImageKit 把缩略图压到 ≤ ~30KB 再传。
+    const thumb = await this.shrinkBytesForIpc(bytes)
     const payload: SystemShareImagePayload = {
       fileUri: `file://${filePath}`,
       title: this.currentTripName
         ? `${this.currentTripName} - TravelPin`
         : 'TravelPin 分享',
       description: this.buildShareDescription(),
-      thumbnail: bytes,    // 复用海报字节做面板预览，避免再请求 cover
+      thumbnail: thumb,
     }
     const ok = await SystemShareService.shareImage(ctx, payload)
     if (!ok) {
@@ -577,11 +582,58 @@ export struct SharePage {
    * ArrayBuffer，所以这里包一层）。任何失败都返 undefined，调用方 share
    * 时直接不带缩略图，不让分享按钮卡住。
    */
+  /**
+   * 把 JPEG/PNG 字节压到 ≤ 100KB 用于 systemShare 缩略图。
+   * 失败或缩放后仍太大 → 返回 undefined，让面板不带缩略图。
+   */
+  private async shrinkBytesForIpc(input: Uint8Array): Promise<Uint8Array | undefined> {
+    const MAX_BYTES = 100 * 1024
+    if (input.byteLength <= MAX_BYTES) {
+      return input
+    }
+    let source: image.ImageSource | undefined
+    let pixelMap: image.PixelMap | undefined
+    let packer: image.ImagePacker | undefined
+    try {
+      source = image.createImageSource(input.buffer)
+      pixelMap = await source.createPixelMap({
+        desiredSize: { width: 320, height: 320 },
+      })
+      packer = image.createImagePacker()
+      const packed = await packer.packing(pixelMap, {
+        format: 'image/jpeg',
+        quality: 50,
+      })
+      if (packed.byteLength > MAX_BYTES) {
+        return undefined
+      }
+      return new Uint8Array(packed)
+    } catch (_) {
+      return undefined
+    } finally {
+      try { await pixelMap?.release() } catch (_) {}
+      try { await source?.release() } catch (_) {}
+      try { await packer?.release() } catch (_) {}
+    }
+  }
+
+  /**
+   * 拉取封面并压缩成 ≤ 100KB 的 JPEG 供 systemShare 走 IPC 投递。
+   *
+   * 直接传原图会触发 HMOS systemShare 的 IPC 数据上限（约 200KB 实测），
+   * 报 code=1003702002 "IPC data is oversized"，整个分享面板调起失败。
+   *
+   * 流程：HTTP 拿 cover.jpg → ImageKit 解码 → 320x320 内缩放 + JPEG quality 50
+   * → 体积通常 < 30KB。任何步骤失败都返回 undefined，让 systemShare 不带缩略图
+   * 调起（链接卡片由微信/QQ 回头抓 og:meta，仍能正常渲染）。
+   */
   private async fetchCoverThumbnail(): Promise<Uint8Array | undefined> {
     if (!this.coverPhotoUrl) {
       return undefined
     }
+    const MAX_THUMB_BYTES = 100 * 1024  // IPC 安全余量
     const httpReq = http.createHttp()
+    let rawBuf: ArrayBuffer | undefined
     try {
       const resp = await httpReq.request(this.coverPhotoUrl, {
         method: http.RequestMethod.GET,
@@ -590,14 +642,47 @@ export struct SharePage {
         expectDataType: http.HttpDataType.ARRAY_BUFFER,
       })
       if (resp.responseCode === 200 && resp.result instanceof ArrayBuffer) {
-        return new Uint8Array(resp.result as ArrayBuffer)
+        rawBuf = resp.result as ArrayBuffer
       }
-      return undefined
     } catch (e) {
-      // 网络抖动 / 超时 / DNS 等任何错误 — 不带缩略图也能分享
       return undefined
     } finally {
       httpReq.destroy()
+    }
+    if (!rawBuf) {
+      return undefined
+    }
+
+    // 原图已经够小：直接返回，省一次编解码
+    if (rawBuf.byteLength <= MAX_THUMB_BYTES) {
+      return new Uint8Array(rawBuf)
+    }
+
+    // 用 ImageKit 缩放 + 重编码到 JPEG ≤ ~30KB
+    let source: image.ImageSource | undefined
+    let pixelMap: image.PixelMap | undefined
+    let packer: image.ImagePacker | undefined
+    try {
+      source = image.createImageSource(rawBuf)
+      pixelMap = await source.createPixelMap({
+        desiredSize: { width: 320, height: 320 },
+      })
+      packer = image.createImagePacker()
+      const packed = await packer.packing(pixelMap, {
+        format: 'image/jpeg',
+        quality: 50,
+      })
+      if (packed.byteLength > MAX_THUMB_BYTES) {
+        // 极端情况：缩放后还是太大 → 放弃缩略图
+        return undefined
+      }
+      return new Uint8Array(packed)
+    } catch (_) {
+      return undefined
+    } finally {
+      try { await pixelMap?.release() } catch (_) {}
+      try { await source?.release() } catch (_) {}
+      try { await packer?.release() } catch (_) {}
     }
   }
 

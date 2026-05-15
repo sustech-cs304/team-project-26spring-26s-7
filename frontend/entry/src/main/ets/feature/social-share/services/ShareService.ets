@@ -17,6 +17,7 @@ import { http } from '@kit.NetworkKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import {
   API_BASE_URL,
+  AiTokenManager,
   HttpTimeout,
   MultipartFormData,
   ShareEndpoints,
@@ -160,12 +161,18 @@ export class ShareService {
     const url = `${this.baseUrl}${ShareEndpoints.PUBLISH}`
     logger.info(TAG, `POST ${url} (${photos.length} photos, ${trip.nodes.length} nodes)`)
 
+    // 用 share_token 作为 Bearer；登录态拿不到则不带（后端 ALLOW_DEV_UID_HEADER=1 时仍可通过）
+    const shareToken = await AiTokenManager.tryGetShareToken()
     const httpReq = http.createHttp()
     try {
       const body = await form.build()
+      const reqHeader: Record<string, string> = { 'Content-Type': form.getContentType() }
+      if (shareToken) {
+        reqHeader['Authorization'] = `Bearer ${shareToken}`
+      }
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': form.getContentType() },
+        header: reqHeader,
         readTimeout: this.timeout,
         connectTimeout: this.timeout,
         expectDataType: http.HttpDataType.OBJECT,
@@ -274,11 +281,16 @@ export class ShareService {
     const url = `${this.baseUrl}${ShareEndpoints.REVOKE_BY_TRIP}`
     logger.info(TAG, `POST ${url} tripId=${tripId}`)
 
+    const shareToken = await AiTokenManager.tryGetShareToken()
     const httpReq = http.createHttp()
     try {
+      const reqHeader: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (shareToken) {
+        reqHeader['Authorization'] = `Bearer ${shareToken}`
+      }
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/json' },
+        header: reqHeader,
         readTimeout: HttpTimeout.DEFAULT,
         connectTimeout: HttpTimeout.DEFAULT,
         expectDataType: http.HttpDataType.OBJECT,

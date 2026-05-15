@@ -3,7 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import auth from '@hw-agconnect/auth'
 
-import { API_BASE_URL, IMAGE_CENSOR_BASE_URL } from './ApiEndpoints'
+import { API_BASE_URL, IMAGE_CENSOR_BASE_URL, VISION_LLM_BASE_URL } from './ApiEndpoints'
 import { AppSessionManager } from '../auth/AppSessionManager'
 
 const DOMAIN = 0x0000
@@ -23,13 +23,24 @@ interface CachedAuditTokens {
   expiresAt: number
 }
 
-interface AiIssueResp {
+interface VisionIssueResp {
   vision_token?: string
   issued_at?: number
   expires_in?: number
 }
 
 interface CachedVisionToken {
+  token: string
+  expiresAt: number
+}
+
+interface ShareIssueResp {
+  share_token?: string
+  issued_at?: number
+  expires_in?: number
+}
+
+interface CachedShareToken {
   token: string
   expiresAt: number
 }
@@ -53,6 +64,8 @@ let auditCached: CachedAuditTokens | null = null
 let auditInflight: Promise<CachedAuditTokens> | null = null
 let visionCached: CachedVisionToken | null = null
 let visionInflight: Promise<CachedVisionToken> | null = null
+let shareCached: CachedShareToken | null = null
+let shareInflight: Promise<CachedShareToken> | null = null
 
 async function fetchAuditTokens(): Promise<CachedAuditTokens> {
   let appSessionToken = await AppSessionManager.getToken()
@@ -133,40 +146,39 @@ function makeVisionFallback(): CachedVisionToken {
 }
 
 async function fetchVisionToken(): Promise<CachedVisionToken> {
-  let uid = ''
-  try {
-    const user = await auth.getCurrentUser()
-    uid = user?.getUid() ?? ''
-  } catch (err) {
-    hilog.warn(DOMAIN, TAG, `get AGC user failed for vision token: ${JSON.stringify(err)}`)
+  // 新流程：AGC 登录 → app_session_token → 调 ai-relay /v1/auth/issue_vision_token 换 vision_token
+  // 未登录 / app session 拿不到 → fallback 到 DEV token（dev 包兜底）
+  let appSessionToken = await AppSessionManager.getToken()
+  if (!appSessionToken) {
+    appSessionToken = await AppSessionManager.refreshFromAgcAuth()
   }
-
-  if (!uid) {
+  if (!appSessionToken) {
+    hilog.warn(DOMAIN, TAG, 'vision token: no app session, using dev fallback')
     return makeVisionFallback()
   }
 
   const httpReq = http.createHttp()
   try {
-    const response = await httpReq.request(`${API_BASE_URL}/api/v1/auth/issue_ai_token`, {
+    const response = await httpReq.request(`${VISION_LLM_BASE_URL}/v1/auth/issue_vision_token`, {
       method: http.RequestMethod.POST,
       header: {
         'Content-Type': 'application/json',
-        'X-Dev-Uid': uid
+        'Authorization': `Bearer ${appSessionToken}`
       },
       readTimeout: 10000,
       connectTimeout: 10000,
       expectDataType: http.HttpDataType.OBJECT,
-      extraData: ''
+      extraData: JSON.stringify({})
     })
 
     if (response.responseCode !== 200 && response.responseCode !== 201) {
-      hilog.warn(DOMAIN, TAG, `issue_ai_token http ${response.responseCode}, fallback`)
+      hilog.warn(DOMAIN, TAG, `issue_vision_token http ${response.responseCode}, body=${stringifyHttpResult(response.result)}, fallback`)
       return makeVisionFallback()
     }
 
-    const body = response.result as AiIssueResp
+    const body = response.result as VisionIssueResp
     if (!body || !body.vision_token) {
-      hilog.warn(DOMAIN, TAG, 'issue_ai_token missing vision_token, fallback')
+      hilog.warn(DOMAIN, TAG, `issue_vision_token missing vision_token: ${stringifyHttpResult(response.result)}, fallback`)
       return makeVisionFallback()
     }
 
@@ -178,8 +190,59 @@ async function fetchVisionToken(): Promise<CachedVisionToken> {
     }
   } catch (err) {
     const be = err as BusinessError
-    hilog.warn(DOMAIN, TAG, `issue_ai_token error: ${be?.message ?? JSON.stringify(err)}, fallback`)
+    hilog.warn(DOMAIN, TAG, `issue_vision_token error: ${be?.message ?? JSON.stringify(err)}, fallback`)
     return makeVisionFallback()
+  } finally {
+    httpReq.destroy()
+  }
+}
+
+async function fetchShareToken(): Promise<CachedShareToken> {
+  // AGC 登录 → app_session_token → 调 share-service /api/v1/auth/issue_share_token
+  // 未登录 → 抛错（调用方决定如何兜底；ShareService 当前会回落到不带 token，由后端 ALLOW_DEV_UID_HEADER 兜底）
+  let appSessionToken = await AppSessionManager.getToken()
+  if (!appSessionToken) {
+    appSessionToken = await AppSessionManager.refreshFromAgcAuth()
+  }
+  if (!appSessionToken) {
+    throw new Error('SHARE_AUTH_REQUIRED')
+  }
+
+  const httpReq = http.createHttp()
+  try {
+    const response = await httpReq.request(`${API_BASE_URL}/api/v1/auth/issue_share_token`, {
+      method: http.RequestMethod.POST,
+      header: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${appSessionToken}`
+      },
+      readTimeout: 10000,
+      connectTimeout: 10000,
+      expectDataType: http.HttpDataType.OBJECT,
+      extraData: JSON.stringify({})
+    })
+
+    if (response.responseCode !== 200 && response.responseCode !== 201) {
+      hilog.error(DOMAIN, TAG, `issue_share_token http ${response.responseCode}, body=${stringifyHttpResult(response.result)}`)
+      throw new Error('SHARE_TOKEN_REQUEST_FAILED')
+    }
+
+    const body = response.result as ShareIssueResp
+    if (!body || !body.share_token) {
+      hilog.error(DOMAIN, TAG, `issue_share_token invalid response: ${stringifyHttpResult(response.result)}`)
+      throw new Error('SHARE_TOKEN_INVALID_RESPONSE')
+    }
+
+    const ttl = body.expires_in ?? 1800
+    const issued = body.issued_at ?? Math.floor(Date.now() / 1000)
+    return {
+      token: body.share_token,
+      expiresAt: issued + ttl - EXPIRY_LEEWAY_SEC
+    }
+  } catch (err) {
+    const be = err as BusinessError
+    hilog.error(DOMAIN, TAG, `issue_share_token error: ${be?.message ?? JSON.stringify(err)}`)
+    throw err as Error
   } finally {
     httpReq.destroy()
   }
@@ -206,6 +269,27 @@ async function getVisionTokenCached(): Promise<string> {
   }
 }
 
+async function getShareTokenCached(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000)
+  if (shareCached && shareCached.expiresAt > now) {
+    return shareCached.token
+  }
+
+  if (shareInflight) {
+    return (await shareInflight).token
+  }
+
+  const promise = fetchShareToken()
+  shareInflight = promise
+  try {
+    const token = await promise
+    shareCached = token
+    return token.token
+  } finally {
+    shareInflight = null
+  }
+}
+
 export class AiTokenManager {
   static async getVisionToken(): Promise<string> {
     return getVisionTokenCached()
@@ -219,8 +303,23 @@ export class AiTokenManager {
     return (await getAuditTokens()).censor
   }
 
+  /** 拿 share-service publish/revoke 用的 Bearer token */
+  static async getShareToken(): Promise<string> {
+    return getShareTokenCached()
+  }
+
+  /** 静默版本：失败返回 null 而不是抛，调用方可以选择回落到匿名调用 */
+  static async tryGetShareToken(): Promise<string | null> {
+    try {
+      return await getShareTokenCached()
+    } catch (_) {
+      return null
+    }
+  }
+
   static invalidate(): void {
     auditCached = null
     visionCached = null
+    shareCached = null
   }
 }
