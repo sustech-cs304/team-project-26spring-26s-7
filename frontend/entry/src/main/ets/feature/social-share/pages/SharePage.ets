@@ -55,6 +55,9 @@ export struct SharePage {
   @State copyText: string = ''
   @State isLoading: boolean = true
   @State loadingMessage: string = '正在生成分享链接...'
+  // 页面已被导航走（aboutToDisappear 后）时设 false。
+  // 所有 await 之后的 toast / 状态更新都要 gate 一下，避免用户已经离开还弹"链接已生成"。
+  private isPageActive: boolean = true
   @State errorMsg: string = ''
   @State currentTripName: string = ''
   @State selectedExpiryIdx: number = 2
@@ -88,6 +91,7 @@ export struct SharePage {
   ]
 
   aboutToAppear(): void {
+    this.isPageActive = true
     const params = router.getParams() as RouterParam
     if (params && params.tripId) {
       this.currentTripId = params.tripId
@@ -100,6 +104,24 @@ export struct SharePage {
       void ReplayPreferences.ensureLoaded(ctxEarly)
     }
     void this.publishShare()
+  }
+
+  aboutToDisappear(): void {
+    // 用户离开分享页（点返回 / 切走）。所有 in-flight 的 async 流程（publish、海报、分享）
+    // 完成后都会先检查 isPageActive，发现是 false 就静默退出，不再 toast / 不再改状态。
+    this.isPageActive = false
+  }
+
+  /** 仅当页面还在前台时弹 toast；async 完成时检查，避免"已经返回了还弹链接已生成" */
+  private safeToast(message: string, duration?: number): void {
+    if (!this.isPageActive) {
+      return
+    }
+    if (duration !== undefined) {
+      promptAction.showToast({ message, duration })
+    } else {
+      promptAction.showToast({ message })
+    }
   }
 
   private syncSelectedExpiryFromStorage(): void {
@@ -190,6 +212,10 @@ export struct SharePage {
 
       const result = await this.shareService.publish(
         req, photos, hours, minutes, replace, replayPrefs)
+      // 用户在 publish 期间已经退出页面 → 不要弹任何 toast、也别折腾状态
+      if (!this.isPageActive) {
+        return
+      }
       if (result.ok && result.data) {
         this.shareUrl = result.data.url
         this.copyText = `我刚分享了一段旅行：${req.tripName}\n${result.data.url}`
@@ -204,14 +230,16 @@ export struct SharePage {
         const toast = isReplacing
           ? `已替换为新链接（原链接已失效，有效期：${opt.label}）`
           : `分享链接已生成（有效期：${opt.label}）`
-        promptAction.showToast({ message: toast })
+        this.safeToast(toast)
       } else {
         this.errorMsg = ShareErrorMapper.formatPublishResult(result)
         this.isLoading = false
       }
     } catch (e) {
-      this.errorMsg = `异常：${JSON.stringify(e)}`
-      this.isLoading = false
+      if (this.isPageActive) {
+        this.errorMsg = `异常：${JSON.stringify(e)}`
+        this.isLoading = false
+      }
     } finally {
       SharePhotoHelper.cleanupTemporaryPhotos(photos)
     }
@@ -437,8 +465,8 @@ export struct SharePage {
     const payload: SystemSharePayload = {
       url: this.shareUrl,
       title: this.currentTripName
-        ? `${this.currentTripName} - TravelPin`
-        : 'TravelPin 分享',
+        ? `${this.currentTripName} - ItsMapPin`
+        : 'ItsMapPin 分享',
       description,
       thumbnail,
     }
@@ -453,11 +481,9 @@ export struct SharePage {
       const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text)
       const board = pasteboard.getSystemPasteboard()
       await board.setData(data)
-      promptAction.showToast({
-        message: `系统分享不可用，已复制内容，请前往${platform}粘贴`
-      })
+      this.safeToast(`系统分享不可用，已复制内容，请前往${platform}粘贴`)
     } catch (e) {
-      promptAction.showToast({ message: `分享失败：${JSON.stringify(e)}` })
+      this.safeToast(`分享失败：${JSON.stringify(e)}`)
     }
   }
 
@@ -502,7 +528,12 @@ export struct SharePage {
     if (!bytes || bytes.byteLength === 0) {
       hilog.error(POSTER_DOMAIN, POSTER_TAG, `fetchPoster returned empty`)
       this.isLoading = false
-      promptAction.showToast({ message: '海报生成失败，请检查网络后重试' })
+      this.safeToast('海报生成失败，请检查网络后重试')
+      return
+    }
+    // fetchPoster 期间用户已退出 → 静默放弃
+    if (!this.isPageActive) {
+      this.isLoading = false
       return
     }
     hilog.info(POSTER_DOMAIN, POSTER_TAG, `step2: got ${bytes.byteLength}B`)
@@ -519,9 +550,7 @@ export struct SharePage {
     } catch (e) {
       hilog.error(POSTER_DOMAIN, POSTER_TAG, `write file failed: ${JSON.stringify(e)}`)
       this.isLoading = false
-      promptAction.showToast({
-        message: `海报保存失败：${JSON.stringify(e)}`
-      })
+      this.safeToast(`海报保存失败：${JSON.stringify(e)}`)
       return
     }
     hilog.info(POSTER_DOMAIN, POSTER_TAG, `step3: wrote to ${filePath}`)
@@ -543,8 +572,8 @@ export struct SharePage {
     const payload: SystemShareImagePayload = {
       fileUri: shareUri,
       title: this.currentTripName
-        ? `${this.currentTripName} - TravelPin`
-        : 'TravelPin 分享',
+        ? `${this.currentTripName} - ItsMapPin`
+        : 'ItsMapPin 分享',
       description: this.buildShareDescription(),
       thumbnail: thumb,
     }
@@ -553,7 +582,7 @@ export struct SharePage {
     hilog.info(POSTER_DOMAIN, POSTER_TAG, `step7: shareImage returned ${ok}`)
     this.isLoading = false
     if (!ok) {
-      promptAction.showToast({ message: '系统分享面板未能打开，请重试' })
+      this.safeToast('系统分享面板未能打开，请重试')
     }
   }
 
@@ -569,12 +598,12 @@ export struct SharePage {
    * 与后端 _build_share_description 字段顺序对齐（手动粘贴 URL 时微信
    * 走 og:meta 的那条路，看到的也是同样格式，体验一致）。
    *
-   * 字段缺省的兜底：没有 cachedReq → "TravelPin 旅行回放"。
+   * 字段缺省的兜底：没有 cachedReq → "ItsMapPin 旅行回放"。
    */
   private buildShareDescription(): string {
     const req = this.cachedReq
     if (!req || req.nodes.length === 0) {
-      return 'TravelPin 旅行回放'
+      return 'ItsMapPin 旅行回放'
     }
     const parts: string[] = []
     // ① 节点数 + 总距离

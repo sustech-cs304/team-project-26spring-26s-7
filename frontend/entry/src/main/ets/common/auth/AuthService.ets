@@ -105,7 +105,7 @@ export class AuthService {
       }
       currentUser = {
         uid: user.getUid(),
-        displayName: user.getDisplayName() ?? 'TravelPin 用户',
+        displayName: user.getDisplayName() ?? 'ItsMapPin 用户',
         avatarUrl: user.getPhotoUrl() ?? ''
       };
       return currentUser;
@@ -421,7 +421,7 @@ export class AuthService {
     }
 
     const agcUser = signInResult.getUser();
-    let displayName = agcUser.getDisplayName() ?? 'TravelPin 用户';
+    let displayName = agcUser.getDisplayName() ?? 'ItsMapPin 用户';
     let avatarUrl = agcUser.getPhotoUrl() ?? '';
 
     try {

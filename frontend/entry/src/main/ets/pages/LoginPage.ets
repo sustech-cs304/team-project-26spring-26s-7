@@ -67,7 +67,7 @@ struct LoginPage {
       Column() {
         Text('📍')
           .fontSize(56)
-        Text('TravelPin')
+        Text('ItsMapPin')
           .fontSize(AppDimens.FONT_TITLE)
           .fontWeight(FontWeight.Bold)
           .fontColor(AppColors.TEXT_PRIMARY)

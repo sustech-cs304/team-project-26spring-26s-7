@@ -17,7 +17,7 @@ import {
 @Component
 export struct ProfileView {
   @StorageLink('appThemeVersion') themeVersion: number = 0
-  @State displayName: string = 'TravelPin 用户'
+  @State displayName: string = 'ItsMapPin 用户'
   @State avatarUrl: string = ''
   @State avatarLoadFailed: boolean = false
   @State loginStatusText: string = '华为账号已登录'
@@ -100,7 +100,7 @@ export struct ProfileView {
         this.avatarLoadFailed = false
       } else {
         const status = await AuthService.getAuthStatus()
-        this.displayName = status.user?.displayName ?? 'TravelPin 用户'
+        this.displayName = status.user?.displayName ?? 'ItsMapPin 用户'
         this.avatarUrl = status.user?.avatarUrl ?? ''
         this.avatarLoadFailed = false
       }
@@ -340,9 +340,9 @@ export struct ProfileView {
 
   private showAbout(): void {
     AlertDialog.show({
-      title: '关于 TravelPin',
+      title: '关于 ItsMapPin',
       message:
-        'TravelPin v1.0.0\n\n' +
+        'ItsMapPin v1.0.0\n\n' +
         '基于 HarmonyOS 的地理位置旅行日记应用。\n\n' +
         '南方科技大学 软件工程课程 第 7 组',
       confirm: {
@@ -542,7 +542,7 @@ export struct ProfileView {
           Divider().color(AppColors.DIVIDER)
           this.settingItem('隐私政策', '', () => router.pushUrl({ url: RouterUrls.PRIVACY_POLICY }))
           Divider().color(AppColors.DIVIDER)
-          this.settingItem('关于 TravelPin', 'v1.0.0', () => this.showAbout())
+          this.settingItem('关于 ItsMapPin', 'v1.0.0', () => this.showAbout())
         }
         .margin({ top: 12 })
         .backgroundColor(AppColors.CARD_BG)

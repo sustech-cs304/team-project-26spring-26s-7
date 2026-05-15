@@ -16,7 +16,7 @@ const TAG = 'ProfileEditPage';
 @Component
 struct ProfileEditPage {
   @StorageLink('appThemeVersion') themeVersion: number = 0
-  @State nickname: string = 'TravelPin 用户'
+  @State nickname: string = 'ItsMapPin 用户'
   @State avatar: string = ''
   @State bio: string = ''
   @State isSaving: boolean = false
@@ -38,7 +38,7 @@ struct ProfileEditPage {
         this.bio = effective.bio
       } else {
         const status = await AuthService.getAuthStatus()
-        this.nickname = status.user?.displayName ?? 'TravelPin 用户'
+        this.nickname = status.user?.displayName ?? 'ItsMapPin 用户'
         this.avatar = status.user?.avatarUrl ?? ''
       }
     } catch (_) {

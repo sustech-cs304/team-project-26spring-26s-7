@@ -61,9 +61,10 @@ export struct AiCopyPage {
   @State isGenerating: boolean = false
   @State generatedCopy: string = ''
   @State alternatives: string[] = []
-  // 调试：实际发送给后端的 prompt
+  // 给用户看的"提示词预览"。让用户看到 AI 实际收到什么；也方便答辩时展示
+  // 风格/长度/POI/mood/tags 切换如何影响 prompt 结构。默认收起避免视觉嘈杂。
   @State debugPrompt: string = ''
-  @State debugPromptExpanded: boolean = true
+  @State debugPromptExpanded: boolean = false
   @State isPreviewingPrompt: boolean = false
   // 云端打标签同意状态（来自 ConsentManager）
   @StorageProp('aiCloudTaggingEnabled') @Watch('onCloudTaggingChanged') cloudTaggingEnabled: boolean = false
@@ -431,6 +432,26 @@ export struct AiCopyPage {
   }
 
   /**
+   * 页内 banner 上的开关：用户直接切换"是否同意上传照片做云端识别"。
+   * 调 recordPromptResult 一次性把 enabled + prompted 都写到 preferences，
+   * 既持久化用户选择，也让自动 JIT 对话框逻辑（needs !prompted）不会再误触发。
+   */
+  private async handleCloudTaggingToggle(turningOn: boolean): Promise<void> {
+    const uiCtx = this.getUIContext();
+    const ctx = uiCtx.getHostContext() as common.UIAbilityContext;
+    if (!ctx) {
+      promptAction.showToast({ message: '无法获取应用上下文' });
+      return;
+    }
+    await ConsentManager.recordPromptResult(ctx, turningOn);
+    promptAction.showToast({
+      message: turningOn
+        ? '已开启云端识别（生成时 AI 可看到首张照片）'
+        : '已关闭，AI 仅使用本机元数据'
+    });
+  }
+
+  /**
    * 复制 debug prompt 到剪贴板
    */
   private async handleCopyPrompt(): Promise<void> {
@@ -626,6 +647,44 @@ export struct AiCopyPage {
           .margin({ bottom: 12 })
           .alignItems(HorizontalAlign.Start)
 
+          // 云端识别同意 banner —— 让用户一眼看到"AI 会不会动我的图片" + 直接切换
+          Column() {
+            Row() {
+              Text(this.cloudTaggingEnabled ? '☁️' : '🔒')
+                .fontSize(20)
+                .margin({ right: 10 })
+
+              Column() {
+                Text(this.cloudTaggingEnabled ? '已开启云端识别' : '未开启云端识别')
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(AppColors.TEXT_PRIMARY)
+                Text(this.cloudTaggingEnabled
+                  ? '生成时会把首张照片送至云端 AI（经审核后使用）'
+                  : '不会上传照片到云端，AI 仅使用本机抽取的元数据')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_SECONDARY)
+                  .lineHeight(18)
+                  .margin({ top: 2 })
+              }
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Start)
+
+              Toggle({ type: ToggleType.Switch, isOn: this.cloudTaggingEnabled })
+                .onChange((isOn: boolean) => this.handleCloudTaggingToggle(isOn))
+            }
+            .width('100%')
+            .alignItems(VerticalAlign.Center)
+          }
+          .width('100%')
+          .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12, bottom: 12 })
+          .backgroundColor(this.cloudTaggingEnabled ? (AppColors.PRIMARY + '14') : AppColors.CARD_BG)
+          .borderRadius(AppDimens.RADIUS_SM)
+          .margin({ bottom: 12 })
+          .border(this.cloudTaggingEnabled
+            ? { width: 0 }
+            : { width: 1, color: AppColors.DIVIDER, style: BorderStyle.Solid })
+
           // 文案风格选择
           Column() {
             Text('文章风格')
@@ -817,25 +876,30 @@ export struct AiCopyPage {
             .margin({ bottom: 12 })
           }
 
-          // 调试：实际发送的 prompt
+          // 提示词预览：透明展示 AI 实际收到的输入，也方便答辩演示"切换选项 → prompt 变化"
           if (this.debugPrompt.length > 0) {
             Column() {
               Row() {
-                Text('🔧 实际 prompt（调试）')
+                Text('📖')
+                  .fontSize(16)
+                  .margin({ right: 6 })
+                Text('AI 看到的提示词')
                   .fontSize(AppDimens.FONT_MD)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(AppColors.TEXT_PRIMARY)
                 Blank()
-                Text(this.debugPromptExpanded ? '收起' : '展开')
+                Text(this.debugPromptExpanded ? '收起' : '查看')
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.PRIMARY)
                   .padding({ left: 8, right: 8 })
                   .onClick(() => { this.debugPromptExpanded = !this.debugPromptExpanded })
-                Text('复制')
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.PRIMARY)
-                  .padding({ left: 8, right: 8 })
-                  .onClick(() => this.handleCopyPrompt())
+                if (this.debugPromptExpanded) {
+                  Text('复制')
+                    .fontSize(AppDimens.FONT_SM)
+                    .fontColor(AppColors.PRIMARY)
+                    .padding({ left: 8, right: 8 })
+                    .onClick(() => this.handleCopyPrompt())
+                }
               }
               .width('100%')
               .margin({ bottom: 8 })
