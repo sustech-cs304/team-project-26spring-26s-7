@@ -98,9 +98,7 @@ cd team-project-26spring-26s-7
 
 ## 运行方式
 
-### 方式一：通过 DevEco Studio 运行
-
-这是最推荐的方式。
+通过 DevEco Studio 运行
 
 1. 在 DevEco Studio 中打开 `frontend/`
 2. 等待工程同步完成
