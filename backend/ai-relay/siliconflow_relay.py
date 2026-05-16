@@ -57,6 +57,12 @@ MAX_QUESTION_CHARS = 3000
 HTTP_TIMEOUT = 60.0
 SENSITIVE_REPLY = "抱歉，内容涉及敏感信息，无法提供相关回答。"
 
+# vision (image) 并发上限。单请求峰值 base64 后约 50MB，2GB 内存机器留余量给
+# 文本 chat / share-service / 系统，把 vision 同时 in-flight 上限定 5。
+# 超过这个数后续请求立刻 503 + Retry-After，让前端做指数退避。
+VISION_CONCURRENCY = int(os.environ.get("VISION_CONCURRENCY", "5"))
+_vision_sem: Optional[asyncio.Semaphore] = None
+
 # ----- 鉴权 secrets（启动时从环境变量读） -----
 # APP_SESSION_SECRET 与 sensitive-check 共享：ai-relay 验 sensitive-check 签发的 app_session_token
 # VISION_TOKEN_SECRET ai-relay 独有：用于签发/验证 scope="vision" 短期 token
@@ -246,11 +252,12 @@ class ChatCompletionRequest(BaseModel):
 # ----- FastAPI lifespan -----
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    global _sidecar_client, _upstream_client
+    global _sidecar_client, _upstream_client, _vision_sem
     # sidecar (127.0.0.1)：必须 trust_env=False，否则会被本机 HTTP_PROXY 截走
     _sidecar_client = httpx.AsyncClient(timeout=HTTP_TIMEOUT, trust_env=False)
     # SF API (外网)：保持默认 trust_env=True，让 HTTP_PROXY/HTTPS_PROXY 生效
     _upstream_client = httpx.AsyncClient(timeout=HTTP_TIMEOUT)
+    _vision_sem = asyncio.Semaphore(VISION_CONCURRENCY)
     print(
         f"[boot] siliconflow-relay text_model={TEXT_MODEL} vision_model={VISION_MODEL} "
         f"upstream={SF_BASE_URL}"
@@ -258,7 +265,8 @@ async def lifespan(_app: FastAPI):
     print(
         f"[boot] auth={'enabled' if VALID_API_KEYS else 'OPEN (no api keys)'}, "
         f"keys={len(VALID_API_KEYS)}, rate_limit/min={RATE_LIMIT_PER_MIN}, "
-        f"max_question_chars={MAX_QUESTION_CHARS}, filter_url={SF_FILTER_URL}"
+        f"max_question_chars={MAX_QUESTION_CHARS}, filter_url={SF_FILTER_URL}, "
+        f"vision_concurrency={VISION_CONCURRENCY}"
     )
     yield
     for c in (_sidecar_client, _upstream_client):
@@ -318,7 +326,11 @@ def normalize_response(sf_data: dict, override_model: str) -> dict:
 
 
 async def call_siliconflow(body: dict) -> dict:
-    """转发到 SF；上游 4xx/5xx 翻成 502 给前端。"""
+    """转发到 SF；上游错误转换给前端：
+    - 429（SF 账户速率超限）→ 503 + Retry-After: 10，让前端做指数退避
+    - 5xx / 网络异常 → 503 + Retry-After: 5
+    - 其它 4xx（model 错 / payload 错等）→ 502，前端应改 payload 不应 retry
+    """
     try:
         r = await _upstream_client.post(
             f"{SF_BASE_URL}/chat/completions",
@@ -327,12 +339,29 @@ async def call_siliconflow(body: dict) -> dict:
         )
     except httpx.HTTPError as exc:
         print(f"[upstream-error] {exc!r}")
-        raise HTTPException(status_code=502, detail=f"upstream unreachable: {exc}")
-    if r.status_code != 200:
-        snippet = r.text[:200].replace("\n", " ")
-        print(f"[upstream-error] HTTP {r.status_code}: {snippet}")
-        raise HTTPException(status_code=502, detail=f"upstream returned {r.status_code}")
-    return r.json()
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "upstream_unreachable", "message": "AI 服务暂时不可用，请稍后重试。"},
+            headers={"Retry-After": "5"},
+        )
+    if r.status_code == 200:
+        return r.json()
+    snippet = r.text[:200].replace("\n", " ")
+    print(f"[upstream-error] HTTP {r.status_code}: {snippet}")
+    if r.status_code == 429:
+        retry_after = r.headers.get("Retry-After", "10")
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "upstream_rate_limited", "message": "AI 服务正忙，请稍后重试。"},
+            headers={"Retry-After": retry_after},
+        )
+    if r.status_code >= 500:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "upstream_error", "message": f"AI 服务暂时故障 ({r.status_code})。"},
+            headers={"Retry-After": "5"},
+        )
+    raise HTTPException(status_code=502, detail=f"upstream returned {r.status_code}: {snippet}")
 
 
 # ----- 端点 1：纯文本聊天 -----
@@ -410,84 +439,102 @@ async def chat_completions_image(
 ):
     enforce_rate_limit(token)
 
-    if len(question) > MAX_QUESTION_CHARS:
-        raise HTTPException(
-            status_code=413,
-            detail=f"question too long: {len(question)} chars > {MAX_QUESTION_CHARS}",
-        )
-    if await filter_check(question, x_filter_token):
-        print("[input-blocked] image-question")
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "code": "content_violation",
-                "category": "input_text",
-                "message": "问题涉及敏感信息，请调整后重试。",
-            },
-        )
-
-    # 推断图片 mime type：
-    # - 客户端没设 content_type → fallback 到文件名/jpeg
-    # - 客户端传 image/* → 直接用
-    # - 客户端传 application/octet-stream（HarmonyOS NetworkKit 默认）→ 按文件名推断
-    # SF vision API 的 data URL 必须是标准 image/* mime，不能是 octet-stream
-    raw_ct = (image.content_type or "").lower()
-    fname = (image.filename or "").lower()
-    if raw_ct.startswith("image/"):
-        content_type = raw_ct
-    else:
-        if fname.endswith(".png"):
-            content_type = "image/png"
-        elif fname.endswith(".webp"):
-            content_type = "image/webp"
-        elif fname.endswith(".gif"):
-            content_type = "image/gif"
-        elif fname.endswith((".jpg", ".jpeg")) or raw_ct == "application/octet-stream":
-            content_type = "image/jpeg"
-        else:
+    # vision 并发上限：单请求峰值 ~50MB 内存（原图 + base64 + buffer），2GB 机器留 5 个 slot。
+    # 拿不到立刻 503 + Retry-After，避免请求堆积撑爆内存。
+    acquired = False
+    if _vision_sem is not None:
+        try:
+            await asyncio.wait_for(_vision_sem.acquire(), timeout=0.1)
+            acquired = True
+        except asyncio.TimeoutError:
             raise HTTPException(
-                status_code=415,
-                detail=f"unsupported content_type: {raw_ct or '(none)'} for filename: {fname or '(none)'}",
+                status_code=503,
+                detail={"code": "server_busy", "message": "AI 服务正忙，请稍后重试。"},
+                headers={"Retry-After": "5"},
             )
-    img_bytes = await image.read()
-    if not img_bytes:
-        raise HTTPException(status_code=400, detail="empty image upload")
-    b64 = base64.b64encode(img_bytes).decode()
-    data_url = f"data:{content_type};base64,{b64}"
 
-    sf_body: dict = {
-        "model": VISION_MODEL,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image_url", "image_url": {"url": data_url}},
-                    {"type": "text", "text": question},
-                ],
-            }
-        ],
-    }
-    if max_tokens:
-        sf_body["max_tokens"] = max_tokens
-    if temperature is not None:
-        sf_body["temperature"] = temperature
-    if top_p is not None:
-        sf_body["top_p"] = top_p
+    try:
+        if len(question) > MAX_QUESTION_CHARS:
+            raise HTTPException(
+                status_code=413,
+                detail=f"question too long: {len(question)} chars > {MAX_QUESTION_CHARS}",
+            )
+        if await filter_check(question, x_filter_token):
+            print("[input-blocked] image-question")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "content_violation",
+                    "category": "input_text",
+                    "message": "问题涉及敏感信息，请调整后重试。",
+                },
+            )
 
-    sf_data = await call_siliconflow(sf_body)
-    data = normalize_response(sf_data, model_name)
+        # 推断图片 mime type：
+        # - 客户端没设 content_type → fallback 到文件名/jpeg
+        # - 客户端传 image/* → 直接用
+        # - 客户端传 application/octet-stream（HarmonyOS NetworkKit 默认）→ 按文件名推断
+        # SF vision API 的 data URL 必须是标准 image/* mime，不能是 octet-stream
+        raw_ct = (image.content_type or "").lower()
+        fname = (image.filename or "").lower()
+        if raw_ct.startswith("image/"):
+            content_type = raw_ct
+        else:
+            if fname.endswith(".png"):
+                content_type = "image/png"
+            elif fname.endswith(".webp"):
+                content_type = "image/webp"
+            elif fname.endswith(".gif"):
+                content_type = "image/gif"
+            elif fname.endswith((".jpg", ".jpeg")) or raw_ct == "application/octet-stream":
+                content_type = "image/jpeg"
+            else:
+                raise HTTPException(
+                    status_code=415,
+                    detail=f"unsupported content_type: {raw_ct or '(none)'} for filename: {fname or '(none)'}",
+                )
+        img_bytes = await image.read()
+        if not img_bytes:
+            raise HTTPException(status_code=400, detail="empty image upload")
+        b64 = base64.b64encode(img_bytes).decode()
+        data_url = f"data:{content_type};base64,{b64}"
 
-    out_msg = data["choices"][0]["message"]
-    if await filter_check(out_msg.get("content", "") or "", x_filter_token):
-        out_msg["content"] = SENSITIVE_REPLY
-        data["choices"][0]["finish_reason"] = "content_filter"
-        print("[output-blocked] image")
+        sf_body: dict = {
+            "model": VISION_MODEL,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image_url", "image_url": {"url": data_url}},
+                        {"type": "text", "text": question},
+                    ],
+                }
+            ],
+        }
+        if max_tokens:
+            sf_body["max_tokens"] = max_tokens
+        if temperature is not None:
+            sf_body["temperature"] = temperature
+        if top_p is not None:
+            sf_body["top_p"] = top_p
 
-    print(
-        f"[image] q_len={len(question)} img_size={len(img_bytes)} "
-        f"max_tokens={max_tokens} usage={data.get('usage')}"
-    )
-    return data
+        sf_data = await call_siliconflow(sf_body)
+        data = normalize_response(sf_data, model_name)
+
+        out_msg = data["choices"][0]["message"]
+        if await filter_check(out_msg.get("content", "") or "", x_filter_token):
+            out_msg["content"] = SENSITIVE_REPLY
+            data["choices"][0]["finish_reason"] = "content_filter"
+            print("[output-blocked] image")
+
+        print(
+            f"[image] q_len={len(question)} img_size={len(img_bytes)} "
+            f"max_tokens={max_tokens} usage={data.get('usage')}"
+        )
+        return data
+    finally:
+        if acquired and _vision_sem is not None:
+            _vision_sem.release()
 
 
 # ----- 鉴权端点：登录用户用 app_session_token 换 vision_token -----
