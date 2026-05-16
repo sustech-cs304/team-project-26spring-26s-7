@@ -104,6 +104,9 @@ _ERR_410 = ("此链接已过期", 410)
 # v0.8: trip 改为私密时 owner 撤销了此分享，仍用 410（资源已不可达），
 # 文案说明具体原因，与"自然过期"区分开。
 _ERR_PRIVATE = ("该用户已设置该路线为私密", 410)
+# v1.2: 内容审查命中（异步 audit 后 BackgroundTask 把行标为 rejected）。
+# 既不暴露具体命中词，也明确告诉用户和接收方"为什么打不开"。
+_ERR_CONTENT_VIOLATION = ("该分享因内容审核未通过已下线", 410)
 
 
 def _err_html(text: str, status_code: int) -> HTMLResponse:
@@ -150,6 +153,8 @@ def _validate_and_fetch_share(
         return _err_html(*_ERR_403)
     if row.get("revoked_reason") == "PRIVATE":
         return _err_html(*_ERR_PRIVATE)
+    if row.get("revoked_reason") == "CONTENT_VIOLATION":
+        return _err_html(*_ERR_CONTENT_VIOLATION)
     if row["expires_at_s"] <= int(time.time()):
         delete_share(short_code)
         return _err_html(*_ERR_410)

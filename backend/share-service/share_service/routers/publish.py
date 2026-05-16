@@ -18,6 +18,7 @@ from typing import Any, Deque, Optional
 
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
     Depends,
     File,
     Form,
@@ -29,6 +30,7 @@ from fastapi import (
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import ValidationError
 
+from ..core.audit_task import audit_share
 from ..core.auth_tokens import require_share_token
 from ..core.config import get_settings
 from ..core.lifecycle import (
@@ -113,7 +115,11 @@ def _cache_root() -> Path:
     status_code=status.HTTP_201_CREATED,
     response_model=PublishResponse,
 )
-async def publish(request: Request, owner_uid: str = Depends(require_share_token)):
+async def publish(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    owner_uid: str = Depends(require_share_token),
+):
     settings = get_settings()
     client_host = request.client.host if request.client else "unknown"
     if not _check_publish_rate(client_host):
@@ -393,6 +399,10 @@ async def publish(request: Request, owner_uid: str = Depends(require_share_token
             "sig_hex": sig_hex,
             "replay_prefs_json": replay_prefs_json,
         })
+        # v1.2：异步审查文本 + 图片。命中后台静默 revoke (写 audit_status='rejected'
+        # + revoked_reason='CONTENT_VIOLATION' + 清 cache)，viewer 显示固定话术。
+        # FastAPI BackgroundTasks 在 response 返回后 schedule，所以不影响 publish 响应延迟。
+        background_tasks.add_task(audit_share, short_code)
     except Exception as e:
         # rmtree is robust against partial state — empty dirs, dirs with
         # only some webp files, missing manifest, all fine. Anything we

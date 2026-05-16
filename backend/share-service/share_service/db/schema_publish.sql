@@ -14,10 +14,12 @@ CREATE TABLE IF NOT EXISTS share_publish (
     view_count         INTEGER NOT NULL DEFAULT 0,
     revoked_reason     TEXT,                 -- v0.8: NULL = active or naturally expired,
                                              --       'PRIVATE' = trip 改为私密后被owner撤销
-    replay_prefs_json  TEXT                  -- v1.0: 发布者在 ReplaySettingsSheet 选的回放偏好。
+    replay_prefs_json  TEXT,                 -- v1.0: 发布者在 ReplaySettingsSheet 选的回放偏好。
                                              -- 7 个字段 (styleKitId/bgmId/filterId/transitionType/
                                              -- enableBlurOverlay/enableRouteAnimation)。
                                              -- NULL 表示用全局默认。
+    audit_status       TEXT NOT NULL DEFAULT 'passed',  -- v1.2: pending / passed / rejected
+    audit_reason       TEXT                  -- v1.2: rejected 时记原因（text:xxx / image:xxx）
 );
 
 CREATE INDEX IF NOT EXISTS idx_share_publish_expires

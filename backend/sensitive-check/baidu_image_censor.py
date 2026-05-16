@@ -327,7 +327,23 @@ def _verify_audit_token(token: str) -> Dict[str, Any]:
     return _verify_signed_payload(token, _AUDIT_TOKEN_SECRET, "audit_token_secret", "audit")
 
 
-def verify_bearer(authorization: Optional[str] = Header(None)) -> str:
+_INTERNAL_SHARED_SECRET = os.environ.get("INTERNAL_SHARED_SECRET", "").strip()
+
+
+def verify_bearer(
+    authorization: Optional[str] = Header(None),
+    x_internal_auth: Optional[str] = Header(None, alias="X-Internal-Auth"),
+) -> str:
+    """同时接受两种来源：
+    - 用户请求：Authorization: Bearer <audit_token>
+    - 服务间请求：X-Internal-Auth: <INTERNAL_SHARED_SECRET>（仅 share-service 等内部服务用）
+
+    内部调用走 X-Internal-Auth，避免 share-service 还要去 mint audit_token；
+    这个 secret 只在服务器 .env 里，公网用户无法获取。
+    """
+    if _INTERNAL_SHARED_SECRET and x_internal_auth and \
+            hmac.compare_digest(x_internal_auth, _INTERNAL_SHARED_SECRET):
+        return "internal:share-service"
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="missing_token")
     token = authorization.split(None, 1)[1].strip()
@@ -482,7 +498,13 @@ def _verify_agc_access_token(access_token: str) -> Dict[str, Any]:
 def _audit_rate_key(request: Request) -> str:
     """slowapi key_func：优先按 Bearer audit_token 解 uid 限流。
     nginx 反代后 client.host 全是 127.0.0.1，per-IP 退化成全局桶，所以必须 per-uid。
+    内部服务间调用（X-Internal-Auth）单独走 'internal' 桶，不挤公网用户。
     """
+    # 内部调用单独桶
+    if _INTERNAL_SHARED_SECRET:
+        x_internal = request.headers.get("x-internal-auth", "")
+        if x_internal and hmac.compare_digest(x_internal, _INTERNAL_SHARED_SECRET):
+            return "internal:share-service"
     auth = request.headers.get("authorization", "")
     if auth.lower().startswith("bearer "):
         token = auth.split(None, 1)[1].strip()
