@@ -607,38 +607,6 @@ export struct AiCopyPage {
               .height(96)
             }
 
-            // 端侧元数据摘要 —— 让用户知道有哪些信息会进入 prompt
-            if (this.isExtracting) {
-              Row({ space: 8 }) {
-                LoadingProgress().width(16).height(16)
-                Text('正在端侧识别照片元数据...')
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_HINT)
-              }
-              .width('100%')
-              .margin({ top: 12 })
-            } else if (this.metadataSummary.length > 0) {
-              Column() {
-                Text(
-                  this.cloudTaggingEnabled
-                    ? '已识别端侧元数据（点击生成时还会把首张照片的剥离 EXIF 副本一并发送，让模型直接看图写文案）'
-                    : '已识别端侧元数据（仅文本进入 prompt，照片本体不会上传）'
-                )
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.PRIMARY)
-                  .margin({ bottom: 6 })
-                Text(this.metadataSummary)
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_SECONDARY)
-                  .lineHeight(20)
-              }
-              .width('100%')
-              .padding(10)
-              .margin({ top: 12 })
-              .backgroundColor(AppColors.PRIMARY + '10')
-              .borderRadius(AppDimens.RADIUS_SM)
-              .alignItems(HorizontalAlign.Start)
-            }
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
