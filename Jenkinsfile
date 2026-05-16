@@ -8,10 +8,10 @@ pipeline {
     }
 
     environment {
-        DEVECO_SDK_HOME = 'C:\\Apps\\DevEco Studio\\sdk'
-        DEVECO_NODE = 'C:\\Apps\\DevEco Studio\\tools\\node\\node.exe'
-        DEVECO_OHPM = 'C:\\Apps\\DevEco Studio\\tools\\ohpm\\bin\\ohpm.bat'
-        LOCAL_ARTIFACT_ROOT_DEFAULT = 'D:\\Mydata\\1University\\3Junior\\Software_Engineering\\project\\frontendv1\\team-project-26spring-26s-7\\ci-artifacts'
+        DEVECO_SDK_HOME = 'D:\\Program Files\\Huawei\\DevEco Studio\\sdk'
+        DEVECO_NODE = 'D:\\Program Files\\Huawei\\DevEco Studio\\tools\\node\\node.exe'
+        DEVECO_OHPM = 'D:\\Program Files\\Huawei\\DevEco Studio\\tools\\ohpm\\bin\\ohpm.bat'
+        LOCAL_ARTIFACT_ROOT_DEFAULT = 'D:\\ci-artifacts\\team-project-26spring-26s-7'
         ANSI_RESET = '[0m'
         ANSI_GREEN = '[32m'
         ANSI_RED = '[31m'
