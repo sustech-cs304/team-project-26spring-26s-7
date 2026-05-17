@@ -70,6 +70,8 @@ const SINGLE_OUTER_R = 116
 const CLUSTER_INNER_R = 116
 const CLUSTER_OUTER_R = 125
 const TIP_HEIGHT = 50
+const FLOATING_TAB_BAR_HEIGHT = 60
+const BOTTOM_PREVIEW_BG = '#F2FFFFFF'
 
 interface RgbColor {
   r: number
@@ -78,11 +80,11 @@ interface RgbColor {
 }
 
 const MARKER_WHITE: RgbColor = { r: 0xFF, g: 0xFF, b: 0xFF }
-const MARKER_BLUE_DARK: RgbColor = { r: 0x1D, g: 0x63, b: 0xB3 }
-const MARKER_BLUE: RgbColor = { r: 0x4A, g: 0x90, b: 0xD9 }
-const MARKER_BLUE_LIGHT: RgbColor = { r: 0x87, g: 0xC2, b: 0xFF }
-const MARKER_BLUE_SOFT: RgbColor = { r: 0xDB, g: 0xEE, b: 0xFF }
-const MARKER_BLUE_SURFACE: RgbColor = { r: 0xF3, g: 0xF9, b: 0xFF }
+const MARKER_BLUE_DARK: RgbColor = { r: 0xD9, g: 0x53, b: 0x12 }
+const MARKER_BLUE: RgbColor = { r: 0xFF, g: 0x6A, b: 0x1A }
+const MARKER_BLUE_LIGHT: RgbColor = { r: 0xFF, g: 0xB3, b: 0x7A }
+const MARKER_BLUE_SOFT: RgbColor = { r: 0xFF, g: 0xE3, b: 0xD1 }
+const MARKER_BLUE_SURFACE: RgbColor = { r: 0xFF, g: 0xF6, b: 0xEF }
 
 interface PhotoData {
   buffer: ArrayBuffer
@@ -367,14 +369,14 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${metrics.width}" height="${metrics.height}" viewBox="0 0 ${metrics.width} ${metrics.height}">
   <defs>
     <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#104b89" flood-opacity="0.22" />
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#FF6A1A" flood-opacity="0.24" />
     </filter>
   </defs>
   <rect x="0" y="0" width="${metrics.width}" height="${metrics.height}" rx="${metrics.height / 2}" ry="${metrics.height / 2}"
     fill="#FFFFFF" filter="url(#shadow)" />
   <rect x="${metrics.borderWidth}" y="${metrics.borderWidth}" width="${metrics.width - metrics.borderWidth * 2}"
     height="${metrics.height - metrics.borderWidth * 2}" rx="${(metrics.height - metrics.borderWidth * 2) / 2}"
-    ry="${(metrics.height - metrics.borderWidth * 2) / 2}" fill="#1D63B3" />
+    ry="${(metrics.height - metrics.borderWidth * 2) / 2}" fill="#D95312" />
   <text x="50%" y="66%" font-family="sans-serif" font-size="${metrics.fontSize}" font-weight="900"
     fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">${label}</text>
   <text x="49.2%" y="66%" font-family="sans-serif" font-size="${metrics.fontSize}" font-weight="900"
@@ -411,9 +413,9 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
   }
 
   private getCountBadgeMetrics(label: string): CountBadgeMetrics {
-    const borderWidth = 7
+    const borderWidth = 8
     const height = label.length >= 4 ? 78 : 74
-    const fontSize = label.length >= 4 ? 24 : label.length >= 3 ? 28 : 34
+    const fontSize = label.length >= 4 ? 26 : label.length >= 3 ? 30 : 36
     const estimatedTextWidth = Math.max(Math.round(fontSize * 0.72), Math.round(label.length * fontSize * 0.62))
     const horizontalPadding = label.length >= 4 ? 20 : label.length >= 3 ? 18 : 16
     const width = Math.max(height, estimatedTextWidth + horizontalPadding * 2 + borderWidth * 2)
@@ -474,7 +476,7 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
   private async drawMarkerCard(view: Uint8Array, canvasSize: number, photoData: PhotoData | undefined,
     countLabel: string): Promise<void> {
     const cardSize = 240
-    const borderWidth = 6
+    const borderWidth = 8
     const radius = 35
     const cardLeft = Math.round((canvasSize - cardSize) / 2)
     const cardTop = Math.round((canvasSize - cardSize) / 2)
@@ -742,8 +744,6 @@ export struct MapHomeView {
   @State isLocating: boolean = false
   @Watch('onTravelDataVersionChange')
   @StorageLink('travelDataVersion') travelDataVersion: number = 0
-  @Watch('onTabRefresh')
-  @StorageLink('tabRefreshToken') tabRefreshToken: number = 0
   @StorageLink('activeTabIndex') activeTabIndex: number = 0
 
   // 地图配置：默认中心为深圳
@@ -751,7 +751,9 @@ export struct MapHomeView {
     position: {
       target: this.getInitialMapCenter(),
       zoom: 12
-    }
+    },
+    zoomControlsEnabled: false,
+    compassControlsEnabled: false
   }
 
   private mapController?: map.MapComponentController
@@ -816,12 +818,6 @@ export struct MapHomeView {
 
   private onTravelDataVersionChange(): void {
     this.loadNodes()
-  }
-
-  private onTabRefresh(): void {
-    if (this.activeTabIndex === 0) {
-      this.loadNodes()
-    }
   }
 
   private async loadNodes(): Promise<void> {
@@ -1513,56 +1509,100 @@ export struct MapHomeView {
             .margin({ top: 12 })
         }
         .padding(16)
-        .backgroundColor(AppColors.CARD_BG)
+        .backgroundColor(AppDimens.SURFACE_TINT)
+        .border({ width: 1, color: AppDimens.GLASS_BORDER })
         .borderRadius(AppDimens.RADIUS_MD)
+        .shadow({ radius: 18, color: AppDimens.SHADOW_FLOAT, offsetY: 8 })
         .position({ x: '25%', y: '45%' })
       }
 
       // 搜索栏 (顶部浮动)
       Column() {
-        Row() {
+        Row({ space: 10 }) {
+          Row() {
           TextInput({ placeholder: '搜索地点、标签...', text: this.searchKeyword })
             .layoutWeight(1)
-            .height(40)
-            .fontColor(AppColors.INPUT_TEXT)
-            .placeholderColor(AppColors.INPUT_PLACEHOLDER)
+            .fontColor('#FFFFFFFF')
+            .placeholderColor('#CCFFFFFF')
             .caretColor(AppColors.INPUT_CARET)
-            .backgroundColor(AppColors.INPUT_BG)
-            .borderRadius(20)
-            .padding({ left: 14, right: 14 })
+            .backgroundColor('#00000000')
             .onChange((value: string) => this.handleSearchInputChange(value))
 
           if (this.searchKeyword.length > 0) {
-            Text('清空')
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(AppColors.PRIMARY)
-              .margin({ left: 10 })
+            Button() {
+              Text('x')
+                .fontSize(16)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(AppColors.TEXT_HINT)
+            }
+              .width(28)
+              .height(28)
+              .padding(0)
+              .backgroundColor('#F0F1F4')
+              .borderRadius(14)
               .onClick(() => this.handleSearchInputChange(''))
           }
 
           if (this.hasSelectedSearchResult) {
             Text('用该地址新建记忆')
-              .fontSize(AppDimens.FONT_MD)
+              .fontSize(AppDimens.FONT_SM)
+              .fontWeight(FontWeight.Medium)
               .fontColor(AppColors.TEXT_ON_PRIMARY)
-              .backgroundColor(AppColors.PRIMARY)
-              .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-              .borderRadius(20)
-              .margin({ left: 8 })
-              .shadow({ radius: 4, color: '#1890FF33', offsetY: 2 })
+              .backgroundColor(AppDimens.CTA_DARK)
+              .height(38)
+              .padding({ left: 12, right: 12 })
+              .borderRadius(19)
+              .margin({ left: 10 })
+              .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
               .onClick(() => this.navigateToCreateNodeFromSearch())
           }
+          }
+          .layoutWeight(1)
+          .height(44)
+          .padding({ left: 12, right: 8, top: 2, bottom: 2 })
+          .backgroundColor('#4D111111')
+          .border({ width: 1, color: '#66FFFFFF' })
+          .borderRadius(22)
+          .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+          .shadow({ radius: 10, color: AppDimens.SHADOW_SOFT, offsetY: 3 })
+          .alignItems(VerticalAlign.Center)
 
-          Text('筛选')
-            .fontSize(AppDimens.FONT_MD)
-            .fontColor(this.showFilter ? AppColors.TEXT_ON_PRIMARY : AppColors.PRIMARY)
-            .backgroundColor(this.showFilter ? AppColors.PRIMARY : AppColors.CARD_BG)
-            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-            .borderRadius(20)
-            .margin({ left: 8 })
-            .shadow({ radius: 4, color: '#0000001A', offsetY: 2 })
-            .onClick(() => { this.showFilter = !this.showFilter })
+          Button() {
+            Column({ space: 4 }) {
+              Column()
+                .width(20)
+                .height(4)
+                .backgroundColor('#FFFFFFFF')
+                .borderRadius(3)
+              Column()
+                .width(24)
+                .height(4)
+                .backgroundColor('#FFFFFFFF')
+                .borderRadius(3)
+              Column()
+                .width(17)
+                .height(4)
+                .backgroundColor('#FFFFFFFF')
+                .borderRadius(3)
+            }
+            .width('100%')
+            .height('100%')
+            .alignItems(HorizontalAlign.Center)
+            .justifyContent(FlexAlign.Center)
+          }
+          .width(44)
+          .height(44)
+          .padding(0)
+          .backgroundColor('#4D111111')
+          .border({ width: 1, color: '#66FFFFFF' })
+          .borderRadius(22)
+          .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+          .shadow({ radius: 10, color: AppDimens.SHADOW_SOFT, offsetY: 3 })
+          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+          .onClick(() => { this.showFilter = !this.showFilter })
         }
         .width('100%')
+        .alignItems(VerticalAlign.Center)
 
         if (this.isSearching) {
           Text('搜索中...')
@@ -1607,14 +1647,15 @@ export struct MapHomeView {
             })
           }
           .width('100%')
-          .backgroundColor(AppColors.CARD_BG)
+          .backgroundColor(AppDimens.SURFACE_TINT)
+          .border({ width: 1, color: AppDimens.GLASS_BORDER })
           .borderRadius(AppDimens.RADIUS_SM)
           .margin({ top: 8 })
-          .shadow({ radius: 6, color: '#0000001A', offsetY: 2 })
+          .shadow({ radius: 18, color: AppDimens.SHADOW_FLOAT, offsetY: 8 })
         }
       }
       .width('100%')
-      .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 8 })
+      .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 14 })
       .position({ x: 0, y: 0 })
 
       // 筛选面板
@@ -1623,15 +1664,20 @@ export struct MapHomeView {
           Text('时间范围')
             .fontSize(AppDimens.FONT_SM)
             .fontWeight(FontWeight.Medium)
-            .fontColor(AppColors.TEXT_PRIMARY)
+            .fontColor('#FFFFFFFF')
           Row({ space: 8 }) {
             ForEach(['全部', '近 7 天', '近 30 天', '近一年'], (label: string) => {
               Text(label)
                 .fontSize(AppDimens.FONT_SM)
-                .fontColor(this.selectedFilterTime === label ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
-                .backgroundColor(this.selectedFilterTime === label ? AppColors.PRIMARY : AppColors.BACKGROUND)
-                .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-                .borderRadius(14)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(this.selectedFilterTime === label ? AppColors.TEXT_PRIMARY : '#FFFFFFFF')
+                .backgroundColor(this.selectedFilterTime === label ? '#F2FFFFFF' : '#22FFFFFF')
+                .border({
+                  width: 1,
+                  color: this.selectedFilterTime === label ? '#88FFFFFF' : '#44FFFFFF'
+                })
+                .padding({ left: 9, right: 9, top: 5, bottom: 5 })
+                .borderRadius(13)
                 .onClick(() => { this.updateFilters(label, undefined) })
             })
           }
@@ -1640,27 +1686,35 @@ export struct MapHomeView {
           Text('标签')
             .fontSize(AppDimens.FONT_SM)
             .fontWeight(FontWeight.Medium)
-            .fontColor(AppColors.TEXT_PRIMARY)
+            .fontColor('#FFFFFFFF')
             .margin({ top: 12 })
           Row({ space: 8 }) {
             ForEach(['全部', '旅行', '美食', '风景', '打卡'], (label: string) => {
               Text(label)
                 .fontSize(AppDimens.FONT_SM)
-                .fontColor(this.selectedFilterTag === label ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
-                .backgroundColor(this.selectedFilterTag === label ? AppColors.PRIMARY : AppColors.BACKGROUND)
-                .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-                .borderRadius(14)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(this.selectedFilterTag === label ? AppColors.TEXT_PRIMARY : '#FFFFFFFF')
+                .backgroundColor(this.selectedFilterTag === label ? '#F2FFFFFF' : '#22FFFFFF')
+                .border({
+                  width: 1,
+                  color: this.selectedFilterTag === label ? '#88FFFFFF' : '#44FFFFFF'
+                })
+                .padding({ left: 9, right: 9, top: 5, bottom: 5 })
+                .borderRadius(13)
                 .onClick(() => { this.updateFilters(undefined, label) })
             })
           }
           .margin({ top: 8 })
         }
-        .width('100%')
-        .padding(AppDimens.PADDING_MD)
-        .backgroundColor(AppColors.CARD_BG)
-        .borderRadius({ bottomLeft: AppDimens.RADIUS_MD, bottomRight: AppDimens.RADIUS_MD })
-        .shadow({ radius: 4, color: '#0000001A', offsetY: 4 })
-        .position({ x: 0, y: 56 })
+        .width(284)
+        .padding({ left: 14, right: 14, top: 12, bottom: 14 })
+        .backgroundColor('#66111111')
+        .border({ width: 1, color: '#66FFFFFF' })
+        .borderRadius(22)
+        .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+        .shadow({ radius: 16, color: AppDimens.SHADOW_FLOAT, offsetY: 6 })
+        .position({ x: '100%', y: 64 })
+        .translate({ x: -300 })
         .alignItems(HorizontalAlign.Start)
       }
 
@@ -1672,33 +1726,39 @@ export struct MapHomeView {
               .fontSize(32)
               .fontWeight(FontWeight.Bold)
               .fontColor(AppColors.PRIMARY)
+              .translate({ y: 2 })
           }
           .width('100%')
           .height('100%')
           .alignContent(Alignment.Center)
         }
-        .width(48)
-        .height(48)
-        .backgroundColor(AppColors.CARD_BG)
-        .borderRadius(24)
+        .width(52)
+        .height(52)
+        .backgroundColor('#22FFFFFF')
+        .border({ width: 0.8, color: '#55FFFFFF' })
+        .borderRadius(26)
+        .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
         .padding(0)
         .enabled(!this.isLocating)
-        .shadow({ radius: 4, color: '#0000001A', offsetY: 2 })
+        .shadow({ radius: 12, color: AppDimens.SHADOW_SOFT, offsetY: 4 })
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
         .onClick(() => this.recenterToCurrentLocation())
 
         Button('+')
           .width(52)
           .height(52)
           .fontSize(24)
+          .fontWeight(FontWeight.Medium)
           .fontColor(AppColors.TEXT_ON_PRIMARY)
-          .backgroundColor(AppColors.PRIMARY)
+          .backgroundColor(AppDimens.CTA_DARK)
           .borderRadius(26)
-          .shadow({ radius: 6, color: '#1890FF66', offsetY: 3 })
+          .shadow({ radius: 12, color: AppDimens.SHADOW_SOFT, offsetY: 4 })
+          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
           .onClick(() => {
             router.pushUrl({ url: RouterUrls.NODE_EDIT })
           })
       }
-      .position({ x: '80%', y: '60%' })
+      .position({ x: '83%', y: '57%' })
 
       // 底部节点预览卡片（增强版：80x80 封面 + 照片数量徽章 + 标签行）
       if (this.previewVisible) {
@@ -1730,7 +1790,7 @@ export struct MapHomeView {
                 Text(`${this.previewPhotoCount}张`)
                   .fontSize(10)
                   .fontColor('#FFFFFF')
-                  .backgroundColor('#000000AA')
+                  .backgroundColor('#AA000000')
                   .padding({ left: 4, right: 4, top: 2, bottom: 2 })
                   .borderRadius(4)
                   .position({ x: 56, y: 64 })
@@ -1763,7 +1823,7 @@ export struct MapHomeView {
                     Text(tag)
                       .fontSize(10)
                       .fontColor(AppColors.PRIMARY)
-                      .backgroundColor('#4A90D920')
+                      .backgroundColor(AppDimens.ACCENT_SOFT_BG)
                       .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                       .borderRadius(8)
                       .margin({ right: 4 })
@@ -1782,7 +1842,8 @@ export struct MapHomeView {
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
-          .backgroundColor(AppColors.CARD_BG)
+          .backgroundColor(BOTTOM_PREVIEW_BG)
+          .backgroundBlurStyle(BlurStyle.Thin)
           .borderRadius({ topLeft: AppDimens.RADIUS_LG, topRight: AppDimens.RADIUS_LG })
           .shadow({ radius: 8, color: '#0000001A', offsetY: -2 })
           .onClick(() => {
@@ -1795,6 +1856,7 @@ export struct MapHomeView {
         }
         .width('100%')
         .height('100%')
+        .padding({ bottom: FLOATING_TAB_BAR_HEIGHT })
       }
 
       // 聚合展开列表（点击聚合标记后显示）
@@ -1862,12 +1924,14 @@ export struct MapHomeView {
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
-          .backgroundColor(AppColors.CARD_BG)
+          .backgroundColor(BOTTOM_PREVIEW_BG)
+          .backgroundBlurStyle(BlurStyle.Thin)
           .borderRadius({ topLeft: AppDimens.RADIUS_LG, topRight: AppDimens.RADIUS_LG })
           .shadow({ radius: 8, color: '#0000001A', offsetY: -2 })
         }
         .width('100%')
         .height('100%')
+        .padding({ bottom: FLOATING_TAB_BAR_HEIGHT })
       }
     }
     .width('100%')

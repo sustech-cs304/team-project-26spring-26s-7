@@ -566,16 +566,16 @@ export struct TripEditPage {
             if (this.isEditMode) {
               Column() {
                 Text('危险操作')
-                  .fontSize(AppDimens.FONT_MD)
+                  .fontSize(0)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor(AppColors.TEXT_PRIMARY)
+                  .fontColor('#00000000')
 
                 Text('删除后，这条旅行及其节点关联将无法恢复。')
-                  .fontSize(AppDimens.FONT_SM)
+                  .fontSize(0)
                   .fontColor(AppColors.TEXT_HINT)
-                  .lineHeight(20)
+                  .lineHeight(0)
                   .width('100%')
-                  .margin({ top: 8 })
+                  .margin({ top: 0 })
 
                 Button('删除旅行')
                   .width('100%')

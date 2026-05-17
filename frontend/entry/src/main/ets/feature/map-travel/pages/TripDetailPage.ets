@@ -507,7 +507,7 @@ export struct TripDetailPage {
     .onClick(() => {
       router.pushUrl({
         url: RouterUrls.NODE_DETAIL,
-        params: { nodeId: node.id } as RouterParam
+        params: { nodeId: node.id, tripId: this.tripId } as RouterParam
       })
     })
   }
