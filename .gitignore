@@ -91,3 +91,7 @@ backend/picture-check/secure/
 package-lock.json
 package.json
 frontend/build-profile.json5
+
+# ci storage
+.be-ci-artifacts/
+ci-artifacts/
