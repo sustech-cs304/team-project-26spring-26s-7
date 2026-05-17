@@ -111,3 +111,4 @@ backend/build-artifacts/
 build-artifacts/
 .ci-logs/
 .be-ci-artifacts/
+ci-artifacts/

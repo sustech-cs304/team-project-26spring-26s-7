@@ -11,7 +11,7 @@ import { TravelRepository } from '../data/TravelRepository'
 
 const DOMAIN = 0x0000
 const TAG = 'CloudSyncService'
-const ZONE_NAME = 'TravelPinZone'
+const ZONE_NAME = 'ItsMapPinZone'
 const MAX_CLOUD_ID_PROBE_COUNT = 10000
 
 let initialized: boolean = false

@@ -39,7 +39,7 @@ export interface UserProfileRow {
   bio: string;
 }
 
-const DB_NAME = 'TravelPin.db';
+const DB_NAME = 'ItsMapPin.db';
 const DB_VERSION = 1;
 
 const STORE_CONFIG: rdb.StoreConfig = {
