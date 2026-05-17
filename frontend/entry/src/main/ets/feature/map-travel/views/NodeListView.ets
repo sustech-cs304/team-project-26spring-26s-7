@@ -32,14 +32,21 @@ export struct NodeListView {
   @State isBulkOperating: boolean = false
   @Watch('onTravelDataVersionChange')
   @StorageLink('travelDataVersion') travelDataVersion: number = 0
-  @Watch('onTabRefresh')
-  @StorageLink('tabRefreshToken') tabRefreshToken: number = 0
   @StorageLink('activeTabIndex') activeTabIndex: number = 0
 
   private dataService = getDataService()
 
   aboutToAppear(): void {
+    this.syncBulkToolbarVisibility()
     this.loadNodes()
+  }
+
+  aboutToDisappear(): void {
+    AppStorage.setOrCreate('nodeBulkActionMode', false)
+  }
+
+  private syncBulkToolbarVisibility(): void {
+    AppStorage.setOrCreate('nodeBulkActionMode', this.isManageMode)
   }
 
   private onTravelDataVersionChange(): void {
@@ -47,12 +54,6 @@ export struct NodeListView {
       return
     }
     this.loadNodes()
-  }
-
-  private onTabRefresh(): void {
-    if (this.activeTabIndex === 2) {
-      this.loadNodes()
-    }
   }
 
   private formatDate(timestamp: number): string {
@@ -70,12 +71,12 @@ export struct NodeListView {
     return `${hours}:${minutes}`
   }
 
-  private getPreviewText(content: string, poiName: string): string {
+  private getPreviewText(content: string, _poiName: string): string {
     const trimmed = content.trim()
     if (trimmed.length > 0) {
       return trimmed
     }
-    return poiName.length > 0 ? `在 ${poiName} 留下的一段记忆` : '还没有补充内容'
+    return ''
   }
 
   private mapNodeToFeedItem(node: MemoryNode, trip: Trip): NodeFeedItem {
@@ -154,6 +155,7 @@ export struct NodeListView {
     Row({ space: 8 }) {
       TextInput({ placeholder: '搜索节点、地点或旅行', text: this.searchKeyword })
         .layoutWeight(1)
+        .defaultFocus(false)
         .fontColor(AppColors.INPUT_TEXT)
         .placeholderColor(AppColors.INPUT_PLACEHOLDER)
         .caretColor(AppColors.INPUT_CARET)
@@ -161,6 +163,17 @@ export struct NodeListView {
         .onChange((value: string) => {
           this.searchKeyword = value
         })
+      if (false) {
+        Text('搜索节点、地点或旅行')
+          .layoutWeight(1)
+          .height(40)
+          .fontSize(AppDimens.FONT_MD)
+          .fontColor(AppColors.INPUT_PLACEHOLDER)
+          .textAlign(TextAlign.Start)
+          .onClick(() => {
+            this.searchKeyword = this.searchKeyword
+          })
+      }
 
       if (this.searchKeyword.length > 0) {
         Button() {
@@ -182,8 +195,10 @@ export struct NodeListView {
     .width('100%')
     .margin({ top: 16 })
     .padding({ left: 12, right: 10 })
-    .backgroundColor(AppColors.INPUT_BG)
-    .borderRadius(22)
+    .backgroundColor(AppDimens.SURFACE_TINT)
+    .border({ width: 1, color: AppDimens.GLASS_BORDER })
+    .borderRadius(24)
+    .shadow({ radius: 12, color: AppDimens.SHADOW_SOFT, offsetY: 4 })
     .alignItems(VerticalAlign.Center)
   }
 
@@ -235,12 +250,14 @@ export struct NodeListView {
   private enterManageMode(): void {
     this.isManageMode = true
     this.selectedNodeIds = []
+    this.syncBulkToolbarVisibility()
   }
 
   private exitManageMode(): void {
     this.isManageMode = false
     this.selectedNodeIds = []
     this.showBulkTripSelector = false
+    this.syncBulkToolbarVisibility()
   }
 
   private isNodeSelected(nodeId: string): boolean {
@@ -418,6 +435,40 @@ export struct NodeListView {
           .fontWeight(FontWeight.Bold)
           .fontColor(AppColors.TEXT_PRIMARY)
           .layoutWeight(1)
+
+        Row({ space: 8 }) {
+          Button(this.isManageMode ? '完成' : '选择')
+            .width(58)
+            .height(32)
+            .padding(0)
+            .fontSize(AppDimens.FONT_SM)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.isManageMode ? AppColors.TEXT_ON_PRIMARY : AppDimens.CTA_DARK)
+            .backgroundColor(this.isManageMode ? AppDimens.CTA_DARK : '#F8F9FB')
+            .border({ width: 1, color: AppDimens.CTA_DARK })
+            .borderRadius(16)
+            .enabled(this.nodes.length > 0)
+            .opacity(this.nodes.length > 0 ? 1 : 0.45)
+            .onClick(() => {
+              if (this.isManageMode) {
+                this.exitManageMode()
+              } else {
+                this.enterManageMode()
+              }
+            })
+
+          Button('+')
+            .width(32)
+            .height(32)
+            .padding(0)
+            .fontSize(20)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(AppColors.TEXT_ON_PRIMARY)
+            .backgroundColor(AppColors.PRIMARY)
+            .borderRadius(16)
+            .onClick(() => this.openNodeEdit())
+        }
+        .alignItems(VerticalAlign.Center)
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
@@ -455,47 +506,6 @@ export struct NodeListView {
 
       this.buildSearchInput()
 
-      Row({ space: 12 }) {
-        if (this.nodes.length > 0) {
-          Button(this.isManageMode ? '完成' : '批量编辑')
-            .layoutWeight(1)
-            .height(40)
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor(this.isManageMode ? AppColors.TEXT_PRIMARY : AppColors.PRIMARY)
-            .backgroundColor(this.isManageMode ? '#F3F4F6' : '#EAF4FF')
-            .borderRadius(20)
-            .onClick(() => {
-              if (this.isManageMode) {
-                this.exitManageMode()
-              } else {
-                this.enterManageMode()
-              }
-            })
-        }
-
-        if (this.isManageMode) {
-          Button(this.isAllFilteredNodesSelected() ? '取消全选' : '全选')
-            .layoutWeight(1)
-            .height(40)
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor(AppColors.PRIMARY)
-            .backgroundColor('#EAF4FF')
-            .borderRadius(20)
-            .onClick(() => this.toggleSelectAll())
-        } else {
-          Button('新建节点')
-            .layoutWeight(1)
-            .height(40)
-            .fontSize(AppDimens.FONT_SM)
-            .backgroundColor(AppColors.PRIMARY)
-            .borderRadius(20)
-            .onClick(() => this.openNodeEdit())
-        }
-      }
-      .width('100%')
-      .margin({ top: 18 })
-      .alignItems(VerticalAlign.Center)
-
       if (this.isManageMode) {
         Text(this.getSelectedCountText())
           .fontSize(AppDimens.FONT_SM)
@@ -505,10 +515,7 @@ export struct NodeListView {
       }
     }
     .width('100%')
-    .padding(AppDimens.PADDING_LG)
-    .backgroundColor(AppColors.CARD_BG)
-    .borderRadius(AppDimens.RADIUS_LG)
-    .shadow({ radius: 10, color: '#00000012', offsetY: 4 })
+    .padding({ left: 0, right: 0, top: 12, bottom: 8 })
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -520,11 +527,11 @@ export struct NodeListView {
           Circle()
             .width(24)
             .height(24)
-            .fill(this.isNodeSelected(item.id) ? AppColors.PRIMARY : AppColors.CARD_BG)
-            .stroke(this.isNodeSelected(item.id) ? AppColors.PRIMARY : AppColors.DIVIDER)
+            .fill(this.isNodeSelected(item.id) ? AppDimens.CTA_DARK : AppColors.CARD_BG)
+            .stroke(this.isNodeSelected(item.id) ? AppDimens.CTA_DARK : AppColors.DIVIDER)
             .strokeWidth(2)
           if (this.isNodeSelected(item.id)) {
-            Text('✓')
+            Text('V')
               .fontSize(14)
               .fontWeight(FontWeight.Bold)
               .fontColor(AppColors.TEXT_ON_PRIMARY)
@@ -543,62 +550,49 @@ export struct NodeListView {
             .objectFit(ImageFit.Cover)
         } else {
           Column() {
-            Text('📷')
-              .fontSize(20)
-              .opacity(0.4)
+            Text('NO PHOTO')
+              .fontSize(AppDimens.FONT_XS)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(AppColors.TEXT_HINT)
           }
           .width('100%')
           .height('100%')
           .justifyContent(FlexAlign.Center)
-          .backgroundColor('#F5F5F5')
+          .backgroundColor(AppDimens.PHOTO_SURFACE)
         }
       }
       .width(108)
       .height(108)
-      .borderRadius(AppDimens.RADIUS_MD)
+      .borderRadius(22)
       .clip(true)
       .margin({ left: this.isManageMode ? 8 : 0 })
 
       Column() {
-        Row() {
-          Text(item.title)
-            .fontSize(AppDimens.FONT_LG)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(AppColors.TEXT_PRIMARY)
-            .layoutWeight(1)
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-          Text(item.tripIsPublic ? '公开' : '私密')
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor(item.tripIsPublic ? '#167D3E' : '#A55B00')
-            .backgroundColor(item.tripIsPublic ? '#E8F5E9' : '#FFF4E5')
-            .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-            .borderRadius(12)
-        }
-        .width('100%')
-
-        Text(`📍 ${item.poiName}`)
-          .fontSize(AppDimens.FONT_SM)
-          .fontColor(AppColors.TEXT_SECONDARY)
-          .margin({ top: 6 })
+        Text(item.title.length > 0 ? item.title : '未命名记忆')
+          .fontSize(AppDimens.FONT_LG)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(AppColors.TEXT_PRIMARY)
           .width('100%')
-          .maxLines(1)
+          .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-        Text(item.content)
+        Text(item.poiName.length > 0 ? item.poiName : '未命名地点')
           .fontSize(AppDimens.FONT_SM)
           .fontColor(AppColors.TEXT_SECONDARY)
-          .lineHeight(20)
+          .lineHeight(18)
           .margin({ top: 8 })
           .width('100%')
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
 
+        Blank()
+
         Text(`${this.formatDate(item.createdAt)} ${this.formatTime(item.createdAt)}`)
           .fontSize(AppDimens.FONT_SM)
           .fontColor(AppColors.TEXT_HINT)
           .width('100%')
-          .margin({ top: 10 })
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
 
         Row() {
           Text('所属旅行')
@@ -618,18 +612,20 @@ export struct NodeListView {
         .alignItems(VerticalAlign.Center)
       }
       .layoutWeight(1)
+      .height(108)
       .margin({ left: 12 })
       .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
     .padding(AppDimens.PADDING_MD)
-    .backgroundColor(this.isNodeSelected(item.id) ? '#F3F9FF' : AppColors.CARD_BG)
-    .borderRadius(AppDimens.RADIUS_MD)
+    .backgroundColor(this.isNodeSelected(item.id) ? AppDimens.ACCENT_SOFT_BG : AppDimens.SURFACE_TINT)
+    .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+    .borderRadius(AppDimens.RADIUS_LG)
     .border({
-      width: this.isNodeSelected(item.id) ? 1.5 : 0,
-      color: this.isNodeSelected(item.id) ? '#B7DCFF' : AppColors.CARD_BG
+      width: this.isNodeSelected(item.id) ? 1.5 : 1,
+      color: this.isNodeSelected(item.id) ? '#FFB37A' : AppDimens.GLASS_BORDER
     })
-    .shadow({ radius: 6, color: '#0000000F', offsetY: 2 })
+    .shadow({ radius: 18, color: AppDimens.SHADOW_SOFT, offsetY: 7 })
     .alignItems(VerticalAlign.Top)
     .onClick(() => this.toggleNodeSelection(item.id))
   }
@@ -641,8 +637,8 @@ export struct NodeListView {
         .layoutWeight(1)
         .height(46)
         .fontSize(AppDimens.FONT_MD)
-        .fontColor(AppColors.PRIMARY)
-        .backgroundColor('#EAF4FF')
+        .fontColor(AppColors.TEXT_ON_PRIMARY)
+        .backgroundColor(AppDimens.CTA_DARK)
         .enabled(!this.isBulkOperating && this.selectedNodeIds.length > 0)
         .opacity(!this.isBulkOperating && this.selectedNodeIds.length > 0 ? 1 : 0.55)
         .onClick(() => this.openBulkTripSelector())
@@ -657,7 +653,9 @@ export struct NodeListView {
         .onClick(() => this.confirmBulkDelete())
     }
     .width('100%')
-    .padding({ top: 12, bottom: 10 })
+    .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 10, bottom: 10 })
+    .backgroundColor(AppColors.BACKGROUND)
+    .shadow({ radius: 18, color: AppDimens.SHADOW_FLOAT, offsetY: -6 })
   }
 
   @Builder
@@ -681,7 +679,7 @@ export struct NodeListView {
           .height(34)
           .fontSize(AppDimens.FONT_SM)
           .fontColor(AppColors.TEXT_PRIMARY)
-          .backgroundColor('#F3F4F6')
+          .backgroundColor(AppDimens.PHOTO_SURFACE)
           .onClick(() => this.closeBulkTripSelector())
       }
       .width('100%')
@@ -693,7 +691,7 @@ export struct NodeListView {
         .margin({ top: 16 })
         .fontSize(AppDimens.FONT_MD)
         .fontColor(AppColors.TEXT_PRIMARY)
-        .backgroundColor('#F7F8FA')
+        .backgroundColor(AppDimens.PHOTO_SURFACE)
         .onClick(() => {
           void this.applyBulkMoveToTrip(TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID)
         })
@@ -725,7 +723,7 @@ export struct NodeListView {
               }
               .width('100%')
               .padding({ left: 16, right: 16, top: 16, bottom: 16 })
-              .backgroundColor('#F7F8FA')
+              .backgroundColor(AppDimens.PHOTO_SURFACE)
               .borderRadius(AppDimens.RADIUS_MD)
               .onClick(() => {
                 void this.applyBulkMoveToTrip(trip.id)
@@ -753,7 +751,8 @@ export struct NodeListView {
     }
     .width('100%')
     .padding(AppDimens.PADDING_LG)
-    .backgroundColor(AppColors.CARD_BG)
+    .backgroundColor(AppDimens.SURFACE_TINT)
+    .border({ width: 1, color: AppDimens.GLASS_BORDER })
     .borderRadius({ topLeft: 24, topRight: 24 })
   }
 
@@ -814,26 +813,34 @@ export struct NodeListView {
                 this.buildNodeCard(item)
               }
             }, (item: NodeFeedItem) => `${item.id}-${item.travelId}-${item.tripName}`)
+            if (!this.isManageMode) {
+              ListItem() {
+                Column()
+                  .width('100%')
+                  .height(76)
+                  .backgroundColor(AppColors.BACKGROUND)
+              }
+            }
           }
           .layoutWeight(1)
           .width('100%')
-          .padding({ top: 16, bottom: 8 })
-        }
-
-        if (this.isManageMode && this.getFilteredNodes().length > 0) {
-          this.buildBulkActionBar()
+          .padding({ top: 16, bottom: this.isManageMode ? 76 : 12 })
         }
       }
       .width('100%')
       .height('100%')
-      .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: AppDimens.PADDING_MD })
+      .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: AppDimens.PADDING_MD, bottom: 0 })
       .backgroundColor(AppColors.BACKGROUND)
+
+      if (this.isManageMode && this.getFilteredNodes().length > 0) {
+        this.buildBulkActionBar()
+      }
 
       if (this.showBulkTripSelector) {
         Column()
           .width('100%')
           .height('100%')
-          .backgroundColor('#00000055')
+          .backgroundColor('#55000000')
           .onClick(() => this.closeBulkTripSelector())
 
         Column() {

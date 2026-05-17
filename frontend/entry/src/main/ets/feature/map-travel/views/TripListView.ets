@@ -1,18 +1,23 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { AppColors, AppDimens, RouterUrls, getDataService } from '../../../common'
 import { RouterParam } from '../../../common'
-import type { Trip } from '../../../common'
+import type { Trip, MemoryNode } from '../../../common'
+
+interface TripCardItem {
+  trip: Trip
+  coverPhoto: string
+  hasCoverPhoto: boolean
+}
 
 @Component
 export struct TripListView {
   @StorageLink('appThemeVersion') themeVersion: number = 0
   @State trips: Trip[] = []
+  @State tripCardItems: TripCardItem[] = []
   @State searchKeyword: string = ''
   @State isLoading: boolean = false
   @Watch('onTravelDataVersionChange')
   @StorageLink('travelDataVersion') travelDataVersion: number = 0
-  @Watch('onTabRefresh')
-  @StorageLink('tabRefreshToken') tabRefreshToken: number = 0
   @StorageLink('activeTabIndex') activeTabIndex: number = 0
 
   private dataService = getDataService()
@@ -23,12 +28,6 @@ export struct TripListView {
 
   private onTravelDataVersionChange(): void {
     this.loadTrips()
-  }
-
-  private onTabRefresh(): void {
-    if (this.activeTabIndex === 1) {
-      this.loadTrips()
-    }
   }
 
   private formatDate(timestamp: number): string {
@@ -45,26 +44,21 @@ export struct TripListView {
     return start === end ? start : `${start} ~ ${end}`
   }
 
-  private getTripDescription(trip: Trip): string {
-    const description = trip.description ?? ''
-    return description.length > 0 ? description : '用这条 Track 串起路线、节点顺序和分享范围。'
-  }
-
   private normalizeSearchKeyword(value: string): string {
     return value.trim().toLowerCase()
   }
 
-  private getFilteredTrips(): Trip[] {
+  private getFilteredTripCards(): TripCardItem[] {
     const keyword = this.normalizeSearchKeyword(this.searchKeyword)
     if (keyword.length === 0) {
-      return this.trips
+      return this.tripCardItems
     }
 
-    return this.trips.filter((trip: Trip) => {
+    return this.tripCardItems.filter((item: TripCardItem) => {
+      const trip = item.trip
       const searchFields: string[] = [
         trip.name,
         trip.description ?? '',
-        this.getVisibilityLabel(trip),
         this.formatDateRange(trip.startDate, trip.endDate)
       ]
 
@@ -72,11 +66,37 @@ export struct TripListView {
     })
   }
 
+  private async mapTripToCardItem(trip: Trip): Promise<TripCardItem> {
+    const nodes: MemoryNode[] = await this.dataService.getNodesByTravelId(trip.id)
+    let coverPhoto = ''
+
+    for (const node of nodes) {
+      if (node.photos.length > 0) {
+        coverPhoto = node.photos[0]
+        break
+      }
+    }
+
+    return {
+      trip,
+      coverPhoto,
+      hasCoverPhoto: coverPhoto.length > 0
+    }
+  }
+
   private async loadTrips(): Promise<void> {
     this.isLoading = true
     try {
-      this.trips = await this.dataService.getAllTravels()
+      const trips = await this.dataService.getAllTravels()
+      const cardItems: TripCardItem[] = []
+      for (const trip of trips) {
+        cardItems.push(await this.mapTripToCardItem(trip))
+      }
+      this.trips = trips
+      this.tripCardItems = cardItems
     } catch (_) {
+      this.trips = []
+      this.tripCardItems = []
       promptAction.showToast({ message: '加载旅行列表失败' })
     } finally {
       this.isLoading = false
@@ -99,18 +119,6 @@ export struct TripListView {
       return
     }
     router.pushUrl({ url: RouterUrls.TRIP_EDIT })
-  }
-
-  private getVisibilityLabel(trip: Trip): string {
-    return trip.isPublic ? '公开' : '私密'
-  }
-
-  private getVisibilityColor(trip: Trip): string {
-    return trip.isPublic ? '#167D3E' : '#A55B00'
-  }
-
-  private getVisibilityBackground(trip: Trip): string {
-    return trip.isPublic ? '#E8F5E9' : '#FFF4E5'
   }
 
   @Builder
@@ -146,9 +154,98 @@ export struct TripListView {
     .width('100%')
     .margin({ top: 16 })
     .padding({ left: 12, right: 10 })
-    .backgroundColor(AppColors.INPUT_BG)
-    .borderRadius(22)
+    .backgroundColor(AppDimens.SURFACE_TINT)
+    .border({ width: 1, color: AppDimens.GLASS_BORDER })
+    .borderRadius(24)
+    .shadow({ radius: 12, color: AppDimens.SHADOW_SOFT, offsetY: 4 })
     .alignItems(VerticalAlign.Center)
+  }
+
+  @Builder
+  private buildTripCoverCard(item: TripCardItem) {
+    Stack() {
+      // 1. 底层图片
+      if (item.hasCoverPhoto) {
+        Image(item.coverPhoto)
+          .width('100%')
+          .height('100%')
+          .objectFit(ImageFit.Cover)
+      } else {
+        Column()
+          .width('100%')
+          .height('100%')
+          .backgroundColor('#374151')
+      }
+
+      // 2. 黑色渐变遮罩层（关键：防止白底背景）
+      // 从透明过渡到深色，范围扩大，确保文字区域在深色范围内
+      Column()
+        .width('100%')
+        .height('100%')
+        .linearGradient({
+          direction: GradientDirection.Bottom,
+          // 0%处完全透明，50%处开始变暗，100%处达到0.8透明度的黑
+          colors: [['#00000000', 0.0], ['#00000033', 0.5], ['#000000CC', 1.0]]
+        })
+
+      // 3. 内容层
+      Column() {
+        Blank()
+
+        // 标题增加微弱阴影，增强在浅色图片上的可读性
+        Text(item.trip.name)
+          .fontSize(22)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#FFFFFF')
+          .width('100%')
+          .maxLines(2)
+          .textShadow({ radius: 4, color: '#44000000', offsetX: 1, offsetY: 1 })
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+        Row({ space: 12 }) {
+          // 查看路线按钮
+          this.buildGlassButton('查看路线', () => this.openTripDetail(item.trip.id))
+
+          // 编辑按钮
+          this.buildGlassButton('编辑', () => this.openTripEdit(item.trip.id))
+        }
+        .width('100%')
+        .margin({ top: 16 })
+      }
+      .width('100%')
+      .height('100%')
+      .padding(AppDimens.PADDING_LG)
+      .alignItems(HorizontalAlign.Start)
+    }
+    .width('100%')
+    .height(210)
+    .borderRadius(AppDimens.RADIUS_LG)
+    .clip(true)
+    .shadow({ radius: 18, color: '#33000000', offsetY: 8 })
+  }
+
+  // 封装的玻璃质感按钮
+  @Builder
+  private buildGlassButton(text: string, onClick: () => void) {
+    Button() {
+      Text(text)
+        .fontSize(AppDimens.FONT_SM)
+        .fontWeight(FontWeight.Medium)
+        .fontColor('#FFFFFF')
+    }
+    .layoutWeight(1)
+    .height(38)
+    .onClick(onClick)
+    // 玻璃感核心设置：
+    // 1. 半透明白色背景
+    .backgroundColor('#22FFFFFF')
+    // 2. 背景模糊（API 9+ 支持）
+    .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+    // 3. 高亮半透明边框，模拟玻璃边缘
+    .border({ width: 0.8, color: '#55FFFFFF' })
+    .borderRadius(19)
+    // 4. 点击时的缩放反馈
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
   }
 
   build() {
@@ -158,12 +255,6 @@ export struct TripListView {
           .fontSize(28)
           .fontWeight(FontWeight.Bold)
           .fontColor(AppColors.TEXT_PRIMARY)
-          .width('100%')
-
-        Text('按旅行维度组织路线、节点和分享范围。')
-          .fontSize(AppDimens.FONT_MD)
-          .fontColor(AppColors.TEXT_SECONDARY)
-          .margin({ top: 8 })
           .width('100%')
 
         Row({ space: 12 }) {
@@ -183,7 +274,8 @@ export struct TripListView {
           Button('新建 Track')
             .height(38)
             .fontSize(AppDimens.FONT_SM)
-            .backgroundColor(AppColors.PRIMARY)
+            .fontColor(AppColors.TEXT_ON_PRIMARY)
+            .backgroundColor(AppDimens.CTA_DARK)
             .onClick(() => this.openTripEdit())
         }
         .width('100%')
@@ -192,10 +284,7 @@ export struct TripListView {
         this.buildSearchInput()
       }
       .width('100%')
-      .padding(AppDimens.PADDING_LG)
-      .backgroundColor(AppColors.CARD_BG)
-      .borderRadius(AppDimens.RADIUS_LG)
-      .shadow({ radius: 10, color: '#00000012', offsetY: 4 })
+      .padding({ left: 0, right: 0, top: 12, bottom: 8 })
       .alignItems(HorizontalAlign.Start)
 
       if (this.isLoading) {
@@ -229,7 +318,7 @@ export struct TripListView {
         .width('100%')
         .layoutWeight(1)
         .justifyContent(FlexAlign.Center)
-      } else if (this.getFilteredTrips().length === 0) {
+      } else if (this.getFilteredTripCards().length === 0) {
         Column() {
           Text('没有找到匹配的旅行')
             .fontSize(AppDimens.FONT_LG)
@@ -245,91 +334,26 @@ export struct TripListView {
         .justifyContent(FlexAlign.Center)
       } else {
         List({ space: 12 }) {
-          ForEach(this.getFilteredTrips(), (trip: Trip) => {
+          ForEach(this.getFilteredTripCards(), (item: TripCardItem) => {
             ListItem() {
-              Column() {
-                Row() {
-                  Column() {
-                    Text(trip.name)
-                      .fontSize(AppDimens.FONT_LG)
-                      .fontWeight(FontWeight.Medium)
-                      .fontColor(AppColors.TEXT_PRIMARY)
-                      .width('100%')
-                      .maxLines(1)
-                      .textOverflow({ overflow: TextOverflow.Ellipsis })
-                    Text(this.formatDateRange(trip.startDate, trip.endDate))
-                      .fontSize(AppDimens.FONT_SM)
-                      .fontColor(AppColors.TEXT_HINT)
-                      .margin({ top: 6 })
-                  }
-                  .layoutWeight(1)
-                  .alignItems(HorizontalAlign.Start)
-
-                  Text(this.getVisibilityLabel(trip))
-                    .fontSize(AppDimens.FONT_SM)
-                    .fontColor(this.getVisibilityColor(trip))
-                    .backgroundColor(this.getVisibilityBackground(trip))
-                    .padding({ left: 10, right: 10, top: 5, bottom: 5 })
-                    .borderRadius(14)
-                }
-                .width('100%')
-
-                Text(this.getTripDescription(trip))
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_SECONDARY)
-                  .lineHeight(20)
-                  .width('100%')
-                  .margin({ top: 14 })
-
-                Row() {
-                  Text(`📍 ${trip.nodeIds.length} 个节点`)
-                    .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.TEXT_SECONDARY)
-                  Text(`路 ${trip.totalDistance} km`)
-                    .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.TEXT_SECONDARY)
-                    .margin({ left: 8 })
-                  Text(`路 ${trip.isPublic ? '所有人可查看' : '仅自己可查看'}`)
-                    .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.TEXT_HINT)
-                    .margin({ left: 8 })
-                }
-                .width('100%')
-                .margin({ top: 12 })
-
-                Row({ space: 10 }) {
-                  Button('查看路线')
-                    .layoutWeight(1)
-                    .height(34)
-                    .fontSize(AppDimens.FONT_SM)
-                    .backgroundColor(AppColors.PRIMARY)
-                    .onClick(() => this.openTripDetail(trip.id))
-                  Button('编辑')
-                    .layoutWeight(1)
-                    .height(34)
-                    .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.PRIMARY)
-                    .backgroundColor('#EAF4FF')
-                    .onClick(() => this.openTripEdit(trip.id))
-                }
-                .width('100%')
-                .margin({ top: 16 })
-              }
-              .backgroundColor(AppColors.CARD_BG)
-              .borderRadius(AppDimens.RADIUS_MD)
-              .padding(AppDimens.PADDING_MD)
-              .shadow({ radius: 4, color: '#0000000D', offsetY: 2 })
+              this.buildTripCoverCard(item)
             }
-          }, (trip: Trip) => `${trip.id}-${trip.nodeIds.length}-${trip.totalDistance}`)
+          }, (item: TripCardItem) => `${item.trip.id}-${item.coverPhoto}-${item.trip.updatedAt}`)
+          ListItem() {
+            Column()
+              .width('100%')
+              .height(76)
+              .backgroundColor(AppColors.BACKGROUND)
+          }
         }
         .layoutWeight(1)
         .width('100%')
-        .padding({ top: 16, bottom: 8 })
+        .padding({ top: 16, bottom: 12 })
       }
     }
     .width('100%')
     .height('100%')
-    .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: AppDimens.PADDING_MD })
+    .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: AppDimens.PADDING_MD, bottom: 0 })
     .backgroundColor(AppColors.BACKGROUND)
   }
 }
