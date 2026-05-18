@@ -83,6 +83,7 @@ frontend/.idea/
 .env.*
 !backend/picture-check/.env.production.example
 agc-apiclient-*.json
+agconnect-services.json
 backend/picture-check/.venv/
 backend/picture-check/logs/
 backend/picture-check/secure/
