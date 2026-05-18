@@ -569,6 +569,10 @@ export struct ProfileView {
           .borderRadius(AppDimens.RADIUS_MD)
           .margin({ top: 12, bottom: 24 })
           .onClick(() => this.handleDeleteAccount())
+
+        Column()
+          .width('100%')
+          .height(76)
       }
       .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD })
     }
