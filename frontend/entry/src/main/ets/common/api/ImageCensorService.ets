@@ -2,7 +2,7 @@ import { http } from '@kit.NetworkKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { hilog } from '@kit.PerformanceAnalysisKit'
 import { MultipartFormData } from './MultipartFormData'
-import { IMAGE_CENSOR_BASE_URL as CENSOR_BASE_URL } from './ApiEndpoints'
+import { IMAGE_CENSOR_BASE_URL as CENSOR_BASE_URL, HttpTimeout } from './ApiEndpoints'
 import { AiTokenManager } from './AiTokenManager'
 
 const DOMAIN = 0x0000
@@ -39,7 +39,7 @@ export class ImageCensorService {
           'Authorization': `Bearer ${token}`
         },
         extraData: requestBody,
-        readTimeout: 30000,
+        readTimeout: HttpTimeout.IMAGE_CENSOR,
         connectTimeout: 10000,
         expectDataType: http.HttpDataType.OBJECT
       })
