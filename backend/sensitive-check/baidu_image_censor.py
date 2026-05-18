@@ -176,29 +176,45 @@ class IssueAuditTokenOut(BaseModel):
 
 _RATE_LIMIT = os.environ.get("BIC_RATE_LIMIT", "30/minute")
 
-# 百度审核 API 的硬约束：QPS = 1（并发也是 1），总额度 5000 次。
-# - Semaphore(1) 串行所有调用，避免百度返 ReadTimeout 链路。
-# - QPS 间隔 = 1.05s，给 50ms 余量。
-# - 队列深度上限 5：超出立刻 503 + Retry-After，不让请求堆积撑爆 worker。
-# 这套 gateway 同时覆盖 /check、/check_url、/text_check。
+# 百度审核 API 的硬约束：图像 QPS=1 + 文本 QPS=1（**两个独立桶**，不互相算）。
+# v1.2 修：之前两类共用一个 Semaphore，导致 ai-relay 频繁调 /text_check 时
+# 头像审核 /check 被卡 >30s 触发前端超时（nginx 看到 HTTP 499）。
+# 现在 image / text 各自一组 sem + qps lock。
 _BAIDU_QPS_INTERVAL = float(os.environ.get("BIC_BAIDU_QPS_INTERVAL", "1.05"))
 _BAIDU_QUEUE_DEPTH = int(os.environ.get("BIC_BAIDU_QUEUE_DEPTH", "5"))
-_baidu_sem: Optional[asyncio.Semaphore] = None
-_baidu_qps_lock: Optional[asyncio.Lock] = None
-_baidu_last_call_t: float = 0.0
+_baidu_image_sem: Optional[asyncio.Semaphore] = None
+_baidu_text_sem: Optional[asyncio.Semaphore] = None
+_baidu_image_lock: Optional[asyncio.Lock] = None
+_baidu_text_lock: Optional[asyncio.Lock] = None
+_baidu_image_last_t: float = 0.0
+_baidu_text_last_t: float = 0.0
 _baidu_client: Optional[httpx.AsyncClient] = None
 
 
-async def _baidu_call_serial(url: str, *, data: dict, headers: Optional[dict] = None,
+async def _baidu_call_serial(url: str, *, kind: str, data: dict,
+                              headers: Optional[dict] = None,
                               timeout: float = 30.0) -> httpx.Response:
-    """串行调百度，强制 1 QPS，队列上限 5。"""
-    global _baidu_last_call_t
-    if _baidu_sem is None or _baidu_client is None:
-        # startup 没跑（极端情况）
+    """串行调百度，强制 1 QPS，队列上限 5。
+
+    kind="image" → /check + /check_url，走 _baidu_image_sem
+    kind="text"  → /text_check，走 _baidu_text_sem
+    两类独立 — 百度图像和文本 QPS 是分开计的。
+    """
+    global _baidu_image_last_t, _baidu_text_last_t
+    if kind == "image":
+        sem = _baidu_image_sem
+        lock = _baidu_image_lock
+    elif kind == "text":
+        sem = _baidu_text_sem
+        lock = _baidu_text_lock
+    else:
+        raise HTTPException(status_code=500, detail=f"unknown baidu kind: {kind}")
+
+    if sem is None or lock is None or _baidu_client is None:
         raise HTTPException(status_code=503, detail="audit_service_initializing")
     # 拿不到 sem（队列满）→ 立刻 503
     try:
-        await asyncio.wait_for(_baidu_sem.acquire(), timeout=0.1)
+        await asyncio.wait_for(sem.acquire(), timeout=0.1)
     except asyncio.TimeoutError:
         raise HTTPException(
             status_code=503,
@@ -206,16 +222,20 @@ async def _baidu_call_serial(url: str, *, data: dict, headers: Optional[dict] = 
             headers={"Retry-After": "5"},
         )
     try:
-        # 强制 1 QPS：跟上次调用至少间隔 _BAIDU_QPS_INTERVAL
-        async with _baidu_qps_lock:
+        # 强制 1 QPS：跟该类型上次调用至少间隔 _BAIDU_QPS_INTERVAL
+        async with lock:
             now = time.monotonic()
-            wait = _BAIDU_QPS_INTERVAL - (now - _baidu_last_call_t)
+            last_t = _baidu_image_last_t if kind == "image" else _baidu_text_last_t
+            wait = _BAIDU_QPS_INTERVAL - (now - last_t)
             if wait > 0:
                 await asyncio.sleep(wait)
-            _baidu_last_call_t = time.monotonic()
+            if kind == "image":
+                _baidu_image_last_t = time.monotonic()
+            else:
+                _baidu_text_last_t = time.monotonic()
         return await _baidu_client.post(url, data=data, headers=headers or {}, timeout=timeout)
     finally:
-        _baidu_sem.release()
+        sem.release()
 _APP_SESSION_TTL_SECONDS = int(os.environ.get("APP_SESSION_TTL_SECONDS", str(7 * 24 * 3600)))
 _APP_SESSION_SECRET = os.environ.get("APP_SESSION_SECRET", "")
 _AUDIT_TOKEN_TTL_SECONDS = int(os.environ.get("BIC_AUDIT_TOKEN_TTL_SECONDS", "1800"))
@@ -529,13 +549,15 @@ app.state.limiter = limiter
 
 @app.on_event("startup")
 async def _init_baidu_gateway():
-    """初始化百度审核 API 的串行调用 gateway。"""
-    global _baidu_sem, _baidu_qps_lock, _baidu_client
-    _baidu_sem = asyncio.Semaphore(_BAIDU_QUEUE_DEPTH)
-    _baidu_qps_lock = asyncio.Lock()
+    """初始化百度审核 API 的串行调用 gateway（image / text 独立）。"""
+    global _baidu_image_sem, _baidu_text_sem, _baidu_image_lock, _baidu_text_lock, _baidu_client
+    _baidu_image_sem = asyncio.Semaphore(_BAIDU_QUEUE_DEPTH)
+    _baidu_text_sem = asyncio.Semaphore(_BAIDU_QUEUE_DEPTH)
+    _baidu_image_lock = asyncio.Lock()
+    _baidu_text_lock = asyncio.Lock()
     _baidu_client = httpx.AsyncClient(timeout=30.0)
     logger.info(
-        "[boot] baidu gateway initialized: qps_interval=%.2fs queue_depth=%d",
+        "[boot] baidu gateway initialized: qps_interval=%.2fs queue_depth=%d (image+text independent)",
         _BAIDU_QPS_INTERVAL, _BAIDU_QUEUE_DEPTH,
     )
 
@@ -645,7 +667,7 @@ async def _do_censor(
     else:
         raise HTTPException(status_code=400, detail="Either image or imgUrl must be provided")
 
-    resp = await _baidu_call_serial(endpoint, data=data, headers=headers, timeout=60.0)
+    resp = await _baidu_call_serial(endpoint, kind="image", data=data, headers=headers, timeout=60.0)
     raw = resp.json()
 
     log_id = raw.get("log_id", 0)
@@ -702,7 +724,7 @@ async def _do_text_censor(text: str, user_id: Optional[str] = None, user_ip: Opt
     if user_ip:
         data["userIp"] = user_ip
 
-    resp = await _baidu_call_serial(endpoint, data=data, headers=headers, timeout=30.0)
+    resp = await _baidu_call_serial(endpoint, kind="text", data=data, headers=headers, timeout=30.0)
     raw = resp.json()
 
     log_id = raw.get("log_id", 0)
