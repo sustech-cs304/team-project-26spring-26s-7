@@ -951,25 +951,37 @@ function initMap() {
 }
 
 // 在 MOVING 阶段刚走完进入新节点时调用：把 visited polyline 延到该节点
-function updateVisitedRoute() {
+// v1.2: 可显式传 uptoIdx，让 MOVING 阶段在 currentNodeIdx 还未推进时也能正确画路线
+function updateVisitedRoute(uptoIdx) {
   if (!visitedLine) return;
-  const upto = State.currentNodeIdx;
+  const upto = (uptoIdx === undefined || uptoIdx === null)
+    ? State.currentNodeIdx
+    : uptoIdx;
   const path = NODES.slice(0, upto + 1).map(n => [n.longitude, n.latitude]);
   visitedLine.setPath(path);
 }
 
 // v1.0.2 #6：把视图中心从"节点经纬度"上移 PAN_OFFSET_PX 像素，让 marker
 // 在屏幕上画得偏下，避开顶部 35% 处的照片卡。
-// AMap 等价 API：lngLatToContainer / containerToLngLat 做 latlng↔像素转换。
+// v1.2 修：原先用 lngLatToContainer / containerToLngLat 做像素↔经纬度转换，
+// 但这个 API 依赖地图**当前 zoom**。初次进页面 zoom 还没设到 FOCUS_ZOOM，
+// 或节点切换动画进行中 zoom 还在过渡，转换结果就是错的（offset 算成 zoom=10
+// 时的像素 → 实际放到 zoom=15 时偏移过大，节点掉出屏幕）。
+// 这里改成 Web Mercator 公式直接算 lat 偏移，不依赖运行时视口状态。
 const PAN_OFFSET_PX = 140;
 const FOCUS_ZOOM = 15;
+const _EARTH_RADIUS_M = 6378137;
+const _LAT_DEG_M = 111320; // 1° lat ≈ 111.32 km，全球近似常数
 
 function _offsetCenter(lat, lng) {
-  if (!map) return [lng, lat];
-  const px = map.lngLatToContainer(new AMap.LngLat(lng, lat));
-  const adj = new AMap.Pixel(px.getX(), px.getY() - PAN_OFFSET_PX);
-  const ll = map.containerToLngLat(adj);
-  return [ll.getLng(), ll.getLat()];
+  // 在 FOCUS_ZOOM 下，每像素对应的 lat 度数（Web Mercator）：
+  //   res(m/px) = cos(lat) * 2π * R / (256 * 2^zoom)
+  //   dLat(°)   = pixels * res / LAT_DEG_M
+  const cosLat = Math.cos(lat * Math.PI / 180);
+  const resMeters = (cosLat * 2 * Math.PI * _EARTH_RADIUS_M) / (256 * Math.pow(2, FOCUS_ZOOM));
+  const dLat = (PAN_OFFSET_PX * resMeters) / _LAT_DEG_M;
+  // center 北移 = 节点显示在屏幕中心偏下
+  return [lng, lat + dLat];
 }
 
 function focusNode(idx, animate) {
@@ -1215,12 +1227,18 @@ function enterPhase(phase) {
       pause();
       return;
     }
-    State.currentNodeIdx = next;
-    syncProgressUI();
+    // v1.2: 推迟 State.currentNodeIdx 到动画完成才推进。
+    // 之前在动画开始就推进，导致用户在 MOVING 期间按 next 会以"目标节点"为基准
+    // 多跳一格（屏幕上看到 N，按 next 实际跳到 N+2）。现在按钮在动画期间点击
+    // 会立刻 snap 到下一节点 / 上一节点，与可视状态对齐。
     focusNode(next, true);
-    // v1.0：路线动画开启时，飞抵新节点同时把 visited polyline 延伸过去
-    if (PREFS.enableRouteAnimation) updateVisitedRoute();
-    State.phaseTimer = setTimeout(() => enterPhase(PHASE.FADE_IN), scheduledMs(DUR.MOVING));
+    // 路线动画显式按"目标 idx"画，currentNodeIdx 还未推进
+    if (PREFS.enableRouteAnimation) updateVisitedRoute(next);
+    State.phaseTimer = setTimeout(() => {
+      State.currentNodeIdx = next;
+      syncProgressUI();
+      enterPhase(PHASE.FADE_IN);
+    }, scheduledMs(DUR.MOVING));
   }
 }
 
