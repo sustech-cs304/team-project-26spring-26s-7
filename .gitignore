@@ -99,3 +99,6 @@ ci-artifacts/
 backend/share-service/share_service/core/test_poster.py
 backend/share-service/share_service/core/test.png
 backend/share-service/share_service/core/poster_test_from_import.jpg
+
+# backup icons
+icon_backup/
