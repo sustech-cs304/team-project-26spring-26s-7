@@ -80,11 +80,11 @@ export struct ReplaySettingsSheet {
   }
 
   private getCardBackground(key: string, selected: boolean): string {
-    return this.isHighlighted(key, selected) ? 'rgba(24, 144, 255, 0.08)' : AppColors.CARD_BG
+    return this.isHighlighted(key, selected) ? AppDimens.ACCENT_SOFT_BG : AppDimens.SURFACE_TINT
   }
 
   private getCardBorderColor(key: string, selected: boolean): string {
-    return this.isHighlighted(key, selected) ? AppColors.PRIMARY : AppColors.DIVIDER
+    return this.isHighlighted(key, selected) ? AppColors.PRIMARY : AppDimens.GLASS_BORDER
   }
 
   private getCardBorderWidth(key: string, selected: boolean): number {
@@ -96,11 +96,11 @@ export struct ReplaySettingsSheet {
   }
 
   private getToggleCardBackground(enabled: boolean): string {
-    return enabled ? 'rgba(24, 144, 255, 0.08)' : AppColors.CARD_BG
+    return enabled ? AppDimens.ACCENT_SOFT_BG : AppDimens.SURFACE_TINT
   }
 
   private getToggleCardBorderColor(enabled: boolean): string {
-    return enabled ? AppColors.PRIMARY : AppColors.DIVIDER
+    return enabled ? AppColors.PRIMARY : AppDimens.GLASS_BORDER
   }
 
   private getToggleCardBorderWidth(enabled: boolean): number {
@@ -168,8 +168,8 @@ export struct ReplaySettingsSheet {
       .fontWeight(this.activeTab === tab ? FontWeight.Bold : FontWeight.Medium)
       .fontColor(this.activeTab === tab ? AppColors.TEXT_PRIMARY : AppColors.TEXT_HINT)
       .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-      .backgroundColor(this.activeTab === tab ? AppColors.BACKGROUND : 'transparent')
-      .borderRadius(16)
+      .backgroundColor(this.activeTab === tab ? AppDimens.ACCENT_SOFT_BG : 'transparent')
+      .borderRadius(AppDimens.RADIUS_MD)
       .onClick(() => {
         this.activeTab = tab
       })
@@ -206,11 +206,13 @@ export struct ReplaySettingsSheet {
     .width('100%')
     .padding(AppDimens.PADDING_MD)
     .backgroundColor(this.getCardBackground(`style:${item.id}`, this.activeStyleKitId === item.id))
-    .borderRadius(16)
+    .borderRadius(AppDimens.RADIUS_MD)
     .border({
       width: this.getCardBorderWidth(`style:${item.id}`, this.activeStyleKitId === item.id),
       color: this.getCardBorderColor(`style:${item.id}`, this.activeStyleKitId === item.id)
     })
+    .backgroundBlurStyle(BlurStyle.Thin)
+    .shadow({ radius: 12, color: AppDimens.SHADOW_SOFT, offsetY: 4 })
     .scale({
       x: this.getCardScale(`style:${item.id}`),
       y: this.getCardScale(`style:${item.id}`)
@@ -246,11 +248,13 @@ export struct ReplaySettingsSheet {
     .width('100%')
     .padding(AppDimens.PADDING_MD)
     .backgroundColor(this.getCardBackground(`music:${item.id}`, this.activeBgmId === item.id))
-    .borderRadius(16)
+    .borderRadius(AppDimens.RADIUS_MD)
     .border({
       width: this.getCardBorderWidth(`music:${item.id}`, this.activeBgmId === item.id),
       color: this.getCardBorderColor(`music:${item.id}`, this.activeBgmId === item.id)
     })
+    .backgroundBlurStyle(BlurStyle.Thin)
+    .shadow({ radius: 12, color: AppDimens.SHADOW_SOFT, offsetY: 4 })
     .scale({
       x: this.getCardScale(`music:${item.id}`),
       y: this.getCardScale(`music:${item.id}`)
@@ -292,11 +296,13 @@ export struct ReplaySettingsSheet {
     .width('100%')
     .padding(AppDimens.PADDING_MD)
     .backgroundColor(this.getCardBackground(`filter:${item.id}`, this.activeFilterId === item.id))
-    .borderRadius(16)
+    .borderRadius(AppDimens.RADIUS_MD)
     .border({
       width: this.getCardBorderWidth(`filter:${item.id}`, this.activeFilterId === item.id),
       color: this.getCardBorderColor(`filter:${item.id}`, this.activeFilterId === item.id)
     })
+    .backgroundBlurStyle(BlurStyle.Thin)
+    .shadow({ radius: 12, color: AppDimens.SHADOW_SOFT, offsetY: 4 })
     .scale({
       x: this.getCardScale(`filter:${item.id}`),
       y: this.getCardScale(`filter:${item.id}`)
@@ -332,11 +338,13 @@ export struct ReplaySettingsSheet {
     .width('100%')
     .padding(AppDimens.PADDING_MD)
     .backgroundColor(this.getCardBackground(`transition:${item.id}`, this.activeTransitionType === item.id))
-    .borderRadius(16)
+    .borderRadius(AppDimens.RADIUS_MD)
     .border({
       width: this.getCardBorderWidth(`transition:${item.id}`, this.activeTransitionType === item.id),
       color: this.getCardBorderColor(`transition:${item.id}`, this.activeTransitionType === item.id)
     })
+    .backgroundBlurStyle(BlurStyle.Thin)
+    .shadow({ radius: 12, color: AppDimens.SHADOW_SOFT, offsetY: 4 })
     .scale({
       x: this.getCardScale(`transition:${item.id}`),
       y: this.getCardScale(`transition:${item.id}`)
@@ -372,11 +380,13 @@ export struct ReplaySettingsSheet {
     .width('100%')
     .padding(AppDimens.PADDING_MD)
     .backgroundColor(this.getToggleCardBackground(this.activeEnableRouteAnimation))
-    .borderRadius(16)
+    .borderRadius(AppDimens.RADIUS_MD)
     .border({
       width: this.getToggleCardBorderWidth(this.activeEnableRouteAnimation),
       color: this.getToggleCardBorderColor(this.activeEnableRouteAnimation)
     })
+    .backgroundBlurStyle(BlurStyle.Thin)
+    .shadow({ radius: 12, color: AppDimens.SHADOW_SOFT, offsetY: 4 })
     .scale({ x: 1, y: 1 })
     .animation({ duration: 160, curve: Curve.EaseOut })
     .onClick(() => {
@@ -409,11 +419,13 @@ export struct ReplaySettingsSheet {
     .width('100%')
     .padding(AppDimens.PADDING_MD)
     .backgroundColor(this.getToggleCardBackground(this.activeEnableBlurOverlay))
-    .borderRadius(16)
+    .borderRadius(AppDimens.RADIUS_MD)
     .border({
       width: this.getToggleCardBorderWidth(this.activeEnableBlurOverlay),
       color: this.getToggleCardBorderColor(this.activeEnableBlurOverlay)
     })
+    .backgroundBlurStyle(BlurStyle.Thin)
+    .shadow({ radius: 12, color: AppDimens.SHADOW_SOFT, offsetY: 4 })
     .scale({ x: 1, y: 1 })
     .animation({ duration: 160, curve: Curve.EaseOut })
     .onClick(() => {
@@ -501,7 +513,7 @@ export struct ReplaySettingsSheet {
         Column()
           .width('100%')
           .height('100%')
-          .backgroundColor('#00000066')
+          .backgroundColor('#22000000')
           .onClick(() => this.close())
 
         Column() {
@@ -513,8 +525,14 @@ export struct ReplaySettingsSheet {
               .layoutWeight(1)
 
             Text('关闭')
-              .fontSize(AppDimens.FONT_MD)
-              .fontColor(AppColors.PRIMARY)
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.TEXT_SECONDARY)
+              .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+              .backgroundColor(AppDimens.SURFACE_TINT)
+              .backgroundBlurStyle(BlurStyle.Thin)
+              .border({ width: 1, color: AppDimens.GLASS_BORDER })
+              .borderRadius(18)
+              .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
               .onClick(() => this.close())
           }
           .width('100%')
@@ -552,8 +570,11 @@ export struct ReplaySettingsSheet {
         .width('100%')
         .height('64%')
         .padding(AppDimens.PADDING_LG)
-        .backgroundColor(AppColors.BACKGROUND)
-        .borderRadius({ topLeft: 24, topRight: 24 })
+        .backgroundColor(AppDimens.SURFACE_TINT)
+        .backgroundBlurStyle(BlurStyle.Thin)
+        .border({ width: 1, color: AppDimens.GLASS_BORDER })
+        .borderRadius({ topLeft: AppDimens.RADIUS_LG, topRight: AppDimens.RADIUS_LG })
+        .shadow({ radius: 26, color: AppDimens.SHADOW_FLOAT, offsetY: -8 })
         .position({ x: 0, y: '36%' })
       }
       .width('100%')
