@@ -161,14 +161,13 @@ export class ShareService {
     const url = `${this.baseUrl}${ShareEndpoints.PUBLISH}`
     logger.info(TAG, `POST ${url} (${photos.length} photos, ${trip.nodes.length} nodes)`)
 
-    // 用 share_token 作为 Bearer；登录态拿不到则不带（后端 ALLOW_DEV_UID_HEADER=1 时仍可通过）
-    const shareToken = await AiTokenManager.tryGetShareToken()
+    const shareToken = await AiTokenManager.getShareToken()
     const httpReq = http.createHttp()
     try {
       const body = await form.build()
-      const reqHeader: Record<string, string> = { 'Content-Type': form.getContentType() }
-      if (shareToken) {
-        reqHeader['Authorization'] = `Bearer ${shareToken}`
+      const reqHeader: Record<string, string> = {
+        'Content-Type': form.getContentType(),
+        'Authorization': `Bearer ${shareToken}`
       }
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
@@ -282,12 +281,12 @@ export class ShareService {
     const url = `${this.baseUrl}${ShareEndpoints.REVOKE_BY_TRIP}`
     logger.info(TAG, `POST ${url} tripId=${tripId}`)
 
-    const shareToken = await AiTokenManager.tryGetShareToken()
+    const shareToken = await AiTokenManager.getShareToken()
     const httpReq = http.createHttp()
     try {
-      const reqHeader: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (shareToken) {
-        reqHeader['Authorization'] = `Bearer ${shareToken}`
+      const reqHeader: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${shareToken}`
       }
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
