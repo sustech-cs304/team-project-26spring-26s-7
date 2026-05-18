@@ -59,7 +59,6 @@ function stringifyHttpResult(result: Object | string | ArrayBuffer | undefined):
   }
 }
 
-const FALLBACK_DEV_TOKEN = 'DEV_05436de19d4ad0029b4d722b9288167b'
 let auditCached: CachedAuditTokens | null = null
 let auditInflight: Promise<CachedAuditTokens> | null = null
 let visionCached: CachedVisionToken | null = null
@@ -138,23 +137,17 @@ async function getAuditTokens(): Promise<CachedAuditTokens> {
   }
 }
 
-function makeVisionFallback(): CachedVisionToken {
-  return {
-    token: FALLBACK_DEV_TOKEN,
-    expiresAt: Math.floor(Date.now() / 1000) + 60
-  }
-}
 
 async function fetchVisionToken(): Promise<CachedVisionToken> {
-  // 新流程：AGC 登录 → app_session_token → 调 ai-relay /v1/auth/issue_vision_token 换 vision_token
-  // 未登录 / app session 拿不到 → fallback 到 DEV token（dev 包兜底）
+  // AGC 登录 → app_session_token → ai-relay /v1/auth/issue_vision_token → vision_token
+  // 未登录或获取失败时抛出异常，不使用任何回退凭据
   let appSessionToken = await AppSessionManager.getToken()
   if (!appSessionToken) {
     appSessionToken = await AppSessionManager.refreshFromAgcAuth()
   }
   if (!appSessionToken) {
-    hilog.warn(DOMAIN, TAG, 'vision token: no app session, using dev fallback')
-    return makeVisionFallback()
+    hilog.error(DOMAIN, TAG, 'vision token: no app session')
+    throw new Error('VISION_AUTH_REQUIRED')
   }
 
   const httpReq = http.createHttp()
@@ -172,14 +165,14 @@ async function fetchVisionToken(): Promise<CachedVisionToken> {
     })
 
     if (response.responseCode !== 200 && response.responseCode !== 201) {
-      hilog.warn(DOMAIN, TAG, `issue_vision_token http ${response.responseCode}, body=${stringifyHttpResult(response.result)}, fallback`)
-      return makeVisionFallback()
+      hilog.error(DOMAIN, TAG, `issue_vision_token http ${response.responseCode}, body=${stringifyHttpResult(response.result)}`)
+      throw new Error('VISION_TOKEN_REQUEST_FAILED')
     }
 
     const body = response.result as VisionIssueResp
     if (!body || !body.vision_token) {
-      hilog.warn(DOMAIN, TAG, `issue_vision_token missing vision_token: ${stringifyHttpResult(response.result)}, fallback`)
-      return makeVisionFallback()
+      hilog.error(DOMAIN, TAG, `issue_vision_token missing vision_token: ${stringifyHttpResult(response.result)}`)
+      throw new Error('VISION_TOKEN_INVALID_RESPONSE')
     }
 
     const ttl = body.expires_in ?? 1800
@@ -190,8 +183,8 @@ async function fetchVisionToken(): Promise<CachedVisionToken> {
     }
   } catch (err) {
     const be = err as BusinessError
-    hilog.warn(DOMAIN, TAG, `issue_vision_token error: ${be?.message ?? JSON.stringify(err)}, fallback`)
-    return makeVisionFallback()
+    hilog.error(DOMAIN, TAG, `issue_vision_token error: ${be?.message ?? JSON.stringify(err)}`)
+    throw err as Error
   } finally {
     httpReq.destroy()
   }
