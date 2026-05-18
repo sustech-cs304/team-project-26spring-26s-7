@@ -466,43 +466,6 @@ export class AiGatewayClient {
       data: mockResponse
     };
   }
-
-  /**
-   * 内容审核
-   */
-  async moderateContent(text: string): Promise<HttpResponse<ModerateResponse>> {
-    logger.info(TAG, 'Moderating content...');
-
-    const mockData: ModerateResponseData = {
-      is_safe: true,
-      categories: []
-    };
-    const mockResponse: ModerateResponse = {
-      code: 0,
-      data: mockData
-    };
-
-    return {
-      statusCode: 200,
-      data: mockResponse
-    };
-  }
-}
-
-/**
- * 内容审核响应数据结构
- */
-interface ModerateResponseData {
-  is_safe: boolean;
-  categories: string[];
-}
-
-/**
- * 内容审核响应结构
- */
-interface ModerateResponse {
-  code: number;
-  data: ModerateResponseData;
 }
 
 /**
