@@ -31,7 +31,7 @@ export struct ReplaySettingsSheet {
   @Prop selectedBgmId: ReplayBgmId = ReplayMusicCatalog.DEFAULT_ID
   @Prop selectedFilterId: ReplayFilterId = ReplayFilterId.NONE
   @Prop selectedTransitionType: ReplayTransitionType = ReplayTransitionType.FADE
-  @Prop enableRouteAnimation: boolean = false
+  @Prop enableRouteAnimation: boolean = true
   @Prop enableBlurOverlay: boolean = false
 
   @State private activeTab: ReplaySettingsTab = ReplaySettingsTab.STYLE
@@ -39,7 +39,7 @@ export struct ReplaySettingsSheet {
   @State private activeBgmId: ReplayBgmId = ReplayMusicCatalog.DEFAULT_ID
   @State private activeFilterId: ReplayFilterId = ReplayFilterId.NONE
   @State private activeTransitionType: ReplayTransitionType = ReplayTransitionType.FADE
-  @State private activeEnableRouteAnimation: boolean = false
+  @State private activeEnableRouteAnimation: boolean = true
   @State private activeEnableBlurOverlay: boolean = false
   @State private feedbackKey: string = ''
 
@@ -93,6 +93,39 @@ export struct ReplaySettingsSheet {
 
   private getCardScale(key: string): number {
     return this.feedbackKey === key ? 0.985 : 1
+  }
+
+  private getSummaryChips(): string[] {
+    const chips: string[] = []
+    chips.push(`转场 ${this.activeTransitionType}`)
+    chips.push(`滤镜 ${this.activeFilterId === ReplayFilterId.NONE ? '原片' : '已启用'}`)
+    if (this.activeEnableRouteAnimation) {
+      chips.push('路线留痕')
+    }
+    if (this.activeEnableBlurOverlay) {
+      chips.push('玻璃详情层')
+    }
+    return chips
+  }
+
+  @Builder
+  private buildSummaryChips() {
+    Scroll() {
+      Row({ space: 8 }) {
+        ForEach(this.getSummaryChips(), (chip: string) => {
+          Text(chip)
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_PRIMARY)
+            .backgroundColor(AppDimens.ACCENT_SOFT_BG)
+            .border({ width: 1, color: AppDimens.GLASS_BORDER })
+            .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+            .borderRadius(12)
+        })
+      }
+    }
+    .scrollable(ScrollDirection.Horizontal)
+    .scrollBar(BarState.Off)
+    .width('100%')
   }
 
   private getToggleCardBackground(enabled: boolean): string {
@@ -524,18 +557,19 @@ export struct ReplaySettingsSheet {
               .fontColor(AppColors.TEXT_PRIMARY)
               .layoutWeight(1)
 
-            Text('关闭')
-              .fontSize(AppDimens.FONT_SM)
+            Text('✕')
+              .fontSize(18)
               .fontColor(AppColors.TEXT_SECONDARY)
-              .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-              .backgroundColor(AppDimens.SURFACE_TINT)
-              .backgroundBlurStyle(BlurStyle.Thin)
-              .border({ width: 1, color: AppDimens.GLASS_BORDER })
+              .width(36)
+              .height(36)
+              .textAlign(TextAlign.Center)
               .borderRadius(18)
-              .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+              .backgroundColor(AppColors.BACKGROUND)
               .onClick(() => this.close())
           }
           .width('100%')
+
+          this.buildSummaryChips()
 
           Row({ space: 8 }) {
             this.buildTabButton(ReplaySettingsTab.STYLE, '风格')
@@ -545,7 +579,7 @@ export struct ReplaySettingsSheet {
             this.buildTabButton(ReplaySettingsTab.TRANSITION, '转场')
           }
           .width('100%')
-          .margin({ top: 16 })
+          .margin({ top: 12 })
 
           Scroll() {
             Column() {

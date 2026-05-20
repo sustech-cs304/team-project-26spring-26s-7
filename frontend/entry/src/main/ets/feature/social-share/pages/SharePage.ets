@@ -82,12 +82,10 @@ export struct SharePage {
   ]
 
   private sharePlatforms: SharePlatform[] = [
-    new SharePlatform('W', '微信'),
-    new SharePlatform('Q', 'QQ'),
-    // v1.1：海报分享 — 后端合成带 QR 的图，转发给微信/QQ/微博/邮件，
-    // 接收方扫码就能跳到分享链接，绕过国内对 trycloudflare 域的卡片渲染拒绝
-    new SharePlatform('P', '海报'),
-    new SharePlatform('C', '复制链接'),
+    new SharePlatform('💬', '微信'),
+    new SharePlatform('🐧', 'QQ'),
+    new SharePlatform('🖼', '海报'),
+    new SharePlatform('🔗', '复制链接'),
   ]
 
   aboutToAppear(): void {

@@ -99,7 +99,7 @@ const STYLE_KITS: ReplayStyleKit[] = [
     controlBarBorderColor: 'rgba(255, 138, 69, 0.18)',
     controlPrimaryColor: '#EAF4FF',
     controlMutedColor: '#9CB4CC',
-    progressTrackColor: 'rgba(255, 255, 255, 0.14)',
+    progressTrackColor: '#7A94B0',
     progressSelectedColor: '#FF8A45',
     progressBlockColor: '#EAF4FF',
     progressLabelColor: '#D4E6F8',

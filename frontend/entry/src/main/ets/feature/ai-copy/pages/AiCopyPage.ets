@@ -1,4 +1,4 @@
-import { router, promptAction } from '@kit.ArkUI'
+import { router, promptAction, LengthMetrics } from '@kit.ArkUI'
 import { common } from '@kit.AbilityKit'
 import { pasteboard } from '@kit.BasicServicesKit'
 import {
@@ -91,9 +91,9 @@ export struct AiCopyPage {
 
   // 文章长度选项
   private lengthOptions: LengthOption[] = [
-    { value: 'short', label: '短 (1~2句)' },
-    { value: 'medium', label: '中 (3~5句)' },
-    { value: 'long', label: '长 (6~10句)' }
+    { value: 'short', label: '简短' },
+    { value: 'medium', label: '适中' },
+    { value: 'long', label: '详细' }
   ]
 
   aboutToAppear(): void {
@@ -703,17 +703,20 @@ export struct AiCopyPage {
               .fontColor(AppColors.TEXT_PRIMARY)
               .margin({ bottom: 12 })
 
-            Row({ space: 12 }) {
+            Row({ space: 8 }) {
               ForEach(this.lengthOptions, (option: LengthOption) => {
                 Text(option.label)
                   .fontSize(AppDimens.FONT_MD)
-                  .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+                  .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+                  .textAlign(TextAlign.Center)
+                  .layoutWeight(1)
                   .backgroundColor(this.selectedLength === option.value ? AppColors.PRIMARY : AppColors.BACKGROUND)
                   .fontColor(this.selectedLength === option.value ? Color.White : AppColors.TEXT_SECONDARY)
                   .borderRadius(AppDimens.RADIUS_SM)
                   .onClick(() => { this.selectedLength = option.value })
               })
             }
+            .width('100%')
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
@@ -797,13 +800,21 @@ export struct AiCopyPage {
           // 生成按钮
           if (this.isGenerating) {
             Row({ space: 12 }) {
-              Button('生成中...')
-                .fontSize(AppDimens.FONT_LG)
-                .layoutWeight(1)
-                .height(50)
-                .backgroundColor(AppColors.TEXT_HINT)
-                .fontColor(Color.White)
-                .enabled(false)
+              Button() {
+                Row({ space: 8 }) {
+                  LoadingProgress()
+                    .width(20)
+                    .height(20)
+                    .color(Color.White)
+                  Text('生成中...')
+                    .fontSize(AppDimens.FONT_LG)
+                    .fontColor(Color.White)
+                }
+              }
+              .layoutWeight(1)
+              .height(50)
+              .backgroundColor(AppColors.TEXT_HINT)
+              .enabled(false)
 
               Button('取消')
                 .fontSize(AppDimens.FONT_LG)
@@ -848,9 +859,6 @@ export struct AiCopyPage {
           if (this.debugPrompt.length > 0) {
             Column() {
               Row() {
-                Text('📖')
-                  .fontSize(16)
-                  .margin({ right: 6 })
                 Text('AI 看到的提示词')
                   .fontSize(AppDimens.FONT_MD)
                   .fontWeight(FontWeight.Medium)

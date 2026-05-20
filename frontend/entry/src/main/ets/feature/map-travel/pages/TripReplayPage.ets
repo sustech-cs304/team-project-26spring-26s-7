@@ -67,8 +67,7 @@ export struct TripReplayPage {
   @State selectedBgmId: ReplayBgmId = ReplayMusicCatalog.DEFAULT_ID
   @State selectedFilterId: ReplayFilterId = ReplayFilterId.NONE
   @State selectedTransitionType: ReplayTransitionType = ReplayTransitionType.FADE
-  @State enableRipple: boolean = false
-  @State enableRouteAnimation: boolean = false
+  @State enableRouteAnimation: boolean = true
   @State enableBlurOverlay: boolean = false
   @State currentStyleKit: ReplayStyleKit = ReplayStyleKitCatalog.getById(ReplayStyleKitCatalog.DEFAULT_ID)
 
@@ -83,12 +82,15 @@ export struct TripReplayPage {
   private readonly FADE_OUT_DURATION: number = 1000
   private readonly MOVE_DURATION: number = 1500
   @State private currentPhase: number = PHASE_IDLE
+  @State private cameraBearing: number = 0
 
   private mapOptions: mapCommon.MapOptions = {
     position: {
       target: DEFAULT_REPLAY_CENTER,
       zoom: 13
     },
+    zoomControlsEnabled: false,
+    compassControlsEnabled: false,
     padding: {
       left: 0,
       right: 0,
@@ -611,6 +613,7 @@ export struct TripReplayPage {
           positions[1].latitude,
           positions[1].longitude
         )
+        this.cameraBearing = bearing
         const cameraUpdate = map.newCameraPosition({
           target: {
             latitude: positions[0].latitude + latitudeOffset,
@@ -853,6 +856,7 @@ export struct TripReplayPage {
       targetNode.position.latitude,
       targetNode.position.longitude
     )
+    this.cameraBearing = bearing
 
     if (prevIndex !== index) {
       this.startMovingIconAnimation(fromNode.position, targetNode.position)
@@ -930,6 +934,24 @@ export struct TripReplayPage {
       Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon)
     const bearing = Math.atan2(y, x) * 180 / Math.PI
     return (bearing + 360) % 360
+  }
+
+  private resetCameraToNorth(): void {
+    if (!this.mapController || !this.replayRoute) {
+      return
+    }
+    this.cameraBearing = 0
+    const node = this.replayRoute.nodes[this.currentNodeIndex]
+    const cameraUpdate = map.newCameraPosition({
+      target: {
+        latitude: node.position.latitude,
+        longitude: node.position.longitude
+      },
+      zoom: 15,
+      bearing: 0,
+      tilt: 0
+    })
+    this.mapController.animateCamera(cameraUpdate, 400)
   }
 
   private jumpToNode(index: number): void {
@@ -1028,51 +1050,6 @@ export struct TripReplayPage {
 
   private closeSettingsSheet(): void {
     this.showSettingsSheet = false
-  }
-
-  private getEffectSummaryChips(): string[] {
-    const chips: string[] = []
-    chips.push(`转场 ${this.selectedTransitionType}`)
-    chips.push(`滤镜 ${this.selectedFilterId === ReplayFilterId.NONE ? '原片' : '已启用'}`)
-    if (this.enableRipple) {
-      chips.push('节点波纹')
-    }
-    if (this.enableRouteAnimation) {
-      chips.push('路线留痕')
-    }
-    if (this.enableBlurOverlay) {
-      chips.push('玻璃详情层')
-    }
-    return chips
-  }
-
-  @Builder
-  private buildRipple() {
-  }
-
-  @Builder
-  private buildEffectChips() {
-    Column() {
-      Row() {
-        ForEach(this.getEffectSummaryChips(), (chip: string) => {
-          Text(chip)
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor('#FFFFFF')
-            .backgroundColor('#22FFFFFF')
-            .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
-            .border({ width: 0.8, color: '#55FFFFFF' })
-            .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-            .borderRadius(14)
-            .margin({ left: 8 })
-        })
-      }
-      .justifyContent(FlexAlign.End)
-      .width('100%')
-    }
-    .width('100%')
-    .position({ x: 0, y: 96 })
-    .padding({ right: 16 })
-    .zIndex(100)
   }
 
   build() {
@@ -1244,7 +1221,7 @@ export struct TripReplayPage {
       .borderRadius(20)
       .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
       .onClick(() => router.back())
-      .position({ x: 16, y: 48 })
+      .position({ x: 16, y: 24 })
       .zIndex(100)
 
       Stack() {
@@ -1260,7 +1237,7 @@ export struct TripReplayPage {
       .borderRadius(20)
       .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
       .onClick(() => this.toggleMusic())
-      .position({ x: '100%', y: 48 })
+      .position({ x: '100%', y: 24 })
       .translate({ x: -56 })
       .zIndex(100)
 
@@ -1277,11 +1254,26 @@ export struct TripReplayPage {
       .borderRadius(20)
       .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
       .onClick(() => this.openSettingsSheet())
-      .position({ x: '100%', y: 48 })
+      .position({ x: '100%', y: 24 })
       .translate({ x: -104 })
       .zIndex(100)
 
-      this.buildEffectChips()
+      Stack() {
+        SymbolGlyph($r('sys.symbol.arrow_up'))
+          .fontSize(20)
+          .fontColor([Color.White])
+          .rotate({ angle: -this.cameraBearing })
+      }
+      .width(40)
+      .height(40)
+      .backgroundColor('#4D111111')
+      .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+      .border({ width: 0.8, color: '#66FFFFFF' })
+      .borderRadius(20)
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+      .onClick(() => this.resetCameraToNorth())
+      .position({ x: 16, y: '74%' })
+      .zIndex(100)
 
       if (this.showOverlay && this.overlayNode) {
         PhotoCardOverlay({

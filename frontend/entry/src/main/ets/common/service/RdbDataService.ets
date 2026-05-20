@@ -460,7 +460,7 @@ export class RdbDataService implements IDataService {
       replayFilterId: trip.replayFilterId ?? '',
       replayTransitionType: trip.replayTransitionType ?? '',
       replayEnableRipple: trip.replayEnableRipple ?? false,
-      replayEnableRouteAnimation: trip.replayEnableRouteAnimation ?? false,
+      replayEnableRouteAnimation: trip.replayEnableRouteAnimation ?? true,
       replayEnableBlurOverlay: trip.replayEnableBlurOverlay ?? false
     };
   }

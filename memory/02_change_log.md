@@ -1,6 +1,10 @@
 # Change Log
 
-**Last Updated**: 2026-05-06
+**Last Updated**: 2026-05-19
+
+## 2026-05-19
+
+- [2026-05-19] - REWRITE - `git reset --soft f287775^` - Removed the requested commit suffix from local history while keeping all code changes in the working tree / index.
 
 ---
 
@@ -488,3 +492,8 @@
 - [2026-05-07-22-05-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 灏嗕笂涓€鑺傜偣 / 涓嬩竴鑺傜偣 / 杩涘害鏉¤烦杞殑鍗＄墖鍒囨崲绾冲叆鍚岀竴濂?fade/slide/scale 杞満锛岄伩鍏嶆墜鍔ㄥ垏鎹㈡椂鐨勭獊鍏?
 - [2026-05-07-22-05-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 鍦ㄥ洖鏀鹃〉鍙充笂瑙掔姸鎬佹爣绛句腑澧炲姞褰撳墠杞満妯″紡锛屼究浜庢墜鍔ㄥ洖褰掑拰鐗规晥鑱斿姩楠岃瘉
 - [2026-05-07-22-05-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 閫氳繃锛堝瓨鍦ㄦ棦鏈?ArkTS warnings锛屾棤鏂板闃诲閿欒锛?
+## 2026-05-19 (ArkTS compile fix)
+
+- [2026-05-19-00-00-00] - UPDATE - `frontend/entry/src/main/ets/feature/map-travel/views/TripListView.ets` - Replaced the misspelled `TransitionEffect.OPPHONENT` reference with `TransitionEffect.OPACITY`.
+- [2026-05-19-00-00-00] - UPDATE - `frontend/entry/src/main/ets/feature/ai-copy/pages/AiCopyPage.ets` - Restored the `LengthMetrics` import from `@kit.ArkUI` and used `LengthMetrics.vp(8)` for Flex spacing.
+- [2026-05-19-00-00-00] - BUILD - `frontend/build.ps1 --mode module -p module=entry@default assembleHap` succeeded after the fix; only pre-existing warnings remain.
