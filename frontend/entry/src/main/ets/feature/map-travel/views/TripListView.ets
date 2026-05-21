@@ -251,7 +251,7 @@ export struct TripListView {
   build() {
     Column() {
       Column() {
-        Text('旅行 Track')
+        Text('旅途')
           .fontSize(28)
           .fontWeight(FontWeight.Bold)
           .fontColor(AppColors.TEXT_PRIMARY)

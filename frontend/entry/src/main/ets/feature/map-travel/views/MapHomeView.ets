@@ -7,6 +7,7 @@ import { util } from '@kit.ArkTS'
 import {
   AppColors,
   AppDimens,
+  AppTheme,
   RouterUrls,
   getDataService,
   getDefaultMapCenter,
@@ -770,6 +771,30 @@ export struct MapHomeView {
   private syncMarkersRunId: number = 0
   private photoCache: Map<string, PhotoData> = new Map()
 
+  private getMapGlassBackground(): string {
+    return AppTheme.isDarkMode() ? '#8A1C211D' : '#B8FFFFFF'
+  }
+
+  private getMapGlassStrongBackground(): string {
+    return AppTheme.isDarkMode() ? '#A61C211D' : '#D9FFFFFF'
+  }
+
+  private getMapGlassBorder(): string {
+    return AppTheme.isDarkMode() ? '#4DFFFFFF' : '#CCFFFFFF'
+  }
+
+  private getMapGlassTextColor(): string {
+    return AppTheme.isDarkMode() ? '#FFFFFF' : '#151917'
+  }
+
+  private getMapGlassSecondaryTextColor(): string {
+    return AppTheme.isDarkMode() ? '#E2DED8' : '#4A4F49'
+  }
+
+  private getMapGlassShadowColor(): string {
+    return AppTheme.isDarkMode() ? '#CC000000' : '#45101820'
+  }
+
   // 节点预览卡片状态
   @State previewVisible: boolean = false
   @State previewNodeId: string = ''
@@ -1520,25 +1545,26 @@ export struct MapHomeView {
       Column() {
         Row({ space: 10 }) {
           Row() {
-          TextInput({ placeholder: '搜索地点、标签...', text: this.searchKeyword })
-            .layoutWeight(1)
-            .fontColor('#FFFFFFFF')
-            .placeholderColor('#CCFFFFFF')
-            .caretColor(AppColors.INPUT_CARET)
-            .backgroundColor('#00000000')
-            .onChange((value: string) => this.handleSearchInputChange(value))
+            TextInput({ placeholder: '搜索地点、标签...', text: this.searchKeyword })
+              .layoutWeight(1)
+              .fontColor(this.getMapGlassTextColor())
+              .placeholderColor(this.getMapGlassSecondaryTextColor())
+              .caretColor(AppColors.INPUT_CARET)
+              .backgroundColor('#00000000')
+              .onChange((value: string) => this.handleSearchInputChange(value))
 
           if (this.searchKeyword.length > 0) {
             Button() {
               Text('x')
                 .fontSize(16)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(AppColors.TEXT_HINT)
+                .fontColor(this.getMapGlassSecondaryTextColor())
             }
               .width(28)
               .height(28)
               .padding(0)
-              .backgroundColor('#F0F1F4')
+              .backgroundColor(this.getMapGlassStrongBackground())
+              .border({ width: 1, color: this.getMapGlassBorder() })
               .borderRadius(14)
               .onClick(() => this.handleSearchInputChange(''))
           }
@@ -1560,11 +1586,11 @@ export struct MapHomeView {
           .layoutWeight(1)
           .height(44)
           .padding({ left: 12, right: 8, top: 2, bottom: 2 })
-          .backgroundColor('#4D111111')
-          .border({ width: 1, color: '#66FFFFFF' })
+          .backgroundColor(this.getMapGlassBackground())
+          .border({ width: 1, color: this.getMapGlassBorder() })
           .borderRadius(22)
           .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
-          .shadow({ radius: 10, color: AppDimens.SHADOW_SOFT, offsetY: 3 })
+          .shadow({ radius: 18, color: this.getMapGlassShadowColor(), offsetY: 8 })
           .alignItems(VerticalAlign.Center)
 
           Button() {
@@ -1572,17 +1598,17 @@ export struct MapHomeView {
               Column()
                 .width(20)
                 .height(4)
-                .backgroundColor('#FFFFFFFF')
+                .backgroundColor(this.getMapGlassTextColor())
                 .borderRadius(3)
               Column()
                 .width(24)
                 .height(4)
-                .backgroundColor('#FFFFFFFF')
+                .backgroundColor(this.getMapGlassTextColor())
                 .borderRadius(3)
               Column()
                 .width(17)
                 .height(4)
-                .backgroundColor('#FFFFFFFF')
+                .backgroundColor(this.getMapGlassTextColor())
                 .borderRadius(3)
             }
             .width('100%')
@@ -1593,11 +1619,11 @@ export struct MapHomeView {
           .width(44)
           .height(44)
           .padding(0)
-          .backgroundColor('#4D111111')
-          .border({ width: 1, color: '#66FFFFFF' })
+          .backgroundColor(this.getMapGlassBackground())
+          .border({ width: 1, color: this.getMapGlassBorder() })
           .borderRadius(22)
           .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
-          .shadow({ radius: 10, color: AppDimens.SHADOW_SOFT, offsetY: 3 })
+          .shadow({ radius: 18, color: this.getMapGlassShadowColor(), offsetY: 8 })
           .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
           .onClick(() => { this.showFilter = !this.showFilter })
         }
@@ -1664,17 +1690,17 @@ export struct MapHomeView {
           Text('时间范围')
             .fontSize(AppDimens.FONT_SM)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFFFF')
+            .fontColor(this.getMapGlassTextColor())
           Row({ space: 8 }) {
             ForEach(['全部', '近 7 天', '近 30 天', '近一年'], (label: string) => {
               Text(label)
                 .fontSize(AppDimens.FONT_SM)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(this.selectedFilterTime === label ? AppColors.TEXT_PRIMARY : '#FFFFFFFF')
-                .backgroundColor(this.selectedFilterTime === label ? '#F2FFFFFF' : '#22FFFFFF')
+                .fontColor(this.selectedFilterTime === label ? AppColors.TEXT_PRIMARY : this.getMapGlassTextColor())
+                .backgroundColor(this.selectedFilterTime === label ? this.getMapGlassStrongBackground() : '#33FFFFFF')
                 .border({
                   width: 1,
-                  color: this.selectedFilterTime === label ? '#88FFFFFF' : '#44FFFFFF'
+                  color: this.selectedFilterTime === label ? this.getMapGlassBorder() : '#66FFFFFF'
                 })
                 .padding({ left: 9, right: 9, top: 5, bottom: 5 })
                 .borderRadius(13)
@@ -1686,18 +1712,18 @@ export struct MapHomeView {
           Text('标签')
             .fontSize(AppDimens.FONT_SM)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFFFF')
+            .fontColor(this.getMapGlassTextColor())
             .margin({ top: 12 })
           Row({ space: 8 }) {
             ForEach(['全部', '旅行', '美食', '风景', '打卡'], (label: string) => {
               Text(label)
                 .fontSize(AppDimens.FONT_SM)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(this.selectedFilterTag === label ? AppColors.TEXT_PRIMARY : '#FFFFFFFF')
-                .backgroundColor(this.selectedFilterTag === label ? '#F2FFFFFF' : '#22FFFFFF')
+                .fontColor(this.selectedFilterTag === label ? AppColors.TEXT_PRIMARY : this.getMapGlassTextColor())
+                .backgroundColor(this.selectedFilterTag === label ? this.getMapGlassStrongBackground() : '#33FFFFFF')
                 .border({
                   width: 1,
-                  color: this.selectedFilterTag === label ? '#88FFFFFF' : '#44FFFFFF'
+                  color: this.selectedFilterTag === label ? this.getMapGlassBorder() : '#66FFFFFF'
                 })
                 .padding({ left: 9, right: 9, top: 5, bottom: 5 })
                 .borderRadius(13)
@@ -1708,11 +1734,11 @@ export struct MapHomeView {
         }
         .width(284)
         .padding({ left: 14, right: 14, top: 12, bottom: 14 })
-        .backgroundColor('#66111111')
-        .border({ width: 1, color: '#66FFFFFF' })
+        .backgroundColor(this.getMapGlassBackground())
+        .border({ width: 1, color: this.getMapGlassBorder() })
         .borderRadius(22)
         .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
-        .shadow({ radius: 16, color: AppDimens.SHADOW_FLOAT, offsetY: 6 })
+        .shadow({ radius: 22, color: this.getMapGlassShadowColor(), offsetY: 10 })
         .position({ x: '100%', y: 64 })
         .translate({ x: -300 })
         .alignItems(HorizontalAlign.Start)
@@ -1787,13 +1813,21 @@ export struct MapHomeView {
               }
               // 照片数量徽章
               if (this.previewPhotoCount > 1) {
-                Text(`${this.previewPhotoCount}张`)
-                  .fontSize(10)
-                  .fontColor('#FFFFFF')
-                  .backgroundColor('#AA000000')
-                  .padding({ left: 4, right: 4, top: 2, bottom: 2 })
-                  .borderRadius(4)
-                  .position({ x: 56, y: 64 })
+                Row({ space: 3 }) {
+                  Text('▧')
+                    .fontSize(10)
+                    .fontColor('#FFFFFF')
+                  Text(this.previewPhotoCount.toString())
+                    .fontSize(10)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor('#FFFFFF')
+                }
+                .height(20)
+                .padding({ left: 6, right: 6 })
+                .backgroundColor('#B0000000')
+                .borderRadius(10)
+                .alignItems(VerticalAlign.Center)
+                .position({ x: 50, y: 56 })
               }
             }
             .width(80)

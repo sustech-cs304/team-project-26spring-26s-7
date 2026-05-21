@@ -443,9 +443,9 @@ export struct NodeListView {
             .padding(0)
             .fontSize(AppDimens.FONT_SM)
             .fontWeight(FontWeight.Medium)
-            .fontColor(this.isManageMode ? AppColors.TEXT_ON_PRIMARY : AppDimens.CTA_DARK)
-            .backgroundColor(this.isManageMode ? AppDimens.CTA_DARK : '#F8F9FB')
-            .border({ width: 1, color: AppDimens.CTA_DARK })
+            .fontColor(this.isManageMode ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_PRIMARY)
+            .backgroundColor(this.isManageMode ? AppColors.PRIMARY : AppColors.CARD_BG)
+            .border({ width: 1, color: this.isManageMode ? AppColors.PRIMARY : AppColors.DIVIDER })
             .borderRadius(16)
             .enabled(this.nodes.length > 0)
             .opacity(this.nodes.length > 0 ? 1 : 0.45)
@@ -463,7 +463,7 @@ export struct NodeListView {
             .padding(0)
             .fontSize(20)
             .fontWeight(FontWeight.Bold)
-            .fontColor(AppColors.TEXT_ON_PRIMARY)
+            .fontColor('#FFFFFF')
             .backgroundColor(AppColors.PRIMARY)
             .borderRadius(16)
             .onClick(() => this.openNodeEdit())
@@ -527,14 +527,14 @@ export struct NodeListView {
           Circle()
             .width(24)
             .height(24)
-            .fill(this.isNodeSelected(item.id) ? AppDimens.CTA_DARK : AppColors.CARD_BG)
-            .stroke(this.isNodeSelected(item.id) ? AppDimens.CTA_DARK : AppColors.DIVIDER)
+            .fill(this.isNodeSelected(item.id) ? AppDimens.ACCENT_SOFT_BG : AppColors.CARD_BG)
+            .stroke(this.isNodeSelected(item.id) ? AppColors.PRIMARY : AppColors.DIVIDER)
             .strokeWidth(2)
           if (this.isNodeSelected(item.id)) {
-            Text('V')
+            Text('✓')
               .fontSize(14)
               .fontWeight(FontWeight.Bold)
-              .fontColor(AppColors.TEXT_ON_PRIMARY)
+              .fontColor(AppColors.PRIMARY)
           }
         }
         .width(28)
@@ -618,12 +618,11 @@ export struct NodeListView {
     }
     .width('100%')
     .padding(AppDimens.PADDING_MD)
-    .backgroundColor(this.isNodeSelected(item.id) ? AppDimens.ACCENT_SOFT_BG : AppDimens.SURFACE_TINT)
-    .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+    .backgroundColor(this.isNodeSelected(item.id) ? AppDimens.ACCENT_SOFT_BG : AppColors.CARD_BG)
     .borderRadius(AppDimens.RADIUS_LG)
     .border({
       width: this.isNodeSelected(item.id) ? 1.5 : 1,
-      color: this.isNodeSelected(item.id) ? '#FFB37A' : AppDimens.GLASS_BORDER
+      color: this.isNodeSelected(item.id) ? AppColors.PRIMARY : AppColors.DIVIDER
     })
     .shadow({ radius: 18, color: AppDimens.SHADOW_SOFT, offsetY: 7 })
     .alignItems(VerticalAlign.Top)

@@ -141,10 +141,16 @@ export struct ReplayPhotoCard {
           }
 
           if (this.node.photos.length > 0) {
-            Text(`${this.node.photos.length} 张照片`)
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(this.styleKit.cardMutedColor)
-              .margin({ top: 6 })
+            Row({ space: 4 }) {
+              Text('▧')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(this.styleKit.cardMutedColor)
+              Text(this.node.photos.length.toString())
+                .fontSize(AppDimens.FONT_SM)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(this.styleKit.cardMutedColor)
+            }
+            .margin({ top: 6 })
           }
 
           if (!this.isPlaying && this.node.photos.length > 1) {
