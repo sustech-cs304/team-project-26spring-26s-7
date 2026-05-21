@@ -19,6 +19,7 @@ export struct TripListView {
   @Watch('onTravelDataVersionChange')
   @StorageLink('travelDataVersion') travelDataVersion: number = 0
   @StorageLink('activeTabIndex') activeTabIndex: number = 0
+  @State longPressedTripId: string = ''
 
   private dataService = getDataService()
 
@@ -202,15 +203,15 @@ export struct TripListView {
           .textShadow({ radius: 4, color: '#44000000', offsetX: 1, offsetY: 1 })
           .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-        Row({ space: 12 }) {
-          // 查看路线按钮
-          this.buildGlassButton('查看路线', () => this.openTripDetail(item.trip.id))
-
-          // 编辑按钮
-          this.buildGlassButton('编辑', () => this.openTripEdit(item.trip.id))
+        if (this.longPressedTripId === item.trip.id) {
+          Row({ space: 12 }) {
+            this.buildGlassButton('查看路线', () => this.openTripDetail(item.trip.id))
+            this.buildGlassButton('编辑', () => this.openTripEdit(item.trip.id))
+          }
+          .width('100%')
+          .margin({ top: 16 })
+          .transition(TransitionEffect.OPACITY.animation({ duration: 200 }))
         }
-        .width('100%')
-        .margin({ top: 16 })
       }
       .width('100%')
       .height('100%')
@@ -222,6 +223,17 @@ export struct TripListView {
     .borderRadius(AppDimens.RADIUS_LG)
     .clip(true)
     .shadow({ radius: 18, color: '#33000000', offsetY: 8 })
+    .gesture(
+      LongPressGesture({ duration: 500 })
+        .onAction(() => {
+          this.longPressedTripId = this.longPressedTripId === item.trip.id ? '' : item.trip.id
+        })
+    )
+    .onClick(() => {
+      if (this.longPressedTripId === item.trip.id) {
+        this.longPressedTripId = ''
+      }
+    })
   }
 
   // 封装的玻璃质感按钮

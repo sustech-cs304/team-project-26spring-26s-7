@@ -1,10 +1,14 @@
 # Project State
 
-**Last Updated**: 2026-05-06 (share privacy gate)
+**Last Updated**: 2026-05-19
 **Project**: TravelPin - HarmonyOS Travel Journal App
 **Repository**: D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7
-**Current Branch**: feature/social-share
+**Current Branch**: incremental-dev-20260423
 **Main Branch**: main
+
+**2026-05-19 Durable Notes**:
+- The local branch history was soft-reset back to `ac53184` so the requested commits are no longer in local history, while the code changes remain in the working tree / index.
+- The requested commit hashes were `730bf8d4838a9cc6c0b0f7b8d851c26e9b1baa87`, `172ee5dae8188f38d5f0b2bfbc4c95dafb0c09c9`, `6e241db4fd213938dfe2572581d3ee65f6be2e60`, `6b64868c3b9ae25a189f4b9b7e7720bc835d416c`, and `f28777531147ec66e4559637b53bd2c2849542df`.
 
 **2026-05-06 Durable Notes**:
 - Trip sharing now requires `Trip.isPublic === true`. Private trips show a greyed share button on `TripDetailPage`; tapping it prompts the user to switch the trip to public before routing to `SharePage`.
@@ -261,3 +265,9 @@ entry/src/main/ets/
 - `0e82f33` - docs: 建立测试体系，添加 P0/P1/P2 优先级测试清单
 - `c515563` - Merge branch 'feature/photo'
 - `7096512` - Merge pull request #104 from sustech-cs304/feature1
+## 2026-05-19 Update
+
+- ArkTS compile blockers were fixed in the current working tree:
+  - `TripListView.ets` now uses `TransitionEffect.OPACITY`.
+  - `AiCopyPage.ets` now imports `LengthMetrics` from `@kit.ArkUI` and uses `LengthMetrics.vp(8)` for Flex spacing.
+- `frontend/build.ps1 --mode module -p module=entry@default assembleHap` succeeds again; remaining diagnostics are pre-existing warnings.

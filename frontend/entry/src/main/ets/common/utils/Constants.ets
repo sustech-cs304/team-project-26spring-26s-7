@@ -240,6 +240,7 @@ export class RouterUrls {
   static readonly AI_COPY: string = 'feature/ai-copy/pages/AiCopyPage'
   static readonly VISION_LLM: string = 'feature/ai-copy/pages/VisionLLMPage'
   static readonly PROFILE_EDIT: string = 'feature/profile/pages/ProfileEditPage'
+  static readonly PROFILE_AVATAR_CROP: string = 'feature/profile/pages/AvatarCropPage'
   static readonly USER_AGREEMENT: string = 'pages/UserAgreementPage'
   static readonly PRIVACY_POLICY: string = 'pages/PrivacyPolicyPage'
 }

@@ -39,6 +39,8 @@ export struct ProfileView {
   @Watch('onTabRefresh')
   @StorageLink('tabRefreshToken') tabRefreshToken: number = 0
   @StorageLink('activeTabIndex') activeTabIndex: number = 0
+  @Watch('onProfileVersionChanged')
+  @StorageLink('profile_version') profileVersion: number = 0
 
   aboutToAppear(): void {
     this.syncShareLinkExpiryFromStorage()
@@ -58,6 +60,12 @@ export struct ProfileView {
   private onTabRefresh(): void {
     if (this.activeTabIndex === 3) {
       this.syncShareLinkExpiryFromStorage()
+      void this.loadAuthStatus()
+    }
+  }
+
+  private onProfileVersionChanged(): void {
+    if (this.activeTabIndex === 3) {
       void this.loadAuthStatus()
     }
   }

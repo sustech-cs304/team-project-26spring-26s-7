@@ -1,4 +1,4 @@
-import { router, promptAction } from '@kit.ArkUI'
+import { router, promptAction, LengthMetrics } from '@kit.ArkUI'
 import { common } from '@kit.AbilityKit'
 import { pasteboard } from '@kit.BasicServicesKit'
 import {
@@ -91,9 +91,9 @@ export struct AiCopyPage {
 
   // 文章长度选项
   private lengthOptions: LengthOption[] = [
-    { value: 'short', label: '短 (1~2句)' },
-    { value: 'medium', label: '中 (3~5句)' },
-    { value: 'long', label: '长 (6~10句)' }
+    { value: 'short', label: '简短' },
+    { value: 'medium', label: '适中' },
+    { value: 'long', label: '详细' }
   ]
 
   aboutToAppear(): void {
@@ -627,39 +627,6 @@ export struct AiCopyPage {
               .height(96)
             }
 
-            // 端侧元数据摘要 —— 让用户知道有哪些信息会进入 prompt
-            if (this.isExtracting) {
-              Row({ space: 8 }) {
-                LoadingProgress().width(16).height(16)
-                Text('正在端侧识别照片元数据...')
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_HINT)
-              }
-              .width('100%')
-              .margin({ top: 12 })
-            } else if (this.metadataSummary.length > 0) {
-              Column() {
-                Text(
-                  this.cloudTaggingEnabled
-                    ? '已识别端侧元数据（点击生成时还会把首张照片的剥离 EXIF 副本一并发送，让模型直接看图写文案）'
-                    : '已识别端侧元数据（仅文本进入 prompt，照片本体不会上传）'
-                )
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_SECONDARY)
-                  .margin({ bottom: 6 })
-                Text(this.metadataSummary)
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_SECONDARY)
-                  .lineHeight(20)
-              }
-              .width('100%')
-              .padding(10)
-              .margin({ top: 12 })
-              .backgroundColor(this.getSoftPanelBg())
-              .border({ width: 1, color: this.getPillButtonBorder() })
-              .borderRadius(AppDimens.RADIUS_SM)
-              .alignItems(HorizontalAlign.Start)
-            }
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
@@ -760,22 +727,16 @@ export struct AiCopyPage {
               ForEach(this.lengthOptions, (option: LengthOption) => {
                 Text(option.label)
                   .fontSize(AppDimens.FONT_MD)
+                  .padding({ left: 12, right: 12, top: 8, bottom: 8 })
                   .textAlign(TextAlign.Center)
-                  .maxLines(1)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
                   .layoutWeight(1)
-                  .height(38)
-                  .padding({ left: 6, right: 6 })
-                  .backgroundColor(this.selectedLength === option.value ? this.getSelectedPillBg() : this.getPillButtonBg())
-                  .fontColor(this.selectedLength === option.value ? this.getSelectedPillTextColor() : AppColors.TEXT_SECONDARY)
-                  .border({
-                    width: 1,
-                    color: this.selectedLength === option.value ? this.getSelectedPillBg() : this.getPillButtonBorder()
-                  })
+                  .backgroundColor(this.selectedLength === option.value ? AppColors.PRIMARY : AppColors.BACKGROUND)
+                  .fontColor(this.selectedLength === option.value ? Color.White : AppColors.TEXT_SECONDARY)
                   .borderRadius(AppDimens.RADIUS_SM)
                   .onClick(() => { this.selectedLength = option.value })
               })
             }
+            .width('100%')
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
@@ -859,13 +820,21 @@ export struct AiCopyPage {
           // 生成按钮
           if (this.isGenerating) {
             Row({ space: 12 }) {
-              Button('生成中...')
-                .fontSize(AppDimens.FONT_LG)
-                .layoutWeight(1)
-                .height(50)
-                .backgroundColor(AppColors.TEXT_HINT)
-                .fontColor(Color.White)
-                .enabled(false)
+              Button() {
+                Row({ space: 8 }) {
+                  LoadingProgress()
+                    .width(20)
+                    .height(20)
+                    .color(Color.White)
+                  Text('生成中...')
+                    .fontSize(AppDimens.FONT_LG)
+                    .fontColor(Color.White)
+                }
+              }
+              .layoutWeight(1)
+              .height(50)
+              .backgroundColor(AppColors.TEXT_HINT)
+              .enabled(false)
 
               Button('取消')
                 .fontSize(AppDimens.FONT_LG)
@@ -910,9 +879,6 @@ export struct AiCopyPage {
           if (this.debugPrompt.length > 0) {
             Column() {
               Row() {
-                Text('📖')
-                  .fontSize(16)
-                  .margin({ right: 6 })
                 Text('AI 看到的提示词')
                   .fontSize(AppDimens.FONT_MD)
                   .fontWeight(FontWeight.Medium)

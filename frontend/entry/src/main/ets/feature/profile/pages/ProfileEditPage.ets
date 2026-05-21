@@ -1,5 +1,5 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, AuthService, ImageCensorService } from '../../../common'
+import { AppColors, AppDimens, AuthService, ImageCensorService, RouterUrls } from '../../../common'
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
@@ -25,6 +25,20 @@ struct ProfileEditPage {
 
   aboutToAppear(): void {
     this.loadProfile()
+  }
+
+  onPageShow(): void {
+    const cropApplied = AppStorage.get('avatarCropApplied') as boolean
+    if (!cropApplied) {
+      return
+    }
+
+    const cropPath = (AppStorage.get('avatarCropPath') as string) || ''
+    AppStorage.setOrCreate('avatarCropApplied', false)
+    AppStorage.setOrCreate('avatarCropPath', '')
+    if (cropPath.length > 0) {
+      void this.auditSelectedAvatar(cropPath)
+    }
   }
 
   private async loadProfile(): Promise<void> {
@@ -104,18 +118,11 @@ struct ProfileEditPage {
           fs.closeSync(targetFile);
         }
 
-        this.isCheckingAvatar = true;
-        promptAction.showToast({ message: '正在审核头像安全性...' });
-        const auditResult = await ImageCensorService.checkLocalImage(targetPath);
-        if (!auditResult.is_safe) {
-          this.deleteAvatarCandidate(targetPath);
-          this.showAvatarViolationDialog(auditResult.conclusion);
-          return;
-        }
-
-        // 存储沙箱路径（不含 file:// 前缀，loadProfile 时统一加）
-        this.avatar = targetPath;
-        promptAction.showToast({ message: '头像已选择' });
+        router.pushUrl({
+          url: RouterUrls.PROFILE_AVATAR_CROP,
+          params: { sourcePath: targetPath }
+        })
+        candidatePath = ''
       }
     } catch (err) {
       if (candidatePath.length > 0) {
@@ -134,6 +141,45 @@ struct ProfileEditPage {
         })
       } else {
         promptAction.showToast({ message: '选择头像失败，请重试' });
+      }
+    } finally {
+      this.isCheckingAvatar = false
+    }
+  }
+
+  private async auditSelectedAvatar(candidatePath: string): Promise<void> {
+    if (this.isCheckingAvatar) {
+      this.deleteAvatarCandidate(candidatePath)
+      return
+    }
+
+    this.isCheckingAvatar = true
+    try {
+      promptAction.showToast({ message: '正在审核头像安全性...' })
+      const auditResult = await ImageCensorService.checkLocalImage(candidatePath)
+      if (!auditResult.is_safe) {
+        this.deleteAvatarCandidate(candidatePath)
+        this.showAvatarViolationDialog(auditResult.conclusion)
+        return
+      }
+
+      this.avatar = candidatePath
+      promptAction.showToast({ message: '头像已选择' })
+    } catch (err) {
+      this.deleteAvatarCandidate(candidatePath)
+      const error = err as BusinessError
+      hilog.warn(DOMAIN, TAG, `Avatar audit failed: ${error?.code ?? 'unknown'} - ${error?.message ?? error}`)
+      if ((err as Error).message === 'IMAGE_CENSOR_NETWORK_ERROR') {
+        AlertDialog.show({
+          title: '头像审核失败',
+          message: '图片安全审核服务暂不可用，请检查网络后重试。',
+          primaryButton: {
+            value: '我知道了',
+            action: () => {}
+          }
+        })
+      } else {
+        promptAction.showToast({ message: '头像审核失败，请重试' })
       }
     } finally {
       this.isCheckingAvatar = false
@@ -160,6 +206,11 @@ struct ProfileEditPage {
     }
   }
 
+  private bumpProfileVersion(): void {
+    const version = AppStorage.get<number>('profile_version') ?? 0
+    AppStorage.setOrCreate('profile_version', version + 1)
+  }
+
   private async handleSave(): Promise<void> {
     if (!this.isNetworkOnline()) {
       promptAction.showToast({ message: '当前无网络，请在联网后保存资料' })
@@ -182,8 +233,7 @@ struct ProfileEditPage {
         userModified: true  // 标记为用户主动修改，登录时不再被华为账号覆盖
       })
       // 写一个递增版本号，让 ProfileView 检测到返回事件并刷新
-      const currentVersion = (AppStorage.get<number>('profile_version') ?? 0) + 1
-      AppStorage.setOrCreate('profile_version', currentVersion)
+      this.bumpProfileVersion()
       promptAction.showToast({ message: '保存成功' })
       router.back()
     } catch (err) {

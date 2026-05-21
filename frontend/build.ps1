@@ -1,4 +1,4 @@
-# Build script for TravelPin HarmonyOS Project
+# Build script for ItsMapPin HarmonyOS Project
 # Usage: powershell -ExecutionPolicy Bypass -File build.ps1 [--sync] [-p product=default] [other hvigor args]
 
 # Set DEVECO_SDK_HOME environment variable (fixes "Invalid value of DEVECO_SDK_HOME" error)

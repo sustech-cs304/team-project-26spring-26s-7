@@ -345,3 +345,4 @@ describe('RdbHelperTest', () => {
 - [ ] T-RP4-004: 鎷栧姩杩涘害鏉¤烦鍒版柊鑺傜偣鏃讹紝鍗＄墖鍏ュ満/鍑哄満鍔ㄧ敾涓庢寜閽烦杞畬鍏ㄤ竴鑷?
 - [ ] T-RP4-005: 鍙充笂瑙掔姸鎬佹爣绛句細鏄剧ず褰撳墠杞満妯″紡锛屼究浜庢墜鍔ㄦ祴璇曟牳瀵?
 - [ ] T-RP4-006: 鎾斁銆佹殏鍋溿€佸垏鏂伴煶涔愩€佸睍寮€鐓х墖璇︽儏灞傜瓑鍘熸湁琛屼负鏃犲洖褰?
+- [x] `frontend/build.ps1 --mode module -p module=entry@default assembleHap` passed again on 2026-05-19 after fixing the two ArkTS compile errors.

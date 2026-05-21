@@ -466,43 +466,6 @@ export class AiGatewayClient {
       data: mockResponse
     };
   }
-
-  /**
-   * 内容审核
-   */
-  async moderateContent(text: string): Promise<HttpResponse<ModerateResponse>> {
-    logger.info(TAG, 'Moderating content...');
-
-    const mockData: ModerateResponseData = {
-      is_safe: true,
-      categories: []
-    };
-    const mockResponse: ModerateResponse = {
-      code: 0,
-      data: mockData
-    };
-
-    return {
-      statusCode: 200,
-      data: mockResponse
-    };
-  }
-}
-
-/**
- * 内容审核响应数据结构
- */
-interface ModerateResponseData {
-  is_safe: boolean;
-  categories: string[];
-}
-
-/**
- * 内容审核响应结构
- */
-interface ModerateResponse {
-  code: number;
-  data: ModerateResponseData;
 }
 
 /**
@@ -529,6 +492,10 @@ function formatExifDate(raw: string): string | undefined {
  * 不再输出 GPS 数字（对模型无意义）和拍摄设备/曝光等技术参数
  */
 function describeSinglePhoto(md: PhotoMetadata): string {
+  // 没有"画面内容"或"画面中文字"时，仅时段/日期对 LLM 无信息价值，直接返空。
+  if (md.objectTags.length === 0 && (!md.ocrText || md.ocrText.length === 0)) {
+    return '';
+  }
   const parts: string[] = [];
   if (md.objectTags.length > 0) {
     parts.push(`画面内容：${md.objectTags.join('、')}`);
@@ -582,6 +549,12 @@ function describePhotoBatch(list: PhotoMetadata[]): string {
         }
       }
     }
+  }
+
+  // 没有"画面内容"或"画面中文字"时，只剩张数+时段+日期对 LLM 没什么信息价值，
+  // 反而占 prompt 长度，直接返空让 buildBatchPrompt 跳过整个【照片元数据】section。
+  if (objectSet.size === 0 && ocrSet.size === 0) {
+    return '';
   }
 
   const parts: string[] = [];

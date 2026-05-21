@@ -105,6 +105,7 @@ export class ShareEndpoints {
 /** HTTP 请求超时配置 (毫秒) */
 export class HttpTimeout {
   static readonly DEFAULT: number = 30000
+  static readonly IMAGE_CENSOR: number = 60000
   static readonly AI_GENERATE: number = 60000  // AI 生成需要更长超时
   static readonly UPLOAD: number = 120000     // 文件上传超时
 }

@@ -1,7 +1,8 @@
-﻿# coding=utf-8
+# coding=utf-8
 """Baidu image/text content audit service."""
 
 import argparse
+import asyncio
 import base64
 import hashlib
 import hmac
@@ -14,6 +15,7 @@ import time
 from logging.handlers import RotatingFileHandler
 from typing import Any, Dict, List, Optional
 
+import httpx
 import requests
 import uvicorn
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
@@ -173,6 +175,67 @@ class IssueAuditTokenOut(BaseModel):
 # ---------- 鉴权与限流 ----------
 
 _RATE_LIMIT = os.environ.get("BIC_RATE_LIMIT", "30/minute")
+
+# 百度审核 API 的硬约束：图像 QPS=1 + 文本 QPS=1（**两个独立桶**，不互相算）。
+# v1.2 修：之前两类共用一个 Semaphore，导致 ai-relay 频繁调 /text_check 时
+# 头像审核 /check 被卡 >30s 触发前端超时（nginx 看到 HTTP 499）。
+# 现在 image / text 各自一组 sem + qps lock。
+_BAIDU_QPS_INTERVAL = float(os.environ.get("BIC_BAIDU_QPS_INTERVAL", "1.05"))
+_BAIDU_QUEUE_DEPTH = int(os.environ.get("BIC_BAIDU_QUEUE_DEPTH", "5"))
+_baidu_image_sem: Optional[asyncio.Semaphore] = None
+_baidu_text_sem: Optional[asyncio.Semaphore] = None
+_baidu_image_lock: Optional[asyncio.Lock] = None
+_baidu_text_lock: Optional[asyncio.Lock] = None
+_baidu_image_last_t: float = 0.0
+_baidu_text_last_t: float = 0.0
+_baidu_client: Optional[httpx.AsyncClient] = None
+
+
+async def _baidu_call_serial(url: str, *, kind: str, data: dict,
+                              headers: Optional[dict] = None,
+                              timeout: float = 30.0) -> httpx.Response:
+    """串行调百度，强制 1 QPS，队列上限 5。
+
+    kind="image" → /check + /check_url，走 _baidu_image_sem
+    kind="text"  → /text_check，走 _baidu_text_sem
+    两类独立 — 百度图像和文本 QPS 是分开计的。
+    """
+    global _baidu_image_last_t, _baidu_text_last_t
+    if kind == "image":
+        sem = _baidu_image_sem
+        lock = _baidu_image_lock
+    elif kind == "text":
+        sem = _baidu_text_sem
+        lock = _baidu_text_lock
+    else:
+        raise HTTPException(status_code=500, detail=f"unknown baidu kind: {kind}")
+
+    if sem is None or lock is None or _baidu_client is None:
+        raise HTTPException(status_code=503, detail="audit_service_initializing")
+    # 拿不到 sem（队列满）→ 立刻 503
+    try:
+        await asyncio.wait_for(sem.acquire(), timeout=0.1)
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "audit_queue_full", "message": "审核队列繁忙，请稍后重试。"},
+            headers={"Retry-After": "5"},
+        )
+    try:
+        # 强制 1 QPS：跟该类型上次调用至少间隔 _BAIDU_QPS_INTERVAL
+        async with lock:
+            now = time.monotonic()
+            last_t = _baidu_image_last_t if kind == "image" else _baidu_text_last_t
+            wait = _BAIDU_QPS_INTERVAL - (now - last_t)
+            if wait > 0:
+                await asyncio.sleep(wait)
+            if kind == "image":
+                _baidu_image_last_t = time.monotonic()
+            else:
+                _baidu_text_last_t = time.monotonic()
+        return await _baidu_client.post(url, data=data, headers=headers or {}, timeout=timeout)
+    finally:
+        sem.release()
 _APP_SESSION_TTL_SECONDS = int(os.environ.get("APP_SESSION_TTL_SECONDS", str(7 * 24 * 3600)))
 _APP_SESSION_SECRET = os.environ.get("APP_SESSION_SECRET", "")
 _AUDIT_TOKEN_TTL_SECONDS = int(os.environ.get("BIC_AUDIT_TOKEN_TTL_SECONDS", "1800"))
@@ -284,7 +347,23 @@ def _verify_audit_token(token: str) -> Dict[str, Any]:
     return _verify_signed_payload(token, _AUDIT_TOKEN_SECRET, "audit_token_secret", "audit")
 
 
-def verify_bearer(authorization: Optional[str] = Header(None)) -> str:
+_INTERNAL_SHARED_SECRET = os.environ.get("INTERNAL_SHARED_SECRET", "").strip()
+
+
+def verify_bearer(
+    authorization: Optional[str] = Header(None),
+    x_internal_auth: Optional[str] = Header(None, alias="X-Internal-Auth"),
+) -> str:
+    """同时接受两种来源：
+    - 用户请求：Authorization: Bearer <audit_token>
+    - 服务间请求：X-Internal-Auth: <INTERNAL_SHARED_SECRET>（仅 share-service 等内部服务用）
+
+    内部调用走 X-Internal-Auth，避免 share-service 还要去 mint audit_token；
+    这个 secret 只在服务器 .env 里，公网用户无法获取。
+    """
+    if _INTERNAL_SHARED_SECRET and x_internal_auth and \
+            hmac.compare_digest(x_internal_auth, _INTERNAL_SHARED_SECRET):
+        return "internal:share-service"
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="missing_token")
     token = authorization.split(None, 1)[1].strip()
@@ -436,13 +515,57 @@ def _verify_agc_access_token(access_token: str) -> Dict[str, Any]:
     return body
 
 
-limiter = Limiter(key_func=get_remote_address, default_limits=[])
+def _audit_rate_key(request: Request) -> str:
+    """slowapi key_func：优先按 Bearer audit_token 解 uid 限流。
+    nginx 反代后 client.host 全是 127.0.0.1，per-IP 退化成全局桶，所以必须 per-uid。
+    内部服务间调用（X-Internal-Auth）单独走 'internal' 桶，不挤公网用户。
+    """
+    # 内部调用单独桶
+    if _INTERNAL_SHARED_SECRET:
+        x_internal = request.headers.get("x-internal-auth", "")
+        if x_internal and hmac.compare_digest(x_internal, _INTERNAL_SHARED_SECRET):
+            return "internal:share-service"
+    auth = request.headers.get("authorization", "")
+    if auth.lower().startswith("bearer "):
+        token = auth.split(None, 1)[1].strip()
+        try:
+            payload = _verify_signed_payload(token, _AUDIT_TOKEN_SECRET, "audit_token_secret", "audit")
+            uid = str(payload.get("uid", "")).strip()
+            if uid:
+                return f"uid:{uid}"
+        except Exception:
+            pass
+    return get_remote_address(request)
+
+
+limiter = Limiter(key_func=_audit_rate_key, default_limits=[])
 
 
 # ---------- FastAPI 应用 ----------
 
 app = FastAPI(title="Baidu Image Censor Service", version="1.0")
 app.state.limiter = limiter
+
+
+@app.on_event("startup")
+async def _init_baidu_gateway():
+    """初始化百度审核 API 的串行调用 gateway（image / text 独立）。"""
+    global _baidu_image_sem, _baidu_text_sem, _baidu_image_lock, _baidu_text_lock, _baidu_client
+    _baidu_image_sem = asyncio.Semaphore(_BAIDU_QUEUE_DEPTH)
+    _baidu_text_sem = asyncio.Semaphore(_BAIDU_QUEUE_DEPTH)
+    _baidu_image_lock = asyncio.Lock()
+    _baidu_text_lock = asyncio.Lock()
+    _baidu_client = httpx.AsyncClient(timeout=30.0)
+    logger.info(
+        "[boot] baidu gateway initialized: qps_interval=%.2fs queue_depth=%d (image+text independent)",
+        _BAIDU_QPS_INTERVAL, _BAIDU_QUEUE_DEPTH,
+    )
+
+
+@app.on_event("shutdown")
+async def _close_baidu_gateway():
+    if _baidu_client is not None:
+        await _baidu_client.aclose()
 
 
 @app.exception_handler(RateLimitExceeded)
@@ -498,34 +621,34 @@ _MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB; Baidu has its own Base64 size lim
 
 @app.post("/check", response_model=CheckOut)
 @limiter.limit(_RATE_LIMIT)
-def check(
+async def check(
     request: Request,
     image: UploadFile = File(...),
     img_type: Optional[int] = Form(0),
     _token: str = Depends(verify_bearer),
 ):
     """Upload an image file and send it to Baidu image censor."""
-    contents = image.file.read()
+    contents = await image.read()
     if len(contents) > _MAX_UPLOAD_BYTES:
         raise HTTPException(
             status_code=413,
             detail=f"image too large: {len(contents)} bytes > limit {_MAX_UPLOAD_BYTES}",
         )
     b64 = base64.b64encode(contents).decode("utf-8")
-    return _do_censor(image_b64=b64, img_type=img_type)
+    return await _do_censor(image_b64=b64, img_type=img_type)
 
 
 @app.post("/check_url", response_model=CheckOut)
 @limiter.limit(_RATE_LIMIT)
-def check_url(
+async def check_url(
     request: Request,
     req: CheckUrlIn,
     _token: str = Depends(verify_bearer),
 ):
-    return _do_censor(img_url=req.imgUrl, img_type=req.img_type)
+    return await _do_censor(img_url=req.imgUrl, img_type=req.img_type)
 
 
-def _do_censor(
+async def _do_censor(
     image_b64: Optional[str] = None,
     img_url: Optional[str] = None,
     img_type: int = 0,
@@ -544,7 +667,7 @@ def _do_censor(
     else:
         raise HTTPException(status_code=400, detail="Either image or imgUrl must be provided")
 
-    resp = requests.post(endpoint, headers=headers, data=data, timeout=60)
+    resp = await _baidu_call_serial(endpoint, kind="image", data=data, headers=headers, timeout=60.0)
     raw = resp.json()
 
     log_id = raw.get("log_id", 0)
@@ -583,7 +706,7 @@ def _do_censor(
 _MAX_TEXT_BYTES = 20000  # Baidu text audit limit is about 20000 bytes.
 
 
-def _do_text_censor(text: str, user_id: Optional[str] = None, user_ip: Optional[str] = None) -> TextCheckOut:
+async def _do_text_censor(text: str, user_id: Optional[str] = None, user_ip: Optional[str] = None) -> TextCheckOut:
     if len(text.encode("utf-8")) > _MAX_TEXT_BYTES:
         raise HTTPException(
             status_code=413,
@@ -601,7 +724,7 @@ def _do_text_censor(text: str, user_id: Optional[str] = None, user_ip: Optional[
     if user_ip:
         data["userIp"] = user_ip
 
-    resp = requests.post(endpoint, headers=headers, data=data, timeout=30)
+    resp = await _baidu_call_serial(endpoint, kind="text", data=data, headers=headers, timeout=30.0)
     raw = resp.json()
 
     log_id = raw.get("log_id", 0)
@@ -640,13 +763,13 @@ def _do_text_censor(text: str, user_id: Optional[str] = None, user_ip: Optional[
 
 @app.post("/text_check", response_model=TextCheckOut)
 @limiter.limit(_RATE_LIMIT)
-def text_check(
+async def text_check(
     request: Request,
     req: TextCheckIn,
     _token: str = Depends(verify_bearer),
 ):
     """Send text to Baidu text censor."""
-    return _do_text_censor(req.text, user_id=req.user_id, user_ip=req.user_ip)
+    return await _do_text_censor(req.text, user_id=req.user_id, user_ip=req.user_ip)
 
 
 # ---------- 启动 ----------
