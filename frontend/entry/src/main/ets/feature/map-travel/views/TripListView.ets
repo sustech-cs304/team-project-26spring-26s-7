@@ -223,16 +223,8 @@ export struct TripListView {
     .borderRadius(AppDimens.RADIUS_LG)
     .clip(true)
     .shadow({ radius: 18, color: '#33000000', offsetY: 8 })
-    .gesture(
-      LongPressGesture({ duration: 500 })
-        .onAction(() => {
-          this.longPressedTripId = this.longPressedTripId === item.trip.id ? '' : item.trip.id
-        })
-    )
     .onClick(() => {
-      if (this.longPressedTripId === item.trip.id) {
-        this.longPressedTripId = ''
-      }
+      this.longPressedTripId = this.longPressedTripId === item.trip.id ? '' : item.trip.id
     })
   }
 
