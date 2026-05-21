@@ -166,12 +166,18 @@ export struct PhotoCardOverlay {
             Blank()
 
             if (this.currentNode.photos.length > 0) {
-              Text(`${this.currentNode.photos.length} 张`)
-                .fontSize(AppDimens.FONT_SM)
-                .fontColor(this.styleKit.overlaySecondaryTextColor)
-                .backgroundColor(this.styleKit.cardTagBackground)
-                .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-                .borderRadius(12)
+              Row({ space: 4 }) {
+                Text('▧')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(this.styleKit.overlaySecondaryTextColor)
+                Text(this.currentNode.photos.length.toString())
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(this.styleKit.overlaySecondaryTextColor)
+              }
+              .backgroundColor(this.styleKit.cardTagBackground)
+              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+              .borderRadius(12)
             }
           }
           .width('100%')

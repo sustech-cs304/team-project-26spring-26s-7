@@ -21,6 +21,7 @@ interface TimelineNodeCard {
   place: string
   summary: string
   photoCount: number
+  coverPhoto: string
   mood: string
   tags: string[]
 }
@@ -145,6 +146,7 @@ export struct TripDetailPage {
       place: trimmedPlace.length > 0 ? trimmedPlace : '未命名地点',
       summary: trimmedContent,
       photoCount: node.photos.length,
+      coverPhoto: node.photos.length > 0 ? node.photos[0] : '',
       mood: node.mood,
       tags: [...node.tags]
     }
@@ -421,88 +423,121 @@ export struct TripDetailPage {
   }
 
   @Builder
-  private buildTimelineItem(node: TimelineNodeCard, index: number) {
-    Column() {
-      Row() {
-        Text(node.date)
-          .fontSize(AppDimens.FONT_SM)
-          .fontColor(AppColors.TEXT_HINT)
-          .backgroundColor(AppColors.BACKGROUND)
-          .padding({ left: 10, right: 10, top: 5, bottom: 5 })
-          .borderRadius(12)
-
-        Blank()
-
-        if (node.photoCount > 0) {
-          Text(`${node.photoCount} 张照片`)
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor(AppColors.PRIMARY)
-            .backgroundColor(AppColors.PRIMARY + '12')
-            .padding({ left: 10, right: 10, top: 5, bottom: 5 })
-            .borderRadius(12)
-        }
-      }
-      .width('100%')
-
-      Text(node.title)
+  private buildHeaderMenuButton() {
+    Button() {
+      Text('...')
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
-        .fontColor(AppColors.TEXT_PRIMARY)
-        .width('100%')
-        .margin({ top: 12 })
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-      Text(node.place)
-        .fontSize(AppDimens.FONT_SM)
         .fontColor(AppColors.TEXT_SECONDARY)
-        .lineHeight(21)
-        .width('100%')
-        .margin({ top: 6 })
-        .maxLines(2)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
+    }
+    .width(44)
+    .height(44)
+    .backgroundColor(AppDimens.PHOTO_SURFACE)
+    .border({ width: 1, color: AppColors.DIVIDER })
+    .borderRadius(22)
+    .margin({ right: 12 })
+    .onClick(() => { this.showMenu = !this.showMenu })
+  }
 
-      if (node.summary.length > 0 && node.summary !== node.title) {
-        Text(node.summary)
-          .fontSize(AppDimens.FONT_SM)
-          .fontColor(AppColors.TEXT_HINT)
-          .lineHeight(20)
-          .width('100%')
-          .margin({ top: 8 })
-          .maxLines(2)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-      }
+  @Builder
+  private buildPhotoCountBadge(count: number) {
+    Row({ space: 4 }) {
+      SymbolGlyph($r('sys.symbol.picture_2'))
+        .fontSize(13)
+        .fontColor([AppColors.TEXT_SECONDARY])
+      Text(count.toString())
+        .fontSize(AppDimens.FONT_SM)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(AppColors.TEXT_SECONDARY)
+    }
+    .padding({ left: 9, right: 9, top: 5, bottom: 5 })
+    .backgroundColor(AppDimens.PHOTO_SURFACE)
+    .border({ width: 1, color: AppColors.DIVIDER })
+    .borderRadius(14)
+  }
 
-      if (node.mood.length > 0 || node.tags.length > 0) {
-        Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
-          if (node.mood.length > 0) {
-            Text(node.mood)
-              .fontSize(AppDimens.FONT_SM)
-              .backgroundColor('#FFF3E8')
-              .padding({ left: 10, right: 10, top: 5, bottom: 5 })
-              .borderRadius(12)
-              .margin({ right: 8, top: 10, bottom: 2 })
+  @Builder
+  private buildTimelineItem(node: TimelineNodeCard, index: number) {
+    Row({ space: 14 }) {
+      Stack() {
+        if (node.coverPhoto.length > 0) {
+          Image(node.coverPhoto)
+            .width('100%')
+            .height('100%')
+            .objectFit(ImageFit.Cover)
+        } else {
+          Column() {
+            Text('▣')
+              .fontSize(24)
+              .fontColor(AppColors.TEXT_HINT)
           }
+          .width('100%')
+          .height('100%')
+          .justifyContent(FlexAlign.Center)
+          .backgroundColor(AppColors.BACKGROUND)
+        }
+      }
+      .width(92)
+      .height(92)
+      .borderRadius(16)
+      .clip(true)
 
-          ForEach(node.tags.slice(0, 3), (tag: string) => {
-            Text(`#${tag}`)
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(AppColors.PRIMARY)
-              .backgroundColor(AppColors.PRIMARY + '12')
-              .padding({ left: 10, right: 10, top: 5, bottom: 5 })
-              .borderRadius(12)
-              .margin({ right: 8, top: 10, bottom: 2 })
-          })
+      Column() {
+        Row() {
+          Text(node.date)
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_HINT)
+            .backgroundColor(AppColors.BACKGROUND)
+            .padding({ left: 9, right: 9, top: 5, bottom: 5 })
+            .borderRadius(12)
+
+          Blank()
+
+          if (node.photoCount > 0) {
+            this.buildPhotoCountBadge(node.photoCount)
+          }
         }
         .width('100%')
+
+        Text(node.title)
+          .fontSize(AppDimens.FONT_LG)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(AppColors.TEXT_PRIMARY)
+          .width('100%')
+          .margin({ top: 10 })
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+        Text(node.place)
+          .fontSize(AppDimens.FONT_SM)
+          .fontColor(AppColors.TEXT_SECONDARY)
+          .lineHeight(18)
+          .width('100%')
+          .margin({ top: 5 })
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+        if (node.summary.length > 0 && node.summary !== node.title) {
+          Text(node.summary)
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_HINT)
+            .lineHeight(18)
+            .width('100%')
+            .margin({ top: 6 })
+            .maxLines(2)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
       }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .padding({ left: 16, right: 16, top: 14, bottom: 14 })
+    .padding(12)
     .backgroundColor(AppColors.CARD_BG)
-    .borderRadius(18)
-    .border({ width: 1, color: '#EEF2F8' })
-    .shadow({ radius: 4, color: '#0000000A', offsetY: 2 })
+    .borderRadius(20)
+    .border({ width: 1, color: AppColors.DIVIDER })
+    .shadow({ radius: 12, color: AppDimens.SHADOW_SOFT, offsetY: 4 })
+    .alignItems(VerticalAlign.Top)
     .margin({ bottom: index < this.timelineNodes.length - 1 ? 10 : 0 })
     .onClick(() => {
       router.pushUrl({
@@ -511,7 +546,6 @@ export struct TripDetailPage {
       })
     })
   }
-
   build() {
     Stack() {
       Column() {
@@ -528,11 +562,7 @@ export struct TripDetailPage {
             .layoutWeight(1)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
-          Text('···')
-            .fontSize(AppDimens.FONT_XL)
-            .fontColor(AppColors.TEXT_SECONDARY)
-            .padding(AppDimens.PADDING_MD)
-            .onClick(() => { this.showMenu = !this.showMenu })
+          this.buildHeaderMenuButton()
         }
         .width('100%')
         .height(56)
@@ -570,7 +600,8 @@ export struct TripDetailPage {
                   .layoutWeight(1)
                   .height(46)
                   .fontSize(AppDimens.FONT_MD)
-                  .backgroundColor(AppColors.PRIMARY)
+                  .backgroundColor(AppDimens.CTA_DARK)
+                  .fontColor(AppColors.TEXT_ON_PRIMARY)
                   .borderRadius(16)
                   .onClick(() => {
                     router.pushUrl({
@@ -582,8 +613,9 @@ export struct TripDetailPage {
                   .layoutWeight(1)
                   .height(46)
                   .fontSize(AppDimens.FONT_MD)
-                  .backgroundColor(this.isPublic ? '#FF8C00' : '#D8D8D8')
+                  .backgroundColor(this.isPublic ? AppDimens.CTA_DARK : AppDimens.PHOTO_SURFACE)
                   .fontColor(this.isPublic ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
+                  .border({ width: 1, color: this.isPublic ? AppDimens.CTA_DARK : AppColors.DIVIDER })
                   .borderRadius(16)
                   .onClick(() => {
                     this.handleShareTrip()

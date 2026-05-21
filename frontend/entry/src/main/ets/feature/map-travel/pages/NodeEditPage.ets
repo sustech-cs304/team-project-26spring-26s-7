@@ -417,6 +417,30 @@ export struct NodeEditPage {
     return '正文会在达到上限后自动停止输入'
   }
 
+  private getPillButtonBg(): string {
+    return AppDimens.PHOTO_SURFACE
+  }
+
+  private getPillButtonBorder(): string {
+    return AppColors.DIVIDER
+  }
+
+  private getSelectedPillBg(): string {
+    return AppDimens.CTA_DARK
+  }
+
+  private getSelectedPillTextColor(): string {
+    return AppColors.TEXT_ON_PRIMARY
+  }
+
+  private getGlassButtonBg(): string {
+    return '#80FFFFFF'
+  }
+
+  private getGlassButtonBorder(): string {
+    return AppDimens.GLASS_BORDER
+  }
+
   @Builder
   private buildDatePickerDialog() {
     Stack({ alignContent: Alignment.Bottom }) {
@@ -508,7 +532,13 @@ export struct NodeEditPage {
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
               Text('重新选点 >')
                 .fontSize(AppDimens.FONT_SM)
+                .fontWeight(FontWeight.Medium)
                 .fontColor(AppColors.PRIMARY)
+                .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+                .backgroundColor(this.getPillButtonBg())
+                .borderRadius(16)
+                .border({ width: 1, color: this.getPillButtonBorder() })
+                .shadow({ radius: 8, color: AppDimens.SHADOW_SOFT, offsetY: 2 })
                 .onClick(() => {
                   router.pushUrl({ url: RouterUrls.LOCATION_PICKER })
                 })
@@ -541,7 +571,13 @@ export struct NodeEditPage {
               .alignItems(HorizontalAlign.Start)
               Text('选择旅行 >')
                 .fontSize(AppDimens.FONT_SM)
+                .fontWeight(FontWeight.Medium)
                 .fontColor(AppColors.PRIMARY)
+                .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+                .backgroundColor(this.getPillButtonBg())
+                .borderRadius(16)
+                .border({ width: 1, color: this.getPillButtonBorder() })
+                .shadow({ radius: 8, color: AppDimens.SHADOW_SOFT, offsetY: 2 })
                 .onClick(() => this.openTripSelector())
             }
             .width('100%')
@@ -652,45 +688,13 @@ export struct NodeEditPage {
             }
             .width('100%')
             .padding(AppDimens.PADDING_MD)
-            .backgroundColor(AppColors.PRIMARY + '10')
+            .backgroundColor(this.getGlassButtonBg())
+            .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+            .border({ width: 0.8, color: this.getGlassButtonBorder() })
             .borderRadius(AppDimens.RADIUS_SM)
+            .shadow({ radius: 18, color: AppDimens.SHADOW_FLOAT, offsetY: 8 })
             .margin({ bottom: 12, top: 8 })
             .onClick(() => this.handleNavigateToAI())
-
-            // 心情选择
-            Column() {
-              Text('心情')
-                .fontSize(AppDimens.FONT_MD)
-                .fontWeight(FontWeight.Medium)
-                .fontColor(AppColors.TEXT_PRIMARY)
-              Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
-                ForEach(['😊', '😢', '🤩', '😌', '🥰', '😤'], (emoji: string) => {
-                  Text(emoji)
-                    .fontSize(28)
-                    .padding(8)
-                    .borderRadius(AppDimens.RADIUS_SM)
-                    .backgroundColor(this.mood === emoji ? AppColors.PRIMARY + '20' : 'transparent')
-                    .border({
-                      width: this.mood === emoji ? 1 : 0,
-                      color: this.mood === emoji ? AppColors.PRIMARY : 'transparent'
-                    })
-                    .margin({ right: 12, bottom: 12 })
-                    .onClick(() => {
-                      this.mood = this.mood === emoji ? '' : emoji
-                    })
-                })
-              }
-              .margin({ top: 8 })
-              Text(this.mood.length > 0 ? `当前已选：${this.mood}，再次点击可取消` : '未选择表情，可直接留空')
-                .fontSize(AppDimens.FONT_SM)
-                .fontColor(AppColors.TEXT_HINT)
-            }
-            .width('100%')
-            .padding(AppDimens.PADDING_MD)
-            .margin({ top: 12 })
-            .backgroundColor(AppColors.CARD_BG)
-            .borderRadius(AppDimens.RADIUS_SM)
-            .alignItems(HorizontalAlign.Start)
 
             // 标签
             Column() {
@@ -702,10 +706,11 @@ export struct NodeEditPage {
                 ForEach(['旅行', '美食', '风景', '打卡', '日常'], (tag: string) => {
                   Text(`#${tag}`)
                     .fontSize(AppDimens.FONT_SM)
-                    .fontColor(this.tags.includes(tag) ? AppColors.TEXT_ON_PRIMARY : AppColors.PRIMARY)
-                    .backgroundColor(this.tags.includes(tag) ? AppColors.PRIMARY : AppColors.PRIMARY + '15')
+                    .fontColor(this.tags.includes(tag) ? this.getSelectedPillTextColor() : AppColors.TEXT_PRIMARY)
+                    .backgroundColor(this.tags.includes(tag) ? this.getSelectedPillBg() : this.getPillButtonBg())
                     .padding({ left: 12, right: 12, top: 6, bottom: 6 })
                     .borderRadius(20)
+                    .border({ width: 1, color: this.tags.includes(tag) ? this.getSelectedPillBg() : this.getPillButtonBorder() })
                     .margin({ right: 8, bottom: 8 })
                     .onClick(() => {
                       if (this.tags.includes(tag)) {
@@ -744,7 +749,12 @@ export struct NodeEditPage {
               .alignItems(HorizontalAlign.Start)
               Text('选择日期 >')
                 .fontSize(AppDimens.FONT_SM)
+                .fontWeight(FontWeight.Medium)
                 .fontColor(AppColors.PRIMARY)
+                .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+                .backgroundColor(this.getPillButtonBg())
+                .borderRadius(16)
+                .border({ width: 1, color: this.getPillButtonBorder() })
             }
             .width('100%')
             .padding(AppDimens.PADDING_MD)

@@ -1,4 +1,4 @@
-import { AppColors, AppDimens } from '../common'
+import { AppColors, AppDimens, AppTheme } from '../common'
 import { MapHomeView } from '../feature/map-travel/views/MapHomeView'
 import { TripListView } from '../feature/map-travel/views/TripListView'
 import { NodeListView } from '../feature/map-travel/views/NodeListView'
@@ -18,8 +18,8 @@ struct MainPage {
   @StorageLink('networkDialogTitle') networkDialogTitle: string = ''
   @StorageLink('nodeBulkActionMode') nodeBulkActionMode: boolean = false
 
-  private tabIcons: string[] = ['⌂', '⌁', '□', '○']
-  private tabTitles: string[] = ['Map', 'Trips', 'Nodes', 'Me']
+  private tabTitles: string[] = ['地图', '旅途', '节点', '设置']
+  private readonly tabIconSize: number = 22
 
   private onNetworkDialogTokenChange(): void {
     if (this.networkDialogToken <= 0 || this.networkDialogMessage.length <= 0) {
@@ -64,12 +64,9 @@ struct MainPage {
     const slotWidth = this.getTabSlotWidth()
     if (slotWidth <= 0) return 0
 
-    // 1. 定义缩放系数（0.8 表示滑块宽度是格子的 80%）
     const shrinkFactor = 0.8
-    // 2. 计算因为缩短而产生的左右空隙（居中偏移量）
     const centeringOffset = (slotWidth * (1 - shrinkFactor)) / 2
 
-    // 3. 最终位置 = (当前索引 * 格子宽) + 拖拽偏移 + 居中补偿
     return (this.currentTabIndex * slotWidth) + this.clampTabDragOffset(this.tabDragOffset) + centeringOffset
   }
 
@@ -86,38 +83,95 @@ struct MainPage {
     this.switchTab(nextIndex)
   }
 
+  private getTabBarBackground(): string {
+    return AppTheme.isDarkMode() ? '#731E2420' : '#80FFFFFF'
+  }
+
+  private getTabIndicatorBackground(): string {
+    if (this.isTabDragging) {
+      return AppTheme.isDarkMode() ? '#44FFFFFF' : '#F2FFFFFF'
+    }
+    return AppTheme.isDarkMode() ? '#38FFFFFF' : '#DFFFFFFF'
+  }
+
+  private getTabShadowColor(): string {
+    return AppTheme.isDarkMode() ? '#CC000000' : '#38101820'
+  }
+
+  private getTabGlassBorderColor(): string {
+    return AppTheme.isDarkMode() ? '#4DFFFFFF' : '#B8FFFFFF'
+  }
+
+  private getTabIndicatorBorderColor(): string {
+    return AppTheme.isDarkMode() ? '#66FFFFFF' : '#FFFFFFFF'
+  }
+
+  private getSelectedTabColor(): string {
+    return AppTheme.isDarkMode() ? '#FFFFFF' : '#101412'
+  }
+
+  private getTabIconColor(isSelected: boolean): string {
+    if (isSelected) {
+      return this.getSelectedTabColor()
+    }
+    return AppTheme.isDarkMode() ? '#F0EDE7' : '#30342F'
+  }
+
   @Builder
   private buildSlidingIndicator() {
     Row()
-    // 直接在这里写表达式，不要定义 const
       .width(this.getTabSlotWidth() * 0.8)
-      .height(40) // 高度也稍微调小一点更精致
-      .backgroundColor(this.isTabDragging ? '#EAEAEA' : '#F2F2F2')
+      .height(40)
+      .backgroundColor(this.getTabIndicatorBackground())
+      .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+      .border({ width: 0.8, color: this.getTabIndicatorBorderColor() })
       .borderRadius(20)
       .shadow({
-        radius: 10,
-        color: '#08000000',
-        offsetY: 2
+        radius: 12,
+        color: this.getTabShadowColor(),
+        offsetY: 4
       })
       .position({
         x: this.getIndicatorX(),
-        y: 8 // (56容器高度 - 40滑块高度) / 2 = 8，实现垂直居中
+        y: 8
       })
       .animation({ duration: this.isTabDragging ? 0 : 250, curve: Curve.EaseInOut })
   }
   @Builder
+  private buildTabIcon(index: number, isSelected: boolean) {
+    if (index === 0) {
+      SymbolGlyph($r('sys.symbol.map_badge_local'))
+        .fontSize(this.tabIconSize)
+        .fontWeight(FontWeight.Bold)
+        .fontColor([this.getTabIconColor(isSelected)])
+    } else if (index === 1) {
+      SymbolGlyph($r('sys.symbol.point_bottomleft_forward_to_point_topright_scurvepath'))
+        .fontSize(this.tabIconSize)
+        .fontWeight(FontWeight.Bold)
+        .fontColor([this.getTabIconColor(isSelected)])
+    } else if (index === 2) {
+      SymbolGlyph($r('sys.symbol.local_fill'))
+        .fontSize(this.tabIconSize)
+        .fontWeight(FontWeight.Bold)
+        .fontColor([this.getTabIconColor(isSelected)])
+    } else {
+      SymbolGlyph($r('sys.symbol.gearshape'))
+        .fontSize(this.tabIconSize)
+        .fontWeight(FontWeight.Bold)
+        .fontColor([this.getTabIconColor(isSelected)])
+    }
+  }
+
+  @Builder
   private buildTabItem(index: number) {
     Row({ space: this.currentTabIndex === index ? 6 : 0 }) {
-      Text(this.tabIcons[index])
-        .fontSize(this.currentTabIndex === index ? 18 : 20)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.currentTabIndex === index ? AppColors.PRIMARY_DARK : AppColors.TEXT_HINT)
+      this.buildTabIcon(index, this.currentTabIndex === index)
 
       if (this.currentTabIndex === index) {
         Text(this.tabTitles[index])
           .fontSize(AppDimens.FONT_SM)
           .fontWeight(FontWeight.Medium)
-          .fontColor(AppColors.PRIMARY_DARK)
+          .fontColor(this.getSelectedTabColor())
       }
     }
     .height(56)
@@ -148,10 +202,11 @@ struct MainPage {
       }
       .width('100%')
       .height(56)
-      .backgroundColor('#F8FFFFFF')
-      .backgroundBlurStyle(BlurStyle.Thin)
+      .backgroundColor(this.getTabBarBackground())
+      .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+      .border({ width: 0.8, color: this.getTabGlassBorderColor() })
       .borderRadius(28)
-      .shadow({ radius: 14, color: '#18000000', offsetY: 4 })
+      .shadow({ radius: 24, color: this.getTabShadowColor(), offsetY: 10 })
       .onAreaChange((_, value) => {
         this.tabBarWidth = Number(value.width)
       })

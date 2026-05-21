@@ -500,6 +500,26 @@ export struct AiCopyPage {
     router.back();
   }
 
+  private getPillButtonBg(): string {
+    return AppDimens.PHOTO_SURFACE
+  }
+
+  private getPillButtonBorder(): string {
+    return AppColors.DIVIDER
+  }
+
+  private getSelectedPillBg(): string {
+    return AppDimens.CTA_DARK
+  }
+
+  private getSelectedPillTextColor(): string {
+    return AppColors.TEXT_ON_PRIMARY
+  }
+
+  private getSoftPanelBg(): string {
+    return AppDimens.PHOTO_SURFACE
+  }
+
   build() {
     Stack() {
       Column() {
@@ -646,11 +666,11 @@ export struct AiCopyPage {
           }
           .width('100%')
           .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12, bottom: 12 })
-          .backgroundColor(this.cloudTaggingEnabled ? (AppColors.PRIMARY + '14') : AppColors.CARD_BG)
+          .backgroundColor(this.cloudTaggingEnabled ? this.getSoftPanelBg() : AppColors.CARD_BG)
           .borderRadius(AppDimens.RADIUS_SM)
           .margin({ bottom: 12 })
           .border(this.cloudTaggingEnabled
-            ? { width: 0 }
+            ? { width: 1, color: this.getPillButtonBorder(), style: BorderStyle.Solid }
             : { width: 1, color: AppColors.DIVIDER, style: BorderStyle.Solid })
 
           // 文案风格选择
@@ -669,17 +689,17 @@ export struct AiCopyPage {
                       .fontSize(28)
                     Text(style.label)
                       .fontSize(AppDimens.FONT_SM)
-                      .fontColor(this.selectedStyle === style.value ? AppColors.PRIMARY : AppColors.TEXT_SECONDARY)
+                      .fontColor(this.selectedStyle === style.value ? this.getSelectedPillTextColor() : AppColors.TEXT_SECONDARY)
                       .margin({ top: 4 })
                   }
                   .width('100%')
                   .height(70)
                   .justifyContent(FlexAlign.Center)
-                  .backgroundColor(this.selectedStyle === style.value ? AppColors.PRIMARY + '20' : AppColors.BACKGROUND)
+                  .backgroundColor(this.selectedStyle === style.value ? this.getSelectedPillBg() : this.getPillButtonBg())
                   .borderRadius(AppDimens.RADIUS_SM)
                   .border({
-                    width: 2,
-                    color: this.selectedStyle === style.value ? AppColors.PRIMARY : 'transparent'
+                    width: 1,
+                    color: this.selectedStyle === style.value ? this.getSelectedPillBg() : this.getPillButtonBorder()
                   })
                   .onClick(() => { this.selectedStyle = style.value })
                 }
@@ -833,8 +853,8 @@ export struct AiCopyPage {
                 .height(50)
                 .layoutWeight(1)
                 .backgroundColor(AppColors.BACKGROUND)
-                .fontColor(AppColors.PRIMARY)
-                .border({ width: 1, color: AppColors.PRIMARY })
+                .fontColor(AppColors.TEXT_PRIMARY)
+                .border({ width: 1, color: this.getPillButtonBorder() })
                 .enabled(this.imagePaths.length > 0 && !this.isPreviewingPrompt)
                 .onClick(() => this.handlePreviewPrompt())
 
@@ -844,10 +864,10 @@ export struct AiCopyPage {
                 .layoutWeight(2)
                 .backgroundColor(
                   this.imagePaths.length > 0 && !this.isPreviewingPrompt
-                    ? AppColors.PRIMARY
+                    ? AppColors.PRIMARY_DARK
                     : AppColors.TEXT_HINT
                 )
-                .fontColor(Color.White)
+                .fontColor(AppColors.TEXT_ON_PRIMARY)
                 .enabled(this.imagePaths.length > 0 && !this.isPreviewingPrompt)
                 .onClick(() => this.handleGenerate())
             }
@@ -956,8 +976,8 @@ export struct AiCopyPage {
               .fontSize(AppDimens.FONT_MD)
               .width('100%')
               .height(46)
-              .backgroundColor(AppColors.PRIMARY)
-              .fontColor(Color.White)
+              .backgroundColor(AppDimens.CTA_DARK)
+              .fontColor(AppColors.TEXT_ON_PRIMARY)
               .borderRadius(AppDimens.RADIUS_SM)
               .margin({ top: 12 })
               .onClick(() => this.handleApplyToNode())
@@ -1048,8 +1068,8 @@ export struct AiCopyPage {
                 .fontSize(AppDimens.FONT_MD)
                 .layoutWeight(1)
                 .height(44)
-                .backgroundColor(AppColors.PRIMARY)
-                .fontColor(Color.White)
+                .backgroundColor(AppDimens.CTA_DARK)
+                .fontColor(AppColors.TEXT_ON_PRIMARY)
                 .onClick(() => this.handleConsentChoice(true))
             }
             .width('100%')
