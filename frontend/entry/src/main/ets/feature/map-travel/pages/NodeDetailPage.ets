@@ -866,14 +866,23 @@ export struct NodeDetailPage {
       } else if (this.swipeNodes.length > 1 && this.activeTripNodeIndex >= 0) {
         Swiper() {
           ForEach(this.swipeNodes, (item: NodeDetailCardItem) => {
-            Column() {
-              this.buildMemoryCard(item)
+            Scroll() {
+              Column() {
+                this.buildMemoryCard(item)
+              }
+              .justifyContent(FlexAlign.Center)
+              .alignItems(HorizontalAlign.Start)
+              .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 16, bottom: 24 })
+              .width('100%')
             }
-            .justifyContent(FlexAlign.Center)
-            .alignItems(HorizontalAlign.Start)
-            .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 16, bottom: 24 })
             .width('100%')
             .height('100%')
+            .scrollBar(BarState.Auto)
+            .edgeEffect(EdgeEffect.Spring)
+            .nestedScroll({
+              scrollForward: NestedScrollMode.SELF_FIRST,
+              scrollBackward: NestedScrollMode.SELF_FIRST
+            })
           }, (item: NodeDetailCardItem) => item.id)
         }
         .layoutWeight(1)
@@ -881,6 +890,7 @@ export struct NodeDetailPage {
         .index(this.activeTripNodeIndex)
         .loop(false)
         .indicator(false)
+        .nestedScroll(SwiperNestedScrollMode.SELF_FIRST)
         .onChange((index: number) => {
           this.switchTripNodeByIndex(index)
         })
