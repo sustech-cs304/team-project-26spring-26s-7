@@ -1696,11 +1696,11 @@ export struct MapHomeView {
               Text(label)
                 .fontSize(AppDimens.FONT_SM)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(this.selectedFilterTime === label ? AppColors.TEXT_PRIMARY : this.getMapGlassTextColor())
-                .backgroundColor(this.selectedFilterTime === label ? this.getMapGlassStrongBackground() : '#33FFFFFF')
+                .fontColor(this.selectedFilterTime === label ? AppColors.PRIMARY : this.getMapGlassTextColor())
+                .backgroundColor(this.selectedFilterTime === label ? AppDimens.ACCENT_SOFT_BG : '#33FFFFFF')
                 .border({
                   width: 1,
-                  color: this.selectedFilterTime === label ? this.getMapGlassBorder() : '#66FFFFFF'
+                  color: this.selectedFilterTime === label ? AppColors.PRIMARY : '#66FFFFFF'
                 })
                 .padding({ left: 9, right: 9, top: 5, bottom: 5 })
                 .borderRadius(13)
@@ -1719,11 +1719,11 @@ export struct MapHomeView {
               Text(label)
                 .fontSize(AppDimens.FONT_SM)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(this.selectedFilterTag === label ? AppColors.TEXT_PRIMARY : this.getMapGlassTextColor())
-                .backgroundColor(this.selectedFilterTag === label ? this.getMapGlassStrongBackground() : '#33FFFFFF')
+                .fontColor(this.selectedFilterTag === label ? AppColors.PRIMARY : this.getMapGlassTextColor())
+                .backgroundColor(this.selectedFilterTag === label ? AppDimens.ACCENT_SOFT_BG : '#33FFFFFF')
                 .border({
                   width: 1,
-                  color: this.selectedFilterTag === label ? this.getMapGlassBorder() : '#66FFFFFF'
+                  color: this.selectedFilterTag === label ? AppColors.PRIMARY : '#66FFFFFF'
                 })
                 .padding({ left: 9, right: 9, top: 5, bottom: 5 })
                 .borderRadius(13)

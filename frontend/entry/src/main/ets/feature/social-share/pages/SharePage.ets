@@ -782,12 +782,12 @@ export struct SharePage {
                 Text(opt.label)
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(idx === this.selectedExpiryIdx ? AppColors.PRIMARY : AppColors.TEXT_SECONDARY)
-                  .backgroundColor(idx === this.selectedExpiryIdx ? AppColors.PRIMARY + '18' : AppColors.INPUT_BG)
+                  .backgroundColor(idx === this.selectedExpiryIdx ? AppDimens.ACCENT_SOFT_BG : AppColors.INPUT_BG)
                   .padding({ left: 12, right: 12, top: 6, bottom: 6 })
                   .borderRadius(16)
                   .border({
-                    width: idx === this.selectedExpiryIdx ? 1 : 0,
-                    color: idx === this.selectedExpiryIdx ? AppColors.PRIMARY : 'transparent'
+                    width: 1,
+                    color: idx === this.selectedExpiryIdx ? AppColors.PRIMARY : AppColors.DIVIDER
                   })
                   .opacity(this.isLoading ? 0.5 : 1.0)
                   .onClick(() => this.onPickExpiry(idx))
