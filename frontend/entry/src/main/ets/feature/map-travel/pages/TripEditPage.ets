@@ -527,7 +527,11 @@ export struct TripEditPage {
                 Button(this.tripId.length > 0 ? '添加节点' : '先保存')
                   .height(34)
                   .fontSize(AppDimens.FONT_SM)
-                  .backgroundColor(AppColors.PRIMARY)
+                  .fontColor(AppColors.PRIMARY)
+                  .backgroundColor(AppDimens.PHOTO_SURFACE)
+                  .border({ width: 1, color: AppColors.DIVIDER })
+                  .borderRadius(17)
+                  .shadow({ radius: 8, color: AppDimens.SHADOW_SOFT, offsetY: 2 })
                   .onClick(() => this.handleAddNode())
               }
               .width('100%')
