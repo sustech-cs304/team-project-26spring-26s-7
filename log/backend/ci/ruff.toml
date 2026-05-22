@@ -1,0 +1,28 @@
+# team-project backend — ruff config for CI lint stage.
+# Stage is warn-only: surface findings, never fail the build.
+# Tighten rule selection over time as the codebase gets cleaner.
+
+line-length    = 120
+target-version = "py310"
+
+extend-exclude = [
+  ".ci-venv",
+  ".venv",
+  "**/.venv",
+  "build-artifacts",
+  "**/__pycache__",
+  "**/share-service/share_service/static",
+]
+
+[lint]
+# Conservative starter set: pyflakes (F) + pycodestyle errors (E) + warnings (W) + import sort (I).
+select = ["E", "F", "W", "I"]
+ignore = [
+  "E501",  # line too long — long URLs / docstrings are common in this repo
+  "E402",  # module-level import not at top — tests/conftest set env before importing
+  "F841",  # unused local variable — common during iteration
+]
+
+[lint.per-file-ignores]
+"**/tests/**" = ["F401", "F811"]
+"ci/smoke_imports.py" = ["F401"]

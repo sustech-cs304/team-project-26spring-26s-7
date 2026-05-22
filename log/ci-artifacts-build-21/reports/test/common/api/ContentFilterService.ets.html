@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Import style -->
+  <link rel="stylesheet" href="..\..\index.css" />
+  <link rel="stylesheet" href="..\..\prettify.css" />
+  <!-- Import Vue 3 -->
+  <script src="..\..\vue.global.prod.js"></script>
+  <!-- Import component library -->
+  <script src="..\..\index.full.min.js"></script>
+  <script src="..\..\prettify.js"></script>
+  <title>Coverage</title>
+</head>
+
+<body>
+  <div id="app" class="common-layout">
+    <el-container>
+      <el-header>
+        <el-row :gutter="10">
+          <el-col :span="5">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <el-link type="primary" :href="relativeHome">
+                    <h2>&lt;</h2>
+                  </el-link>
+                </el-text></div>
+              <div><el-text class="mx-1 "><h2>{{title}}</h2></el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info"></el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.functions.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Functions</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.functions.covered}}/{{file.summary.functions.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.branches.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Branches</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.branches.covered}}/{{file.summary.branches.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.lines.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Lines</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.lines.covered}}/{{file.summary.lines.total}}</el-text></div>
+            </el-space>
+          </el-col>
+        </el-row>
+        <el-divider />
+      </el-header>
+      <el-main>
+        <el-row>
+        </el-row>
+        <pre>
+          <table class="coverage">
+            <tr>
+              <td class="line-count quiet">
+                <pre class="prettyprint lang-js">
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+                </pre>
+        </td>
+        <td class="text">
+          <pre class="prettyprint linenums lang-js">
+import { http } from &#39;@kit.NetworkKit&#39; 
+import { hilog } from &#39;@kit.PerformanceAnalysisKit&#39; 
+import { BusinessError } from &#39;@kit.BasicServicesKit&#39; 
+import { CONTENT_FILTER_BASE_URL } from &#39;./ApiEndpoints&#39; 
+import { AiTokenManager } from &#39;./AiTokenManager&#39; 
+ 
+const DOMAIN = 0x0000 
+const TAG = &#39;ContentFilterService&#39; 
+ 
+export interface CheckResult { 
+  blocked: boolean 
+  hit: string | null 
+  hits_count: number 
+} 
+ 
+export interface MaskResult { 
+  masked: string 
+  hits: string[] 
+} 
+ 
+interface TextCheckIn { 
+  text: string 
+  user_id?: string 
+  user_ip?: string 
+} 
+ 
+interface TextHit { 
+  keyword?: string 
+  msg?: string 
+} 
+ 
+interface TextCheckOut { 
+  conclusion: string 
+  conclusionType: number 
+  log_id: number 
+  is_safe: boolean 
+  is_hit: boolean 
+  error_code?: number | null 
+  error_msg?: string | null 
+  data?: TextHit[] 
+} 
+ 
+class CheckResultImpl implements CheckResult { 
+  blocked: boolean 
+  hit: string | null 
+  hits_count: number 
+ 
+  constructor(blocked: boolean, hit: string | null, hits_count: number) { 
+    this.blocked = blocked 
+    this.hit = hit 
+    this.hits_count = hits_count 
+  } 
+} 
+ 
+class MaskResultImpl implements MaskResult { 
+  masked: string 
+  hits: string[] 
+ 
+  constructor(masked: string, hits: string[]) { 
+    this.masked = masked 
+    this.hits = hits 
+  } 
+} 
+ 
+export class ContentFilterService { 
+  static isOnline(): boolean { 
+    return (AppStorage.get(&#39;networkOnline&#39;) as boolean) ?? false 
+  } 
+ 
+  static async check(text: string): Promise&lt;CheckResult&gt; { 
+    const trimmed = text.trim() 
+    if (!trimmed) { 
+      return new CheckResultImpl(false, null, 0) 
+    } 
+ 
+    const result = await ContentFilterService.requestTextCheck({ text: trimmed }) 
+    const hits = result.data ?? [] 
+    const firstHit = hits.length &gt; 0 ? (hits[0].keyword ?? hits[0].msg ?? result.conclusion) : null 
+    return new CheckResultImpl(!result.is_safe, firstHit, hits.length) 
+  } 
+ 
+  static async batchCheck(texts: string[]): Promise&lt;CheckResult[]&gt; { 
+    const results: CheckResult[] = [] 
+    for (let i = 0; i &lt; texts.length; i++) { 
+      if (texts[i].trim().length &gt; 0) { 
+        results.push(await ContentFilterService.check(texts[i])) 
+      } 
+    } 
+    return results 
+  } 
+ 
+  static async mask(text: string, maskChar: string = &#39;***&#39;): Promise&lt;MaskResult&gt; { 
+    const result = await ContentFilterService.check(text) 
+    if (!result.blocked || !result.hit) { 
+      return new MaskResultImpl(text, []) 
+    } 
+    return new MaskResultImpl(text.replace(result.hit, maskChar), [result.hit]) 
+  } 
+ 
+  private static async requestTextCheck(body: TextCheckIn, retry: boolean = true): Promise&lt;TextCheckOut&gt; { 
+    const token = await AiTokenManager.getCensorToken() 
+    const httpRequest = http.createHttp() 
+ 
+    try { 
+      const response = await httpRequest.request(`${CONTENT_FILTER_BASE_URL}/text_check`, { 
+        method: http.RequestMethod.POST, 
+        header: { 
+          &#39;Content-Type&#39;: &#39;application/json&#39;, 
+          &#39;Authorization&#39;: `Bearer ${token}` 
+        }, 
+        extraData: JSON.stringify(body), 
+        readTimeout: 30000, 
+        connectTimeout: 10000, 
+        expectDataType: http.HttpDataType.OBJECT 
+      }) 
+ 
+      if (response.responseCode === 200 || response.responseCode === 201) { 
+        const result = response.result as TextCheckOut 
+        if (result.error_code !== undefined &amp;&amp; result.error_code !== null) { 
+          hilog.error(DOMAIN, TAG, `text_check provider error: code=${result.error_code}, msg=${result.error_msg ?? &#39;&#39;}`) 
+          throw new Error(&#39;CONTENT_CHECK_NETWORK_ERROR&#39;) 
+        } 
+        return result 
+      } 
+ 
+      if (response.responseCode === 401 &amp;&amp; retry) { 
+        AiTokenManager.invalidate() 
+        return ContentFilterService.requestTextCheck(body, false) 
+      } 
+ 
+      hilog.error(DOMAIN, TAG, `text_check failed: HTTP ${response.responseCode}, body=${JSON.stringify(response.result)}`) 
+      throw new Error(&#39;CONTENT_CHECK_NETWORK_ERROR&#39;) 
+    } catch (err) { 
+      const error = err as BusinessError 
+      if ((err as Error).message === &#39;AUDIT_AUTH_REQUIRED&#39;) { 
+        throw err as Error 
+      } 
+      if ((err as Error).message === &#39;CONTENT_CHECK_NETWORK_ERROR&#39;) { 
+        throw err as Error 
+      } 
+      hilog.error(DOMAIN, TAG, `text_check error: ${error.message ?? JSON.stringify(err)}`) 
+      throw new Error(&#39;CONTENT_CHECK_NETWORK_ERROR&#39;) 
+    } finally { 
+      httpRequest.destroy() 
+    } 
+  } 
+} 
+
+              </pre>
+        </td>
+        </tr>
+        </table>
+        </pre>
+      </el-main>
+      <el-footer align="middle" class="footer">
+        Code coverage generated by <el-link href="https://github.com/SMAT-Lab/bjc" type="primary"
+          target="_blank">bjc</el-link> at {{date}}
+      </el-footer>
+    </el-container>
+  </div>
+</body>
+
+<script>
+  const App = {
+    data() {
+      return {"date":"Fri May 22 2026 22:32:24 GMT+0800 (中国标准时间)","file":{"version":"bjc v1.0.0","versionCode":10000,"path":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend/entry/src/main/ets/common/api/ContentFilterService.ets","hash":"31efb0cbdc70e937874cc5f9f45ddc3f57f39fe8520c24061434560611c883ec","lineCnt":148,"count":0,"projectPath":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend","functions":[{"name":"CheckResultImpl.constructor","count":0,"regions":[{"startLoc":{"line":48,"col":3},"endLoc":{"line":52,"col":4},"count":0,"ignored":0},{"startLoc":{"line":49,"col":5},"endLoc":{"line":52,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":0},{"name":"MaskResultImpl.constructor","count":0,"regions":[{"startLoc":{"line":59,"col":3},"endLoc":{"line":62,"col":4},"count":0,"ignored":0},{"startLoc":{"line":60,"col":5},"endLoc":{"line":62,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":1},{"name":"ContentFilterService.isOnline","count":0,"regions":[{"startLoc":{"line":66,"col":3},"endLoc":{"line":68,"col":4},"count":0,"ignored":0},{"startLoc":{"line":67,"col":5},"endLoc":{"line":68,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":2},{"name":"ContentFilterService.check","count":0,"regions":[{"startLoc":{"line":70,"col":3},"endLoc":{"line":80,"col":4},"count":0,"ignored":0},{"startLoc":{"line":76,"col":5},"endLoc":{"line":80,"col":4},"count":0,"ignored":0},{"startLoc":{"line":72,"col":19},"endLoc":{"line":74,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":72,"col":9},"endLoc":{"line":72,"col":17},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":78,"col":22},"endLoc":{"line":78,"col":100},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":3},{"name":"ContentFilterService.batchCheck","count":0,"regions":[{"startLoc":{"line":82,"col":3},"endLoc":{"line":90,"col":4},"count":0,"ignored":0},{"startLoc":{"line":84,"col":5},"endLoc":{"line":88,"col":6},"count":0,"ignored":0},{"startLoc":{"line":85,"col":39},"endLoc":{"line":87,"col":8},"count":0,"ignored":0},{"startLoc":{"line":89,"col":5},"endLoc":{"line":90,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":85,"col":11},"endLoc":{"line":85,"col":37},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":4},{"name":"ContentFilterService.mask","count":0,"regions":[{"startLoc":{"line":92,"col":3},"endLoc":{"line":98,"col":4},"count":0,"ignored":0},{"startLoc":{"line":94,"col":41},"endLoc":{"line":96,"col":6},"count":0,"ignored":0},{"startLoc":{"line":97,"col":5},"endLoc":{"line":98,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":94,"col":9},"endLoc":{"line":94,"col":39},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":5},{"name":"ContentFilterService.requestTextCheck","count":0,"regions":[{"startLoc":{"line":100,"col":3},"endLoc":{"line":146,"col":4},"count":0,"ignored":0},{"startLoc":{"line":104,"col":9},"endLoc":{"line":133,"col":6},"count":0,"ignored":0},{"startLoc":{"line":133,"col":7},"endLoc":{"line":143,"col":6},"count":0,"ignored":0},{"startLoc":{"line":117,"col":75},"endLoc":{"line":124,"col":8},"count":0,"ignored":0},{"startLoc":{"line":119,"col":76},"endLoc":{"line":122,"col":10},"count":0,"ignored":0},{"startLoc":{"line":126,"col":51},"endLoc":{"line":129,"col":8},"count":0,"ignored":0},{"startLoc":{"line":143,"col":15},"endLoc":{"line":145,"col":6},"count":0,"ignored":0},{"startLoc":{"line":135,"col":61},"endLoc":{"line":137,"col":8},"count":0,"ignored":0},{"startLoc":{"line":138,"col":69},"endLoc":{"line":140,"col":8},"count":0,"ignored":0},{"startLoc":{"line":131,"col":7},"endLoc":{"line":133,"col":6},"count":0,"ignored":0},{"startLoc":{"line":141,"col":7},"endLoc":{"line":143,"col":6},"count":0,"ignored":0},{"startLoc":{"line":123,"col":9},"endLoc":{"line":124,"col":8},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":117,"col":11},"endLoc":{"line":117,"col":73},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":119,"col":13},"endLoc":{"line":119,"col":74},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":126,"col":11},"endLoc":{"line":126,"col":49},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":135,"col":11},"endLoc":{"line":135,"col":59},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":138,"col":11},"endLoc":{"line":138,"col":67},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":6}],"exeLine":{"0":1,"1":2,"2":3,"3":4,"4":5,"5":7,"6":8,"7":10,"8":11,"9":12,"10":13,"11":16,"12":17,"13":18,"14":21,"15":22,"16":23,"17":24,"18":27,"19":28,"20":29,"21":32,"22":33,"23":34,"24":35,"25":36,"26":37,"27":38,"28":39,"29":40,"30":43,"31":44,"32":45,"33":46,"34":48,"35":49,"36":50,"37":51,"38":55,"39":56,"40":57,"41":59,"42":60,"43":61,"44":65,"45":66,"46":67,"47":70,"48":71,"49":72,"50":73,"51":76,"52":77,"53":78,"54":79,"55":82,"56":83,"57":84,"58":85,"59":86,"60":89,"61":92,"62":93,"63":94,"64":95,"65":97,"66":100,"67":101,"68":102,"69":104,"70":105,"71":106,"72":107,"73":108,"74":109,"75":111,"76":112,"77":113,"78":114,"79":117,"80":118,"81":119,"82":120,"83":121,"84":123,"85":126,"86":127,"87":128,"88":131,"89":132,"90":133,"91":134,"92":135,"93":136,"94":138,"95":139,"96":141,"97":142,"98":143,"99":144},"summary":{"lines":{"total":62,"covered":0,"pct":0,"executedLineCount":[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,0,0,0,-1,-1,-1,-1,0,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,-1,-1,0,-1,-1,0,0,0,0,-1,0,-1,-1,0,0,0,-1,0,0,0,0,0,0,-1,0,0,0,0,-1,-1,0,0,0,0,0,-1,0,-1,-1,0,0,0,-1,-1,0,0,0,0,0,0,-1,0,0,-1,0,0,0,0,-1,-1,-1,-1]},"functions":{"total":7,"covered":0,"pct":0},"branches":{"total":18,"covered":0,"pct":0}}},"title":"ContentFilterService.ets.html","relativeHome":"..\\..\\index.html"};
+    }
+  };
+
+  const app = Vue.createApp(App);
+  app.use(ElementPlus);
+  app.mount("#app");
+
+  window.onload = function () {
+    prettyPrint();
+  }
+</script>
+
+<style scoped>
+  table.coverage {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 0 0;
+    padding: 0;
+  }
+
+  table.coverage td {
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  table.coverage td.line-count {
+    width: 12%;
+    text-align: right;
+    padding: 0 5px 0 20px;
+  }
+
+  table.coverage td.line-coverage {
+    text-align: right;
+    padding-right: 10px;
+    min-width: 20px;
+  }
+
+  table.coverage td span.cline-any {
+    display: inline-block;
+    padding: 0 5px;
+    width: 100%;
+    height: 18px;
+  }
+
+  .low,
+  .cline-no {
+    background: #FCE1E5
+  }
+
+  .high,
+  .cline-yes {
+    background: rgb(230, 245, 208)
+  }
+
+  span.cline-neutral {
+    background: #eaeaea;
+  }
+
+  pre.prettyprint {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .el-main {
+    box-sizing: border-box;
+    display: block;
+    flex: 1;
+    flex-basis: auto;
+    overflow: auto;
+    padding: var(--el-main-padding)
+  }
+
+  .el-container {
+    min-height: 100vh;
+    height: 100%;
+  }
+
+  .footer {
+    font-size: small;
+  }
+
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .el-col {
+    border-radius: 4px;
+  }
+
+  .green {
+    color: var(--el-color-success);
+  }
+
+  .red {
+    color: var(--el-color-error);
+  }
+
+  .linenums li {
+    height: 18px;
+    line-height: 18px;
+  }
+
+  li.L0,
+  li.L1,
+  li.L2,
+  li.L3,
+  li.L5,
+  li.L6,
+  li.L7,
+  li.L8 {
+    list-style-type: decimal
+  }
+
+  .el-col-5 {
+    max-width: 100%;
+  }
+
+  .el-col-3 {
+    max-width: 100%;
+  }
+
+</style>
+
+</html>

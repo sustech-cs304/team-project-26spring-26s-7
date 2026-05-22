@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Import style -->
+  <link rel="stylesheet" href="..\..\..\index.css" />
+  <link rel="stylesheet" href="..\..\..\prettify.css" />
+  <!-- Import Vue 3 -->
+  <script src="..\..\..\vue.global.prod.js"></script>
+  <!-- Import component library -->
+  <script src="..\..\..\index.full.min.js"></script>
+  <script src="..\..\..\prettify.js"></script>
+  <title>Coverage</title>
+</head>
+
+<body>
+  <div id="app" class="common-layout">
+    <el-container>
+      <el-header>
+        <el-row :gutter="10">
+          <el-col :span="5">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <el-link type="primary" :href="relativeHome">
+                    <h2>&lt;</h2>
+                  </el-link>
+                </el-text></div>
+              <div><el-text class="mx-1 "><h2>{{title}}</h2></el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info"></el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.functions.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Functions</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.functions.covered}}/{{file.summary.functions.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.branches.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Branches</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.branches.covered}}/{{file.summary.branches.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.lines.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Lines</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.lines.covered}}/{{file.summary.lines.total}}</el-text></div>
+            </el-space>
+          </el-col>
+        </el-row>
+        <el-divider />
+      </el-header>
+      <el-main>
+        <el-row>
+        </el-row>
+        <pre>
+          <table class="coverage">
+            <tr>
+              <td class="line-count quiet">
+                <pre class="prettyprint lang-js">
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+                </pre>
+        </td>
+        <td class="text">
+          <pre class="prettyprint linenums lang-js">
+/* 
+ * Copyright (c) 2024 Huawei Device Co., Ltd. 
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); 
+ * you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at 
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0 
+ * 
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and 
+ * limitations under the License. 
+ */ 
+ 
+import { http } from &#39;@kit.NetworkKit&#39; 
+import { BusinessError } from &#39;@kit.BasicServicesKit&#39; 
+import { 
+  API_BASE_URL, 
+  AiTokenManager, 
+  HttpTimeout, 
+  MultipartFormData, 
+  ShareEndpoints, 
+} from &#39;../../../common/api&#39; 
+import { logger } from &#39;../../../common/utils/Logger&#39; 
+import { 
+  ReplaceLink, 
+  ReplayPrefsForShare, 
+  RevokeByTripOk, 
+  SharePublishOk, 
+  SharePublishRequest, 
+  SharePublishResponse, 
+  ShareStatusOk, 
+  ShareStatusResponse, 
+} from &#39;../types/ShareTypes&#39; 
+ 
+const TAG = &#39;ShareService&#39; 
+ 
+/** 
+ * 单张待上传照片描述 — name 在 multipart 里固定为 photo_{flatIdx}， 
+ * 调用方按节点顺序整理好 photoPaths 后传进来即可。 
+ */ 
+export interface SharePhoto { 
+  /** 沙箱绝对路径（不带 file:// 前缀） */ 
+  filePath: string 
+  /** 文件名（用于 multipart Content-Disposition.filename） */ 
+  filename: string 
+  /** MIME 类型；JPEG/PNG/HEIC 等 */ 
+  contentType: string 
+  cleanupPath?: string 
+} 
+ 
+/** 
+ * 分享服务客户端 — 封装 P08 API 规范的 publish / status 两个端点。 
+ * 
+ * 用法： 
+ * ```ts 
+ * const svc = new ShareService(); 
+ * const result = await svc.publish(tripData, photos, 168); 
+ * if (result.ok) { 
+ *   console.log(result.data.url); 
+ * } else { 
+ *   console.error(result.errorMessage); 
+ * } 
+ * ``` 
+ */ 
+export class ShareService { 
+  private baseUrl: string 
+  private timeout: number 
+ 
+  constructor(baseUrl: string = API_BASE_URL, timeout: number = HttpTimeout.UPLOAD) { 
+    this.baseUrl = baseUrl 
+    this.timeout = timeout 
+  } 
+ 
+  /** 
+   * 发布分享 — 调用 POST /api/v1/share/publish 
+   * 
+   * @param trip            trip 元数据 + 节点数组（含每节点 photoCount） 
+   * @param photos          按 nodeOrder 升序、每节点内按 photoIdx 顺序整理好的扁平照片列表 
+   *                        总数必须等于 sum(nodes[].photoCount)，否则后端返回 40001 
+   * @param expiryHours     过期小时数；默认 168 (7 天)，范围 1–720 
+   * @param expiryMinutes   可选，过期分钟数；当传入且 &gt; 0 时**优先级高于** expiryHours 
+   *                        （供 SharePage 的&quot;5 分钟测试&quot;选项使用，最低 1 分钟） 
+   * @param replace         可选，要随本次发布**自动撤销**的旧链接三件套 
+   *                        (shortCode + expirySec + sig)。后端会校验 sig 后 
+   *                        在新发布**成功之后**才删除旧的；新失败旧保留。 
+   * @param replayPrefs     可选（v1.0），把当前用户的回放偏好顺路上传，让生成 
+   *                        的 /sreplay 页面与发布者本机的回放设置视觉一致。 
+   *                        缺哪个字段后端就用哪个的 default；不传整个对象 → 
+   *                        DB 存 NULL，viewer 走全局默认（极简白 + city_lights_lofi 等）。 
+   */ 
+  async publish( 
+    trip: SharePublishRequest, 
+    photos: SharePhoto[], 
+    expiryHours: number = 168, 
+    expiryMinutes?: number, 
+    replace?: ReplaceLink, 
+    replayPrefs?: ReplayPrefsForShare 
+  ): Promise&lt;ShareCallResult&lt;SharePublishOk&gt;&gt; { 
+    // 客户端先做一遍 photoCount 校验，避免无谓的上传 
+    let expectedTotal = 0 
+    for (let i = 0; i &lt; trip.nodes.length; i++) { 
+      expectedTotal += trip.nodes[i].photoCount 
+    } 
+    if (expectedTotal !== photos.length) { 
+      const msg = 
+        `photoCount sum (${expectedTotal}) != photos.length (${photos.length})` 
+      logger.error(TAG, msg) 
+      return errResult(40001, &#39;INVALID_PHOTO_COUNT&#39;, msg) 
+    } 
+ 
+    const form = new MultipartFormData() 
+    // §4.2 — tripData 作为文本字段（JSON 字符串） 
+    form.addField(&#39;tripData&#39;, JSON.stringify(trip)) 
+    // §4.1 — 过期时长。expiryMinutes 优先于 expiryHours（与后端约定一致） 
+    if (expiryMinutes !== undefined &amp;&amp; expiryMinutes &gt; 0) { 
+      form.addField(&#39;expiryMinutes&#39;, expiryMinutes.toString()) 
+    } else { 
+      form.addField(&#39;expiryHours&#39;, expiryHours.toString()) 
+    } 
+    // v0.6 — 替换上一条链接（&quot;切档自动撤销旧链接&quot;） 
+    if (replace !== undefined &amp;&amp; replace.shortCode) { 
+      form.addField(&#39;replaceShortCode&#39;, replace.shortCode) 
+      form.addField(&#39;replaceExpiry&#39;,    replace.expirySec.toString()) 
+      form.addField(&#39;replaceSig&#39;,       replace.sig) 
+    } 
+    // v1.0 — 回放偏好（6 个字段全部可选；后端按字段 fallback） 
+    if (replayPrefs !== undefined) { 
+      if (replayPrefs.styleKitId !== undefined) { 
+        form.addField(&#39;replayStyleKitId&#39;, replayPrefs.styleKitId) 
+      } 
+      if (replayPrefs.bgmId !== undefined) { 
+        form.addField(&#39;replayBgmId&#39;, replayPrefs.bgmId) 
+      } 
+      if (replayPrefs.filterId !== undefined) { 
+        form.addField(&#39;replayFilterId&#39;, replayPrefs.filterId) 
+      } 
+      if (replayPrefs.transitionType !== undefined) { 
+        form.addField(&#39;replayTransitionType&#39;, replayPrefs.transitionType) 
+      } 
+      if (replayPrefs.enableBlurOverlay !== undefined) { 
+        form.addField(&#39;replayEnableBlurOverlay&#39;, 
+          replayPrefs.enableBlurOverlay ? &#39;true&#39; : &#39;false&#39;) 
+      } 
+      if (replayPrefs.enableRouteAnimation !== undefined) { 
+        form.addField(&#39;replayEnableRouteAnimation&#39;, 
+          replayPrefs.enableRouteAnimation ? &#39;true&#39; : &#39;false&#39;) 
+      } 
+      if (replayPrefs.enableRipple !== undefined) { 
+        form.addField(&#39;replayEnableRipple&#39;, 
+          replayPrefs.enableRipple ? &#39;true&#39; : &#39;false&#39;) 
+      } 
+    } 
+    // §4.1 + §4.3 — photo_N 作为文件字段，按 N 从 0 起连续 
+    for (let i = 0; i &lt; photos.length; i++) { 
+      const p = photos[i] 
+      form.addFile(`photo_${i}`, p.filename, p.filePath, p.contentType) 
+    } 
+ 
+    const url = `${this.baseUrl}${ShareEndpoints.PUBLISH}` 
+    logger.info(TAG, `POST ${url} (${photos.length} photos, ${trip.nodes.length} nodes)`) 
+ 
+    const shareToken = await AiTokenManager.getShareToken() 
+    const httpReq = http.createHttp() 
+    try { 
+      const body = await form.build() 
+      const reqHeader: Record&lt;string, string&gt; = { 
+        &#39;Content-Type&#39;: form.getContentType(), 
+        &#39;Authorization&#39;: `Bearer ${shareToken}` 
+      } 
+      const options: http.HttpRequestOptions = { 
+        method: http.RequestMethod.POST, 
+        header: reqHeader, 
+        readTimeout: this.timeout, 
+        connectTimeout: this.timeout, 
+        expectDataType: http.HttpDataType.OBJECT, 
+        extraData: body, 
+      } 
+      const resp = await httpReq.request(url, options) 
+      logger.info(TAG, `Response status: ${resp.responseCode}`) 
+ 
+      const parsed = parseEnvelope&lt;SharePublishOk&gt;(resp.result) 
+      if (resp.responseCode === 201 &amp;&amp; parsed.code === 0 &amp;&amp; parsed.data) { 
+        return okResult(parsed.data) 
+      } 
+      // 错误：尽量带回后端的 message + detail，便于 UI 展示 
+      const errMsg = parsed.message || `HTTP ${resp.responseCode}` 
+      const errDetail = parsed.detail || JSON.stringify(resp.result) 
+      logger.error(TAG, `publish failed: ${errMsg} — ${errDetail}`) 
+      return errResult(parsed.code || resp.responseCode, errMsg, errDetail) 
+    } catch (e) { 
+      const be = e as BusinessError 
+      const msg = `Network error: ${be?.message ?? JSON.stringify(e)}` 
+      logger.error(TAG, msg) 
+      return errResult(0, &#39;NETWORK_ERROR&#39;, msg) 
+    } finally { 
+      httpReq.destroy() 
+    } 
+  } 
+ 
+  /** 
+   * 查询分享状态 — 调用 GET /api/v1/share/{shortCode}/status (§6) 
+   */ 
+  async status(shortCode: string): Promise&lt;ShareCallResult&lt;ShareStatusOk&gt;&gt; { 
+    const url = `${this.baseUrl}${ShareEndpoints.STATUS_PREFIX}/${shortCode}/status` 
+    logger.info(TAG, `GET ${url}`) 
+ 
+    const httpReq = http.createHttp() 
+    try { 
+      const options: http.HttpRequestOptions = { 
+        method: http.RequestMethod.GET, 
+        readTimeout: HttpTimeout.DEFAULT, 
+        connectTimeout: HttpTimeout.DEFAULT, 
+        expectDataType: http.HttpDataType.OBJECT, 
+      } 
+      const resp = await httpReq.request(url, options) 
+      const parsed = parseEnvelope&lt;ShareStatusOk&gt;(resp.result) 
+      if (parsed.code === 0 &amp;&amp; parsed.data) { 
+        return okResult(parsed.data) 
+      } 
+      return errResult(parsed.code, parsed.message ?? &#39;NOT_FOUND_OR_EXPIRED&#39;) 
+    } catch (e) { 
+      const be = e as BusinessError 
+      return errResult(0, &#39;NETWORK_ERROR&#39;, be?.message ?? JSON.stringify(e)) 
+    } finally { 
+      httpReq.destroy() 
+    } 
+  } 
+ 
+  /** 
+   * v1.1：拉取后端合成的分享海报（JPG，含 QR + 封面 + 标题 + 路线预览）。 
+   * 
+   * 后端首次请求时合成 750×1334 海报并落盘到 cache/{code}/poster.jpg， 
+   * 同 shortCode 后续请求直接走磁盘缓存。本方法返回的 Uint8Array 用于 
+   * 写到 app 沙箱（cacheDir）再通过 systemShare 的 general.image UTD 投递。 
+   * 
+   * 失败（网络/超时/sig 错）一律返回 undefined，调用方走&quot;复制链接&quot;兜底。 
+   */ 
+  async fetchPoster( 
+    shortCode: string, 
+    expirySec: number, 
+    sig: string, 
+  ): Promise&lt;Uint8Array | undefined&gt; { 
+    const url = `${this.baseUrl}${ShareEndpoints.POSTER_PREFIX}/${shortCode}/poster.jpg?t=${expirySec}&amp;s=${sig}` 
+    logger.info(TAG, `GET ${url}`) 
+    const httpReq = http.createHttp() 
+    try { 
+      const resp = await httpReq.request(url, { 
+        method: http.RequestMethod.GET, 
+        // 首次合成 PIL 处理 + 网络往返，给到 30s；命中 cache 后毫秒级 
+        readTimeout: 30000, 
+        connectTimeout: 8000, 
+        expectDataType: http.HttpDataType.ARRAY_BUFFER, 
+      }) 
+      if (resp.responseCode === 200 &amp;&amp; resp.result instanceof ArrayBuffer) { 
+        return new Uint8Array(resp.result as ArrayBuffer) 
+      } 
+      logger.warn(TAG, `fetchPoster non-200: ${resp.responseCode}`) 
+      return undefined 
+    } catch (e) { 
+      const be = e as BusinessError 
+      logger.error(TAG, `fetchPoster failed: ${be?.message ?? JSON.stringify(e)}`) 
+      return undefined 
+    } finally { 
+      httpReq.destroy() 
+    } 
+  } 
+ 
+  /** 
+   * 关停某 trip 的全部分享 — 当用户把 trip 从公开切换到私密时调用。 
+   * 调用 POST /api/v1/share/revoke-by-trip (v0.8)。 
+   * 
+   * 失败处理：网络错误等不该阻塞 trip 保存本身（隐私设置已经在 RDB 写好）， 
+   * 调用方应该 fire-and-forget 这个调用，最多 log 一行警告。 
+   * 
+   * @param tripId  本地 RDB 里 Trip.id（与 publish 时上传的 tripData.tripId 一致） 
+   * @returns       后端实际撤销的链接条数（0 = 这个 trip 没分享或已都失活） 
+   */ 
+  async revokeByTrip(tripId: string): Promise&lt;ShareCallResult&lt;RevokeByTripOk&gt;&gt; { 
+    const url = `${this.baseUrl}${ShareEndpoints.REVOKE_BY_TRIP}` 
+    logger.info(TAG, `POST ${url} tripId=${tripId}`) 
+ 
+    const shareToken = await AiTokenManager.getShareToken() 
+    const httpReq = http.createHttp() 
+    try { 
+      const reqHeader: Record&lt;string, string&gt; = { 
+        &#39;Content-Type&#39;: &#39;application/json&#39;, 
+        &#39;Authorization&#39;: `Bearer ${shareToken}` 
+      } 
+      const options: http.HttpRequestOptions = { 
+        method: http.RequestMethod.POST, 
+        header: reqHeader, 
+        readTimeout: HttpTimeout.DEFAULT, 
+        connectTimeout: HttpTimeout.DEFAULT, 
+        expectDataType: http.HttpDataType.OBJECT, 
+        extraData: JSON.stringify({ tripId }), 
+      } 
+      const resp = await httpReq.request(url, options) 
+      const parsed = parseEnvelope&lt;RevokeByTripOk&gt;(resp.result) 
+      if (resp.responseCode === 200 &amp;&amp; parsed.code === 0 &amp;&amp; parsed.data) { 
+        logger.info(TAG, `revoked ${parsed.data.revokedCount} shares for trip=${tripId}`) 
+        return okResult(parsed.data) 
+      } 
+      const errMsg = parsed.message || `HTTP ${resp.responseCode}` 
+      logger.warn(TAG, `revokeByTrip failed: ${errMsg}`) 
+      return errResult(parsed.code || resp.responseCode, errMsg, parsed.detail) 
+    } catch (e) { 
+      const be = e as BusinessError 
+      const msg = `Network error: ${be?.message ?? JSON.stringify(e)}` 
+      logger.warn(TAG, msg) 
+      return errResult(0, &#39;NETWORK_ERROR&#39;, msg) 
+    } finally { 
+      httpReq.destroy() 
+    } 
+  } 
+} 
+ 
+// ========== 内部工具：响应包络解析 + Result 类型 ========== 
+ 
+/** 
+ * 调用结果 — discriminated union 风格的 Result。 
+ * 用 ok 字段判别，TypeScript 能在 ok=true 分支里收窄到有 data。 
+ */ 
+export interface ShareCallResult&lt;T&gt; { 
+  ok: boolean 
+  data?: T 
+  errorCode?: number 
+  errorMessage?: string 
+  errorDetail?: string 
+} 
+ 
+function okResult&lt;T&gt;(data: T): ShareCallResult&lt;T&gt; { 
+  return { ok: true, data } 
+} 
+ 
+function errResult&lt;T&gt;(code: number, message: string, detail?: string): ShareCallResult&lt;T&gt; { 
+  return { ok: false, errorCode: code, errorMessage: message, errorDetail: detail } 
+} 
+ 
+interface Envelope&lt;T&gt; { 
+  code: number 
+  message?: string 
+  data?: T 
+  detail?: string 
+} 
+ 
+/** 
+ * 后端响应一律是 {code, message, data?, detail?} 信封。 
+ * 这里把 unknown 转成强类型；解析失败时返回 50000 INTERNAL_ERROR。 
+ */ 
+function parseEnvelope&lt;T&gt;(raw: Object | string | ArrayBuffer | undefined): Envelope&lt;T&gt; { 
+  if (raw === undefined || raw === null) { 
+    return { code: 50000, message: &#39;EMPTY_RESPONSE&#39; } 
+  } 
+  let obj: Object 
+  if (typeof raw === &#39;string&#39;) { 
+    try { 
+      obj = JSON.parse(raw) as Object 
+    } catch (e) { 
+      return { code: 50000, message: &#39;INVALID_JSON_RESPONSE&#39; } 
+    } 
+  } else { 
+    obj = raw as Object 
+  } 
+  // ArkTS 不支持 `as` 收窄到任意接口，手动取字段 
+  const r = obj as Record&lt;string, Object&gt; 
+  return { 
+    code: typeof r[&#39;code&#39;] === &#39;number&#39; ? r[&#39;code&#39;] as number : 50000, 
+    message: typeof r[&#39;message&#39;] === &#39;string&#39; ? r[&#39;message&#39;] as string : undefined, 
+    data: r[&#39;data&#39;] as T | undefined, 
+    detail: typeof r[&#39;detail&#39;] === &#39;string&#39; ? r[&#39;detail&#39;] as string : undefined, 
+  } 
+} 
+
+              </pre>
+        </td>
+        </tr>
+        </table>
+        </pre>
+      </el-main>
+      <el-footer align="middle" class="footer">
+        Code coverage generated by <el-link href="https://github.com/SMAT-Lab/bjc" type="primary"
+          target="_blank">bjc</el-link> at {{date}}
+      </el-footer>
+    </el-container>
+  </div>
+</body>
+
+<script>
+  const App = {
+    data() {
+      return {"date":"Fri May 22 2026 22:32:24 GMT+0800 (中国标准时间)","file":{"version":"bjc v1.0.0","versionCode":10000,"path":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend/entry/src/main/ets/feature/social-share/services/ShareService.ets","hash":"0e1c357a4d715227be95ce99637017c7904b808d6e6687dd27e07f673bc449ec","lineCnt":375,"count":0,"projectPath":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend","functions":[{"name":"ShareService.constructor","count":8,"regions":[{"startLoc":{"line":71,"col":3},"endLoc":{"line":74,"col":4},"count":8,"ignored":0},{"startLoc":{"line":72,"col":5},"endLoc":{"line":74,"col":4},"count":8,"ignored":0}],"branches":[],"ignored":0,"index":0},{"name":"ShareService.publish","count":5,"regions":[{"startLoc":{"line":93,"col":3},"endLoc":{"line":200,"col":4},"count":5,"ignored":0},{"startLoc":{"line":166,"col":9},"endLoc":{"line":192,"col":6},"count":0,"ignored":0},{"startLoc":{"line":129,"col":36},"endLoc":{"line":154,"col":6},"count":1,"ignored":0},{"startLoc":{"line":106,"col":42},"endLoc":{"line":111,"col":6},"count":1,"ignored":0},{"startLoc":{"line":192,"col":7},"endLoc":{"line":197,"col":6},"count":0,"ignored":0},{"startLoc":{"line":123,"col":53},"endLoc":{"line":127,"col":6},"count":1,"ignored":0},{"startLoc":{"line":188,"col":7},"endLoc":{"line":192,"col":6},"count":0,"ignored":0},{"startLoc":{"line":142,"col":56},"endLoc":{"line":145,"col":8},"count":1,"ignored":0},{"startLoc":{"line":146,"col":59},"endLoc":{"line":149,"col":8},"count":1,"ignored":0},{"startLoc":{"line":150,"col":51},"endLoc":{"line":153,"col":8},"count":1,"ignored":0},{"startLoc":{"line":156,"col":5},"endLoc":{"line":159,"col":6},"count":7,"ignored":0},{"startLoc":{"line":103,"col":5},"endLoc":{"line":105,"col":6},"count":5,"ignored":0},{"startLoc":{"line":117,"col":59},"endLoc":{"line":119,"col":6},"count":1,"ignored":0},{"startLoc":{"line":119,"col":12},"endLoc":{"line":121,"col":6},"count":3,"ignored":0},{"startLoc":{"line":130,"col":49},"endLoc":{"line":132,"col":8},"count":1,"ignored":0},{"startLoc":{"line":133,"col":44},"endLoc":{"line":135,"col":8},"count":1,"ignored":0},{"startLoc":{"line":136,"col":47},"endLoc":{"line":138,"col":8},"count":1,"ignored":0},{"startLoc":{"line":139,"col":53},"endLoc":{"line":141,"col":8},"count":1,"ignored":0},{"startLoc":{"line":197,"col":15},"endLoc":{"line":199,"col":6},"count":0,"ignored":0},{"startLoc":{"line":184,"col":74},"endLoc":{"line":186,"col":8},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":106,"col":9},"endLoc":{"line":106,"col":40},"trueCount":1,"falseCount":4,"group":[],"ignored":0},{"startLoc":{"line":117,"col":9},"endLoc":{"line":117,"col":57},"trueCount":1,"falseCount":3,"group":[],"ignored":0},{"startLoc":{"line":123,"col":9},"endLoc":{"line":123,"col":51},"trueCount":1,"falseCount":3,"group":[],"ignored":0},{"startLoc":{"line":129,"col":9},"endLoc":{"line":129,"col":34},"trueCount":1,"falseCount":3,"group":[],"ignored":0},{"startLoc":{"line":130,"col":11},"endLoc":{"line":130,"col":47},"trueCount":1,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":133,"col":11},"endLoc":{"line":133,"col":42},"trueCount":1,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":136,"col":11},"endLoc":{"line":136,"col":45},"trueCount":1,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":139,"col":11},"endLoc":{"line":139,"col":51},"trueCount":1,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":142,"col":11},"endLoc":{"line":142,"col":54},"trueCount":1,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":144,"col":11},"endLoc":{"line":144,"col":59},"trueCount":1,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":146,"col":11},"endLoc":{"line":146,"col":57},"trueCount":1,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":148,"col":11},"endLoc":{"line":148,"col":62},"trueCount":0,"falseCount":1,"group":[],"ignored":0},{"startLoc":{"line":150,"col":11},"endLoc":{"line":150,"col":49},"trueCount":1,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":152,"col":11},"endLoc":{"line":152,"col":54},"trueCount":1,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":184,"col":11},"endLoc":{"line":184,"col":72},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":1},{"name":"ShareService.status","count":2,"regions":[{"startLoc":{"line":205,"col":3},"endLoc":{"line":229,"col":4},"count":2,"ignored":0},{"startLoc":{"line":210,"col":9},"endLoc":{"line":223,"col":6},"count":2,"ignored":0},{"startLoc":{"line":223,"col":7},"endLoc":{"line":226,"col":6},"count":0,"ignored":0},{"startLoc":{"line":226,"col":15},"endLoc":{"line":228,"col":6},"count":2,"ignored":0},{"startLoc":{"line":219,"col":45},"endLoc":{"line":221,"col":8},"count":0,"ignored":0},{"startLoc":{"line":222,"col":7},"endLoc":{"line":223,"col":6},"count":2,"ignored":0}],"branches":[{"startLoc":{"line":219,"col":11},"endLoc":{"line":219,"col":43},"trueCount":0,"falseCount":2,"group":[],"ignored":0}],"ignored":0,"index":2},{"name":"ShareService.fetchPoster","count":0,"regions":[{"startLoc":{"line":240,"col":3},"endLoc":{"line":268,"col":4},"count":0,"ignored":0},{"startLoc":{"line":248,"col":9},"endLoc":{"line":261,"col":6},"count":0,"ignored":0},{"startLoc":{"line":261,"col":7},"endLoc":{"line":265,"col":6},"count":0,"ignored":0},{"startLoc":{"line":265,"col":15},"endLoc":{"line":267,"col":6},"count":0,"ignored":0},{"startLoc":{"line":256,"col":76},"endLoc":{"line":258,"col":8},"count":0,"ignored":0},{"startLoc":{"line":259,"col":7},"endLoc":{"line":261,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":256,"col":11},"endLoc":{"line":256,"col":74},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":3},{"name":"ShareService.revokeByTrip","count":1,"regions":[{"startLoc":{"line":280,"col":3},"endLoc":{"line":316,"col":4},"count":1,"ignored":0},{"startLoc":{"line":286,"col":9},"endLoc":{"line":308,"col":6},"count":0,"ignored":0},{"startLoc":{"line":308,"col":7},"endLoc":{"line":313,"col":6},"count":0,"ignored":0},{"startLoc":{"line":301,"col":74},"endLoc":{"line":304,"col":8},"count":0,"ignored":0},{"startLoc":{"line":305,"col":7},"endLoc":{"line":308,"col":6},"count":0,"ignored":0},{"startLoc":{"line":313,"col":15},"endLoc":{"line":315,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":301,"col":11},"endLoc":{"line":301,"col":72},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":4},{"name":"okResult","count":0,"regions":[{"startLoc":{"line":333,"col":1},"endLoc":{"line":335,"col":2},"count":0,"ignored":0},{"startLoc":{"line":334,"col":3},"endLoc":{"line":335,"col":2},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":5},{"name":"errResult","count":3,"regions":[{"startLoc":{"line":337,"col":1},"endLoc":{"line":339,"col":2},"count":3,"ignored":0},{"startLoc":{"line":338,"col":3},"endLoc":{"line":339,"col":2},"count":3,"ignored":0}],"branches":[],"ignored":0,"index":6},{"name":"parseEnvelope","count":2,"regions":[{"startLoc":{"line":352,"col":1},"endLoc":{"line":374,"col":2},"count":2,"ignored":0},{"startLoc":{"line":367,"col":3},"endLoc":{"line":374,"col":2},"count":2,"ignored":0},{"startLoc":{"line":357,"col":32},"endLoc":{"line":363,"col":4},"count":0,"ignored":0},{"startLoc":{"line":353,"col":42},"endLoc":{"line":355,"col":4},"count":0,"ignored":0},{"startLoc":{"line":363,"col":10},"endLoc":{"line":365,"col":4},"count":2,"ignored":0},{"startLoc":{"line":358,"col":9},"endLoc":{"line":360,"col":6},"count":0,"ignored":0},{"startLoc":{"line":360,"col":7},"endLoc":{"line":362,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":353,"col":7},"endLoc":{"line":353,"col":40},"trueCount":0,"falseCount":2,"group":[],"ignored":0},{"startLoc":{"line":357,"col":7},"endLoc":{"line":357,"col":30},"trueCount":0,"falseCount":2,"group":[],"ignored":0},{"startLoc":{"line":369,"col":11},"endLoc":{"line":369,"col":70},"trueCount":2,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":370,"col":14},"endLoc":{"line":370,"col":83},"trueCount":2,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":372,"col":13},"endLoc":{"line":372,"col":80},"trueCount":0,"falseCount":2,"group":[],"ignored":0}],"ignored":0,"index":7}],"exeLine":{"0":16,"1":17,"2":18,"3":19,"4":20,"5":21,"6":22,"7":23,"8":24,"9":25,"10":27,"11":28,"12":29,"13":30,"14":31,"15":33,"16":35,"17":37,"18":43,"19":45,"20":47,"21":49,"22":50,"23":67,"24":68,"25":69,"26":71,"27":72,"28":73,"29":93,"30":94,"31":95,"32":96,"33":97,"34":98,"35":99,"36":100,"37":102,"38":103,"39":104,"40":106,"41":107,"42":108,"43":109,"44":110,"45":113,"46":115,"47":117,"48":118,"49":119,"50":120,"51":123,"52":124,"53":125,"54":126,"55":129,"56":130,"57":131,"58":133,"59":134,"60":136,"61":137,"62":139,"63":140,"64":142,"65":143,"66":144,"67":146,"68":147,"69":148,"70":150,"71":151,"72":152,"73":156,"74":157,"75":158,"76":161,"77":162,"78":164,"79":165,"80":166,"81":167,"82":168,"83":169,"84":170,"85":172,"86":173,"87":174,"88":175,"89":176,"90":177,"91":178,"92":180,"93":181,"94":183,"95":184,"96":185,"97":188,"98":189,"99":190,"100":191,"101":192,"102":193,"103":194,"104":195,"105":196,"106":197,"107":198,"108":205,"109":206,"110":207,"111":209,"112":210,"113":211,"114":212,"115":213,"116":214,"117":215,"118":217,"119":218,"120":219,"121":220,"122":222,"123":223,"124":224,"125":225,"126":226,"127":227,"128":240,"129":241,"130":242,"131":243,"132":244,"133":245,"134":246,"135":247,"136":248,"137":249,"138":250,"139":252,"140":253,"141":254,"142":256,"143":257,"144":259,"145":260,"146":261,"147":262,"148":263,"149":264,"150":265,"151":266,"152":280,"153":281,"154":282,"155":284,"156":285,"157":286,"158":287,"159":288,"160":289,"161":291,"162":292,"163":293,"164":294,"165":295,"166":296,"167":297,"168":299,"169":300,"170":301,"171":302,"172":303,"173":305,"174":306,"175":307,"176":308,"177":309,"178":310,"179":311,"180":312,"181":313,"182":314,"183":325,"184":326,"185":327,"186":328,"187":329,"188":330,"189":333,"190":334,"191":337,"192":338,"193":341,"194":342,"195":343,"196":344,"197":345,"198":352,"199":353,"200":354,"201":356,"202":357,"203":358,"204":359,"205":360,"206":361,"207":363,"208":364,"209":367,"210":368,"211":369,"212":370,"213":371,"214":372},"summary":{"lines":{"total":178,"covered":90,"pct":50.56,"executedLineCount":[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,8,8,8,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,5,5,5,5,5,5,5,5,-1,5,5,5,-1,5,1,1,1,1,-1,-1,5,-1,5,-1,4,1,3,3,-1,-1,4,1,1,1,-1,-1,4,1,1,-1,1,1,-1,1,1,-1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,-1,-1,7,7,7,-1,-1,5,5,-1,5,5,0,0,0,0,0,-1,0,0,0,0,0,0,0,-1,0,0,-1,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,2,2,2,-1,2,2,2,2,2,2,2,-1,2,2,2,0,-1,2,2,0,0,2,2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,-1,0,0,-1,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,1,1,-1,1,1,0,0,0,0,-1,0,0,0,0,0,0,0,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,-1,-1,3,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,2,2,0,-1,2,2,0,0,0,0,-1,2,2,-1,-1,2,2,2,2,2,2,-1,-1,-1]},"functions":{"total":8,"covered":6,"pct":75},"branches":{"total":46,"covered":24,"pct":52.17}}},"title":"ShareService.ets.html","relativeHome":"..\\..\\..\\index.html"};
+    }
+  };
+
+  const app = Vue.createApp(App);
+  app.use(ElementPlus);
+  app.mount("#app");
+
+  window.onload = function () {
+    prettyPrint();
+  }
+</script>
+
+<style scoped>
+  table.coverage {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 0 0;
+    padding: 0;
+  }
+
+  table.coverage td {
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  table.coverage td.line-count {
+    width: 12%;
+    text-align: right;
+    padding: 0 5px 0 20px;
+  }
+
+  table.coverage td.line-coverage {
+    text-align: right;
+    padding-right: 10px;
+    min-width: 20px;
+  }
+
+  table.coverage td span.cline-any {
+    display: inline-block;
+    padding: 0 5px;
+    width: 100%;
+    height: 18px;
+  }
+
+  .low,
+  .cline-no {
+    background: #FCE1E5
+  }
+
+  .high,
+  .cline-yes {
+    background: rgb(230, 245, 208)
+  }
+
+  span.cline-neutral {
+    background: #eaeaea;
+  }
+
+  pre.prettyprint {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .el-main {
+    box-sizing: border-box;
+    display: block;
+    flex: 1;
+    flex-basis: auto;
+    overflow: auto;
+    padding: var(--el-main-padding)
+  }
+
+  .el-container {
+    min-height: 100vh;
+    height: 100%;
+  }
+
+  .footer {
+    font-size: small;
+  }
+
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .el-col {
+    border-radius: 4px;
+  }
+
+  .green {
+    color: var(--el-color-success);
+  }
+
+  .red {
+    color: var(--el-color-error);
+  }
+
+  .linenums li {
+    height: 18px;
+    line-height: 18px;
+  }
+
+  li.L0,
+  li.L1,
+  li.L2,
+  li.L3,
+  li.L5,
+  li.L6,
+  li.L7,
+  li.L8 {
+    list-style-type: decimal
+  }
+
+  .el-col-5 {
+    max-width: 100%;
+  }
+
+  .el-col-3 {
+    max-width: 100%;
+  }
+
+</style>
+
+</html>

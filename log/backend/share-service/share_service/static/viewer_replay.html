@@ -1,0 +1,1401 @@
+<!--
+  ItsMapPin 分享查看页 — Plan A 路线回放（v0.9）
+
+  H5 复刻 TripReplayPage（feature/map-travel/pages/TripReplayPage.ets）：
+    * 5 阶段状态机：FADE_IN 2s → STAYING 3s → FADE_OUT 1s → MOVING 1.5s
+    * 0.5x / 1x / 2x 倍速（动画时长缩放，音频不同步 — 与 TripReplayPage 一致）
+    * 背景音乐自动播放 + 循环 + 顶部右上角 ♪ 切换
+    * 节点照片卡浮在地图上方，含标题 + 最多 3 个 tag + 照片数
+    * 点卡片展开为底部 65% 半模态：标题 + mood 徽章 + 全部 tags + 全文 note + 时间
+    * 进度条：离散滑块，每节点一格，拖动跳转
+    * 上一节点 / 下一节点按钮 + 退出按钮
+
+  与 TripReplayPage 的差异：
+    * 用 Leaflet 替代 MapKit；没有 bearing/tilt 3D 相机，纯俯视。
+      Plan B 升级到 MapLibre GL 才能补 3D。
+    * 没有"行人 icon 沿 polyline 走"的细节，太复杂；改用 polyline + flyTo
+      camera 即可表达"路线"。
+
+  数据：服务端把 ShareRouteData 注入 window.__ROUTE_DATA__。
+  音频路径通过 {{AUDIO_URL}} 占位符注入（同源 /assets/replay-audio.mp3）。
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+  <title>{{HTML_TITLE}}</title>
+  <meta name="description" content="{{SHARE_DESCRIPTION}}">
+  <meta property="og:type"        content="article">
+  <meta property="og:title"       content="{{HTML_TITLE}}">
+  <meta property="og:description" content="{{SHARE_DESCRIPTION}}">
+  <meta property="og:url"         content="{{SHARE_URL}}">
+  <meta property="og:image"       content="{{COVER_PHOTO_URL}}">
+  <meta property="og:site_name"   content="ItsMapPin">
+  <meta property="og:locale"      content="zh_CN">
+
+  <link rel="preconnect" href="https://webapi.amap.com">
+  <!-- v1.0.6：AMap (高德) JS API 替代 Leaflet。安全密钥要在 API script 之前
+       挂到 window 上，否则带 jscode 校验的 Key 会被拒；这两个值由后端从
+       .env 注入到模板。 -->
+  <script>
+    window._AMapSecurityConfig = { securityJsCode: '{{AMAP_SECURITY_CODE}}' };
+  </script>
+  <script src="https://webapi.amap.com/maps?v=2.0&key={{AMAP_KEY}}"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* 长文本防溢出（v0.8.1 规则的延续） */
+    html, body { overflow-x: hidden; max-width: 100%; height: 100%; }
+    body, h1, h2, h3, p, span, article {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    /* v1.0：变量按 frontend ReplayStyleKit 字段一一映射，运行时由 JS 写到
+     * document.documentElement.style 上。除了 styleKit 没覆盖的少数（pin
+     * 颜色、warm 兜底）保持硬值。 */
+    :root {
+      /* — 页面 / mask — */
+      --page-bg:       #0a0a0f;
+      --page-mask:     rgba(0,0,0,0);              /* pageMaskColor */
+      /* — 底部控制条 — */
+      --ctrl-bg:       linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.45));
+      --ctrl-border:   transparent;                /* controlBarBorderColor */
+      --ctrl-primary:  #ffffff;                    /* controlPrimaryColor */
+      --ctrl-muted:    #c8c8d0;                    /* controlMutedColor */
+      /* — 进度条 — */
+      --prog-track:    rgba(255,255,255,0.18);     /* progressTrackColor */
+      --prog-selected: #1890FF;                    /* progressSelectedColor */
+      --prog-block:    #FFFFFF;                    /* progressBlockColor */
+      --prog-label:    #c8c8d0;                    /* progressLabelColor */
+      /* — 节点照片卡 — */
+      --card-photo-bg: #1a1a25;                    /* cardPhotoBackground */
+      --card-bg:       rgba(40,40,55,0.92);        /* cardContentBackground */
+      --card-border:   rgba(255,255,255,0.08);
+      --card-title:    #e8e8ed;                    /* cardTitleColor */
+      --card-body:     #c8c8d0;                    /* cardBodyColor */
+      --card-muted:    #86868b;                    /* cardMutedColor */
+      --card-tag-text: #a5b4fc;                    /* cardTagTextColor */
+      --card-tag-bg:   rgba(99,102,241,0.18);      /* cardTagBackground */
+      --card-shadow:   rgba(0,0,0,0.5);            /* shadowColor */
+      /* — 半模态展开层 — */
+      --ov-mask:       rgba(0,0,0,0.65);           /* overlayMaskColor */
+      --ov-bg:         rgba(20,20,30,0.96);        /* overlayPanelBackground */
+      --ov-border:     rgba(255,255,255,0.08);     /* overlayPanelBorderColor */
+      --ov-text:       #e8e8ed;                    /* overlayTextColor */
+      --ov-text2:      #c8c8d0;                    /* overlaySecondaryTextColor */
+      /* mood 徽章 */
+      --mood-text:     #1a1a1f;                    /* moodTextColor（注意：浅底色 kit 下要换前景色） */
+      --mood-bg:       #fbbf24;                    /* moodBackgroundColor */
+      /* — pin — */
+      --pin:           #d23a3a;
+      /* — 卡片照片滤镜（v1.0 filter）— */
+      --card-img-opacity: 1;
+      --card-img-filter:  none;
+      --card-overlay:     transparent;             /* ::after 颜色层 */
+      /* — 卡片进入/退出动画时长（v1.0 transition）— */
+      --card-in-dur:   2000ms;
+      --card-out-dur:  1000ms;
+      /* — 半模态背景模糊（v1.0 enableBlurOverlay）— */
+      --ov-blur:       0px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--page-bg);
+      color: var(--ctrl-primary);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    /* —— 地图占满全屏 —— */
+    #map {
+      position: fixed; inset: 0; z-index: 1;
+      background: var(--page-bg);
+    }
+    /* AMap 自身容器统一暗背景；AMap 的 logo 在右下，淡化一下 */
+    .amap-container { background: var(--page-bg); }
+    .amap-logo, .amap-copyright { opacity: 0.5; }
+    /* styleKit 的 pageMaskColor —— 一层薄色叠在地图之上，让浅色 kit
+       下整体不至于太刺眼。点击穿透。 */
+    #page-mask {
+      position: fixed; inset: 0; z-index: 2;
+      background: var(--page-mask);
+      pointer-events: none;
+    }
+
+    /* 节点 marker：水滴形 + 带数字编号 —— 颜色不跟 styleKit 走（保持
+       醒目红/活跃黄），只跟 --pin 兜底变量走。 */
+    .pin {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--pin), #8a2424);
+      color: #fff;
+      font-weight: 700; font-size: 14px;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+      border: 2px solid #fff;
+    }
+    .pin span { transform: rotate(45deg); }
+    /* 活跃 marker：跟 styleKit 的进度条选中色（accent）走，纯色 + 半透白 highlight，
+       兼容旧版 Chromium WebView，不依赖 color-mix。 */
+    .pin.active {
+      background: var(--prog-selected);
+      transform: rotate(-45deg) scale(1.15);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+    }
+    /* v1.0.1 enableRipple：active marker 外圈做一圈 ripple 脉冲。
+       关闭则不渲染（::after 留空）。.pin 自己 rotate(-45deg)，::after
+       用纯圆形，不受旋转影响。 */
+    .pin.active::after {
+      content: ""; position: absolute;
+      inset: -8px; border-radius: 50%;
+      border: 2px solid var(--prog-selected);
+      opacity: 0;
+      pointer-events: none;
+    }
+    body.ripple-on .pin.active::after {
+      animation: pin-ripple 1.4s ease-out infinite;
+    }
+    @keyframes pin-ripple {
+      0%   { transform: scale(0.6); opacity: 0.65; }
+      100% { transform: scale(1.7); opacity: 0;    }
+    }
+
+    /* —— 顶部按钮（退出 / 音乐） —— */
+    .top-buttons {
+      position: fixed; top: 14px; left: 0; right: 0;
+      display: flex; justify-content: space-between;
+      padding: 0 14px; z-index: 30;
+      pointer-events: none;
+    }
+    .top-buttons button {
+      pointer-events: auto;
+      width: 38px; height: 38px;
+      border: none; border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, opacity 0.15s;
+    }
+    .top-buttons button:active { background: rgba(0,0,0,0.75); }
+    .top-buttons .music.muted { opacity: 0.45; }
+
+    /* SVG 图标按钮的统一尺寸 + 颜色（继承 currentColor） */
+    .icon-btn svg {
+      width: 22px; height: 22px;
+      display: block;
+      pointer-events: none;
+      stroke-width: 2;
+    }
+    .play-btn svg { width: 24px; height: 24px; }
+
+    /* —— 节点照片卡（紧贴 STAYING 阶段） —— */
+    /* 位置参考 TripReplayPage：屏幕中线偏上。
+     * v1.0：移除原 opacity transition，改成由 .anim-in-* / .anim-out-*
+     * data-attribute 驱动的 keyframe，时长由 --card-in-dur / --card-out-dur
+     * 决定（按 speed 实时缩放）。卡片默认 opacity:0，开始动画时设
+     * data-anim 触发对应 keyframe。 */
+    .photo-card {
+      position: fixed;
+      left: 50%; top: 35%;
+      width: min(280px, calc(100vw - 32px));
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 12px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 18px 50px var(--card-shadow);
+      opacity: 0;
+      transform: translate(-50%, -50%);
+      z-index: 20;
+      cursor: pointer;
+      animation-fill-mode: both;
+    }
+    .photo-card.show { opacity: 1; }   /* 兼容：JS 进 STAYING 后落停态 */
+    /* —— transitionType keyframes —— */
+    @keyframes card-in-fade  { from { opacity: 0; }
+                               to   { opacity: 1; } }
+    @keyframes card-out-fade { from { opacity: 1; }
+                               to   { opacity: 0; } }
+    @keyframes card-in-slide  { from { opacity: 0; transform: translate(calc(-50% + 60px), -50%); }
+                                to   { opacity: 1; transform: translate(-50%, -50%); } }
+    @keyframes card-out-slide { from { opacity: 1; transform: translate(-50%, -50%); }
+                                to   { opacity: 0; transform: translate(calc(-50% - 60px), -50%); } }
+    @keyframes card-in-scale  { from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+                                to   { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+    @keyframes card-out-scale { from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                                to   { opacity: 0; transform: translate(-50%, -50%) scale(1.06); } }
+    .photo-card[data-anim="in-fade"]   { animation: card-in-fade  var(--card-in-dur)  ease forwards; }
+    .photo-card[data-anim="in-slide"]  { animation: card-in-slide var(--card-in-dur)  cubic-bezier(0.2,0.8,0.2,1) forwards; }
+    .photo-card[data-anim="in-scale"]  { animation: card-in-scale var(--card-in-dur)  cubic-bezier(0.2,0.8,0.2,1) forwards; }
+    .photo-card[data-anim="out-fade"]  { animation: card-out-fade  var(--card-out-dur) ease forwards; }
+    .photo-card[data-anim="out-slide"] { animation: card-out-slide var(--card-out-dur) cubic-bezier(0.4,0,0.6,1) forwards; }
+    .photo-card[data-anim="out-scale"] { animation: card-out-scale var(--card-out-dur) ease forwards; }
+
+    .photo-card .photo-frame {
+      width: 100%; aspect-ratio: 16/10;
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--card-photo-bg);
+      position: relative;
+    }
+    /* v1.0：filterId 用 ::after 半透明色块叠在照片上，加 img 的 opacity/filter
+       三件一组实现"胶片/暖阳/冷调/黑白"。NONE 时 overlay 全透明、img 不变。 */
+    .photo-card .photo-frame::after {
+      content: ""; position: absolute; inset: 0;
+      background: var(--card-overlay);
+      pointer-events: none;
+      border-radius: inherit;
+      z-index: 1;
+    }
+    .photo-card .photo-frame img {
+      width: 100%; height: 100%; object-fit: cover;
+      display: block;
+      opacity: var(--card-img-opacity);
+      filter: var(--card-img-filter);
+    }
+    .photo-card .swipe-arrow {
+      position: absolute; top: 50%;
+      transform: translateY(-50%);
+      width: 30px; height: 56px;
+      background: rgba(0,0,0,0.4);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      z-index: 2;
+    }
+    .photo-card .swipe-arrow svg { width: 18px; height: 18px; display: block; pointer-events: none; }
+    .photo-card .swipe-arrow.left  { left: 0;  border-radius: 0 4px 4px 0; }
+    .photo-card .swipe-arrow.right { right: 0; border-radius: 4px 0 0 4px; }
+    .photo-card .photo-dots {
+      position: absolute; bottom: 6px; left: 0; right: 0;
+      display: flex; justify-content: center; gap: 4px;
+    }
+    .photo-card .photo-dots span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+    }
+    .photo-card .photo-dots span.active { background: #fff; }
+
+    .photo-card h2 {
+      font-size: 16px; font-weight: 600;
+      margin-top: 10px;
+      color: var(--card-title);
+    }
+    .photo-card .tags {
+      display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;
+    }
+    .photo-card .tag {
+      background: var(--card-tag-bg);
+      color: var(--card-tag-text);
+      padding: 1px 7px; border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid var(--card-tag-bg);
+    }
+    .photo-card .photo-count {
+      margin-top: 6px;
+      font-size: 11px; color: var(--card-muted);
+    }
+
+    /* —— 底部进度条 + 控件 —— */
+    .bottom-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--ctrl-bg);
+      border-top: 1px solid var(--ctrl-border);
+      padding: 14px 16px 22px;
+      z-index: 30;
+      backdrop-filter: blur(10px);
+    }
+    .progress-wrap {
+      width: 100%;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px;
+    }
+    .progress-wrap .label {
+      color: var(--prog-label);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      min-width: 44px; text-align: center;
+    }
+    /* 离散进度条（每节点一档） */
+    .progress {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--prog-track);
+      border-radius: 999px;
+      height: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+    .progress::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      background: var(--prog-selected);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid var(--prog-block);
+    }
+    .progress::-moz-range-thumb {
+      width: 14px; height: 14px;
+      background: var(--prog-selected);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid var(--prog-block);
+    }
+    /* v1.0.3：5 列等宽 grid，把控件按位置精确钉到节奏感强的位置：
+     *   col 1（10%）= 上一节点
+     *   col 2（30%）= 空
+     *   col 3（50%）= 播放（视觉正中）
+     *   col 4（70%）= 倍速（介于 play 与 next 中间）
+     *   col 5（90%）= 下一节点
+     * 这样 play 永远在画面中线，speed 永远在 play 和 next 的中点。 */
+    .controls-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      gap: 4px;
+    }
+    .ctrl-zone {
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .controls-row button {
+      border: none; background: var(--prog-track);
+      color: var(--ctrl-primary);
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .controls-row button:active { transform: scale(0.96); }
+    .controls-row .play-btn {
+      background: var(--prog-selected);
+      color: var(--prog-block);
+      width: 52px; height: 52px;
+    }
+    /* v1.0.2：固定 height 40 + min-width 56，border-radius 用 height/2 形成
+     * "胶囊"形状——0.5x / 1x / 2x 文本宽度变化时永远是规则的圆角矩形，不会
+     * 出现"1x 时是圆形、0.5x 时变扁椭圆"的视觉跳变。 */
+    .controls-row .speed-btn {
+      width: auto; min-width: 58px; height: 40px;
+      padding: 0 14px;
+      border-radius: 20px;
+      font-size: 13px; font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* —— 半模态展开层 —— */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: var(--ov-mask);
+      z-index: 50;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    /* v1.0：enableBlurOverlay = true 时往 documentElement 写 --ov-blur:14px，
+       让 modal 面板带上 backdrop-filter 毛玻璃；同时降一点面板自身不透明
+       度（用半透明的 overlayPanelBackground rgba()）。 */
+    .modal {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      height: 65vh;
+      background: var(--ov-bg);
+      border-top: 1px solid var(--ov-border);
+      border-top-left-radius: 20px; border-top-right-radius: 20px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      backdrop-filter: blur(var(--ov-blur));
+      -webkit-backdrop-filter: blur(var(--ov-blur));
+      z-index: 51;
+      overflow-y: auto;
+      padding: 18px 20px 24px;
+      color: var(--ov-text);
+    }
+    .modal.show { transform: translateY(0); }
+    .modal .grip {
+      width: 40px; height: 4px; border-radius: 2px;
+      background: var(--ov-border);
+      margin: 0 auto 12px;
+    }
+    .modal h2 {
+      font-size: clamp(18px, 4.6vw, 22px);
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--ov-text);
+      padding-right: 36px;             /* 让 close-btn 不压标题 */
+      line-height: 1.35;
+    }
+    .modal .meta {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-bottom: 14px; font-size: 13px;
+    }
+    .modal .mood {
+      background: var(--mood-bg);
+      color: var(--mood-text);
+      font-weight: 600;
+      padding: 2px 10px; border-radius: 8px; font-size: 12px;
+    }
+    .modal .tag {
+      background: var(--card-tag-bg);
+      color: var(--card-tag-text);
+      padding: 2px 9px; border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--card-tag-bg);
+    }
+    .modal .photo-count { color: var(--ov-text2); font-size: 12px; padding: 2px 0; }
+    /* v1.0.1：photos-strip 改成"首/末图能 scroll-snap 居中"的标准做法。
+     * 在 strip 两侧加 padding-inline:15%，配合 image width 70% +
+     * scroll-snap-align:center，单图就视觉居中；多图时 peek 大约 7.5%。
+     * 用 0 张照片时容器空，无视觉影响。 */
+    .modal .photos-strip {
+      display: flex; gap: 8px; overflow-x: auto;
+      padding: 0 15% 6px;
+      margin: 0 -20px 14px;          /* 抵掉 modal 自身的 left/right padding，
+                                        让 strip 能用满 viewport 宽度做居中 */
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: 15%;
+      scrollbar-width: none;
+    }
+    .modal .photos-strip::-webkit-scrollbar { display: none; }
+    .modal .photos-strip img {
+      width: 70%; flex-shrink: 0;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      border-radius: 12px;
+      scroll-snap-align: center;
+      background: var(--card-photo-bg);
+      box-shadow: 0 8px 22px var(--card-shadow);
+    }
+    /* 极小屏（< 360px）：图片占满更紧凑些，避免左右白边过宽 */
+    @media (max-width: 360px) {
+      .modal .photos-strip { padding: 0 8% 6px; }
+      .modal .photos-strip img { width: 84%; }
+    }
+    /* v0.9.1: 模态里的全文 note 默认收起 6 行，长文本旁出"展开"按钮 */
+    .modal .note {
+      color: var(--ov-text2);
+      white-space: pre-wrap;
+      font-size: 14px;
+      line-height: 1.7;
+      display: -webkit-box;
+      -webkit-line-clamp: 6;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .modal .note.expanded { -webkit-line-clamp: unset; display: block; }
+    .modal .toggle-content {
+      background: none; border: none;
+      color: var(--prog-selected); cursor: pointer;
+      padding: 6px 0; font-size: 13px;
+      font-weight: 500;
+    }
+    .modal .toggle-content.hidden { display: none; }
+    .modal .timestamp {
+      margin-top: 18px;
+      color: var(--ov-text2);
+      font-size: 12px;
+    }
+    .modal .close-btn {
+      position: sticky; top: 0;
+      float: right;
+      background: var(--ov-border);
+      border: none; color: var(--ov-text);
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal .close-btn svg { width: 16px; height: 16px; display: block; pointer-events: none; }
+
+    /* —— 加载 / 错误状态 —— */
+    .state {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: var(--card-muted); padding: 32px;
+      text-align: center;
+      z-index: 100;
+    }
+    .state .icon { font-size: 56px; margin-bottom: 14px; opacity: 0.5; }
+  </style>
+</head>
+<body>
+  <!-- 数据 + 偏好通过服务端注入 -->
+  <script>window.__ROUTE_DATA__ = {{ROUTE_DATA_JSON}};</script>
+  <script>window.__REPLAY_PREFS__ = {{REPLAY_PREFS_JSON}};</script>
+  <script>window.__REPLAY_AUDIO_URL__ = "{{AUDIO_URL}}";</script>
+
+  <div id="map"></div>
+  <div id="page-mask"></div>
+
+  <div class="top-buttons">
+    <button id="btn-exit"  class="icon-btn" title="返回"></button>
+    <button id="btn-music" class="icon-btn music" title="切换背景音乐"></button>
+  </div>
+
+  <!-- 节点照片卡（FADE_IN/STAYING/FADE_OUT 阶段可见） -->
+  <div id="card" class="photo-card" style="display:none;">
+    <div class="photo-frame">
+      <img id="card-photo" src="" alt="">
+      <div class="swipe-arrow left"  id="card-prev-photo"></div>
+      <div class="swipe-arrow right" id="card-next-photo"></div>
+      <div class="photo-dots" id="card-dots"></div>
+    </div>
+    <h2 id="card-title"></h2>
+    <div class="tags" id="card-tags"></div>
+    <div class="photo-count" id="card-count"></div>
+  </div>
+
+  <!-- 半模态展开层 -->
+  <div class="modal-overlay" id="modal-overlay"></div>
+  <div class="modal" id="modal">
+    <button class="close-btn" id="modal-close" type="button" aria-label="关闭"></button>
+    <div class="grip"></div>
+    <h2 id="modal-title"></h2>
+    <div class="meta" id="modal-meta"></div>
+    <div class="photo-count" id="modal-photo-count"></div>
+    <div class="photos-strip" id="modal-photos"></div>
+    <div class="note" id="modal-note"></div>
+    <button class="toggle-content hidden" id="modal-note-toggle" type="button">展开</button>
+    <div class="timestamp" id="modal-timestamp"></div>
+  </div>
+
+  <!-- 底部控件
+       v1.0.2：3 列 grid 让"上一节点 / 播放（绝对居中） / 下一节点"对称分布；
+       倍速按钮另起一组停在最右，宽度 auto + min-width 防止 0.5x 时变扁。 -->
+  <div class="bottom-bar">
+    <div class="progress-wrap">
+      <div class="label" id="progress-label">1 / 1</div>
+      <input type="range" id="progress" class="progress" min="0" max="0" step="1" value="0">
+    </div>
+    <div class="controls-row">
+      <div class="ctrl-zone" style="grid-column: 1">
+        <button id="btn-prev" class="icon-btn" title="上一节点"></button>
+      </div>
+      <div class="ctrl-zone" style="grid-column: 3">
+        <button id="btn-play" class="icon-btn play-btn" title="播放/暂停"></button>
+      </div>
+      <div class="ctrl-zone" style="grid-column: 4">
+        <button id="btn-speed" class="speed-btn" title="倍速">1x</button>
+      </div>
+      <div class="ctrl-zone" style="grid-column: 5">
+        <button id="btn-next" class="icon-btn" title="下一节点"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加载/错误占位 -->
+  <div id="state" class="state" style="display:none;">
+    <div class="icon">⏳</div>
+    <div id="state-msg">加载中…</div>
+  </div>
+
+  <audio id="bgm" src="{{AUDIO_URL}}" loop preload="auto"></audio>
+
+<script>
+'use strict';
+
+// ============================================================
+// v1.0.2：内嵌 SVG 图标（替代 emoji，跨设备渲染一致）
+// 全部 stroke/fill: currentColor，颜色继承按钮 color。
+// ============================================================
+const ICONS = {
+  close:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>',
+  music:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+  play:     '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.87l13-7.5a1 1 0 0 0 0-1.74l-13-7.5A1 1 0 0 0 7 4.5z"/></svg>',
+  pause:    '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+  prev:     '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="2.4" height="14" rx="0.6"/><path d="M19 5.5v13a.8.8 0 0 1-1.27.65L9 12.65a.8.8 0 0 1 0-1.3l8.73-6.5A.8.8 0 0 1 19 5.5z"/></svg>',
+  next:     '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="15.6" y="5" width="2.4" height="14" rx="0.6"/><path d="M5 5.5v13a.8.8 0 0 0 1.27.65L15 12.65a.8.8 0 0 0 0-1.3L6.27 4.85A.8.8 0 0 0 5 5.5z"/></svg>',
+  chevLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+  chevRight:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+};
+
+// ============================================================
+// v1.0：偏好（styleKit / filter / transition / blurOverlay / routeAnimation）
+// 所有表与 frontend ReplayStyleKit.ets / ReplayEffectOptions.ets 完全对齐。
+// 服务端把 prefs 注入 window.__REPLAY_PREFS__；prefs===null 表示用默认。
+// ============================================================
+const PREFS_DEFAULT = {
+  styleKitId: 'minimal_white',
+  bgmId: 'city_lights_lofi',
+  filterId: 'none',
+  transitionType: 'fade',
+  enableBlurOverlay: false,
+  enableRouteAnimation: false,
+  enableRipple: false,
+};
+const PREFS = Object.assign({}, PREFS_DEFAULT, window.__REPLAY_PREFS__ || {});
+
+// 与 ReplayStyleKit.ets 字段一一映射；写到 :root 上的 CSS 变量名是
+// styleKit 那一组（--page-mask / --ctrl-bg / ...）。
+const STYLE_KITS = {
+  minimal_white: {
+    pageMaskColor: 'rgba(0, 0, 0, 0.16)',
+    controlBarBackground: 'rgba(255, 255, 255, 0.96)',
+    controlBarBorderColor: 'rgba(24, 144, 255, 0.10)',
+    controlPrimaryColor: '#1A1A1A',
+    controlMutedColor: '#6B7280',
+    progressTrackColor: '#D8E2EF',
+    progressSelectedColor: '#1890FF',
+    progressBlockColor: '#FFFFFF',
+    progressLabelColor: '#364152',
+    cardPhotoBackground: '#2D3748',
+    cardContentBackground: 'rgba(255, 255, 255, 0.92)',
+    cardTitleColor: '#111827',
+    cardBodyColor: '#4B5563',
+    cardMutedColor: '#6B7280',
+    cardTagTextColor: '#1565C0',
+    cardTagBackground: 'rgba(21, 101, 192, 0.10)',
+    overlayMaskColor: 'rgba(14, 18, 24, 0.52)',
+    overlayPanelBackground: '#FFFFFF',
+    overlayPanelBorderColor: 'rgba(17, 24, 39, 0.06)',
+    overlayTextColor: '#111827',
+    overlaySecondaryTextColor: '#5B6472',
+    moodTextColor: '#D9485F',
+    moodBackgroundColor: 'rgba(217, 72, 95, 0.10)',
+    shadowColor: 'rgba(15, 23, 42, 0.18)',
+    mapPolylineColor: '#1890FF',
+    mapPolylineWidth: 4,
+    routePendingColor: 'rgba(24, 144, 255, 0.28)',
+    routePendingWidth: 4,
+    routeVisitedColor: '#1890FF',
+    routeVisitedWidth: 5,
+  },
+  dark_night: {
+    pageMaskColor: 'rgba(6, 10, 18, 0.24)',
+    controlBarBackground: 'rgba(12, 20, 33, 0.94)',
+    controlBarBorderColor: 'rgba(110, 187, 255, 0.18)',
+    controlPrimaryColor: '#EAF4FF',
+    controlMutedColor: '#9CB4CC',
+    progressTrackColor: 'rgba(255, 255, 255, 0.14)',
+    progressSelectedColor: '#67B7FF',
+    progressBlockColor: '#EAF4FF',
+    progressLabelColor: '#D4E6F8',
+    cardPhotoBackground: '#0D1420',
+    cardContentBackground: 'rgba(8, 15, 25, 0.90)',
+    cardTitleColor: '#F5FAFF',
+    cardBodyColor: '#CBDBEB',
+    cardMutedColor: '#97A8BA',
+    cardTagTextColor: '#8ED0FF',
+    cardTagBackground: 'rgba(93, 173, 226, 0.16)',
+    overlayMaskColor: 'rgba(2, 6, 12, 0.72)',
+    overlayPanelBackground: 'rgba(10, 18, 28, 0.94)',
+    overlayPanelBorderColor: 'rgba(142, 208, 255, 0.12)',
+    overlayTextColor: '#F5FAFF',
+    overlaySecondaryTextColor: '#B0C5D9',
+    moodTextColor: '#FFB38A',
+    moodBackgroundColor: 'rgba(255, 179, 138, 0.12)',
+    shadowColor: 'rgba(0, 0, 0, 0.34)',
+    mapPolylineColor: '#67B7FF',
+    mapPolylineWidth: 5,
+    routePendingColor: 'rgba(103, 183, 255, 0.28)',
+    routePendingWidth: 4,
+    routeVisitedColor: '#A8D8FF',
+    routeVisitedWidth: 5,
+  },
+  vintage_film: {
+    pageMaskColor: 'rgba(53, 34, 18, 0.18)',
+    controlBarBackground: 'rgba(244, 232, 213, 0.95)',
+    controlBarBorderColor: 'rgba(124, 74, 34, 0.14)',
+    controlPrimaryColor: '#5A3B24',
+    controlMutedColor: '#8A6B50',
+    progressTrackColor: 'rgba(125, 95, 62, 0.18)',
+    progressSelectedColor: '#A8612D',
+    progressBlockColor: '#FFF7EB',
+    progressLabelColor: '#6E4B2F',
+    cardPhotoBackground: '#4B372A',
+    cardContentBackground: 'rgba(245, 236, 220, 0.94)',
+    cardTitleColor: '#4E3424',
+    cardBodyColor: '#6C5340',
+    cardMutedColor: '#8E735C',
+    cardTagTextColor: '#8C4C21',
+    cardTagBackground: 'rgba(140, 76, 33, 0.12)',
+    overlayMaskColor: 'rgba(44, 26, 15, 0.58)',
+    overlayPanelBackground: 'rgba(249, 241, 228, 0.96)',
+    overlayPanelBorderColor: 'rgba(115, 78, 45, 0.10)',
+    overlayTextColor: '#4E3424',
+    overlaySecondaryTextColor: '#6D5642',
+    moodTextColor: '#B15C3A',
+    moodBackgroundColor: 'rgba(177, 92, 58, 0.12)',
+    shadowColor: 'rgba(70, 42, 20, 0.20)',
+    mapPolylineColor: '#B56B36',
+    mapPolylineWidth: 5,
+    routePendingColor: 'rgba(181, 107, 54, 0.28)',
+    routePendingWidth: 4,
+    routeVisitedColor: '#B56B36',
+    routeVisitedWidth: 5,
+  },
+};
+
+// 与 ReplayEffectOptions.ets FILTER_OPTIONS 完全对齐。MONO 在 imageOpacity
+// 之外多打一层 grayscale，效果更接近黑白胶片。
+const FILTERS = {
+  none: { imageOpacity: 1.0,  overlayColor: 'rgba(255, 255, 255, 0)', filter: 'none' },
+  film: { imageOpacity: 0.94, overlayColor: 'rgba(180, 131, 72, 0.16)', filter: 'contrast(1.05) saturate(0.9)' },
+  warm: { imageOpacity: 0.96, overlayColor: 'rgba(255, 155, 55, 0.18)', filter: 'saturate(1.1)' },
+  cool: { imageOpacity: 0.95, overlayColor: 'rgba(68, 142, 255, 0.18)', filter: 'saturate(0.9)' },
+  mono: { imageOpacity: 0.82, overlayColor: 'rgba(17, 24, 39, 0.30)', filter: 'grayscale(1) contrast(1.1)' },
+};
+
+const TRANSITIONS = ['fade', 'slide', 'scale'];   // CSS animation suffix
+
+function applyStyleKit(kitId) {
+  const k = STYLE_KITS[kitId] || STYLE_KITS[PREFS_DEFAULT.styleKitId];
+  const root = document.documentElement.style;
+  root.setProperty('--page-mask',     k.pageMaskColor);
+  root.setProperty('--ctrl-bg',       k.controlBarBackground);
+  root.setProperty('--ctrl-border',   k.controlBarBorderColor);
+  root.setProperty('--ctrl-primary',  k.controlPrimaryColor);
+  root.setProperty('--ctrl-muted',    k.controlMutedColor);
+  root.setProperty('--prog-track',    k.progressTrackColor);
+  root.setProperty('--prog-selected', k.progressSelectedColor);
+  root.setProperty('--prog-block',    k.progressBlockColor);
+  root.setProperty('--prog-label',    k.progressLabelColor);
+  root.setProperty('--card-photo-bg', k.cardPhotoBackground);
+  root.setProperty('--card-bg',       k.cardContentBackground);
+  root.setProperty('--card-border',   k.overlayPanelBorderColor);
+  root.setProperty('--card-title',    k.cardTitleColor);
+  root.setProperty('--card-body',     k.cardBodyColor);
+  root.setProperty('--card-muted',    k.cardMutedColor);
+  root.setProperty('--card-tag-text', k.cardTagTextColor);
+  root.setProperty('--card-tag-bg',   k.cardTagBackground);
+  root.setProperty('--card-shadow',   k.shadowColor);
+  root.setProperty('--ov-mask',       k.overlayMaskColor);
+  root.setProperty('--ov-bg',         k.overlayPanelBackground);
+  root.setProperty('--ov-border',     k.overlayPanelBorderColor);
+  root.setProperty('--ov-text',       k.overlayTextColor);
+  root.setProperty('--ov-text2',      k.overlaySecondaryTextColor);
+  root.setProperty('--mood-text',     k.moodTextColor);
+  root.setProperty('--mood-bg',       k.moodBackgroundColor);
+}
+
+function applyFilter(filterId) {
+  const f = FILTERS[filterId] || FILTERS.none;
+  const root = document.documentElement.style;
+  root.setProperty('--card-img-opacity', String(f.imageOpacity));
+  root.setProperty('--card-img-filter',  f.filter);
+  root.setProperty('--card-overlay',     f.overlayColor);
+}
+
+// rgba/#hex/rgb → 强制改成指定 alpha 的 rgba。识别失败原样返回。
+function _alphaOverride(color, alpha) {
+  if (typeof color !== 'string') return color;
+  let m;
+  if ((m = color.match(/^rgba?\(([^)]+)\)$/i))) {
+    const parts = m[1].split(',').map(s => s.trim());
+    return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
+  }
+  if ((m = color.match(/^#([0-9a-f]{3,8})$/i))) {
+    let hex = m[1];
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    if (hex.length === 4) hex = hex.split('').map(c => c + c).join('').slice(0, 6);
+    if (hex.length === 8) hex = hex.slice(0, 6);
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  return color;
+}
+
+function applyBlurOverlay(enable) {
+  const root = document.documentElement.style;
+  root.setProperty('--ov-blur', enable ? '14px' : '0px');
+  // v1.0.1：浅色 kit（minimal_white、vintage_film）面板背景接近不透明，
+  // 单纯加 backdrop-filter 看不出毛玻璃。开启 blur 时把 --ov-bg 强制改成
+  // 同色相但 alpha=0.72 的版本，让背后地图/卡片可视；关闭时恢复 kit 原始。
+  const kit = STYLE_KITS[PREFS.styleKitId] || STYLE_KITS[PREFS_DEFAULT.styleKitId];
+  root.setProperty(
+    '--ov-bg',
+    enable ? _alphaOverride(kit.overlayPanelBackground, 0.72)
+           : kit.overlayPanelBackground,
+  );
+}
+
+function applyRipple(enable) {
+  document.body.classList.toggle('ripple-on', !!enable);
+}
+
+// ============================================================
+// 数据 + 状态机参数（与 TripReplayPage 对齐）
+// ============================================================
+const DATA = window.__ROUTE_DATA__ || { nodes: [] };
+// 节点已在服务端按 nodeOrder 升序排好
+const NODES = (DATA.nodes || []).filter(n =>
+  typeof n.latitude === 'number' && typeof n.longitude === 'number'
+);
+
+// 时长（毫秒）— TripReplayPage 同名常量
+const DUR = { FADE_IN: 2000, STAYING: 3000, FADE_OUT: 1000, MOVING: 1500 };
+const SPEEDS = [0.5, 1.0, 2.0];   // 与 TripReplayPage 一致
+const PHASE = { FADE_IN: 1, STAYING: 2, FADE_OUT: 3, MOVING: 4 };
+
+// 全局回放状态
+const State = {
+  speedIdx: 1,                  // 默认 1.0x
+  speed: () => SPEEDS[State.speedIdx],
+  isPlaying: false,
+  currentNodeIdx: 0,
+  phase: PHASE.FADE_IN,
+  phaseTimer: null,             // setTimeout id
+  cardPhotoIdx: 0,              // 卡片内当前照片索引（左右翻看）
+};
+
+// ============================================================
+// 错误页（路线没有任何带坐标的节点 = 没法回放）
+// ============================================================
+if (NODES.length === 0) {
+  const s = document.getElementById('state');
+  s.style.display = 'flex';
+  document.getElementById('state-msg').textContent =
+    '这条路线没有节点坐标，无法回放（建议改用普通分享视图）';
+  document.getElementById('map').style.display = 'none';
+  document.querySelector('.bottom-bar').style.display = 'none';
+}
+
+// ============================================================
+// 地图：v1.0.6 改用 AMap (高德) JS API
+//   * AMap 注意点：经纬度顺序是 [lng, lat]（Leaflet 是 [lat, lng]，每处都要翻转）
+//   * Marker.content 是 HTML 字符串；offset 是 top-left → position 的偏移
+//   * mapStyle 跟 styleKit 联动：dark_night → dark；vintage → whitesmoke；
+//     minimal_white → light（与默认 carto 主题观感最接近）
+//   * 路线动画两层 polyline 逻辑沿用：pending（虚线灰底）+ visited（实线主色）
+// ============================================================
+let map = null;
+let markerObjs = [];
+let pendingLine = null;
+let visitedLine = null;
+
+function _amapStyleForKit(kitId) {
+  if (kitId === 'dark_night')   return 'amap://styles/dark';
+  if (kitId === 'vintage_film') return 'amap://styles/whitesmoke';
+  return 'amap://styles/light';
+}
+
+function initMap() {
+  if (NODES.length === 0) return;
+
+  map = new AMap.Map('map', {
+    mapStyle: _amapStyleForKit(PREFS.styleKitId),
+    zoom: 14,
+    zooms: [3, 19],
+    // 回放期间禁用所有用户交互
+    dragEnable: false,
+    zoomEnable: false,
+    doubleClickZoom: false,
+    keyboardEnable: false,
+    rotateEnable: false,
+    pitchEnable: false,
+    showLabel: true,
+  });
+
+  markerObjs = NODES.map((n, i) => {
+    const m = new AMap.Marker({
+      position: [n.longitude, n.latitude],          // [lng, lat] — AMap 顺序
+      content: `<div class="pin" data-idx="${i}"><span>${i + 1}</span></div>`,
+      offset: new AMap.Pixel(-16, -32),             // 把 32×32 容器底中放到经纬度上
+      anchor: 'top-left',
+      zIndex: 100 + i,
+    });
+    map.add(m);
+    return m;
+  });
+
+  if (NODES.length >= 2) {
+    const kit = STYLE_KITS[PREFS.styleKitId] || STYLE_KITS[PREFS_DEFAULT.styleKitId];
+    const allPts = NODES.map(n => [n.longitude, n.latitude]);
+    if (PREFS.enableRouteAnimation) {
+      pendingLine = new AMap.Polyline({
+        path: allPts,
+        strokeColor: kit.routePendingColor,
+        strokeWeight: kit.routePendingWidth,
+        strokeOpacity: 1,
+        strokeStyle: 'dashed',
+        strokeDasharray: [6, 6],
+      });
+      visitedLine = new AMap.Polyline({
+        path: [allPts[0]],
+        strokeColor: kit.routeVisitedColor,
+        strokeWeight: kit.routeVisitedWidth,
+        strokeOpacity: 0.95,
+      });
+      map.add([pendingLine, visitedLine]);
+    } else {
+      map.add(new AMap.Polyline({
+        path: allPts,
+        strokeColor: kit.mapPolylineColor,
+        strokeWeight: kit.mapPolylineWidth,
+        strokeOpacity: 0.7,
+        strokeStyle: 'dashed',
+        strokeDasharray: [8, 6],
+      }));
+    }
+  }
+
+  // 初始视野：把所有 marker 框进去；avoid = [top, right, bottom, left]
+  map.setFitView(markerObjs, false, [80, 80, 80, 80], 14);
+
+  // 进入第一个节点（AMap 异步渲染，留 500ms 给瓦片落定）
+  setTimeout(() => focusNode(0, false), 500);
+}
+
+// 在 MOVING 阶段刚走完进入新节点时调用：把 visited polyline 延到该节点
+function updateVisitedRoute() {
+  if (!visitedLine) return;
+  const upto = State.currentNodeIdx;
+  const path = NODES.slice(0, upto + 1).map(n => [n.longitude, n.latitude]);
+  visitedLine.setPath(path);
+}
+
+// v1.0.2 #6：把视图中心从"节点经纬度"上移 PAN_OFFSET_PX 像素，让 marker
+// 在屏幕上画得偏下，避开顶部 35% 处的照片卡。
+// AMap 等价 API：lngLatToContainer / containerToLngLat 做 latlng↔像素转换。
+const PAN_OFFSET_PX = 140;
+const FOCUS_ZOOM = 15;
+
+function _offsetCenter(lat, lng) {
+  if (!map) return [lng, lat];
+  const px = map.lngLatToContainer(new AMap.LngLat(lng, lat));
+  const adj = new AMap.Pixel(px.getX(), px.getY() - PAN_OFFSET_PX);
+  const ll = map.containerToLngLat(adj);
+  return [ll.getLng(), ll.getLat()];
+}
+
+function focusNode(idx, animate) {
+  const n = NODES[idx];
+  if (!n) return;
+  const movingMs = animate ? (DUR.MOVING / State.speed()) : 0;
+  const center = _offsetCenter(n.latitude, n.longitude);
+  if (animate) {
+    // setZoomAndCenter(zoom, center, immediately=false → 走动画, durationMs)
+    map.setZoomAndCenter(FOCUS_ZOOM, center, false, movingMs);
+  } else {
+    map.setZoomAndCenter(FOCUS_ZOOM, center, true, 0);
+  }
+  // 高亮 marker —— AMap content DOM 跟 Leaflet 一样可以被 querySelectorAll 抓到
+  document.querySelectorAll('.pin').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+  });
+}
+
+// ============================================================
+// 卡片 UI
+// ============================================================
+const $card        = document.getElementById('card');
+const $cardPhoto   = document.getElementById('card-photo');
+const $cardTitle   = document.getElementById('card-title');
+const $cardTags    = document.getElementById('card-tags');
+const $cardCount   = document.getElementById('card-count');
+const $cardDots    = document.getElementById('card-dots');
+const $progress    = document.getElementById('progress');
+const $progressLbl = document.getElementById('progress-label');
+const $playBtn     = document.getElementById('btn-play');
+const $speedBtn    = document.getElementById('btn-speed');
+
+function fmtNode(idx) { return `${idx + 1} / ${NODES.length}`; }
+
+function setCardData(node) {
+  // 照片：节点 photos 数组 — 每张图有 width: 375|750 两个变种，挑 375 给卡片用
+  const photoUrls = collectNodePhotoUrls(node, 375);
+  State.cardPhotoIdx = 0;
+
+  $cardTitle.textContent = node.title || '未命名节点';
+  $cardTags.innerHTML = '';
+  (node.tags || []).slice(0, 3).forEach(t => {
+    const span = document.createElement('span');
+    span.className = 'tag';
+    span.textContent = '#' + t;
+    $cardTags.appendChild(span);
+  });
+  $cardCount.textContent = photoUrls.length > 0 ? `${photoUrls.length} 张照片` : '无照片';
+
+  $cardDots.innerHTML = '';
+  photoUrls.forEach((_, i) => {
+    const d = document.createElement('span');
+    if (i === 0) d.classList.add('active');
+    $cardDots.appendChild(d);
+  });
+
+  if (photoUrls.length > 0) {
+    $cardPhoto.src = photoUrls[0];
+    $cardPhoto.style.display = '';
+  } else {
+    $cardPhoto.removeAttribute('src');
+    $cardPhoto.style.display = 'none';
+  }
+  // 卡片缓存当前节点的全部 url，给左右翻和半模态用
+  $card.dataset.photoUrls = JSON.stringify(photoUrls);
+}
+
+function collectNodePhotoUrls(node, preferredWidth) {
+  // photos 是 [{url, width}, ...]，每张原图有 375w / 750w 两个变种共享同一
+  // photoIdx，要按 photoIdx 去重 (一张原图只显示一次，挑 preferredWidth)。
+  // v0.9.3 fix：兼容两种 backend 命名：
+  //   * v0.4 起：{flatIdx}_{w}w.webp        — 关键标识 = flatIdx
+  //   * v0.3：  {nodeOrder}_{photoIdx}_{w}w.webp — 关键标识 = nodeOrder_photoIdx
+  // 之前正则只认旧格式，新格式落到 fallback 分支用 url 当 key，结果同一张
+  // 图的 375w 和 750w 变成两条独立 entry，1 张照片显示成 2 张。
+  const byKey = new Map();
+  for (const p of (node.photos || [])) {
+    const m = String(p.url).match(/(\d+(?:_\d+)?)_(\d+)w\.webp$/);
+    if (!m) { byKey.set(p.url, p.url); continue; }
+    const key = m[1];                  // flatIdx 或 nodeOrder_photoIdx
+    const w = Number(m[2]);
+    // 同 photoIdx 第一次见就存；之后只有遇到 preferredWidth 才覆盖
+    if (!byKey.has(key) || w === preferredWidth) {
+      byKey.set(key, p.url);
+    }
+  }
+  return [...byKey.values()];
+}
+
+// v1.0：动画时长按 speed 实时缩放（与 enterPhase scheduledMs 保持同节奏），
+// 通过设置 --card-in-dur / --card-out-dur CSS 变量驱动 keyframe。
+function _setCardDurations() {
+  const inMs  = DUR.FADE_IN  / State.speed();
+  const outMs = DUR.FADE_OUT / State.speed();
+  document.documentElement.style.setProperty('--card-in-dur',  inMs + 'ms');
+  document.documentElement.style.setProperty('--card-out-dur', outMs + 'ms');
+}
+function _setCardAnim(name) {
+  // 移除旧 anim 后强制 reflow，再写新值，否则同名 anim 不会重启
+  $card.removeAttribute('data-anim');
+  // eslint-disable-next-line no-unused-expressions
+  $card.offsetHeight;
+  if (name) $card.setAttribute('data-anim', name);
+}
+
+function showCard(node) {
+  setCardData(node);
+  $card.style.display = '';
+  _setCardDurations();
+  _setCardAnim('in-' + (TRANSITIONS.includes(PREFS.transitionType)
+                       ? PREFS.transitionType : 'fade'));
+  // 兼容老逻辑里 .show 类的稳定态
+  $card.classList.add('show');
+}
+function hideCard() {
+  _setCardDurations();
+  _setCardAnim('out-' + (TRANSITIONS.includes(PREFS.transitionType)
+                        ? PREFS.transitionType : 'fade'));
+  $card.classList.remove('show');
+}
+function instantHideCard() {
+  _setCardAnim(null);
+  $card.classList.remove('show');
+  $card.style.display = 'none';
+  $card.style.opacity = 0;
+}
+
+// 卡片左右翻看照片（手动，非自动）
+document.getElementById('card-prev-photo').onclick = function (e) {
+  e.stopPropagation(); flipCardPhoto(-1);
+};
+document.getElementById('card-next-photo').onclick = function (e) {
+  e.stopPropagation(); flipCardPhoto(+1);
+};
+function flipCardPhoto(delta) {
+  const urls = JSON.parse($card.dataset.photoUrls || '[]');
+  if (urls.length <= 1) return;
+  State.cardPhotoIdx = (State.cardPhotoIdx + delta + urls.length) % urls.length;
+  $cardPhoto.src = urls[State.cardPhotoIdx];
+  $cardDots.querySelectorAll('span').forEach((d, i) => {
+    d.classList.toggle('active', i === State.cardPhotoIdx);
+  });
+}
+
+// 点卡片 → 半模态展开
+$card.onclick = openModal;
+
+// ============================================================
+// 半模态展开
+// ============================================================
+const $modalOverlay = document.getElementById('modal-overlay');
+const $modal        = document.getElementById('modal');
+
+function openModal() {
+  const node = NODES[State.currentNodeIdx];
+  if (!node) return;
+  // v0.9.4: 不再自动暂停回放 — 模态是底部 65vh，顶部 35vh 仍能看到地图飞行
+  // 和卡片切换；模态本身 z-index 51 在最上层不会被状态机干扰，关闭后回放
+  // 自然延续用户进入模态时所在节点之后的位置。如果用户想停就主动按 ⏸。
+
+  document.getElementById('modal-title').textContent = node.title || '';
+
+  const photoUrls = collectNodePhotoUrls(node, 750);
+  const $strip = document.getElementById('modal-photos');
+  $strip.innerHTML = '';
+  photoUrls.forEach(u => {
+    const img = document.createElement('img');
+    img.src = u; img.loading = 'lazy';
+    $strip.appendChild(img);
+  });
+  document.getElementById('modal-photo-count').textContent =
+    photoUrls.length > 0 ? `共 ${photoUrls.length} 张照片` : '';
+
+  const $meta = document.getElementById('modal-meta');
+  $meta.innerHTML = '';
+  if (node.mood) {
+    const m = document.createElement('span');
+    m.className = 'mood'; m.textContent = node.mood;
+    $meta.appendChild(m);
+  }
+  (node.tags || []).forEach(t => {
+    const tg = document.createElement('span');
+    tg.className = 'tag'; tg.textContent = '#' + t;
+    $meta.appendChild(tg);
+  });
+
+  const noteEl = document.getElementById('modal-note');
+  const noteToggle = document.getElementById('modal-note-toggle');
+  noteEl.textContent = node.content || '';
+  // v0.9.1: 重置成收起状态再判断是否需要按钮
+  noteEl.classList.remove('expanded');
+  noteToggle.textContent = '展开';
+  noteToggle.classList.add('hidden');
+  requestAnimationFrame(() => {
+    if (noteEl.scrollHeight > noteEl.clientHeight + 1) {
+      noteToggle.classList.remove('hidden');
+    }
+  });
+  noteToggle.onclick = () => {
+    const isExp = noteEl.classList.toggle('expanded');
+    noteToggle.textContent = isExp ? '收起' : '展开';
+  };
+  // visitedAt 规范是毫秒，但万一旧客户端误传了秒（10 位数字 < 1e11），
+  // 这里防御性地放大成毫秒，避免详情页时间显示"1970-01-XX"。
+  const _ts = typeof node.visitedAt === 'number'
+    ? (node.visitedAt < 1e11 ? node.visitedAt * 1000 : node.visitedAt)
+    : 0;
+  document.getElementById('modal-timestamp').textContent =
+    _ts ? new Date(_ts).toLocaleString('zh-CN') : '';
+
+  $modalOverlay.classList.add('show');
+  $modal.classList.add('show');
+}
+function closeModal() {
+  $modalOverlay.classList.remove('show');
+  $modal.classList.remove('show');
+}
+$modalOverlay.onclick = closeModal;
+document.getElementById('modal-close').onclick = closeModal;
+
+// ============================================================
+// 5 阶段状态机
+// ============================================================
+function scheduledMs(d) { return d / State.speed(); }
+
+function enterPhase(phase) {
+  State.phase = phase;
+  clearTimeout(State.phaseTimer);
+  if (phase === PHASE.FADE_IN) {
+    showCard(NODES[State.currentNodeIdx]);
+    State.phaseTimer = setTimeout(() => enterPhase(PHASE.STAYING), scheduledMs(DUR.FADE_IN));
+  } else if (phase === PHASE.STAYING) {
+    State.phaseTimer = setTimeout(() => enterPhase(PHASE.FADE_OUT), scheduledMs(DUR.STAYING));
+  } else if (phase === PHASE.FADE_OUT) {
+    hideCard();
+    State.phaseTimer = setTimeout(() => enterPhase(PHASE.MOVING), scheduledMs(DUR.FADE_OUT));
+  } else if (phase === PHASE.MOVING) {
+    instantHideCard();
+    const next = State.currentNodeIdx + 1;
+    if (next >= NODES.length) {
+      // 播放完毕：停在最后节点，不循环
+      pause();
+      return;
+    }
+    State.currentNodeIdx = next;
+    syncProgressUI();
+    focusNode(next, true);
+    // v1.0：路线动画开启时，飞抵新节点同时把 visited polyline 延伸过去
+    if (PREFS.enableRouteAnimation) updateVisitedRoute();
+    State.phaseTimer = setTimeout(() => enterPhase(PHASE.FADE_IN), scheduledMs(DUR.MOVING));
+  }
+}
+
+// v1.0.2 #1：play/pause 只控制状态机，**不再**牵动 BGM。BGM 由进入页面
+// 时的 startBgm() + 顶部 ♪ 按钮独立管理。
+function play() {
+  if (NODES.length === 0) return;
+  State.isPlaying = true;
+  $playBtn.innerHTML = ICONS.pause;
+  enterPhase(PHASE.FADE_IN);
+}
+function pause() {
+  State.isPlaying = false;
+  $playBtn.innerHTML = ICONS.play;
+  clearTimeout(State.phaseTimer);
+}
+function togglePlay() { State.isPlaying ? pause() : play(); }
+
+// ============================================================
+// 倍速
+// ============================================================
+function cycleSpeed() {
+  State.speedIdx = (State.speedIdx + 1) % SPEEDS.length;
+  $speedBtn.textContent = SPEEDS[State.speedIdx] + 'x';
+  // 与 TripReplayPage 一致：音频不跟随倍速变化（SDK 限制）
+}
+
+// ============================================================
+// 跳到指定节点
+// v0.9.3：保留当前 play/pause 状态——播放中跳节点继续播放（从新节点
+// FADE_IN 重新进入状态机），暂停中跳节点保持暂停只刷新卡片。
+// 之前是无脑 pause()，结果用户点 ⏭ 想看下一段就被打断要再点 ▶。
+// ============================================================
+function jumpTo(idx) {
+  if (idx < 0 || idx >= NODES.length) return;
+  const wasPlaying = State.isPlaying;
+  // 清掉当前节点的 phase 计时器，但**不**翻 isPlaying 标记 / 不暂停音乐
+  clearTimeout(State.phaseTimer);
+  State.currentNodeIdx = idx;
+  syncProgressUI();
+  instantHideCard();
+  focusNode(idx, false);          // instant focus（不走 fly 动画）
+  // 拖拉进度条时把 visited 路径也同步成"已经走过 idx"
+  if (PREFS.enableRouteAnimation) updateVisitedRoute();
+  // 用 phaseTimer 存这个延迟启动的 timer，下一次 jumpTo 来时能 clearTimeout
+  // 把它取消（slider 拖动时 oninput 频繁触发，避免堆叠多个 FADE_IN 计时器）
+  if (wasPlaying) {
+    // 继续播：从新节点的 FADE_IN 阶段重新开始状态机；音乐没停过
+    State.phaseTimer = setTimeout(() => enterPhase(PHASE.FADE_IN), 50);
+  } else {
+    // 之前就是暂停的：只把新节点的卡片显示出来
+    State.phaseTimer = setTimeout(() => showCard(NODES[idx]), 50);
+  }
+}
+
+function syncProgressUI() {
+  $progress.value = State.currentNodeIdx;
+  $progressLbl.textContent = fmtNode(State.currentNodeIdx);
+}
+
+// ============================================================
+// 控件绑定
+// ============================================================
+document.getElementById('btn-play').onclick = togglePlay;
+document.getElementById('btn-prev').onclick = () => jumpTo(State.currentNodeIdx - 1);
+document.getElementById('btn-next').onclick = () => jumpTo(State.currentNodeIdx + 1);
+document.getElementById('btn-speed').onclick = cycleSpeed;
+document.getElementById('btn-exit').onclick = () => {
+  history.length > 1 ? history.back() : window.close();
+};
+
+$progress.oninput = (e) => {
+  jumpTo(parseInt(e.target.value, 10));
+};
+
+// ============================================================
+// 背景音乐 —— v1.0.2 改成"进入页面就自动播 + 仅 ♪ 按钮控制"
+//   * 初次 boot() 调 startBgm()：先尝试 bgm.play()，被浏览器拒就挂钩
+//     第一次用户手势（pointerdown / touchstart）再播。
+//   * play()/pause()（节点状态机）**不再**牵动 BGM。
+//   * 顶部 ♪ 按钮：toggle muted，muted=true 立刻 pause；恢复时直接 play。
+//   * 退出页面（iframe.src=about:blank / 关 tab）：audio element 被销毁，
+//     BGM 自然停。
+// ============================================================
+const bgm = document.getElementById('bgm');
+let muted = false;
+
+function startBgm() {
+  if (muted) return;
+  bgm.play().catch(() => {
+    // 自动播放被拒：等第一次用户手势再尝试。{once:true} 确保只触发一次。
+    const onFirstGesture = () => {
+      if (!muted) bgm.play().catch(() => {});
+      window.removeEventListener('pointerdown', onFirstGesture);
+      window.removeEventListener('touchstart',  onFirstGesture);
+    };
+    window.addEventListener('pointerdown', onFirstGesture, { once: true });
+    window.addEventListener('touchstart',  onFirstGesture, { once: true, passive: true });
+  });
+}
+
+document.getElementById('btn-music').onclick = () => {
+  muted = !muted;
+  const $bm = document.getElementById('btn-music');
+  $bm.classList.toggle('muted', muted);
+  if (muted) {
+    bgm.pause();
+  } else {
+    bgm.play().catch(() => {});
+  }
+};
+
+// 微信内置浏览器：必须在 WeixinJSBridgeReady 之后才能尝试自动播放音频
+function tryWeixinAutoplayHook() {
+  if (typeof WeixinJSBridge !== 'undefined') {
+    WeixinJSBridge.invoke('getNetworkType', {}, () => { startBgm(); });
+  } else {
+    document.addEventListener('WeixinJSBridgeReady', () => { startBgm(); }, false);
+  }
+}
+
+// ============================================================
+// 启动
+// ============================================================
+function _injectIcons() {
+  document.getElementById('btn-exit').innerHTML        = ICONS.close;
+  document.getElementById('btn-music').innerHTML       = ICONS.music;
+  document.getElementById('btn-prev').innerHTML        = ICONS.prev;
+  document.getElementById('btn-next').innerHTML        = ICONS.next;
+  document.getElementById('btn-play').innerHTML        = ICONS.play;
+  document.getElementById('card-prev-photo').innerHTML = ICONS.chevLeft;
+  document.getElementById('card-next-photo').innerHTML = ICONS.chevRight;
+  document.getElementById('modal-close').innerHTML     = ICONS.close;
+}
+
+function boot() {
+  _injectIcons();
+
+  if (NODES.length === 0) return;
+
+  // v1.0.1：被 viewer_publish.html 用 iframe 嵌入时，外层 overlay 已经有
+  // 自己的关闭 ×（替代了"退出回放"语义），iframe 内部的 btn-exit 既调
+  // history.back() 在嵌入场景里不工作，又让用户看到"左上右上两个 ×"
+  // 困惑。同源嵌入下隐藏 btn-exit；直接打开 /sreplay 的链接照常显示。
+  if (window.parent !== window) {
+    document.getElementById('btn-exit').style.display = 'none';
+  }
+
+  // v1.0：先把偏好打到 :root（kit 决定 tile 主题/路线颜色，必须在 initMap 前）
+  applyStyleKit(PREFS.styleKitId);
+  applyFilter(PREFS.filterId);
+  applyRipple(PREFS.enableRipple);
+  applyBlurOverlay(PREFS.enableBlurOverlay);
+
+  initMap();
+  syncProgressUI();
+  $progress.max = NODES.length - 1;
+
+  document.title = (DATA.tripName || 'ItsMapPin 分享') + ' · 路线回放';
+
+  // v1.0.2 #5：进入页面后等 initMap fitBounds 稳定（~400ms 内动画收尾）
+  // 直接 play() 自动开始状态机（旧版是只 showCard 进暂停态）。
+  // v1.0.2 #1：startBgm() 独立尝试自动播放音乐，与状态机解耦。
+  startBgm();
+  setTimeout(() => { play(); }, 500);
+
+  // 微信内置浏览器音频自动播放兼容
+  tryWeixinAutoplayHook();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
+</script>
+</body>
+</html>

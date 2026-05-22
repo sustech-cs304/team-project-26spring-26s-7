@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Import style -->
+  <link rel="stylesheet" href="..\..\index.css" />
+  <link rel="stylesheet" href="..\..\prettify.css" />
+  <!-- Import Vue 3 -->
+  <script src="..\..\vue.global.prod.js"></script>
+  <!-- Import component library -->
+  <script src="..\..\index.full.min.js"></script>
+  <script src="..\..\prettify.js"></script>
+  <title>Coverage</title>
+</head>
+
+<body>
+  <div id="app" class="common-layout">
+    <el-container>
+      <el-header>
+        <el-row :gutter="10">
+          <el-col :span="5">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <el-link type="primary" :href="relativeHome">
+                    <h2>&lt;</h2>
+                  </el-link>
+                </el-text></div>
+              <div><el-text class="mx-1 "><h2>{{title}}</h2></el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info"></el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.functions.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Functions</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.functions.covered}}/{{file.summary.functions.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.branches.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Branches</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.branches.covered}}/{{file.summary.branches.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.lines.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Lines</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.lines.covered}}/{{file.summary.lines.total}}</el-text></div>
+            </el-space>
+          </el-col>
+        </el-row>
+        <el-divider />
+      </el-header>
+      <el-main>
+        <el-row>
+        </el-row>
+        <pre>
+          <table class="coverage">
+            <tr>
+              <td class="line-count quiet">
+                <pre class="prettyprint lang-js">
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+                </pre>
+        </td>
+        <td class="text">
+          <pre class="prettyprint linenums lang-js">
+/* 
+ * Copyright (c) 2024 Huawei Device Co., Ltd. 
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); 
+ * you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at 
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0 
+ * 
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and 
+ * limitations under the License. 
+ */ 
+ 
+import { relationalStore as rdb } from &#39;@kit.ArkData&#39;; 
+import { RdbHelper } from &#39;./RdbHelper&#39;; 
+import { logger } from &#39;../utils/Logger&#39;; 
+import { PhotoMetadata } from &#39;../ai/PhotoMetadata&#39;; 
+ 
+const TAG = &#39;PhotoMetadataRepo&#39;; 
+ 
+/** 
+ * 照片元数据仓库 
+ * 管理 photo_metadata 表的 CRUD 操作 
+ */ 
+export class PhotoMetadataRepository { 
+  private rdbHelper: RdbHelper; 
+ 
+  constructor() { 
+    this.rdbHelper = RdbHelper.getInstance(); 
+  } 
+ 
+  /** 
+   * 插入或更新照片元数据 
+   * @param metadata 照片元数据 
+   */ 
+  async upsert(metadata: PhotoMetadata): Promise&lt;void&gt; { 
+    logger.info(TAG, `Upserting metadata for: ${metadata.photoPath}`); 
+ 
+    const store = await this.rdbHelper.getStore(); 
+ 
+    const valueBucket: rdb.ValuesBucket = { 
+      photo_path: metadata.photoPath, 
+      scene_tags: JSON.stringify(metadata.sceneTags), 
+      object_tags: JSON.stringify(metadata.objectTags), 
+      color_tags: JSON.stringify(metadata.colorTags), 
+      time_tags: JSON.stringify(metadata.timeTags), 
+      emotion_tags: JSON.stringify(metadata.emotionTags), 
+      extracted_at: metadata.extractedAt, 
+      sensitivity: &#39;S2&#39; 
+    }; 
+ 
+    // 使用 REPLACE 语义（插入或替换） 
+    const result = await store.insert(&#39;photo_metadata&#39;, valueBucket, rdb.ConflictResolution.ON_CONFLICT_REPLACE); 
+ 
+    logger.debug(TAG, `Upsert result: ${result}`); 
+  } 
+ 
+  /** 
+   * 根据照片路径获取元数据 
+   * @param photoPath 照片沙箱路径 
+   * @returns 照片元数据，不存在则返回 undefined 
+   */ 
+  async getByPath(photoPath: string): Promise&lt;PhotoMetadata | undefined&gt; { 
+    logger.info(TAG, `Getting metadata for: ${photoPath}`); 
+ 
+    const store = await this.rdbHelper.getStore(); 
+ 
+    const predicates = new rdb.RdbPredicates(&#39;photo_metadata&#39;); 
+    predicates.equalTo(&#39;photo_path&#39;, photoPath); 
+ 
+    const resultSet = await store.query(predicates); 
+ 
+    try { 
+      if (resultSet.goToFirstRow()) { 
+        const metadata: PhotoMetadata = { 
+          photoPath: resultSet.getString(resultSet.getColumnIndex(&#39;photo_path&#39;)), 
+          sceneTags: this.parseJsonArray(resultSet.getString(resultSet.getColumnIndex(&#39;scene_tags&#39;))), 
+          objectTags: this.parseJsonArray(resultSet.getString(resultSet.getColumnIndex(&#39;object_tags&#39;))), 
+          colorTags: this.parseJsonArray(resultSet.getString(resultSet.getColumnIndex(&#39;color_tags&#39;))), 
+          timeTags: this.parseJsonArray(resultSet.getString(resultSet.getColumnIndex(&#39;time_tags&#39;))), 
+          emotionTags: this.parseJsonArray(resultSet.getString(resultSet.getColumnIndex(&#39;emotion_tags&#39;))), 
+          extractedAt: resultSet.getLong(resultSet.getColumnIndex(&#39;extracted_at&#39;)) 
+        }; 
+        logger.debug(TAG, `Found metadata: ${JSON.stringify(metadata)}`); 
+        return metadata; 
+      } 
+ 
+      logger.info(TAG, `No metadata found for: ${photoPath}`); 
+      return undefined; 
+    } finally { 
+      resultSet.close(); 
+    } 
+  } 
+ 
+  /** 
+   * 批量获取多张照片的元数据 
+   * @param photoPaths 照片路径数组 
+   * @returns 元数据 Map (路径 -&gt; 元数据) 
+   */ 
+  async getBatch(photoPaths: string[]): Promise&lt;Map&lt;string, PhotoMetadata&gt;&gt; { 
+    logger.info(TAG, `Batch getting ${photoPaths.length} photos metadata`); 
+ 
+    const resultMap = new Map&lt;string, PhotoMetadata&gt;(); 
+ 
+    if (photoPaths.length === 0) { 
+      return resultMap; 
+    } 
+ 
+    const store = await this.rdbHelper.getStore(); 
+ 
+    const predicates = new rdb.RdbPredicates(&#39;photo_metadata&#39;); 
+    predicates.in(&#39;photo_path&#39;, photoPaths); 
+ 
+    const resultSet = await store.query(predicates); 
+ 
+    try { 
+      while (resultSet.goToNextRow()) { 
+        const metadata: PhotoMetadata = { 
+          photoPath: resultSet.getString(resultSet.getColumnIndex(&#39;photo_path&#39;)), 
+          sceneTags: this.parseJsonArray(resultSet.getString(resultSet.getColumnIndex(&#39;scene_tags&#39;))), 
+          objectTags: this.parseJsonArray(resultSet.getString(resultSet.getColumnIndex(&#39;object_tags&#39;))), 
+          colorTags: this.parseJsonArray(resultSet.getString(resultSet.getColumnIndex(&#39;color_tags&#39;))), 
+          timeTags: this.parseJsonArray(resultSet.getString(resultSet.getColumnIndex(&#39;time_tags&#39;))), 
+          emotionTags: this.parseJsonArray(resultSet.getString(resultSet.getColumnIndex(&#39;emotion_tags&#39;))), 
+          extractedAt: resultSet.getLong(resultSet.getColumnIndex(&#39;extracted_at&#39;)) 
+        }; 
+        resultMap.set(metadata.photoPath, metadata); 
+      } 
+    } finally { 
+      resultSet.close(); 
+    } 
+ 
+    logger.debug(TAG, `Found ${resultMap.size} metadata records`); 
+    return resultMap; 
+  } 
+ 
+  /** 
+   * 删除照片元数据 
+   * @param photoPath 照片沙箱路径 
+   */ 
+  async delete(photoPath: string): Promise&lt;void&gt; { 
+    logger.info(TAG, `Deleting metadata for: ${photoPath}`); 
+ 
+    const store = await this.rdbHelper.getStore(); 
+ 
+    const predicates = new rdb.RdbPredicates(&#39;photo_metadata&#39;); 
+    predicates.equalTo(&#39;photo_path&#39;, photoPath); 
+ 
+    const result = await store.delete(predicates); 
+    logger.debug(TAG, `Delete result: ${result}`); 
+  } 
+ 
+  /** 
+   * 检查照片元数据是否存在 
+   * @param photoPath 照片沙箱路径 
+   * @returns 是否存在 
+   */ 
+  async exists(photoPath: string): Promise&lt;boolean&gt; { 
+    const metadata = await this.getByPath(photoPath); 
+    return metadata !== undefined; 
+  } 
+ 
+  /** 
+   * 解析 JSON 数组字段 
+   * @param jsonString JSON 字符串 
+   * @returns 字符串数组 
+   */ 
+  private parseJsonArray(jsonString: string): string[] { 
+    try { 
+      if (!jsonString || jsonString === &#39;&#39;) { 
+        return []; 
+      } 
+      return JSON.parse(jsonString) as string[]; 
+    } catch (err) { 
+      logger.error(TAG, `Failed to parse JSON array: ${jsonString}`); 
+      return []; 
+    } 
+  } 
+}
+              </pre>
+        </td>
+        </tr>
+        </table>
+        </pre>
+      </el-main>
+      <el-footer align="middle" class="footer">
+        Code coverage generated by <el-link href="https://github.com/SMAT-Lab/bjc" type="primary"
+          target="_blank">bjc</el-link> at {{date}}
+      </el-footer>
+    </el-container>
+  </div>
+</body>
+
+<script>
+  const App = {
+    data() {
+      return {"date":"Fri May 22 2026 22:32:24 GMT+0800 (中国标准时间)","file":{"version":"bjc v1.0.0","versionCode":10000,"path":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend/entry/src/main/ets/common/data/PhotoMetadataRepository.ets","hash":"061a9a6f2c7e80d6c49078a66dd2f4367eacd3e4b279256341b2b102415a7e39","lineCnt":181,"count":0,"projectPath":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend","functions":[{"name":"PhotoMetadataRepository.constructor","count":0,"regions":[{"startLoc":{"line":30,"col":3},"endLoc":{"line":32,"col":4},"count":0,"ignored":0},{"startLoc":{"line":31,"col":5},"endLoc":{"line":32,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":0},{"name":"PhotoMetadataRepository.upsert","count":0,"regions":[{"startLoc":{"line":38,"col":3},"endLoc":{"line":58,"col":4},"count":0,"ignored":0},{"startLoc":{"line":39,"col":5},"endLoc":{"line":58,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":1},{"name":"PhotoMetadataRepository.getByPath","count":0,"regions":[{"startLoc":{"line":65,"col":3},"endLoc":{"line":95,"col":4},"count":0,"ignored":0},{"startLoc":{"line":75,"col":9},"endLoc":{"line":92,"col":6},"count":0,"ignored":0},{"startLoc":{"line":76,"col":37},"endLoc":{"line":88,"col":8},"count":0,"ignored":0},{"startLoc":{"line":92,"col":15},"endLoc":{"line":94,"col":6},"count":0,"ignored":0},{"startLoc":{"line":90,"col":7},"endLoc":{"line":92,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":76,"col":11},"endLoc":{"line":76,"col":35},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":2},{"name":"PhotoMetadataRepository.getBatch","count":0,"regions":[{"startLoc":{"line":102,"col":3},"endLoc":{"line":137,"col":4},"count":0,"ignored":0},{"startLoc":{"line":118,"col":9},"endLoc":{"line":131,"col":6},"count":0,"ignored":0},{"startLoc":{"line":119,"col":7},"endLoc":{"line":130,"col":8},"count":0,"ignored":0},{"startLoc":{"line":107,"col":34},"endLoc":{"line":109,"col":6},"count":0,"ignored":0},{"startLoc":{"line":131,"col":15},"endLoc":{"line":133,"col":6},"count":0,"ignored":0},{"startLoc":{"line":135,"col":5},"endLoc":{"line":137,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":107,"col":9},"endLoc":{"line":107,"col":32},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":3},{"name":"PhotoMetadataRepository.delete","count":0,"regions":[{"startLoc":{"line":143,"col":3},"endLoc":{"line":153,"col":4},"count":0,"ignored":0},{"startLoc":{"line":144,"col":5},"endLoc":{"line":153,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":4},{"name":"PhotoMetadataRepository.exists","count":0,"regions":[{"startLoc":{"line":160,"col":3},"endLoc":{"line":163,"col":4},"count":0,"ignored":0},{"startLoc":{"line":161,"col":5},"endLoc":{"line":163,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":5},{"name":"PhotoMetadataRepository.parseJsonArray","count":0,"regions":[{"startLoc":{"line":170,"col":3},"endLoc":{"line":180,"col":4},"count":0,"ignored":0},{"startLoc":{"line":171,"col":9},"endLoc":{"line":176,"col":6},"count":0,"ignored":0},{"startLoc":{"line":176,"col":7},"endLoc":{"line":179,"col":6},"count":0,"ignored":0},{"startLoc":{"line":172,"col":45},"endLoc":{"line":174,"col":8},"count":0,"ignored":0},{"startLoc":{"line":175,"col":7},"endLoc":{"line":176,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":172,"col":11},"endLoc":{"line":172,"col":43},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":6}],"exeLine":{"0":16,"1":17,"2":18,"3":19,"4":21,"5":27,"6":28,"7":30,"8":31,"9":38,"10":39,"11":41,"12":43,"13":44,"14":45,"15":46,"16":47,"17":48,"18":49,"19":50,"20":51,"21":55,"22":57,"23":65,"24":66,"25":68,"26":70,"27":71,"28":73,"29":75,"30":76,"31":77,"32":78,"33":79,"34":80,"35":81,"36":82,"37":83,"38":84,"39":86,"40":87,"41":90,"42":91,"43":92,"44":93,"45":102,"46":103,"47":105,"48":107,"49":108,"50":111,"51":113,"52":114,"53":116,"54":118,"55":119,"56":120,"57":121,"58":122,"59":123,"60":124,"61":125,"62":126,"63":127,"64":129,"65":131,"66":132,"67":135,"68":136,"69":143,"70":144,"71":146,"72":148,"73":149,"74":151,"75":152,"76":160,"77":161,"78":162,"79":170,"80":171,"81":172,"82":173,"83":175,"84":176,"85":177,"86":178},"summary":{"lines":{"total":80,"covered":0,"pct":0,"executedLineCount":[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,-1,-1,-1,-1,-1,-1,0,0,-1,0,-1,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,-1,0,-1,-1,-1,-1,-1,-1,-1,0,0,-1,0,-1,0,0,-1,0,-1,0,0,0,0,0,0,0,0,0,0,-1,0,0,-1,-1,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,0,0,-1,0,-1,0,0,-1,-1,0,-1,0,0,-1,0,-1,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,0,-1,-1,0,0,-1,-1,-1,-1,-1,-1,0,0,-1,0,-1,0,0,-1,0,0,-1,-1,-1,-1,-1,-1,-1,0,0,0,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,-1,0,0,0,0,-1,-1,-1]},"functions":{"total":7,"covered":0,"pct":0},"branches":{"total":6,"covered":0,"pct":0}}},"title":"PhotoMetadataRepository.ets.html","relativeHome":"..\\..\\index.html"};
+    }
+  };
+
+  const app = Vue.createApp(App);
+  app.use(ElementPlus);
+  app.mount("#app");
+
+  window.onload = function () {
+    prettyPrint();
+  }
+</script>
+
+<style scoped>
+  table.coverage {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 0 0;
+    padding: 0;
+  }
+
+  table.coverage td {
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  table.coverage td.line-count {
+    width: 12%;
+    text-align: right;
+    padding: 0 5px 0 20px;
+  }
+
+  table.coverage td.line-coverage {
+    text-align: right;
+    padding-right: 10px;
+    min-width: 20px;
+  }
+
+  table.coverage td span.cline-any {
+    display: inline-block;
+    padding: 0 5px;
+    width: 100%;
+    height: 18px;
+  }
+
+  .low,
+  .cline-no {
+    background: #FCE1E5
+  }
+
+  .high,
+  .cline-yes {
+    background: rgb(230, 245, 208)
+  }
+
+  span.cline-neutral {
+    background: #eaeaea;
+  }
+
+  pre.prettyprint {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .el-main {
+    box-sizing: border-box;
+    display: block;
+    flex: 1;
+    flex-basis: auto;
+    overflow: auto;
+    padding: var(--el-main-padding)
+  }
+
+  .el-container {
+    min-height: 100vh;
+    height: 100%;
+  }
+
+  .footer {
+    font-size: small;
+  }
+
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .el-col {
+    border-radius: 4px;
+  }
+
+  .green {
+    color: var(--el-color-success);
+  }
+
+  .red {
+    color: var(--el-color-error);
+  }
+
+  .linenums li {
+    height: 18px;
+    line-height: 18px;
+  }
+
+  li.L0,
+  li.L1,
+  li.L2,
+  li.L3,
+  li.L5,
+  li.L6,
+  li.L7,
+  li.L8 {
+    list-style-type: decimal
+  }
+
+  .el-col-5 {
+    max-width: 100%;
+  }
+
+  .el-col-3 {
+    max-width: 100%;
+  }
+
+</style>
+
+</html>

@@ -1,0 +1,554 @@
+<!--
+  ItsMapPin 分享查看页 — Vue 3 + Three.js 3D 演示版
+
+  编辑指引（哪一段改什么）：
+    A. <style> 块             —— 视觉：色板、字号、阴影、动效曲线
+    B. setupHero(canvas, …)   —— 头部 Three.js 旋转线框星球 + 节点黄点
+    C. tiltHandler / tiltReset—— 卡片跟鼠标的 3D 倾斜
+    D. createApp({ template }) —— Vue 模板（页面骨架、节点卡片、底部）
+    E. setup()                —— 数据加载、错误状态、IntersectionObserver
+
+  数据来源：fetch('/api/share/{code}.{sig}') 返回的 JSON。
+  路由：本页面挂在 /s3d/{code}.{sig}，路由代码在
+        share_service/routers/viewer.py。
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>ItsMapPin · 分享</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <!-- Three.js dropped its UMD bundle at r150, so we use ESM via importmap.
+       Vue's ESM build is loaded the same way. Both `import` calls below
+       resolve through this map. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "vue":   "https://unpkg.com/vue@3.4.27/dist/vue.esm-browser.prod.js",
+      "three": "https://cdn.jsdelivr.net/npm/three@0.164.0/build/three.module.min.js"
+    }
+  }
+  </script>
+  <style>
+    /* ===== A. 视觉调色板（改这里） ===== */
+    :root {
+      --bg:        #0a0a0f;
+      --bg-card:   linear-gradient(145deg, rgba(40,40,55,0.85), rgba(20,20,30,0.95));
+      --text:      #e8e8ed;
+      --text-soft: #c8c8d0;
+      --text-mute: #86868b;
+      --accent:    #6366f1;   /* indigo — 用于线框 + tag */
+      --warm:      #fbbf24;   /* amber — 用于 mood + 节点 marker */
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* === v0.8.1 长文本 / 长 URL 防溢出 ===
+       3D 卡片内的 h2 / .content / .tag 如果遇到不可断的长串，会让卡片
+       超过 main 容器宽度（perspective: 1400px 也救不了），整页随之拉宽。
+       强制硬断 + img max-width 100% + flex/grid 子项 min-width: 0。 */
+    html { max-width: 100%; }
+    body, h1, h2, h3, p, span, article {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    img { max-width: 100%; }
+    main, .meta, .tags, .photos, .hero-content { min-width: 0; }
+
+    /* === v0.9.1 节点正文展开/收起 === */
+    .content {
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      white-space: pre-wrap;
+    }
+    .content.expanded { -webkit-line-clamp: unset; display: block; }
+    .toggle-content {
+      background: none; border: none;
+      color: #a5b4fc; cursor: pointer;
+      padding: 4px 0; font-size: 13px;
+      font-weight: 500;
+      transform: translateZ(15px);
+    }
+    .toggle-content.hidden { display: none; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* —— Hero —— */
+    .hero {
+      position: relative;
+      height: 60vh; min-height: 380px;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .hero canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      text-align: center; padding: 0 24px;
+      pointer-events: none;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 6vw, 56px);
+      font-weight: 700; letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 0%, #a0a0a8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: fadeUp 0.9s cubic-bezier(0.2,0.8,0.2,1);
+    }
+    .date-range {
+      margin-top: 12px; color: var(--text-mute); font-size: 16px;
+      animation: fadeUp 0.9s 0.15s cubic-bezier(0.2,0.8,0.2,1) backwards;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* —— 主体（perspective 容器） —— */
+    main {
+      max-width: 720px; margin: 0 auto;
+      padding: 32px 16px 80px;
+      perspective: 1400px;
+    }
+
+    /* —— 节点卡片 —— */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 22px;
+      backdrop-filter: blur(12px);
+      transform-style: preserve-3d;
+      transition: transform 0.18s ease-out, box-shadow 0.4s;
+      opacity: 0;
+      transform: translateY(40px);
+      cursor: default;
+      will-change: transform;
+    }
+    .card.visible {
+      animation: cardIn 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    @keyframes cardIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .card:hover {
+      box-shadow: 0 25px 70px rgba(99, 102, 241, 0.18),
+                  0 10px 25px rgba(0,0,0,0.35);
+    }
+
+    .card h2 {
+      font-size: 22px; font-weight: 600; margin-bottom: 12px;
+      transform: translateZ(40px);
+    }
+    .meta {
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      margin-bottom: 14px; font-size: 13px; color: var(--text-mute);
+      transform: translateZ(28px);
+    }
+    .poi::before { content: "📍 "; }
+    .mood {
+      background: linear-gradient(135deg, var(--warm), #f59e0b);
+      color: #1a1a1f; font-weight: 600;
+      padding: 3px 10px; border-radius: 8px; font-size: 12px;
+    }
+    .coord {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 12px; color: #6e6e73;
+    }
+    .content {
+      color: var(--text-soft); margin-bottom: 14px;
+      white-space: pre-wrap;
+      transform: translateZ(20px);
+    }
+    .tags {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;
+      transform: translateZ(20px);
+    }
+    .tag {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      padding: 3px 10px; border-radius: 999px; font-size: 12px;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+    .photos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+      transform: translateZ(28px);
+    }
+    .photos img {
+      width: 100%; aspect-ratio: 1;
+      object-fit: cover; border-radius: 12px;
+      background: linear-gradient(135deg, #1a1a25, #2a2a35);
+      transition: transform 0.3s ease, box-shadow 0.3s;
+    }
+    .photos img:hover {
+      transform: scale(1.06);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+    }
+    .photos img.broken {
+      background: repeating-linear-gradient(45deg,
+        #1a1a25, #1a1a25 10px, #25252f 10px, #25252f 20px);
+    }
+
+    /* —— Footer / states —— */
+    footer {
+      text-align: center; padding: 28px 16px;
+      color: #6e6e73; font-size: 12px;
+      display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      margin-top: 40px;
+    }
+    .state {
+      text-align: center; padding: 100px 16px;
+      color: var(--text-mute);
+    }
+    .state .icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+
+    /* —— Hero hint overlay (drag instruction) —— */
+    .hint {
+      position: absolute;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(10px);
+      padding: 8px 16px;
+      border-radius: 999px;
+      color: #c8c8d0;
+      font-size: 13px;
+      pointer-events: none;
+      z-index: 3;
+      animation: fadeUp 0.6s 0.8s cubic-bezier(0.2,0.8,0.2,1) backwards;
+      transition: opacity 0.4s;
+    }
+    .hint.gone { opacity: 0; }
+    .hero canvas { cursor: grab; }
+    .hero canvas.dragging { cursor: grabbing; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="state"><div class="icon">⏳</div>加载中…</div>
+  </div>
+
+<script type="module">
+import * as THREE from 'three';
+import { createApp, ref, computed, onMounted, nextTick } from 'vue';
+
+// ===== B. Three.js 多面体 + 节点 marker + 拖拽旋转 =====
+//
+// 黄点的含义：每个节点的 lat/lng 经标准球面映射 (phi, theta) 投到球面上，
+// 所以这个多面体本质是一个"风格化地球"。看到点都聚在一起，是因为这次 demo
+// 的所有节点都在中国西北一小片区域。把镜头转到那一面就能看清排布。
+//
+// 交互：鼠标 / 触屏拖动旋转，松手有动量惯性。完全静止时缓慢自转。
+function setupHero(canvas, nodes, onFirstInteract) {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(
+    45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+  camera.position.z = 5;
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas, alpha: true, antialias: true,
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+
+  const wireframe = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1.6, 2),
+    new THREE.MeshBasicMaterial({
+      color: 0x6366f1, wireframe: true,
+      transparent: true, opacity: 0.45,
+    })
+  );
+  scene.add(wireframe);
+
+  const inner = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1.55, 2),
+    new THREE.MeshBasicMaterial({
+      color: 0x16162a, transparent: true, opacity: 0.5,
+    })
+  );
+  scene.add(inner);
+
+  // 每个节点的 lat/lng 投到球面
+  nodes.forEach(n => {
+    if (typeof n.lat !== "number" || typeof n.lng !== "number") return;
+    const phi = (90 - n.lat) * Math.PI / 180;
+    const theta = (n.lng + 180) * Math.PI / 180;
+    const r = 1.65;
+    const dot = new THREE.Mesh(
+      new THREE.SphereGeometry(0.06, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xfbbf24 })
+    );
+    dot.position.set(
+      -r * Math.sin(phi) * Math.cos(theta),
+       r * Math.cos(phi),
+       r * Math.sin(phi) * Math.sin(theta)
+    );
+    wireframe.add(dot);
+  });
+
+  // —— 拖拽 + 动量 ——
+  // userRot：用户累计旋转；vel：松手后的角速度，每帧衰减
+  // idleSpinY：当用户完全空闲时的环境慢速自转
+  const userRot   = { x: 0.4, y: 0 };  // 默认略微俯视，看到节点群更自然
+  const vel       = { x: 0, y: 0 };
+  let   idleSpinY = 0;
+  let   dragging  = false;
+  let   lastX = 0, lastY = 0;
+  let   firstInteractFired = false;
+
+  const SENSITIVITY = 0.006;
+  const FRICTION    = 0.94;
+  const IDLE_SPEED  = 0.0025;
+
+  function onPointerDown(e) {
+    dragging = true;
+    canvas.classList.add("dragging");
+    canvas.setPointerCapture(e.pointerId);
+    lastX = e.clientX;
+    lastY = e.clientY;
+    vel.x = 0; vel.y = 0;
+    if (!firstInteractFired) {
+      firstInteractFired = true;
+      onFirstInteract?.();
+    }
+  }
+  function onPointerMove(e) {
+    if (!dragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    userRot.y += dx * SENSITIVITY;
+    userRot.x += dy * SENSITIVITY;
+    vel.x = dx * SENSITIVITY;
+    vel.y = dy * SENSITIVITY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  }
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    canvas.classList.remove("dragging");
+    if (e?.pointerId != null) {
+      try { canvas.releasePointerCapture(e.pointerId); } catch {}
+    }
+  }
+
+  canvas.addEventListener("pointerdown",   onPointerDown);
+  canvas.addEventListener("pointermove",   onPointerMove);
+  canvas.addEventListener("pointerup",     endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
+  canvas.addEventListener("pointerleave",  endDrag);
+
+  function tick() {
+    if (!dragging) {
+      // 应用动量 + 摩擦
+      userRot.y += vel.x;
+      userRot.x += vel.y;
+      vel.x *= FRICTION;
+      vel.y *= FRICTION;
+      // 动量基本耗尽后启动慢速环境自转
+      if (Math.abs(vel.x) < 0.0008 && Math.abs(vel.y) < 0.0008) {
+        idleSpinY += IDLE_SPEED * 0.016 * 60;  // 大约 IDLE_SPEED rad/frame
+      }
+    }
+    // X 限制在 [-π/2, π/2] 防止翻倒
+    if (userRot.x >  1.4) userRot.x =  1.4;
+    if (userRot.x < -1.4) userRot.x = -1.4;
+
+    wireframe.rotation.x = userRot.x;
+    wireframe.rotation.y = userRot.y + idleSpinY;
+    inner.rotation.copy(wireframe.rotation);
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  window.addEventListener("resize", () => {
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+  });
+}
+
+// ===== C. 卡片 3D 倾斜（鼠标位置 → rotateX/rotateY） =====
+function tiltHandler(e) {
+  const card = e.currentTarget;
+  const rect = card.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width - 0.5;
+  const y = (e.clientY - rect.top) / rect.height - 0.5;
+  card.style.transform =
+    `rotateY(${x * 9}deg) rotateX(${-y * 9}deg) translateZ(0)`;
+}
+function tiltReset(e) {
+  e.currentTarget.style.transform = "";
+}
+
+// ===== D & E. Vue 应用 =====
+createApp({
+  setup() {
+    const state = ref({ kind: "loading" });
+    const hintGone = ref(false);
+
+    onMounted(async () => {
+      const m = location.pathname.match(/\/s3d\/([^/]+)$/);
+      if (!m) {
+        state.value = { kind: "error", icon: "⚠️", msg: "链接格式错误" };
+        return;
+      }
+      try {
+        const r = await fetch(`/api/share/${m[1]}`,
+          { headers: { Accept: "application/json" } });
+        if (r.status === 404) {
+          state.value = { kind: "error", icon: "🔗", msg: "链接已失效或已被撤销" };
+          return;
+        }
+        if (r.status === 429) {
+          state.value = { kind: "error", icon: "⏱️", msg: "访问太频繁，请稍后再试" };
+          return;
+        }
+        if (!r.ok) {
+          state.value = { kind: "error", icon: "⚠️", msg: `加载失败（${r.status}）` };
+          return;
+        }
+        const data = await r.json();
+        state.value = { kind: "ok", data };
+        document.title = `${data.snapshot?.trip?.name || "ItsMapPin 分享"} · ItsMapPin`;
+
+        await nextTick();
+        const canvas = document.getElementById("hero-canvas");
+        if (canvas) {
+          setupHero(canvas, data.snapshot?.nodes || [],
+                    () => { hintGone.value = true; });
+        }
+
+        // 滚动入场
+        const obs = new IntersectionObserver((entries) => {
+          entries.forEach(en => {
+            if (en.isIntersecting) {
+              en.target.classList.add("visible");
+              obs.unobserve(en.target);
+            }
+          });
+        }, { threshold: 0.12 });
+        document.querySelectorAll(".card").forEach(el => obs.observe(el));
+
+        // v0.9.1: 节点正文展开/收起 — Vue 渲染完后扫一遍 .content-block，
+        // 真的溢出 4 行的才显示展开按钮（避免短文本旁边出现没意义的 "展开"）
+        document.querySelectorAll(".content-block").forEach(block => {
+          const c = block.querySelector(".content");
+          const b = block.querySelector(".toggle-content");
+          if (!c || !b) return;
+          requestAnimationFrame(() => {
+            if (c.scrollHeight > c.clientHeight + 1) {
+              b.classList.remove("hidden");
+            }
+          });
+          b.onclick = () => {
+            const isExp = c.classList.toggle("expanded");
+            b.textContent = isExp ? "收起" : "展开";
+          };
+        });
+      } catch (e) {
+        state.value = { kind: "error", icon: "⚠️", msg: "网络错误：" + e.message };
+      }
+    });
+
+    const trip       = computed(() => state.value.data?.snapshot?.trip || {});
+    const photoUrls  = computed(() => state.value.data?.photoUrls || {});
+    const expireAt   = computed(() => state.value.data?.expireAt);
+    const viewCount  = computed(() => state.value.data?.viewCount);
+    const sortedNodes = computed(() => {
+      const ns = state.value.data?.snapshot?.nodes || [];
+      return [...ns].sort((a, b) => (a.nodeOrder ?? 0) - (b.nodeOrder ?? 0));
+    });
+
+    function nodePhotos(node) {
+      return (node.photos || []).map(k => photoUrls.value[k]).filter(Boolean);
+    }
+    function fmtTime(ms) { return new Date(ms).toLocaleString("zh-CN"); }
+    function brokenImg(e) {
+      e.target.classList.add("broken");
+      e.target.removeAttribute("src");
+    }
+
+    return {
+      state, hintGone, trip, sortedNodes, expireAt, viewCount,
+      nodePhotos, fmtTime, brokenImg,
+      tiltHandler, tiltReset,
+    };
+  },
+  template: `
+    <div v-if="state.kind === 'loading'" class="state">
+      <div class="icon">⏳</div>加载中…
+    </div>
+    <div v-else-if="state.kind === 'error'" class="state">
+      <div class="icon">{{ state.icon }}</div>{{ state.msg }}
+    </div>
+    <template v-else>
+      <section class="hero">
+        <canvas id="hero-canvas"></canvas>
+        <div class="hero-content">
+          <h1>{{ trip.name || "未命名旅行" }}</h1>
+          <p v-if="trip.startDate || trip.endDate" class="date-range">
+            {{ trip.startDate || "" }} — {{ trip.endDate || "" }}
+          </p>
+        </div>
+        <div class="hint" :class="{ gone: hintGone }">
+          🖐️ 拖动旋转 · 黄点 = 节点位置
+        </div>
+      </section>
+      <main>
+        <article v-for="(node, i) in sortedNodes"
+                 :key="i"
+                 class="card"
+                 @mousemove="tiltHandler"
+                 @mouseleave="tiltReset">
+          <h2>{{ node.title || "未命名节点" }}</h2>
+          <div class="meta">
+            <span v-if="node.poiName" class="poi">{{ node.poiName }}</span>
+            <span v-if="node.mood" class="mood">{{ node.mood }}</span>
+            <span v-if="typeof node.lat === 'number' && typeof node.lng === 'number'" class="coord">
+              {{ node.lat.toFixed(4) }}, {{ node.lng.toFixed(4) }}
+            </span>
+          </div>
+          <div v-if="node.content" class="content-block">
+            <p class="content">{{ node.content }}</p>
+            <button class="toggle-content hidden" type="button">展开</button>
+          </div>
+          <div v-if="(node.tags || []).length" class="tags">
+            <span v-for="t in node.tags" :key="t" class="tag">#{{ t }}</span>
+          </div>
+          <div v-if="nodePhotos(node).length" class="photos">
+            <img v-for="(u, k) in nodePhotos(node)" :key="k"
+                 :src="u" loading="lazy" alt=""
+                 @error="brokenImg">
+          </div>
+        </article>
+        <footer>
+          <span>访问 {{ viewCount }} 次</span>
+          <span>有效期至 {{ fmtTime(expireAt) }}</span>
+        </footer>
+      </main>
+    </template>
+  `,
+}).mount("#app");
+</script>
+</body>
+</html>

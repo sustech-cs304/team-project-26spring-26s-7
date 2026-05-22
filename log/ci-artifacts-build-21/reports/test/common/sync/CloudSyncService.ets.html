@@ -1,0 +1,1286 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Import style -->
+  <link rel="stylesheet" href="..\..\index.css" />
+  <link rel="stylesheet" href="..\..\prettify.css" />
+  <!-- Import Vue 3 -->
+  <script src="..\..\vue.global.prod.js"></script>
+  <!-- Import component library -->
+  <script src="..\..\index.full.min.js"></script>
+  <script src="..\..\prettify.js"></script>
+  <title>Coverage</title>
+</head>
+
+<body>
+  <div id="app" class="common-layout">
+    <el-container>
+      <el-header>
+        <el-row :gutter="10">
+          <el-col :span="5">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <el-link type="primary" :href="relativeHome">
+                    <h2>&lt;</h2>
+                  </el-link>
+                </el-text></div>
+              <div><el-text class="mx-1 "><h2>{{title}}</h2></el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info"></el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.functions.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Functions</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.functions.covered}}/{{file.summary.functions.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.branches.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Branches</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.branches.covered}}/{{file.summary.branches.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.lines.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Lines</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.lines.covered}}/{{file.summary.lines.total}}</el-text></div>
+            </el-space>
+          </el-col>
+        </el-row>
+        <el-divider />
+      </el-header>
+      <el-main>
+        <el-row>
+        </el-row>
+        <pre>
+          <table class="coverage">
+            <tr>
+              <td class="line-count quiet">
+                <pre class="prettyprint lang-js">
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+                </pre>
+        </td>
+        <td class="text">
+          <pre class="prettyprint linenums lang-js">
+import { cloudCommon, cloudDatabase } from &#39;@kit.CloudFoundationKit&#39; 
+import { hilog } from &#39;@kit.PerformanceAnalysisKit&#39; 
+import { BusinessError } from &#39;@kit.BasicServicesKit&#39; 
+import auth from &#39;@hw-agconnect/auth&#39; 
+import type { Trip, MemoryNode } from &#39;../service/types&#39; 
+import { TravelSpecialValues } from &#39;../utils/Constants&#39; 
+import { CloudTravel } from &#39;./CloudTravel&#39; 
+import { CloudMemoryNode } from &#39;./CloudMemoryNode&#39; 
+import { CloudProfile } from &#39;./CloudProfile&#39; 
+import { TravelRepository } from &#39;../data/TravelRepository&#39; 
+ 
+const DOMAIN = 0x0000 
+const TAG = &#39;CloudSyncService&#39; 
+const ZONE_NAME = &#39;TravelPinZone&#39; 
+const MAX_CLOUD_ID_PROBE_COUNT = 10000 
+ 
+let initialized: boolean = false 
+let databaseZone: cloudDatabase.DatabaseZone | null = null 
+ 
+interface TravelPayload { 
+  ownerUid: string 
+  localId: string 
+  cloudId: string 
+  name: string 
+  coverPhoto: string 
+  startDate: number 
+  endDate: number 
+  createdAt: number 
+  updatedAt: number 
+  deletedAt: number 
+  version: number 
+  isPublic: number 
+} 
+ 
+interface NodePayload { 
+  ownerUid: string 
+  localId: string 
+  cloudId: string 
+  travelId: string 
+  title: string 
+  content: string 
+  latitude: number 
+  longitude: number 
+  poiName: string 
+  photos: string[] 
+  mood: string 
+  tags: string[] 
+  nodeOrder: number 
+  createdAt: number 
+  updatedAt: number 
+  deletedAt: number 
+  version: number 
+  photoManifest: string 
+  visitedAt: number 
+} 
+ 
+interface ProfilePayload { 
+  ownerUid: string 
+  cloudId: string 
+  nickname: string 
+  bio: string 
+  avatarCloudPath: string 
+  version: number 
+  updatedAt: number 
+} 
+ 
+export class CloudSyncService { 
+  /** 
+   * 把 cloud_id 用 ownerUid 隔开，避免不同设备/账号的 local id 撞车。 
+   * 旧格式 `travel_&lt;localId&gt;` / `node_&lt;localId&gt;` 已不安全：两个用户的 local id=5 
+   * 会 upsert 到同一行，互相覆盖。新格式 `travel_&lt;uid&gt;_&lt;localId&gt;` / `node_&lt;uid&gt;_&lt;localId&gt;` 
+   * 内嵌 uid 后天然不会冲突。 
+   * 已有 cloud_id 的实体保留旧值（迁移成本），但下面的 hardDelete*ByCloudId 都会再加 
+   * ownerUid 过滤条件，即使 cloud_id 历史撞车也只动自己的行。 
+   */ 
+  static buildTravelCloudId(ownerUid: string, localId: string): string { 
+    return ownerUid &amp;&amp; ownerUid.length &gt; 0 ? `travel_${ownerUid}_${localId}` : `travel_${localId}` 
+  } 
+ 
+  static buildNodeCloudId(ownerUid: string, localId: string): string { 
+    return ownerUid &amp;&amp; ownerUid.length &gt; 0 ? `node_${ownerUid}_${localId}` : `node_${localId}` 
+  } 
+ 
+  private static nextCloudId(candidate: string): string { 
+    const lastUnderscore = candidate.lastIndexOf(&#39;_&#39;) 
+    if (lastUnderscore &lt; 0 || lastUnderscore &gt;= candidate.length - 1) { 
+      return `${candidate}_1` 
+    } 
+ 
+    const suffix = candidate.substring(lastUnderscore + 1) 
+    const suffixNumber = Number(suffix) 
+    if (!Number.isInteger(suffixNumber)) { 
+      return `${candidate}_1` 
+    } 
+ 
+    return `${candidate.substring(0, lastUnderscore + 1)}${suffixNumber + 1}` 
+  } 
+ 
+  private static async travelCloudIdExists(cloudId: string): Promise&lt;boolean&gt; { 
+    if (databaseZone === null || cloudId.length === 0) { 
+      return false 
+    } 
+    const condition = new cloudDatabase.DatabaseQuery(CloudTravel) 
+    condition.equalTo(&#39;cloudId&#39;, cloudId) 
+    const records = await databaseZone.query(condition) 
+    return records.length &gt; 0 
+  } 
+ 
+  private static async nodeCloudIdExists(cloudId: string): Promise&lt;boolean&gt; { 
+    if (databaseZone === null || cloudId.length === 0) { 
+      return false 
+    } 
+    const condition = new cloudDatabase.DatabaseQuery(CloudMemoryNode) 
+    condition.equalTo(&#39;cloudId&#39;, cloudId) 
+    const records = await databaseZone.query(condition) 
+    return records.length &gt; 0 
+  } 
+ 
+  private static async resolveAvailableTravelCloudId(data: TravelPayload): Promise&lt;string&gt; { 
+    if (data.cloudId &amp;&amp; data.cloudId.length &gt; 0) { 
+      return data.cloudId 
+    } 
+ 
+    let cloudId = CloudSyncService.buildTravelCloudId(data.ownerUid, data.localId) 
+    for (let i = 0; i &lt; MAX_CLOUD_ID_PROBE_COUNT; i++) { 
+      if (!(await CloudSyncService.travelCloudIdExists(cloudId))) { 
+        return cloudId 
+      } 
+      const nextCloudId = CloudSyncService.nextCloudId(cloudId) 
+      hilog.warn(DOMAIN, TAG, `[resolveAvailableTravelCloudId] cloudId collision: ${cloudId} -&gt; ${nextCloudId}`) 
+      cloudId = nextCloudId 
+    } 
+    throw new Error(`No available travel cloudId after ${MAX_CLOUD_ID_PROBE_COUNT} probes`) 
+  } 
+ 
+  private static async resolveAvailableNodeCloudId(data: NodePayload): Promise&lt;string&gt; { 
+    if (data.cloudId &amp;&amp; data.cloudId.length &gt; 0) { 
+      return data.cloudId 
+    } 
+ 
+    let cloudId = CloudSyncService.buildNodeCloudId(data.ownerUid, data.localId) 
+    for (let i = 0; i &lt; MAX_CLOUD_ID_PROBE_COUNT; i++) { 
+      if (!(await CloudSyncService.nodeCloudIdExists(cloudId))) { 
+        return cloudId 
+      } 
+      const nextCloudId = CloudSyncService.nextCloudId(cloudId) 
+      hilog.warn(DOMAIN, TAG, `[resolveAvailableNodeCloudId] cloudId collision: ${cloudId} -&gt; ${nextCloudId}`) 
+      cloudId = nextCloudId 
+    } 
+    throw new Error(`No available memory node cloudId after ${MAX_CLOUD_ID_PROBE_COUNT} probes`) 
+  } 
+ 
+  /** 
+   * 从 cloud_id 反推原始 localId（用于构造云端存储路径）： 
+   *  - 旧格式 &#39;travel_5&#39; → &#39;5&#39; 
+   *  - 新格式 &#39;travel_&lt;uid&gt;_5&#39; → &#39;5&#39;（取最后一个下划线之后的部分） 
+   * 注意：跨设备同步时 localId 可能与当前设备的 RDB id 不一致， 
+   *       但由于云端存储路径是 `users/&lt;uid&gt;/...` 用户隔离的，最坏情况只会动到自己用户下的错误目录。 
+   */ 
+  static extractLocalIdFromCloudId(cloudId: string): string { 
+    const lastUnderscore = cloudId.lastIndexOf(&#39;_&#39;) 
+    if (lastUnderscore &lt; 0 || lastUnderscore &gt;= cloudId.length - 1) { 
+      return cloudId 
+    } 
+    return cloudId.substring(lastUnderscore + 1) 
+  } 
+ 
+  static async ensureReady(): Promise&lt;boolean&gt; { 
+    if (initialized &amp;&amp; databaseZone !== null) { 
+      return true 
+    } 
+ 
+    try { 
+      cloudCommon.init({ 
+        region: cloudCommon.CloudRegion.CHINA, 
+        authProvider: auth.getAuthProvider(), 
+        databaseOptions: { schema: &#39;schema.json&#39; } 
+      }) 
+      databaseZone = cloudDatabase.zone(ZONE_NAME) 
+      initialized = true 
+      hilog.info(DOMAIN, TAG, `Cloud database ready: ${ZONE_NAME}`) 
+      return true 
+    } catch (err) { 
+      const error = err as BusinessError 
+      hilog.error(DOMAIN, TAG, `Cloud database init failed: ${error.message}`) 
+      databaseZone = null 
+      initialized = false 
+      return false 
+    } 
+  } 
+ 
+  static reset(): void { 
+    databaseZone = null 
+    initialized = false 
+  } 
+ 
+  static async buildTravelPayload(travel: Trip): Promise&lt;string&gt; { 
+    hilog.info(DOMAIN, TAG, `[buildTravelPayload] travel.id=${travel.id}, isPublic=${travel.isPublic}`) 
+    const ownerUid = travel.ownerUid ?? &#39;&#39; 
+    const payload: TravelPayload = { 
+      ownerUid: ownerUid, 
+      localId: travel.id, 
+      cloudId: travel.cloudId &amp;&amp; travel.cloudId.length &gt; 0 
+        ? travel.cloudId 
+        : CloudSyncService.buildTravelCloudId(ownerUid, travel.id), 
+      name: travel.name, 
+      coverPhoto: travel.coverPhoto ?? &#39;&#39;, 
+      startDate: travel.startDate, 
+      endDate: travel.endDate, 
+      createdAt: travel.createdAt, 
+      updatedAt: travel.updatedAt, 
+      deletedAt: travel.deletedAt ?? 0, 
+      version: travel.version ?? 1, 
+      isPublic: travel.isPublic ? 1 : 0 
+    } 
+    hilog.info(DOMAIN, TAG, `[buildTravelPayload] payload.isPublic=${payload.isPublic}, id=${travel.id}`) 
+    return JSON.stringify(payload) 
+  } 
+ 
+  static async buildNodePayload(node: MemoryNode): Promise&lt;string&gt; { 
+    const ownerUid = node.ownerUid ?? &#39;&#39; 
+    const payload: NodePayload = { 
+      ownerUid: ownerUid, 
+      localId: node.id, 
+      cloudId: node.cloudId &amp;&amp; node.cloudId.length &gt; 0 
+        ? node.cloudId 
+        : CloudSyncService.buildNodeCloudId(ownerUid, node.id), 
+      travelId: node.travelId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID ? &#39;&#39; : node.travelId, 
+      title: node.title, 
+      content: node.content, 
+      latitude: node.latitude, 
+      longitude: node.longitude, 
+      poiName: node.poiName, 
+      photos: node.photos, 
+      mood: node.mood, 
+      tags: node.tags, 
+      nodeOrder: node.nodeOrder ?? 0, 
+      createdAt: node.createdAt, 
+      updatedAt: node.updatedAt, 
+      deletedAt: node.deletedAt ?? 0, 
+      version: node.version ?? 1, 
+      photoManifest: node.photoManifest &amp;&amp; node.photoManifest.length &gt; 2 ? node.photoManifest : &#39;[]&#39;, 
+      visitedAt: node.visitedAt ?? 0 
+    } 
+    return JSON.stringify(payload) 
+  } 
+ 
+  static async upsertTravel(payload: string): Promise&lt;string&gt; { 
+    const ready = await CloudSyncService.ensureReady() 
+    if (!ready || databaseZone === null) { 
+      throw new Error(&#39;云数据库未初始化&#39;) 
+    } 
+ 
+    const data = JSON.parse(payload) as TravelPayload 
+    const cloudId = await CloudSyncService.resolveAvailableTravelCloudId(data) 
+    hilog.info(DOMAIN, TAG, `[upsertTravel] isPublic=${data.isPublic}, cloudId=${cloudId}, name=${data.name}`) 
+    const travel = new CloudTravel() 
+    travel.cloudId = cloudId 
+    travel.ownerUid = data.ownerUid 
+    travel.name = data.name 
+    travel.coverPhotoObjectKey = data.coverPhoto 
+    travel.startDate = data.startDate 
+    travel.endDate = data.endDate 
+    travel.createdAt = data.createdAt || data.updatedAt 
+    travel.updatedAt = data.updatedAt 
+    travel.deletedAt = data.deletedAt 
+    travel.version = data.version 
+    travel.isPublic = data.isPublic 
+    hilog.info(DOMAIN, TAG, `[upsertTravel] travel.isPublic assigned=${travel.isPublic}`) 
+    await databaseZone.upsert(travel) 
+    hilog.info(DOMAIN, TAG, `[upsertTravel] upsert completed for cloudId=${cloudId}`) 
+    return cloudId 
+  } 
+ 
+  static async deleteTravel(payload: string): Promise&lt;void&gt; { 
+    const ready = await CloudSyncService.ensureReady() 
+    if (!ready || databaseZone === null) { 
+      throw new Error(&#39;云数据库未初始化&#39;) 
+    } 
+ 
+    const data = JSON.parse(payload) as TravelPayload 
+    const travel = new CloudTravel() 
+    travel.cloudId = data.cloudId || CloudSyncService.buildTravelCloudId(data.ownerUid, data.localId) 
+    travel.deletedAt = data.deletedAt 
+    travel.updatedAt = data.deletedAt 
+    travel.version = Math.max(data.version, 999999) 
+    await databaseZone.upsert(travel) 
+  } 
+ 
+  static async upsertMemoryNode(payload: string): Promise&lt;string&gt; { 
+    const ready = await CloudSyncService.ensureReady() 
+    if (!ready || databaseZone === null) { 
+      throw new Error(&#39;云数据库未初始化&#39;) 
+    } 
+ 
+    const data = JSON.parse(payload) as NodePayload 
+    const cloudId = await CloudSyncService.resolveAvailableNodeCloudId(data) 
+    const node = new CloudMemoryNode() 
+    node.cloudId = cloudId 
+    node.ownerUid = data.ownerUid 
+    // 父 travel 的外键引用：优先用本地 DB 里父 travel 已存在的 cloud_id， 
+    // 这样旧数据（cloud_id=&#39;travel_&lt;id&gt;&#39;）和新数据（cloud_id=&#39;travel_&lt;uid&gt;_&lt;id&gt;&#39;）能共存， 
+    // 不会因 FK 不匹配导致 replaceLocalWithCloud 找不到 localTravelId 而跳过节点。 
+    if (data.travelId.length &gt; 0 &amp;&amp; data.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) { 
+      const parentTravel = await new TravelRepository().getTravelById(data.travelId) 
+      if (parentTravel &amp;&amp; parentTravel.cloudId &amp;&amp; parentTravel.cloudId.length &gt; 0) { 
+        node.travelCloudId = parentTravel.cloudId 
+      } else { 
+        node.travelCloudId = CloudSyncService.buildTravelCloudId(data.ownerUid, data.travelId) 
+      } 
+    } else { 
+      node.travelCloudId = &#39;&#39; 
+    } 
+    node.title = data.title 
+    node.content = data.content 
+    node.latitude = data.latitude 
+    node.longitude = data.longitude 
+    node.poiName = data.poiName 
+    node.mood = data.mood 
+    node.tagsJson = JSON.stringify(data.tags) 
+    node.nodeOrder = data.nodeOrder 
+    node.photoManifest = data.photoManifest 
+    node.createdAt = data.createdAt || data.updatedAt 
+    node.updatedAt = data.updatedAt 
+    node.deletedAt = data.deletedAt 
+    node.version = data.version 
+    node.visitedAt = data.visitedAt 
+    await databaseZone.upsert(node) 
+    return cloudId 
+  } 
+ 
+  static async deleteMemoryNode(payload: string): Promise&lt;void&gt; { 
+    const ready = await CloudSyncService.ensureReady() 
+    if (!ready || databaseZone === null) { 
+      throw new Error(&#39;云数据库未初始化&#39;) 
+    } 
+ 
+    const data = JSON.parse(payload) as NodePayload 
+    const node = new CloudMemoryNode() 
+    node.cloudId = data.cloudId || CloudSyncService.buildNodeCloudId(data.ownerUid, data.localId) 
+    node.deletedAt = data.deletedAt 
+    node.updatedAt = data.deletedAt 
+    node.version = Math.max(data.version, 999999) 
+    await databaseZone.upsert(node) 
+  } 
+ 
+  /** 
+   * 必须传 ownerUid：硬删除前再加一条 ownerUid 过滤， 
+   * 防止历史 cloud_id 撞车把别的账号的行也删掉。 
+   */ 
+  static async hardDeleteTravelByCloudId(cloudId: string, ownerUid: string): Promise&lt;void&gt; { 
+    const ready = await CloudSyncService.ensureReady() 
+    if (!ready || databaseZone === null || cloudId.length === 0 || ownerUid.length === 0) { 
+      hilog.warn(DOMAIN, TAG, `hardDeleteTravelByCloudId skipped: cloudId=${cloudId}, ownerUid=${ownerUid}`) 
+      return 
+    } 
+ 
+    const condition = new cloudDatabase.DatabaseQuery(CloudTravel) 
+    condition.equalTo(&#39;cloudId&#39;, cloudId).and().equalTo(&#39;ownerUid&#39;, ownerUid) 
+    const records = await databaseZone.query(condition) 
+    hilog.info(DOMAIN, TAG, `Query travel delete target count=${records.length}, cloudId=${cloudId}, ownerUid=${ownerUid}`) 
+    if (records.length &lt;= 0) { 
+      return 
+    } 
+    const deletedCount = await databaseZone.delete(records) 
+    hilog.info(DOMAIN, TAG, `Hard deleted travel count=${deletedCount}, cloudId=${cloudId}`) 
+  } 
+ 
+  static async hardDeleteMemoryNodeByCloudId(cloudId: string, ownerUid: string): Promise&lt;void&gt; { 
+    const ready = await CloudSyncService.ensureReady() 
+    if (!ready || databaseZone === null || cloudId.length === 0 || ownerUid.length === 0) { 
+      hilog.warn(DOMAIN, TAG, `hardDeleteMemoryNodeByCloudId skipped: cloudId=${cloudId}, ownerUid=${ownerUid}`) 
+      return 
+    } 
+ 
+    const condition = new cloudDatabase.DatabaseQuery(CloudMemoryNode) 
+    condition.equalTo(&#39;cloudId&#39;, cloudId).and().equalTo(&#39;ownerUid&#39;, ownerUid) 
+    const records = await databaseZone.query(condition) 
+    hilog.info(DOMAIN, TAG, `Query memory node delete target count=${records.length}, cloudId=${cloudId}, ownerUid=${ownerUid}`) 
+    if (records.length &lt;= 0) { 
+      return 
+    } 
+    const deletedCount = await databaseZone.delete(records) 
+    hilog.info(DOMAIN, TAG, `Hard deleted memory node count=${deletedCount}, cloudId=${cloudId}`) 
+  } 
+ 
+  static async fetchTravels(ownerUid: string): Promise&lt;Trip[]&gt; { 
+    const ready = await CloudSyncService.ensureReady() 
+    if (!ready || databaseZone === null) { 
+      return [] 
+    } 
+ 
+    const condition = new cloudDatabase.DatabaseQuery(CloudTravel) 
+    condition.equalTo(&#39;ownerUid&#39;, ownerUid).orderByDesc(&#39;updatedAt&#39;) 
+    const records = await databaseZone.query(condition) 
+    const result: Trip[] = [] 
+    for (let i = 0; i &lt; records.length; i++) { 
+      const record = records[i] 
+      const trip: Trip = { 
+        id: &#39;0&#39;, 
+        name: record.name ?? &#39;&#39;, 
+        description: &#39;&#39;, 
+        coverPhoto: record.coverPhotoObjectKey ?? &#39;&#39;, 
+        isPublic: (record.isPublic ?? 0) === 1, 
+        startDate: record.startDate ?? 0, 
+        endDate: record.endDate ?? 0, 
+        nodeIds: [], 
+        totalDistance: 0, 
+        createdAt: record.createdAt ?? 0, 
+        updatedAt: record.updatedAt ?? 0, 
+        ownerUid: record.ownerUid ?? &#39;&#39;, 
+        cloudId: record.cloudId ?? &#39;&#39;, 
+        syncStatus: &#39;synced&#39;, 
+        deletedAt: record.deletedAt ?? 0, 
+        lastSyncedAt: Date.now(), 
+        version: record.version ?? 1 
+      } 
+      result.push(trip) 
+    } 
+    return result 
+  } 
+ 
+  static async fetchMemoryNodes(ownerUid: string): Promise&lt;MemoryNode[]&gt; { 
+    const ready = await CloudSyncService.ensureReady() 
+    if (!ready || databaseZone === null) { 
+      return [] 
+    } 
+ 
+    const condition = new cloudDatabase.DatabaseQuery(CloudMemoryNode) 
+    condition.equalTo(&#39;ownerUid&#39;, ownerUid).orderByDesc(&#39;updatedAt&#39;) 
+    const records = await databaseZone.query(condition) 
+    const result: MemoryNode[] = [] 
+    for (let i = 0; i &lt; records.length; i++) { 
+      const record = records[i] 
+      const node: MemoryNode = { 
+        id: &#39;0&#39;, 
+        travelId: (record.travelCloudId &amp;&amp; record.travelCloudId.length &gt; 0) 
+          ? record.travelCloudId 
+          : TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID, 
+        title: record.title ?? &#39;&#39;, 
+        content: record.content ?? &#39;&#39;, 
+        latitude: record.latitude ?? 0, 
+        longitude: record.longitude ?? 0, 
+        poiName: record.poiName ?? &#39;&#39;, 
+        photos: [], 
+        mood: record.mood ?? &#39;&#39;, 
+        tags: record.tagsJson ? JSON.parse(record.tagsJson) as string[] : [], 
+        createdAt: record.createdAt ?? 0, 
+        updatedAt: record.updatedAt ?? 0, 
+        nodeOrder: record.nodeOrder ?? 0, 
+        ownerUid: record.ownerUid ?? &#39;&#39;, 
+        cloudId: record.cloudId ?? &#39;&#39;, 
+        syncStatus: &#39;synced&#39;, 
+        deletedAt: record.deletedAt ?? 0, 
+        lastSyncedAt: Date.now(), 
+        version: record.version ?? 1, 
+        photoManifest: record.photoManifest ?? &#39;&#39;, 
+        visitedAt: record.visitedAt ?? 0 
+      } 
+      result.push(node) 
+    } 
+    return result 
+  } 
+ 
+  // ========== Profile ========== 
+ 
+  static async upsertProfile(payload: string): Promise&lt;string&gt; { 
+    const ready = await CloudSyncService.ensureReady() 
+    if (!ready || databaseZone === null) { 
+      throw new Error(&#39;云数据库未初始化&#39;) 
+    } 
+ 
+    const data = JSON.parse(payload) as ProfilePayload 
+    const cloudId = data.cloudId || `profile_${data.ownerUid}` 
+    hilog.info(DOMAIN, TAG, `upsertProfile: creating CloudProfile, cloudId=${cloudId}, className=${new CloudProfile().naturalbase_ClassName()}`) 
+    const profile = new CloudProfile() 
+    profile.cloudId = cloudId 
+    profile.ownerUid = data.ownerUid 
+    profile.nickname = data.nickname ?? undefined 
+    profile.bio = data.bio ?? undefined 
+    profile.avatarCloudPath = data.avatarCloudPath ?? undefined 
+    profile.version = data.version ?? undefined 
+    profile.updatedAt = data.updatedAt ?? undefined 
+    hilog.info(DOMAIN, TAG, `upsertProfile: fields assigned, bio=&quot;${profile.bio}&quot;, nickname=&quot;${profile.nickname}&quot;`) 
+    try { 
+      await databaseZone.upsert(profile) 
+      hilog.info(DOMAIN, TAG, `upsertProfile done: cloudId=${cloudId}`) 
+    } catch (err) { 
+      const error = err as BusinessError 
+      hilog.error(DOMAIN, TAG, `upsertProfile upsert FAILED: code=${error.code}, message=${error.message}, name=${error.name}`) 
+      throw new Error(`个人资料保存失败(${error.code})，请重试`) 
+    } 
+    return cloudId 
+  } 
+ 
+  static async fetchProfile(ownerUid: string): Promise&lt;CloudProfile | null&gt; { 
+    const ready = await CloudSyncService.ensureReady() 
+    if (!ready || databaseZone === null) { 
+      return null 
+    } 
+ 
+    const condition = new cloudDatabase.DatabaseQuery(CloudProfile) 
+    condition.equalTo(&#39;ownerUid&#39;, ownerUid) 
+    const records = await databaseZone.query(condition) 
+    if (records.length &lt;= 0) { 
+      hilog.info(DOMAIN, TAG, `fetchProfile: no record for ownerUid=${ownerUid}`) 
+      return null 
+    } 
+    hilog.info(DOMAIN, TAG, `fetchProfile: found record for ownerUid=${ownerUid}`) 
+    return records[0] as CloudProfile 
+  } 
+ 
+  static async hardDeleteProfileByOwnerUid(ownerUid: string): Promise&lt;void&gt; { 
+    const ready = await CloudSyncService.ensureReady() 
+    if (!ready || databaseZone === null || !ownerUid) { 
+      return 
+    } 
+ 
+    const condition = new cloudDatabase.DatabaseQuery(CloudProfile) 
+    condition.equalTo(&#39;ownerUid&#39;, ownerUid) 
+    const records = await databaseZone.query(condition) 
+    hilog.info(DOMAIN, TAG, `hardDeleteProfile: count=${records.length}, ownerUid=${ownerUid}`) 
+    if (records.length &lt;= 0) { 
+      return 
+    } 
+    await databaseZone.delete(records) 
+    hilog.info(DOMAIN, TAG, `hardDeleteProfile: deleted count=${records.length}`) 
+  } 
+} 
+
+              </pre>
+        </td>
+        </tr>
+        </table>
+        </pre>
+      </el-main>
+      <el-footer align="middle" class="footer">
+        Code coverage generated by <el-link href="https://github.com/SMAT-Lab/bjc" type="primary"
+          target="_blank">bjc</el-link> at {{date}}
+      </el-footer>
+    </el-container>
+  </div>
+</body>
+
+<script>
+  const App = {
+    data() {
+      return {"date":"Fri May 22 2026 22:32:24 GMT+0800 (中国标准时间)","file":{"version":"bjc v1.0.0","versionCode":10000,"path":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend/entry/src/main/ets/common/sync/CloudSyncService.ets","hash":"e274565d2cff1e20964b70fb3b271f2dce2fef92ec13d5f696e290b2cd6d2332","lineCnt":530,"count":0,"projectPath":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend","functions":[{"name":"CloudSyncService.buildTravelCloudId","count":0,"regions":[{"startLoc":{"line":76,"col":3},"endLoc":{"line":78,"col":4},"count":0,"ignored":0},{"startLoc":{"line":77,"col":5},"endLoc":{"line":78,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":77,"col":12},"endLoc":{"line":77,"col":99},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":0},{"name":"CloudSyncService.buildNodeCloudId","count":0,"regions":[{"startLoc":{"line":80,"col":3},"endLoc":{"line":82,"col":4},"count":0,"ignored":0},{"startLoc":{"line":81,"col":5},"endLoc":{"line":82,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":81,"col":12},"endLoc":{"line":81,"col":95},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":1},{"name":"CloudSyncService.nextCloudId","count":0,"regions":[{"startLoc":{"line":84,"col":3},"endLoc":{"line":97,"col":4},"count":0,"ignored":0},{"startLoc":{"line":86,"col":71},"endLoc":{"line":88,"col":6},"count":0,"ignored":0},{"startLoc":{"line":92,"col":42},"endLoc":{"line":94,"col":6},"count":0,"ignored":0},{"startLoc":{"line":96,"col":5},"endLoc":{"line":97,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":86,"col":9},"endLoc":{"line":86,"col":69},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":92,"col":9},"endLoc":{"line":92,"col":40},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":2},{"name":"CloudSyncService.travelCloudIdExists","count":0,"regions":[{"startLoc":{"line":99,"col":3},"endLoc":{"line":107,"col":4},"count":0,"ignored":0},{"startLoc":{"line":103,"col":5},"endLoc":{"line":107,"col":4},"count":0,"ignored":0},{"startLoc":{"line":100,"col":56},"endLoc":{"line":102,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":100,"col":9},"endLoc":{"line":100,"col":54},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":3},{"name":"CloudSyncService.nodeCloudIdExists","count":0,"regions":[{"startLoc":{"line":109,"col":3},"endLoc":{"line":117,"col":4},"count":0,"ignored":0},{"startLoc":{"line":113,"col":5},"endLoc":{"line":117,"col":4},"count":0,"ignored":0},{"startLoc":{"line":110,"col":56},"endLoc":{"line":112,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":110,"col":9},"endLoc":{"line":110,"col":54},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":4},{"name":"CloudSyncService.resolveAvailableTravelCloudId","count":0,"regions":[{"startLoc":{"line":119,"col":3},"endLoc":{"line":134,"col":4},"count":0,"ignored":0},{"startLoc":{"line":125,"col":5},"endLoc":{"line":132,"col":6},"count":0,"ignored":0},{"startLoc":{"line":129,"col":7},"endLoc":{"line":132,"col":6},"count":0,"ignored":0},{"startLoc":{"line":120,"col":50},"endLoc":{"line":122,"col":6},"count":0,"ignored":0},{"startLoc":{"line":126,"col":67},"endLoc":{"line":128,"col":8},"count":0,"ignored":0},{"startLoc":{"line":133,"col":5},"endLoc":{"line":134,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":120,"col":9},"endLoc":{"line":120,"col":48},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":126,"col":11},"endLoc":{"line":126,"col":65},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":5},{"name":"CloudSyncService.resolveAvailableNodeCloudId","count":0,"regions":[{"startLoc":{"line":136,"col":3},"endLoc":{"line":151,"col":4},"count":0,"ignored":0},{"startLoc":{"line":142,"col":5},"endLoc":{"line":149,"col":6},"count":0,"ignored":0},{"startLoc":{"line":146,"col":7},"endLoc":{"line":149,"col":6},"count":0,"ignored":0},{"startLoc":{"line":137,"col":50},"endLoc":{"line":139,"col":6},"count":0,"ignored":0},{"startLoc":{"line":143,"col":65},"endLoc":{"line":145,"col":8},"count":0,"ignored":0},{"startLoc":{"line":150,"col":5},"endLoc":{"line":151,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":137,"col":9},"endLoc":{"line":137,"col":48},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":143,"col":11},"endLoc":{"line":143,"col":63},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":6},{"name":"CloudSyncService.extractLocalIdFromCloudId","count":0,"regions":[{"startLoc":{"line":160,"col":3},"endLoc":{"line":166,"col":4},"count":0,"ignored":0},{"startLoc":{"line":162,"col":69},"endLoc":{"line":164,"col":6},"count":0,"ignored":0},{"startLoc":{"line":165,"col":5},"endLoc":{"line":166,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":162,"col":9},"endLoc":{"line":162,"col":67},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":7},{"name":"CloudSyncService.ensureReady","count":0,"regions":[{"startLoc":{"line":168,"col":3},"endLoc":{"line":190,"col":4},"count":0,"ignored":0},{"startLoc":{"line":173,"col":9},"endLoc":{"line":183,"col":6},"count":0,"ignored":0},{"startLoc":{"line":183,"col":7},"endLoc":{"line":189,"col":6},"count":0,"ignored":0},{"startLoc":{"line":169,"col":47},"endLoc":{"line":171,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":169,"col":9},"endLoc":{"line":169,"col":45},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":8},{"name":"CloudSyncService.reset","count":0,"regions":[{"startLoc":{"line":192,"col":3},"endLoc":{"line":195,"col":4},"count":0,"ignored":0},{"startLoc":{"line":193,"col":5},"endLoc":{"line":195,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":9},{"name":"CloudSyncService.buildTravelPayload","count":0,"regions":[{"startLoc":{"line":197,"col":3},"endLoc":{"line":218,"col":4},"count":0,"ignored":0},{"startLoc":{"line":198,"col":5},"endLoc":{"line":218,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":203,"col":16},"endLoc":{"line":205,"col":67},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":214,"col":17},"endLoc":{"line":214,"col":40},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":10},{"name":"CloudSyncService.buildNodePayload","count":0,"regions":[{"startLoc":{"line":220,"col":3},"endLoc":{"line":246,"col":4},"count":0,"ignored":0},{"startLoc":{"line":221,"col":5},"endLoc":{"line":246,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":225,"col":16},"endLoc":{"line":227,"col":63},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":228,"col":17},"endLoc":{"line":228,"col":99},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":242,"col":22},"endLoc":{"line":242,"col":101},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":11},{"name":"CloudSyncService.upsertTravel","count":0,"regions":[{"startLoc":{"line":248,"col":3},"endLoc":{"line":273,"col":4},"count":0,"ignored":0},{"startLoc":{"line":254,"col":5},"endLoc":{"line":273,"col":4},"count":0,"ignored":0},{"startLoc":{"line":250,"col":42},"endLoc":{"line":252,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":250,"col":9},"endLoc":{"line":250,"col":40},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":12},{"name":"CloudSyncService.deleteTravel","count":0,"regions":[{"startLoc":{"line":275,"col":3},"endLoc":{"line":288,"col":4},"count":0,"ignored":0},{"startLoc":{"line":281,"col":5},"endLoc":{"line":288,"col":4},"count":0,"ignored":0},{"startLoc":{"line":277,"col":42},"endLoc":{"line":279,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":277,"col":9},"endLoc":{"line":277,"col":40},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":13},{"name":"CloudSyncService.upsertMemoryNode","count":0,"regions":[{"startLoc":{"line":290,"col":3},"endLoc":{"line":330,"col":4},"count":0,"ignored":0},{"startLoc":{"line":314,"col":5},"endLoc":{"line":330,"col":4},"count":0,"ignored":0},{"startLoc":{"line":304,"col":100},"endLoc":{"line":311,"col":6},"count":0,"ignored":0},{"startLoc":{"line":292,"col":42},"endLoc":{"line":294,"col":6},"count":0,"ignored":0},{"startLoc":{"line":311,"col":12},"endLoc":{"line":313,"col":6},"count":0,"ignored":0},{"startLoc":{"line":306,"col":84},"endLoc":{"line":308,"col":8},"count":0,"ignored":0},{"startLoc":{"line":308,"col":14},"endLoc":{"line":310,"col":8},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":292,"col":9},"endLoc":{"line":292,"col":40},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":304,"col":9},"endLoc":{"line":304,"col":98},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":306,"col":11},"endLoc":{"line":306,"col":82},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":14},{"name":"CloudSyncService.deleteMemoryNode","count":0,"regions":[{"startLoc":{"line":332,"col":3},"endLoc":{"line":345,"col":4},"count":0,"ignored":0},{"startLoc":{"line":338,"col":5},"endLoc":{"line":345,"col":4},"count":0,"ignored":0},{"startLoc":{"line":334,"col":42},"endLoc":{"line":336,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":334,"col":9},"endLoc":{"line":334,"col":40},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":15},{"name":"CloudSyncService.hardDeleteTravelByCloudId","count":0,"regions":[{"startLoc":{"line":351,"col":3},"endLoc":{"line":367,"col":4},"count":0,"ignored":0},{"startLoc":{"line":353,"col":91},"endLoc":{"line":356,"col":6},"count":0,"ignored":0},{"startLoc":{"line":362,"col":30},"endLoc":{"line":364,"col":6},"count":0,"ignored":0},{"startLoc":{"line":365,"col":5},"endLoc":{"line":367,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":353,"col":9},"endLoc":{"line":353,"col":89},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":362,"col":9},"endLoc":{"line":362,"col":28},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":16},{"name":"CloudSyncService.hardDeleteMemoryNodeByCloudId","count":0,"regions":[{"startLoc":{"line":369,"col":3},"endLoc":{"line":385,"col":4},"count":0,"ignored":0},{"startLoc":{"line":371,"col":91},"endLoc":{"line":374,"col":6},"count":0,"ignored":0},{"startLoc":{"line":380,"col":30},"endLoc":{"line":382,"col":6},"count":0,"ignored":0},{"startLoc":{"line":383,"col":5},"endLoc":{"line":385,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":371,"col":9},"endLoc":{"line":371,"col":89},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":380,"col":9},"endLoc":{"line":380,"col":28},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":17},{"name":"CloudSyncService.fetchTravels","count":0,"regions":[{"startLoc":{"line":387,"col":3},"endLoc":{"line":421,"col":4},"count":0,"ignored":0},{"startLoc":{"line":397,"col":5},"endLoc":{"line":419,"col":6},"count":0,"ignored":0},{"startLoc":{"line":389,"col":42},"endLoc":{"line":391,"col":6},"count":0,"ignored":0},{"startLoc":{"line":420,"col":5},"endLoc":{"line":421,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":389,"col":9},"endLoc":{"line":389,"col":40},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":18},{"name":"CloudSyncService.fetchMemoryNodes","count":0,"regions":[{"startLoc":{"line":423,"col":3},"endLoc":{"line":463,"col":4},"count":0,"ignored":0},{"startLoc":{"line":433,"col":5},"endLoc":{"line":461,"col":6},"count":0,"ignored":0},{"startLoc":{"line":425,"col":42},"endLoc":{"line":427,"col":6},"count":0,"ignored":0},{"startLoc":{"line":462,"col":5},"endLoc":{"line":463,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":425,"col":9},"endLoc":{"line":425,"col":40},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":437,"col":19},"endLoc":{"line":439,"col":56},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":447,"col":15},"endLoc":{"line":447,"col":77},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":19},{"name":"CloudSyncService.upsertProfile","count":0,"regions":[{"startLoc":{"line":467,"col":3},"endLoc":{"line":494,"col":4},"count":0,"ignored":0},{"startLoc":{"line":488,"col":7},"endLoc":{"line":492,"col":6},"count":0,"ignored":0},{"startLoc":{"line":485,"col":9},"endLoc":{"line":488,"col":6},"count":0,"ignored":0},{"startLoc":{"line":469,"col":42},"endLoc":{"line":471,"col":6},"count":0,"ignored":0},{"startLoc":{"line":493,"col":5},"endLoc":{"line":494,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":469,"col":9},"endLoc":{"line":469,"col":40},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":20},{"name":"CloudSyncService.fetchProfile","count":0,"regions":[{"startLoc":{"line":496,"col":3},"endLoc":{"line":511,"col":4},"count":0,"ignored":0},{"startLoc":{"line":505,"col":30},"endLoc":{"line":508,"col":6},"count":0,"ignored":0},{"startLoc":{"line":498,"col":42},"endLoc":{"line":500,"col":6},"count":0,"ignored":0},{"startLoc":{"line":509,"col":5},"endLoc":{"line":511,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":498,"col":9},"endLoc":{"line":498,"col":40},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":505,"col":9},"endLoc":{"line":505,"col":28},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":21},{"name":"CloudSyncService.hardDeleteProfileByOwnerUid","count":0,"regions":[{"startLoc":{"line":513,"col":3},"endLoc":{"line":528,"col":4},"count":0,"ignored":0},{"startLoc":{"line":515,"col":55},"endLoc":{"line":517,"col":6},"count":0,"ignored":0},{"startLoc":{"line":523,"col":30},"endLoc":{"line":525,"col":6},"count":0,"ignored":0},{"startLoc":{"line":526,"col":5},"endLoc":{"line":528,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":515,"col":9},"endLoc":{"line":515,"col":53},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":523,"col":9},"endLoc":{"line":523,"col":28},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":22}],"exeLine":{"0":1,"1":2,"2":3,"3":4,"4":5,"5":6,"6":7,"7":8,"8":9,"9":10,"10":12,"11":13,"12":14,"13":15,"14":17,"15":18,"16":20,"17":21,"18":22,"19":23,"20":24,"21":25,"22":26,"23":27,"24":28,"25":29,"26":30,"27":31,"28":32,"29":35,"30":36,"31":37,"32":38,"33":39,"34":40,"35":41,"36":42,"37":43,"38":44,"39":45,"40":46,"41":47,"42":48,"43":49,"44":50,"45":51,"46":52,"47":53,"48":54,"49":57,"50":58,"51":59,"52":60,"53":61,"54":62,"55":63,"56":64,"57":67,"58":76,"59":77,"60":80,"61":81,"62":84,"63":85,"64":86,"65":87,"66":90,"67":91,"68":92,"69":93,"70":96,"71":99,"72":100,"73":101,"74":103,"75":104,"76":105,"77":106,"78":109,"79":110,"80":111,"81":113,"82":114,"83":115,"84":116,"85":119,"86":120,"87":121,"88":124,"89":125,"90":126,"91":127,"92":129,"93":130,"94":131,"95":133,"96":136,"97":137,"98":138,"99":141,"100":142,"101":143,"102":144,"103":146,"104":147,"105":148,"106":150,"107":160,"108":161,"109":162,"110":163,"111":165,"112":168,"113":169,"114":170,"115":173,"116":174,"117":175,"118":176,"119":177,"120":179,"121":180,"122":181,"123":182,"124":183,"125":184,"126":185,"127":186,"128":187,"129":188,"130":192,"131":193,"132":194,"133":197,"134":198,"135":199,"136":200,"137":201,"138":202,"139":203,"140":204,"141":205,"142":206,"143":207,"144":208,"145":209,"146":210,"147":211,"148":212,"149":213,"150":214,"151":216,"152":217,"153":220,"154":221,"155":222,"156":223,"157":224,"158":225,"159":226,"160":227,"161":228,"162":229,"163":230,"164":231,"165":232,"166":233,"167":234,"168":235,"169":236,"170":237,"171":238,"172":239,"173":240,"174":241,"175":242,"176":243,"177":245,"178":248,"179":249,"180":250,"181":251,"182":254,"183":255,"184":256,"185":257,"186":258,"187":259,"188":260,"189":261,"190":262,"191":263,"192":264,"193":265,"194":266,"195":267,"196":268,"197":269,"198":270,"199":271,"200":272,"201":275,"202":276,"203":277,"204":278,"205":281,"206":282,"207":283,"208":284,"209":285,"210":286,"211":287,"212":290,"213":291,"214":292,"215":293,"216":296,"217":297,"218":298,"219":299,"220":300,"221":304,"222":305,"223":306,"224":307,"225":308,"226":309,"227":311,"228":312,"229":314,"230":315,"231":316,"232":317,"233":318,"234":319,"235":320,"236":321,"237":322,"238":323,"239":324,"240":325,"241":326,"242":327,"243":328,"244":329,"245":332,"246":333,"247":334,"248":335,"249":338,"250":339,"251":340,"252":341,"253":342,"254":343,"255":344,"256":351,"257":352,"258":353,"259":354,"260":355,"261":358,"262":359,"263":360,"264":361,"265":362,"266":363,"267":365,"268":366,"269":369,"270":370,"271":371,"272":372,"273":373,"274":376,"275":377,"276":378,"277":379,"278":380,"279":381,"280":383,"281":384,"282":387,"283":388,"284":389,"285":390,"286":393,"287":394,"288":395,"289":396,"290":397,"291":398,"292":399,"293":400,"294":401,"295":402,"296":403,"297":404,"298":405,"299":406,"300":407,"301":408,"302":409,"303":410,"304":411,"305":412,"306":413,"307":414,"308":415,"309":416,"310":418,"311":420,"312":423,"313":424,"314":425,"315":426,"316":429,"317":430,"318":431,"319":432,"320":433,"321":434,"322":435,"323":436,"324":437,"325":438,"326":439,"327":440,"328":441,"329":442,"330":443,"331":444,"332":445,"333":446,"334":447,"335":448,"336":449,"337":450,"338":451,"339":452,"340":453,"341":454,"342":455,"343":456,"344":457,"345":458,"346":460,"347":462,"348":467,"349":468,"350":469,"351":470,"352":473,"353":474,"354":475,"355":476,"356":477,"357":478,"358":479,"359":480,"360":481,"361":482,"362":483,"363":484,"364":485,"365":486,"366":487,"367":488,"368":489,"369":490,"370":491,"371":493,"372":496,"373":497,"374":498,"375":499,"376":502,"377":503,"378":504,"379":505,"380":506,"381":507,"382":509,"383":510,"384":513,"385":514,"386":515,"387":516,"388":519,"389":520,"390":521,"391":522,"392":523,"393":524,"394":526,"395":527},"summary":{"lines":{"total":338,"covered":0,"pct":0,"executedLineCount":[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,-1,-1,0,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,-1,-1,0,-1,-1,0,0,0,-1,0,0,0,0,-1,-1,0,0,0,-1,0,0,0,0,-1,-1,0,0,0,-1,-1,0,0,0,0,-1,0,0,0,-1,0,-1,-1,0,0,0,-1,-1,0,0,0,0,-1,0,0,0,-1,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,-1,0,-1,-1,0,0,0,-1,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,0,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,-1,-1,-1,0,0,0,0,0,0,-1,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,0,0,0,0,0,-1,-1,0,0,0,0,0,0,-1,0,0,-1,-1,0,0,0,0,0,-1,-1,0,0,0,0,0,0,-1,0,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,0,-1,-1,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,0,-1,0,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,0,-1,0,0,-1,-1,-1]},"functions":{"total":23,"covered":0,"pct":0},"branches":{"total":72,"covered":0,"pct":0}}},"title":"CloudSyncService.ets.html","relativeHome":"..\\..\\index.html"};
+    }
+  };
+
+  const app = Vue.createApp(App);
+  app.use(ElementPlus);
+  app.mount("#app");
+
+  window.onload = function () {
+    prettyPrint();
+  }
+</script>
+
+<style scoped>
+  table.coverage {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 0 0;
+    padding: 0;
+  }
+
+  table.coverage td {
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  table.coverage td.line-count {
+    width: 12%;
+    text-align: right;
+    padding: 0 5px 0 20px;
+  }
+
+  table.coverage td.line-coverage {
+    text-align: right;
+    padding-right: 10px;
+    min-width: 20px;
+  }
+
+  table.coverage td span.cline-any {
+    display: inline-block;
+    padding: 0 5px;
+    width: 100%;
+    height: 18px;
+  }
+
+  .low,
+  .cline-no {
+    background: #FCE1E5
+  }
+
+  .high,
+  .cline-yes {
+    background: rgb(230, 245, 208)
+  }
+
+  span.cline-neutral {
+    background: #eaeaea;
+  }
+
+  pre.prettyprint {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .el-main {
+    box-sizing: border-box;
+    display: block;
+    flex: 1;
+    flex-basis: auto;
+    overflow: auto;
+    padding: var(--el-main-padding)
+  }
+
+  .el-container {
+    min-height: 100vh;
+    height: 100%;
+  }
+
+  .footer {
+    font-size: small;
+  }
+
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .el-col {
+    border-radius: 4px;
+  }
+
+  .green {
+    color: var(--el-color-success);
+  }
+
+  .red {
+    color: var(--el-color-error);
+  }
+
+  .linenums li {
+    height: 18px;
+    line-height: 18px;
+  }
+
+  li.L0,
+  li.L1,
+  li.L2,
+  li.L3,
+  li.L5,
+  li.L6,
+  li.L7,
+  li.L8 {
+    list-style-type: decimal
+  }
+
+  .el-col-5 {
+    max-width: 100%;
+  }
+
+  .el-col-3 {
+    max-width: 100%;
+  }
+
+</style>
+
+</html>

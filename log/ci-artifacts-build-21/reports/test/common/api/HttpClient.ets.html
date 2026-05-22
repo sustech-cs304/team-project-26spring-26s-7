@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Import style -->
+  <link rel="stylesheet" href="..\..\index.css" />
+  <link rel="stylesheet" href="..\..\prettify.css" />
+  <!-- Import Vue 3 -->
+  <script src="..\..\vue.global.prod.js"></script>
+  <!-- Import component library -->
+  <script src="..\..\index.full.min.js"></script>
+  <script src="..\..\prettify.js"></script>
+  <title>Coverage</title>
+</head>
+
+<body>
+  <div id="app" class="common-layout">
+    <el-container>
+      <el-header>
+        <el-row :gutter="10">
+          <el-col :span="5">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <el-link type="primary" :href="relativeHome">
+                    <h2>&lt;</h2>
+                  </el-link>
+                </el-text></div>
+              <div><el-text class="mx-1 "><h2>{{title}}</h2></el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info"></el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.functions.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Functions</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.functions.covered}}/{{file.summary.functions.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.branches.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Branches</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.branches.covered}}/{{file.summary.branches.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.lines.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Lines</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.lines.covered}}/{{file.summary.lines.total}}</el-text></div>
+            </el-space>
+          </el-col>
+        </el-row>
+        <el-divider />
+      </el-header>
+      <el-main>
+        <el-row>
+        </el-row>
+        <pre>
+          <table class="coverage">
+            <tr>
+              <td class="line-count quiet">
+                <pre class="prettyprint lang-js">
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+                </pre>
+        </td>
+        <td class="text">
+          <pre class="prettyprint linenums lang-js">
+/* 
+ * Copyright (c) 2024 Huawei Device Co., Ltd. 
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); 
+ * you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at 
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0 
+ * 
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and 
+ * limitations under the License. 
+ */ 
+ 
+import { http } from &#39;@kit.NetworkKit&#39;; 
+import { logger } from &#39;../utils/Logger&#39;; 
+import { API_BASE_URL, HttpTimeout } from &#39;./ApiEndpoints&#39;; 
+ 
+const TAG = &#39;HttpClient&#39;; 
+ 
+/** 
+ * HTTP 响应结构 
+ */ 
+export interface HttpResponse&lt;T&gt; { 
+  /** HTTP 状态码 */ 
+  statusCode: number; 
+  /** 响应数据 */ 
+  data: T | undefined; 
+  /** 错误信息 */ 
+  error?: string; 
+} 
+ 
+/** 
+ * HTTP 客户端基础封装 
+ * 提供统一的请求发送和错误处理 
+ */ 
+export class HttpClient { 
+  private baseUrl: string; 
+ 
+  constructor(baseUrl: string = API_BASE_URL) { 
+    this.baseUrl = baseUrl; 
+  } 
+ 
+  /** 
+   * 发送 GET 请求 
+   * @param endpoint API 端点路径 
+   * @param params 查询参数 
+   * @param timeout 超时时间 (毫秒) 
+   */ 
+  async get&lt;T&gt;( 
+    endpoint: string, 
+    params?: Record&lt;string, string | number&gt;, 
+    timeout: number = HttpTimeout.DEFAULT 
+  ): Promise&lt;HttpResponse&lt;T&gt;&gt; { 
+    return this.request&lt;T&gt;(http.RequestMethod.GET, endpoint, undefined, params, timeout); 
+  } 
+ 
+  /** 
+   * 发送 POST 请求 
+   * @param endpoint API 端点路径 
+   * @param body 请求体 
+   * @param timeout 超时时间 (毫秒) 
+   */ 
+  async post&lt;T&gt;( 
+    endpoint: string, 
+    body: Object | undefined, 
+    timeout: number = HttpTimeout.DEFAULT 
+  ): Promise&lt;HttpResponse&lt;T&gt;&gt; { 
+    return this.request&lt;T&gt;(http.RequestMethod.POST, endpoint, body, undefined, timeout); 
+  } 
+ 
+  /** 
+   * 发送 HTTP 请求 
+   * TODO: 后端开发同事可能需要添加认证 Token、签名等 
+   */ 
+  private async request&lt;T&gt;( 
+    method: http.RequestMethod, 
+    endpoint: string, 
+    body: Object | undefined, 
+    params?: Record&lt;string, string | number&gt;, 
+    timeout: number = HttpTimeout.DEFAULT 
+  ): Promise&lt;HttpResponse&lt;T&gt;&gt; { 
+    const httpRequest = http.createHttp(); 
+ 
+    try { 
+      // 构建完整 URL 
+      let url = `${this.baseUrl}${endpoint}`; 
+      if (params &amp;&amp; Object.keys(params).length &gt; 0) { 
+        // ArkTS 不支持解构赋值，使用传统方式构建查询字符串 
+        const keys = Object.keys(params); 
+        const queryParts: string[] = []; 
+        for (let i = 0; i &lt; keys.length; i++) { 
+          const key = keys[i]; 
+          const value = params[key]; 
+          queryParts.push(`${key}=${encodeURIComponent(String(value))}`); 
+        } 
+        const queryString = queryParts.join(&#39;&amp;&#39;); 
+        url = `${url}?${queryString}`; 
+      } 
+ 
+      logger.info(TAG, `Sending ${method} request to: ${url}`); 
+ 
+      // 请求配置 
+      const options: http.HttpRequestOptions = { 
+        method: method, 
+        header: { 
+          &#39;Content-Type&#39;: &#39;application/json&#39; 
+          // TODO: 添加认证 Token 
+          // &#39;Authorization&#39;: `Bearer ${token}` 
+        }, 
+        readTimeout: timeout, 
+        connectTimeout: timeout, 
+        expectDataType: http.HttpDataType.OBJECT 
+      }; 
+ 
+      // 添加请求体 
+      if (body) { 
+        options.extraData = JSON.stringify(body); 
+        logger.debug(TAG, `Request body: ${JSON.stringify(body)}`); 
+      } 
+ 
+      const response = await httpRequest.request(url, options); 
+ 
+      logger.info(TAG, `Response status: ${response.responseCode}`); 
+ 
+      // 处理响应 
+      if (response.responseCode === 200 || response.responseCode === 201) { 
+        const result = response.result as T; 
+        return { 
+          statusCode: response.responseCode, 
+          data: result 
+        }; 
+      } else { 
+        const errorMsg = `HTTP ${response.responseCode}: ${response.result}`; 
+        logger.error(TAG, errorMsg); 
+        return { 
+          statusCode: response.responseCode, 
+          data: undefined, 
+          error: errorMsg 
+        }; 
+      } 
+    } catch (err) { 
+      const errorMsg = `Request failed: ${JSON.stringify(err)}`; 
+      logger.error(TAG, errorMsg); 
+      return { 
+        statusCode: 0, 
+        data: undefined, 
+        error: errorMsg 
+      }; 
+    } finally { 
+      httpRequest.destroy(); 
+    } 
+  } 
+}
+              </pre>
+        </td>
+        </tr>
+        </table>
+        </pre>
+      </el-main>
+      <el-footer align="middle" class="footer">
+        Code coverage generated by <el-link href="https://github.com/SMAT-Lab/bjc" type="primary"
+          target="_blank">bjc</el-link> at {{date}}
+      </el-footer>
+    </el-container>
+  </div>
+</body>
+
+<script>
+  const App = {
+    data() {
+      return {"date":"Fri May 22 2026 22:32:24 GMT+0800 (中国标准时间)","file":{"version":"bjc v1.0.0","versionCode":10000,"path":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend/entry/src/main/ets/common/api/HttpClient.ets","hash":"cf3839af96108223009a0b81e4018fe7c6ac644793ea506dccd3a67250d0c11e","lineCnt":155,"count":0,"projectPath":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend","functions":[{"name":"HttpClient.constructor","count":0,"regions":[{"startLoc":{"line":41,"col":3},"endLoc":{"line":43,"col":4},"count":0,"ignored":0},{"startLoc":{"line":42,"col":5},"endLoc":{"line":43,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":0},{"name":"HttpClient.get","count":0,"regions":[{"startLoc":{"line":51,"col":3},"endLoc":{"line":57,"col":4},"count":0,"ignored":0},{"startLoc":{"line":56,"col":5},"endLoc":{"line":57,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":1},{"name":"HttpClient.post","count":0,"regions":[{"startLoc":{"line":65,"col":3},"endLoc":{"line":71,"col":4},"count":0,"ignored":0},{"startLoc":{"line":70,"col":5},"endLoc":{"line":71,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":2},{"name":"HttpClient.request","count":0,"regions":[{"startLoc":{"line":77,"col":3},"endLoc":{"line":154,"col":4},"count":0,"ignored":0},{"startLoc":{"line":86,"col":9},"endLoc":{"line":143,"col":6},"count":0,"ignored":0},{"startLoc":{"line":89,"col":53},"endLoc":{"line":100,"col":8},"count":0,"ignored":0},{"startLoc":{"line":143,"col":7},"endLoc":{"line":151,"col":6},"count":0,"ignored":0},{"startLoc":{"line":134,"col":14},"endLoc":{"line":142,"col":8},"count":0,"ignored":0},{"startLoc":{"line":128,"col":75},"endLoc":{"line":134,"col":8},"count":0,"ignored":0},{"startLoc":{"line":93,"col":9},"endLoc":{"line":97,"col":10},"count":0,"ignored":0},{"startLoc":{"line":118,"col":17},"endLoc":{"line":121,"col":8},"count":0,"ignored":0},{"startLoc":{"line":151,"col":15},"endLoc":{"line":153,"col":6},"count":0,"ignored":0},{"startLoc":{"line":98,"col":9},"endLoc":{"line":100,"col":8},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":89,"col":11},"endLoc":{"line":89,"col":51},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":118,"col":11},"endLoc":{"line":118,"col":15},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":128,"col":11},"endLoc":{"line":128,"col":73},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":3}],"exeLine":{"0":16,"1":17,"2":18,"3":20,"4":25,"5":27,"6":29,"7":31,"8":38,"9":39,"10":41,"11":42,"12":51,"13":52,"14":53,"15":54,"16":55,"17":56,"18":65,"19":66,"20":67,"21":68,"22":69,"23":70,"24":77,"25":78,"26":79,"27":80,"28":81,"29":82,"30":83,"31":84,"32":86,"33":88,"34":89,"35":91,"36":92,"37":93,"38":94,"39":95,"40":96,"41":98,"42":99,"43":102,"44":105,"45":106,"46":107,"47":108,"48":112,"49":113,"50":114,"51":118,"52":119,"53":120,"54":123,"55":125,"56":128,"57":129,"58":130,"59":131,"60":132,"61":134,"62":135,"63":136,"64":137,"65":138,"66":139,"67":140,"68":143,"69":144,"70":145,"71":146,"72":147,"73":148,"74":149,"75":151,"76":152},"summary":{"lines":{"total":67,"covered":0,"pct":0,"executedLineCount":[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,-1,0,-1,0,0,-1,0,0,0,0,0,0,-1,0,0,-1,-1,0,-1,-1,0,0,0,0,-1,-1,-1,0,0,0,-1,-1,-1,0,0,0,-1,-1,0,-1,0,-1,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,-1,-1,0,0,0,0,0,0,0,-1,0,0,-1,-1,-1]},"functions":{"total":4,"covered":0,"pct":0},"branches":{"total":6,"covered":0,"pct":0}}},"title":"HttpClient.ets.html","relativeHome":"..\\..\\index.html"};
+    }
+  };
+
+  const app = Vue.createApp(App);
+  app.use(ElementPlus);
+  app.mount("#app");
+
+  window.onload = function () {
+    prettyPrint();
+  }
+</script>
+
+<style scoped>
+  table.coverage {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 0 0;
+    padding: 0;
+  }
+
+  table.coverage td {
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  table.coverage td.line-count {
+    width: 12%;
+    text-align: right;
+    padding: 0 5px 0 20px;
+  }
+
+  table.coverage td.line-coverage {
+    text-align: right;
+    padding-right: 10px;
+    min-width: 20px;
+  }
+
+  table.coverage td span.cline-any {
+    display: inline-block;
+    padding: 0 5px;
+    width: 100%;
+    height: 18px;
+  }
+
+  .low,
+  .cline-no {
+    background: #FCE1E5
+  }
+
+  .high,
+  .cline-yes {
+    background: rgb(230, 245, 208)
+  }
+
+  span.cline-neutral {
+    background: #eaeaea;
+  }
+
+  pre.prettyprint {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .el-main {
+    box-sizing: border-box;
+    display: block;
+    flex: 1;
+    flex-basis: auto;
+    overflow: auto;
+    padding: var(--el-main-padding)
+  }
+
+  .el-container {
+    min-height: 100vh;
+    height: 100%;
+  }
+
+  .footer {
+    font-size: small;
+  }
+
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .el-col {
+    border-radius: 4px;
+  }
+
+  .green {
+    color: var(--el-color-success);
+  }
+
+  .red {
+    color: var(--el-color-error);
+  }
+
+  .linenums li {
+    height: 18px;
+    line-height: 18px;
+  }
+
+  li.L0,
+  li.L1,
+  li.L2,
+  li.L3,
+  li.L5,
+  li.L6,
+  li.L7,
+  li.L8 {
+    list-style-type: decimal
+  }
+
+  .el-col-5 {
+    max-width: 100%;
+  }
+
+  .el-col-3 {
+    max-width: 100%;
+  }
+
+</style>
+
+</html>
