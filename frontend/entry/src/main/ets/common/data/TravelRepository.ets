@@ -69,6 +69,24 @@ interface NodePhotoData {
 export class TravelRepository {
   private rdbHelper: RdbHelper;
 
+  // Test-overridable hooks. Reassigned by integration tests
+  // (see frontend/entry/src/test/integration/data/TravelRepository.test.ets).
+  // Default values let production go through the real rdb / AuthService.
+  static ownerUidProvider: (() => Promise<string>) | null = null;
+  static predicatesFactory: (table: string) => Object = (table: string): Object => {
+    return new rdb.RdbPredicates(table);
+  };
+  static nowProvider: (() => number) | null = null;
+
+  /** Reset all static test hooks back to defaults. */
+  static resetTestingHooks(): void {
+    TravelRepository.ownerUidProvider = null;
+    TravelRepository.predicatesFactory = (table: string): Object => {
+      return new rdb.RdbPredicates(table);
+    };
+    TravelRepository.nowProvider = null;
+  }
+
   constructor() {
     this.rdbHelper = RdbHelper.getInstance();
   }

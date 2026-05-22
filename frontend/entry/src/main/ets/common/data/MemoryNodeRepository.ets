@@ -68,6 +68,26 @@ export interface SoftDeleteResult {
 export class MemoryNodeRepository {
   private rdbHelper: RdbHelper;
 
+  // Test-overridable hooks. Reassigned by integration tests
+  // (see frontend/entry/src/test/integration/data/MemoryNodeRepository.test.ets).
+  // Default values let production go through the real rdb / AuthService / TravelRepository.
+  static ownerUidProvider: (() => Promise<string>) | null = null;
+  static predicatesFactory: (table: string) => Object = (table: string): Object => {
+    return new rdb.RdbPredicates(table);
+  };
+  static travelRepositoryFactory: (() => TravelRepository) | null = null;
+  static nowProvider: (() => number) | null = null;
+
+  /** Reset all static test hooks back to defaults. */
+  static resetTestingHooks(): void {
+    MemoryNodeRepository.ownerUidProvider = null;
+    MemoryNodeRepository.predicatesFactory = (table: string): Object => {
+      return new rdb.RdbPredicates(table);
+    };
+    MemoryNodeRepository.travelRepositoryFactory = null;
+    MemoryNodeRepository.nowProvider = null;
+  }
+
   constructor() {
     this.rdbHelper = RdbHelper.getInstance();
   }

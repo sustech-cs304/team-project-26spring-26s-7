@@ -275,7 +275,32 @@ export class RdbHelper {
   private appContext: common.Context | undefined = undefined;
   private initPromise: Promise<void> | null = null;
 
+  // Test-overridable hooks. Default factories delegate to real rdb / Date.now().
+  // Reassigned by tests (see frontend/entry/src/test/integration/data/FakeRdbSupport.ets).
+  static predicatesFactory: (table: string) => Object = (table: string): Object => {
+    return new rdb.RdbPredicates(table);
+  };
+  static nowProvider: () => number = (): number => Date.now();
+
   private constructor() {}
+
+  /** Test hook: reset both instance state and the static factory hooks back to defaults. */
+  resetForTesting(): void {
+    this.rdbStore = undefined;
+    this.initialized = false;
+    this.appContext = undefined;
+    this.initPromise = null;
+    RdbHelper.predicatesFactory = (table: string): Object => {
+      return new rdb.RdbPredicates(table);
+    };
+    RdbHelper.nowProvider = (): number => Date.now();
+  }
+
+  /** Test hook: inject a fake rdb store. Loose-typed so tests can pass FakeStore. */
+  setStoreForTesting(store: Object): void {
+    this.rdbStore = store as rdb.RdbStore;
+    this.initialized = true;
+  }
 
   private toError(err: Object): Error {
     return new Error(JSON.stringify(err));
