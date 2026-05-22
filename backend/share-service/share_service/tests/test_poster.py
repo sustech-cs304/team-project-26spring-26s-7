@@ -12,6 +12,7 @@ from share_service.main import app
 
 
 client = TestClient(app)
+_AUTH = {"X-Dev-Uid": "test"}
 
 
 def _jpeg(color=(180, 100, 40)) -> bytes:
@@ -47,7 +48,7 @@ def _publish() -> dict:
         ("photo_0", ("p.jpg", _jpeg(), "image/jpeg")),
         ("expiryHours", (None, "168", "text/plain")),
     ]
-    r = client.post("/api/v1/share/publish", files=files)
+    r = client.post("/api/v1/share/publish", headers=_AUTH, files=files)
     assert r.status_code == 201, r.text
     return r.json()["data"]
 
@@ -134,7 +135,7 @@ def test_poster_endpoint_works_with_zero_photos():
         ("tripData", (None, json.dumps(trip), "text/plain")),
         ("expiryHours", (None, "168", "text/plain")),
     ]
-    r = client.post("/api/v1/share/publish", files=files)
+    r = client.post("/api/v1/share/publish", headers=_AUTH, files=files)
     assert r.status_code == 201, r.text
     data = r.json()["data"]
     code, t, s = _parse(data["url"])

@@ -20,6 +20,7 @@ from share_service.models.publish import (
 
 
 client = TestClient(app)
+_AUTH = {"X-Dev-Uid": "test"}
 
 
 # --- helpers (small clones so this file is self-contained) ----------------
@@ -251,7 +252,7 @@ def test_audio_route_blocks_path_traversal():
 def test_head_supported_on_publish_viewer_and_cover():
     """微信卡片爬虫先 HEAD 探活，再 GET 抓 og:meta；GET-only 路由会 405
     导致它放弃，卡片只剩 title。HEAD 必须返 200，且头部跟 GET 一致。"""
-    r = client.post("/api/v1/share/publish", files=_files(_trip_one_node()))
+    r = client.post("/api/v1/share/publish", headers=_AUTH, files=_files(_trip_one_node()))
     assert r.status_code == 201, r.text
     data = r.json()["data"]
     code = data["shortCode"]; sig = data["sig"]; expires = data["expiresAt"]
