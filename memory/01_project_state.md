@@ -1,20 +1,18 @@
 # Project State
 
-**Last Updated**: 2026-05-10 (GitHub Actions Jenkins bridge)
+**Last Updated**: 2026-05-19
 **Project**: TravelPin - HarmonyOS Travel Journal App
 **Repository**: D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7
-**Current Branch**: feature/social-share
+**Current Branch**: incremental-dev-20260423
 **Main Branch**: main
+
+**2026-05-19 Durable Notes**:
+- The local branch history was soft-reset back to `ac53184` so the requested commits are no longer in local history, while the code changes remain in the working tree / index.
+- The requested commit hashes were `730bf8d4838a9cc6c0b0f7b8d851c26e9b1baa87`, `172ee5dae8188f38d5f0b2bfbc4c95dafb0c09c9`, `6e241db4fd213938dfe2572581d3ee65f6be2e60`, `6b64868c3b9ae25a189f4b9b7e7720bc835d416c`, and `f28777531147ec66e4559637b53bd2c2849542df`.
 
 **2026-05-06 Durable Notes**:
 - Trip sharing now requires `Trip.isPublic === true`. Private trips show a greyed share button on `TripDetailPage`; tapping it prompts the user to switch the trip to public before routing to `SharePage`.
 - `SharePage` now blocks direct entry for private trips as a frontend guardrail.
-
-**2026-05-10 Durable Notes**:
-- Added a GitHub Actions workflow at `.github/workflows/jenkinsfile-check.yml` that triggers the local Jenkins job `travelpin-ci` on pushes to `test/ci-cd`.
-- The workflow is designed for a Windows self-hosted runner on the same machine as Jenkins and uploads `.ci-logs` plus the matching `ci-artifacts/build-<BUILD_NUMBER>` directory.
-- `scripts/watch-jenkins-build.ps1` now writes `latest-run.json` metadata so GitHub Actions can resolve the Jenkins build number and artifact directory.
-- `Jenkinsfile` now allows `LOCAL_ARTIFACT_ROOT` to be overridden while keeping the current local `ci-artifacts` path as the default.
 
 ---
 
@@ -267,42 +265,9 @@ entry/src/main/ets/
 - `0e82f33` - docs: 建立测试体系，添加 P0/P1/P2 优先级测试清单
 - `c515563` - Merge branch 'feature/photo'
 - `7096512` - Merge pull request #104 from sustech-cs304/feature1
-## 2026-05-10 Test Status
+## 2026-05-19 Update
 
-- `frontend/build.ps1 test` 鐜板湪鍖呭惈 3 涓笟鍔℃祴璇曞浠讹細`SharePreflightTest`銆?`ShareErrorMapperTest`銆?`MultipartFormDataTest`
-- 鏈湴 Hypium 鎵ц缁撴灉锛?`Tests run: 12, Failure: 0, Error: 0, Pass: 12, Ignore: 0`
-- Jenkinsfile 鐜版湁 `Test` stage 缁х画璋冪敤 `build.ps1 test` 鍗冲彲鎷惧彇杩欐壒鏈湴娴嬭瘯锛屾殏涓嶉渶淇敼 pipeline 缁撴瀯
-- `MultipartFormDataTest` 褰撳墠鍙繚鐣?smoke 妫€鏌ワ紙`build()` 鍙墽琛屼笉鎶涘紓甯革級锛屽洜鍗曟祴鐜涓?`ArrayBuffer/TextEncoder` 琛屼负涓嶇ǔ瀹?
-## 2026-05-10 Test Status Update
-
-- `frontend/build.ps1 test` 鐜板湪鍖呭惈 5 涓湰鍦?Hypium 涓氬姟娴嬭瘯濂楋細`MultipartFormDataTest`銆?`ShareErrorMapperTest`銆?`SharePhotoHelperTest`銆?`SharePreflightTest`銆?`ShareServiceTest`
-- 褰撳墠鏈湴鎵ц缁撴灉锛?`Tests run: 20, Failure: 0, Error: 0, Pass: 20, Ignore: 0`
-- `ShareService.ets` 宸叉柊澧炲彲娴嬭瘯缂濓細`createFormData()` 涓?`sendRequest()`锛岄粯璁よ繍琛岃涓轰笉鍙?
-- Jenkinsfile 鐜版湁 `Test` stage 缁х画璋冪敤 `build.ps1 test` 鍗冲彲鎷惧彇杩欐壒娴嬭瘯锛屾殏涓嶉渶璋冩暣 pipeline 缁撴瀯
-
-## 2026-05-10 Light Integration Test Update
-
-- `SharePhotoHelper.ets` now exposes hook seams for `fileExists`, `sanitizeUpload`, and `deleteTemporary`, so Hypium can cover share-photo prepare/sanitize/cleanup flows without real filesystem or image APIs.
-- `frontend/build.ps1 test` now runs 23 business tests: `Tests run: 23, Failure: 0, Error: 0, Pass: 23, Ignore: 0`.
-- `SharePhotoHelperTest` now covers `prepareSharePhotos()`, `toSanitizedSharePhotos()`, and `cleanupTemporaryPhotos()` in addition to `toSharePhotos()`.
-
-## 2026-05-10 RdbHelper Light Integration Update
-
-- `RdbHelper.ets` now exposes narrow testing seams for fake predicate creation, fake time injection, and fake store injection via `setStoreForTesting()` / `resetForTesting()`.
-- `frontend/build.ps1 test` now runs 27 business tests: `Tests run: 27, Failure: 0, Error: 0, Pass: 27, Ignore: 0`.
-- `RdbHelperTest` now covers uninitialized `getStore()`, scoped sync state read/write, sync queue ordering/removal, and `wipeAllUserData()` table clearing.
-
-## 2026-05-10 ShareService Boundary Test Update
-
-- `AGENTS.md` now requires all new memory entries to be written in English only because mixed encodings previously produced unreadable text.
-- `frontend/build.ps1 test` now runs 29 business tests: `Tests run: 29, Failure: 0, Error: 0, Pass: 29, Ignore: 0`.
-- `ShareServiceTest` now covers fallback to `expiryHours` when `expiryMinutes` is absent, omission of empty optional replace/replay fields, stable `photo_N` ordering for three files, and error-envelope mapping for `status()`.
-
-## 2026-05-10 Repository Light Integration Update
-
-- `FakeRdbSupport.ets` now provides a shared fake store, fake predicates, fake result set, and deterministic time helpers for repository-level Hypium tests.
-- `TravelRepository.ets` now exposes narrow testing seams for owner UID, current time, and predicate creation without changing production call sites.
-- `MemoryNodeRepository.ets` now exposes narrow testing seams for owner UID, current time, predicate creation, and injected `TravelRepository` lookups.
-- `frontend/build.ps1 test` now runs 35 business tests: `Tests run: 35, Failure: 0, Error: 0, Pass: 35, Ignore: 0`.
-- `TravelRepositoryTest` now covers create/load, cloud-backed update metadata transitions, and cascading delete of child nodes.
-- `MemoryNodeRepositoryTest` now covers node creation with next-order assignment, moving nodes to a new travel with appended order, and reorder persistence with `pending_reorder`.
+- ArkTS compile blockers were fixed in the current working tree:
+  - `TripListView.ets` now uses `TransitionEffect.OPACITY`.
+  - `AiCopyPage.ets` now imports `LengthMetrics` from `@kit.ArkUI` and uses `LengthMetrics.vp(8)` for Flex spacing.
+- `frontend/build.ps1 --mode module -p module=entry@default assembleHap` succeeds again; remaining diagnostics are pre-existing warnings.

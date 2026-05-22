@@ -17,7 +17,7 @@ import {
 @Component
 export struct ProfileView {
   @StorageLink('appThemeVersion') themeVersion: number = 0
-  @State displayName: string = 'TravelPin 用户'
+  @State displayName: string = 'ItsMapPin 用户'
   @State avatarUrl: string = ''
   @State avatarLoadFailed: boolean = false
   @State loginStatusText: string = '华为账号已登录'
@@ -31,17 +31,14 @@ export struct ProfileView {
   @State exifStripAlwaysOn: boolean = true
   /** AI 云端打标签开关，绑定 ConsentManager 持久化的同意状态 */
   @StorageLink('aiCloudTaggingEnabled') aiCloudTaggingEnabled: boolean = false
-  @State wifiOnlySync: boolean = true
-  @Watch('onShareLinkExpiryChanged')
-  @StorageLink('shareLinkExpiryDays') shareLinkExpiryDays: number = 7
-  @State shareLinkExpiry: string = '7 天'
   @StorageLink('networkJustReconnected') networkJustReconnected: boolean = false
   @Watch('onTabRefresh')
   @StorageLink('tabRefreshToken') tabRefreshToken: number = 0
   @StorageLink('activeTabIndex') activeTabIndex: number = 0
+  @Watch('onProfileVersionChanged')
+  @StorageLink('profile_version') profileVersion: number = 0
 
   aboutToAppear(): void {
-    this.syncShareLinkExpiryFromStorage()
     void this.loadAuthStatus()
     const uiContext = this.getUIContext()
     const ctx = uiContext.getHostContext() as common.UIAbilityContext
@@ -51,24 +48,19 @@ export struct ProfileView {
   }
 
   onPageShow(): void {
-    this.syncShareLinkExpiryFromStorage()
     void this.loadAuthStatus()
   }
 
   private onTabRefresh(): void {
     if (this.activeTabIndex === 3) {
-      this.syncShareLinkExpiryFromStorage()
       void this.loadAuthStatus()
     }
   }
 
-  private syncShareLinkExpiryFromStorage(): void {
-    const days = AppStorage.get<number>('shareLinkExpiryDays') ?? 7
-    this.shareLinkExpiry = `${days} 天`
-  }
-
-  private onShareLinkExpiryChanged(): void {
-    this.shareLinkExpiry = `${this.shareLinkExpiryDays} 天`
+  private onProfileVersionChanged(): void {
+    if (this.activeTabIndex === 3) {
+      void this.loadAuthStatus()
+    }
   }
 
   private formatSyncTime(timestamp: number): string {
@@ -100,7 +92,7 @@ export struct ProfileView {
         this.avatarLoadFailed = false
       } else {
         const status = await AuthService.getAuthStatus()
-        this.displayName = status.user?.displayName ?? 'TravelPin 用户'
+        this.displayName = status.user?.displayName ?? 'ItsMapPin 用户'
         this.avatarUrl = status.user?.avatarUrl ?? ''
         this.avatarLoadFailed = false
       }
@@ -271,31 +263,6 @@ export struct ProfileView {
     })
   }
 
-  private showStorageSettings(): void {
-    AlertDialog.show({
-      title: '流量与存储',
-      message:
-        `仅 Wi-Fi 同步：${this.wifiOnlySync ? '已开启' : '已关闭'}\n\n` +
-        '开启后，蜂窝网络下仅加载缩略图，原图和批量同步会延后到 Wi-Fi 环境执行。',
-      confirm: {
-        value: '关闭',
-        action: () => {}
-      }
-    })
-  }
-
-  private showExpirySettings(): void {
-    ActionSheet.show({
-      title: '分享链接默认有效期',
-      message: '选择通过链接分享路线时的默认有效期。',
-      sheets: [
-        { title: '1 天', action: () => { this.shareLinkExpiryDays = 1 } },
-        { title: '7 天', action: () => { this.shareLinkExpiryDays = 7 } },
-        { title: '30 天', action: () => { this.shareLinkExpiryDays = 30 } },
-      ]
-    })
-  }
-
   private showOfflineMapGuide(): void {
     const launchAndMark = async () => {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext
@@ -340,9 +307,9 @@ export struct ProfileView {
 
   private showAbout(): void {
     AlertDialog.show({
-      title: '关于 TravelPin',
+      title: '关于 ItsMapPin',
       message:
-        'TravelPin v1.0.0\n\n' +
+        'ItsMapPin v1.0.0\n\n' +
         '基于 HarmonyOS 的地理位置旅行日记应用。\n\n' +
         '南方科技大学 软件工程课程 第 7 组',
       confirm: {
@@ -492,20 +459,28 @@ export struct ProfileView {
             .alignItems(HorizontalAlign.Start)
             .layoutWeight(1)
 
-            Row() {
+            Column({ space: 10 }) {
               Button(this.isSyncing ? '上传中...' : '上传本地')
-                .height(32)
+                .width(118)
+                .height(38)
                 .fontSize(AppDimens.FONT_SM)
-                .backgroundColor(AppColors.PRIMARY)
+                .fontColor(AppColors.TEXT_ON_PRIMARY)
+                .backgroundColor(AppDimens.CTA_DARK)
+                .borderRadius(19)
+                .shadow({ radius: 10, color: AppDimens.SHADOW_SOFT, offsetY: 3 })
                 .enabled(!this.isSyncing)
                 .onClick(() => { void this.runPushSync() })
 
               Button(this.isSyncing ? '下载中...' : '下载云端')
-                .height(32)
+                .width(118)
+                .height(38)
                 .fontSize(AppDimens.FONT_SM)
-                .backgroundColor(AppColors.SUCCESS)
+                .fontColor(AppColors.PRIMARY)
+                .backgroundColor(AppDimens.SURFACE_TINT)
+                .border({ width: 1, color: AppColors.PRIMARY + '28' })
+                .borderRadius(19)
+                .shadow({ radius: 10, color: AppDimens.SHADOW_SOFT, offsetY: 3 })
                 .enabled(!this.isSyncing)
-                .margin({ left: 8 })
                 .onClick(() => { void this.runPullSync() })
             }
             .margin({ top: 12 })
@@ -533,16 +508,12 @@ export struct ProfileView {
             () => this.showPrivacySettings()
           )
           Divider().color(AppColors.DIVIDER)
-          this.settingItem('流量与存储', this.wifiOnlySync ? '仅 Wi-Fi' : '', () => this.showStorageSettings())
-          Divider().color(AppColors.DIVIDER)
-          this.settingItem('分享链接默认有效期', this.shareLinkExpiry, () => this.showExpirySettings())
-          Divider().color(AppColors.DIVIDER)
           this.settingItem('离线地图', '下载全球基础包', () => this.showOfflineMapGuide())
           this.settingItem('用户协议', '', () => router.pushUrl({ url: RouterUrls.USER_AGREEMENT }))
           Divider().color(AppColors.DIVIDER)
           this.settingItem('隐私政策', '', () => router.pushUrl({ url: RouterUrls.PRIVACY_POLICY }))
           Divider().color(AppColors.DIVIDER)
-          this.settingItem('关于 TravelPin', 'v1.0.0', () => this.showAbout())
+          this.settingItem('关于 ItsMapPin', 'v1.0.0', () => this.showAbout())
         }
         .margin({ top: 12 })
         .backgroundColor(AppColors.CARD_BG)
@@ -569,6 +540,10 @@ export struct ProfileView {
           .borderRadius(AppDimens.RADIUS_MD)
           .margin({ top: 12, bottom: 24 })
           .onClick(() => this.handleDeleteAccount())
+
+        Column()
+          .width('100%')
+          .height(76)
       }
       .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD })
     }

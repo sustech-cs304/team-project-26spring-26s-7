@@ -82,7 +82,7 @@ export class ReplayPreferences {
       const transition = await store.get(
         ReplayPreferences.TRANSITION_KEY, ReplayTransitionType.FADE) as string
       const ripple = await store.get(ReplayPreferences.ENABLE_RIPPLE_KEY, false) as boolean
-      const route = await store.get(ReplayPreferences.ENABLE_ROUTE_ANIMATION_KEY, false) as boolean
+      const route = await store.get(ReplayPreferences.ENABLE_ROUTE_ANIMATION_KEY, true) as boolean
       const blur = await store.get(ReplayPreferences.ENABLE_BLUR_OVERLAY_KEY, false) as boolean
 
       AppStorage.setOrCreate(ReplayPreferences.STYLE_KIT_KEY, styleKit)
@@ -154,7 +154,7 @@ export class ReplayPreferences {
       ReplayTransitionType.FADE
     )
     ReplayPreferences.ensureDefault<boolean>(ReplayPreferences.ENABLE_RIPPLE_KEY, false)
-    ReplayPreferences.ensureDefault<boolean>(ReplayPreferences.ENABLE_ROUTE_ANIMATION_KEY, false)
+    ReplayPreferences.ensureDefault<boolean>(ReplayPreferences.ENABLE_ROUTE_ANIMATION_KEY, true)
     ReplayPreferences.ensureDefault<boolean>(ReplayPreferences.ENABLE_BLUR_OVERLAY_KEY, false)
     ReplayPreferences.ensureDefault<number>(ReplayPreferences.VERSION_KEY, 0)
   }
@@ -233,7 +233,7 @@ export class ReplayPreferences {
 
   static getEnableRouteAnimation(): boolean {
     ReplayPreferences.initializeDefaults()
-    return AppStorage.get<boolean>(ReplayPreferences.ENABLE_ROUTE_ANIMATION_KEY) ?? false
+    return AppStorage.get<boolean>(ReplayPreferences.ENABLE_ROUTE_ANIMATION_KEY) ?? true
   }
 
   static setEnableRouteAnimation(value: boolean): void {

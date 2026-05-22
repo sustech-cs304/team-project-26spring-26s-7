@@ -43,6 +43,16 @@ def _ensure_schema() -> str:
                 conn.execute(
                     "ALTER TABLE share_publish ADD COLUMN replay_prefs_json TEXT"
                 )
+            # v1.2 migration: 内容审查相关字段。老行默认 passed（既往不咎），
+            # 新 publish 在创建时显式写 pending，由 BackgroundTask 异步审完后更新。
+            if "audit_status" not in cols:
+                conn.execute(
+                    "ALTER TABLE share_publish ADD COLUMN audit_status TEXT NOT NULL DEFAULT 'passed'"
+                )
+            if "audit_reason" not in cols:
+                conn.execute(
+                    "ALTER TABLE share_publish ADD COLUMN audit_reason TEXT"
+                )
             # 新索引（CREATE INDEX IF NOT EXISTS 自身幂等）
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_share_publish_trip "
@@ -77,8 +87,8 @@ def insert_publish(row: dict[str, Any]) -> None:
             INSERT INTO share_publish
               (short_code, trip_id, trip_data_json, photo_index_json,
                cover_relpath, published_at_ms, expires_at_s, sig_hex, view_count,
-               replay_prefs_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+               replay_prefs_json, audit_status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'pending')
             """,
             (
                 row["short_code"],
@@ -92,6 +102,32 @@ def insert_publish(row: dict[str, Any]) -> None:
                 row.get("replay_prefs_json"),
             ),
         )
+
+
+def mark_audit_passed(short_code: str) -> bool:
+    """审核通过：仅在 pending 状态时改，避免覆盖已 reject / 已 revoke 的状态。"""
+    with _open_conn() as conn:
+        cur = conn.execute(
+            "UPDATE share_publish SET audit_status = 'passed' "
+            "WHERE short_code = ? AND audit_status = 'pending'",
+            (short_code,),
+        )
+        return cur.rowcount > 0
+
+
+def mark_audit_rejected(short_code: str, reason: str) -> bool:
+    """审核命中：写 audit_status='rejected' + audit_reason，同时打上 revoked_reason='CONTENT_VIOLATION'
+    让 viewer 走"已下线"分支。仅在 pending 状态时改。"""
+    with _open_conn() as conn:
+        cur = conn.execute(
+            "UPDATE share_publish SET "
+            "  audit_status = 'rejected', "
+            "  audit_reason = ?, "
+            "  revoked_reason = 'CONTENT_VIOLATION' "
+            "WHERE short_code = ? AND audit_status = 'pending'",
+            (reason, short_code),
+        )
+        return cur.rowcount > 0
 
 
 def short_code_exists(code: str) -> bool:

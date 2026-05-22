@@ -1,26 +1,10 @@
 # Task Backlog
 
-**Last Updated**: 2026-05-10 (GitHub Actions Jenkins bridge)
+**Last Updated**: 2026-05-06 (share privacy gate)
 **Total Tasks**: 按模块滚动维护
 **Completed**: 三层架构、动态旅程回放、地点搜索替换、首页地图搜索、云同步认证、UI 页面更新、social-share 模块 1 主链路
 **In Progress**: social-share 图片分享完善
 **Pending**: cloud-only 自动回源、分享链路测试补充、发布阶段提示优化
-
----
-
-## 2026-05-10 Update: GitHub Actions Jenkins Bridge
-
-### ✅ Completed
-
-- Added a repo workflow that listens to `push` on `test/ci-cd` and triggers the local Jenkins job `travelpin-ci` through the Jenkins HTTP API.
-- Wired the GitHub Actions side to upload `.ci-logs` and the matching `ci-artifacts/build-<BUILD_NUMBER>` directory for the Jenkins run.
-- Kept the existing local Jenkins + DevEco + hvigor flow as the execution backend instead of replacing it with Jenkinsfile Runner.
-
-### ⏳ Pending
-
-- Register the Windows self-hosted GitHub Actions runner on the Jenkins machine and confirm it carries the `self-hosted` and `windows` labels.
-- Add `JENKINS_USERNAME` and `JENKINS_API_TOKEN` repository secrets, then push a test commit to `test/ci-cd` for end-to-end validation.
-- If needed later, generalize the hard-coded local artifact root in the workflow into a machine-level variable or secret.
 
 ---
 

@@ -1,4 +1,4 @@
-import { ReplayStyleKit, ReplayStyleKitCatalog } from '../../../common'
+import { AppDimens, ReplayStyleKit, ReplayStyleKitCatalog } from '../../../common'
 
 @Component
 export struct ReplayProgressBar {
@@ -71,6 +71,8 @@ export struct ReplayProgressBar {
           .trackColor(this.styleKit.progressTrackColor)
           .selectedColor(this.styleKit.progressSelectedColor)
           .blockColor(this.styleKit.progressSelectedColor)
+          .blockSize({ width: 18, height: 18 })
+          .trackThickness(4)
           .onChange((value: number) => {
             const index = this.nodeCount > 1
               ? Math.round((value / 100) * (this.nodeCount - 1))
@@ -87,5 +89,10 @@ export struct ReplayProgressBar {
       .margin({ top: 6 })
     }
     .width('100%')
+    .backgroundColor(AppDimens.SURFACE_TINT)
+    .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+    .border({ width: 1, color: AppDimens.GLASS_BORDER })
+    .borderRadius(20)
+    .padding({ left: AppDimens.PADDING_SM, right: AppDimens.PADDING_SM, top: 8, bottom: 8 })
   }
 }

@@ -1,0 +1,35 @@
+[Unit]
+Description=ItsMapPin Picture/Text Censor (Baidu Cloud wrapper)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=itsmappin
+Group=itsmappin
+WorkingDirectory=/opt/itsmappin/Backend_ItsMapPin/picture-check
+EnvironmentFile=/opt/itsmappin/Backend_ItsMapPin/.env
+Environment=PYTHONUNBUFFERED=1
+# 公网入口由 nginx 终结；这里只绑本机
+Environment=BIC_HOST=127.0.0.1
+Environment=BIC_PORT=9200
+Environment=BIC_LOG_DIR=/var/log/itsmappin
+# BIC_API_KEY / BIC_SECRET_KEY 由 EnvironmentFile 注入
+
+ExecStart=/opt/itsmappin/Backend_ItsMapPin/.venv/bin/python baidu_image_censor.py
+
+Restart=always
+RestartSec=5
+StartLimitInterval=300
+StartLimitBurst=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/itsmappin
+StandardOutput=append:/var/log/itsmappin/picture-check.log
+StandardError=append:/var/log/itsmappin/picture-check.err
+
+[Install]
+WantedBy=multi-user.target

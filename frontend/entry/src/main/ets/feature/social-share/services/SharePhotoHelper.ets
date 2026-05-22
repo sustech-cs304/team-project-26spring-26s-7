@@ -30,29 +30,6 @@ export interface SharePhotoBatchResult {
   issues: SharePhotoIssue[]
 }
 
-export interface SharePhotoHelperHooks {
-  fileExists(path: string): boolean
-  sanitizeUpload(ctx: common.UIAbilityContext, filePath: string): Promise<string | undefined>
-  deleteTemporary(path: string): void
-}
-
-class DefaultSharePhotoHelperHooks implements SharePhotoHelperHooks {
-  fileExists(path: string): boolean {
-    return fs.accessSync(path)
-  }
-
-  async sanitizeUpload(
-    ctx: common.UIAbilityContext,
-    filePath: string
-  ): Promise<string | undefined> {
-    return ImageSanitizer.sanitizeForUpload(ctx, filePath)
-  }
-
-  deleteTemporary(path: string): void {
-    ImageSanitizer.deleteSanitized(path)
-  }
-}
-
 /**
  * 把 MemoryNode.photos 里那些"可能带 file:// 前缀 / 可能不存在 / 可能是
  * cloud key 而不是本地路径"的字符串，过滤成可以喂给 multipart 上传的
@@ -65,8 +42,6 @@ class DefaultSharePhotoHelperHooks implements SharePhotoHelperHooks {
  *   - 推断 contentType（按扩展名）
  */
 export class SharePhotoHelper {
-  static hooks: SharePhotoHelperHooks = new DefaultSharePhotoHelperHooks()
-
   /**
    * 把任意路径字符串数组归一化成 SharePhoto 列表。
    * 不存在或不是本地文件的条目会被丢弃。
@@ -82,7 +57,7 @@ export class SharePhotoHelper {
         continue
       }
       const realPath = raw.startsWith('file://') ? raw.substring(7) : raw
-      if (!SharePhotoHelper.hooks.fileExists(realPath)) {
+      if (!fs.accessSync(realPath)) {
         logger.warn(TAG, `skip missing file: ${realPath}`)
         continue
       }
@@ -100,7 +75,7 @@ export class SharePhotoHelper {
     const localPhotos = SharePhotoHelper.toSharePhotos(rawPaths)
     const out: SharePhoto[] = []
     for (let i = 0; i < localPhotos.length; i++) {
-      const sanitizedPath = await SharePhotoHelper.hooks.sanitizeUpload(ctx, localPhotos[i].filePath)
+      const sanitizedPath = await ImageSanitizer.sanitizeForUpload(ctx, localPhotos[i].filePath)
       if (!sanitizedPath) {
         logger.warn(TAG, `skip unsanitized file: ${localPhotos[i].filePath}`)
         continue
@@ -139,7 +114,7 @@ export class SharePhotoHelper {
       }
 
       const realPath = raw.startsWith('file://') ? raw.substring(7) : raw
-      if (!SharePhotoHelper.hooks.fileExists(realPath)) {
+      if (!fs.accessSync(realPath)) {
         issues.push({
           nodeId,
           rawPath: raw,
@@ -149,7 +124,7 @@ export class SharePhotoHelper {
         continue
       }
 
-      const sanitizedPath = await SharePhotoHelper.hooks.sanitizeUpload(ctx, realPath)
+      const sanitizedPath = await ImageSanitizer.sanitizeForUpload(ctx, realPath)
       if (!sanitizedPath) {
         issues.push({
           nodeId,
@@ -221,7 +196,7 @@ export class SharePhotoHelper {
       if (!cleanupPath) {
         continue
       }
-      SharePhotoHelper.hooks.deleteTemporary(cleanupPath)
+      ImageSanitizer.deleteSanitized(cleanupPath)
     }
   }
 

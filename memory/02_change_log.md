@@ -1,14 +1,10 @@
 # Change Log
 
-**Last Updated**: 2026-05-10
+**Last Updated**: 2026-05-19
 
----
+## 2026-05-19
 
-## 2026-05-10
-
-- [2026-05-10] - CI - `.github/workflows/jenkinsfile-check.yml` - Added GitHub Actions bridge that triggers the local Jenkins job `travelpin-ci` on pushes to `test/ci-cd`, streams Jenkins logs, and uploads `.ci-logs` plus the matching `ci-artifacts` build directory
-- [2026-05-10] - CI - `scripts/watch-jenkins-build.ps1` - Added optional metadata output so downstream automation can resolve the Jenkins build number and artifact path for the current run
-- [2026-05-10] - CI - `Jenkinsfile` - Switched artifact root handling to use an overridable `LOCAL_ARTIFACT_ROOT` with the existing local `ci-artifacts` path preserved as the default
+- [2026-05-19] - REWRITE - `git reset --soft f287775^` - Removed the requested commit suffix from local history while keeping all code changes in the working tree / index.
 
 ---
 
@@ -496,36 +492,8 @@
 - [2026-05-07-22-05-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 灏嗕笂涓€鑺傜偣 / 涓嬩竴鑺傜偣 / 杩涘害鏉¤烦杞殑鍗＄墖鍒囨崲绾冲叆鍚岀竴濂?fade/slide/scale 杞満锛岄伩鍏嶆墜鍔ㄥ垏鎹㈡椂鐨勭獊鍏?
 - [2026-05-07-22-05-00] - UPDATE - feature/map-travel/pages/TripReplayPage.ets - 鍦ㄥ洖鏀鹃〉鍙充笂瑙掔姸鎬佹爣绛句腑澧炲姞褰撳墠杞満妯″紡锛屼究浜庢墜鍔ㄥ洖褰掑拰鐗规晥鑱斿姩楠岃瘉
 - [2026-05-07-22-05-00] - BUILD - frontend/build.ps1 --mode module -p module=entry@default assembleHap 閫氳繃锛堝瓨鍦ㄦ棦鏈?ArkTS warnings锛屾棤鏂板闃诲閿欒锛?
-- [2026-05-10-15-40-00] - DELETE - frontend/entry/src/test/LocalUnit.test.ets - 绉婚櫎 Hypium 妯℃澘娴嬭瘯
-- [2026-05-10-15-40-00] - UPDATE - frontend/entry/src/test/List.test.ets - 鏇存柊娴嬭瘯鍏ュ彛锛屾敞鍐?`MultipartFormDataTest`銆?`ShareErrorMapperTest`銆?`SharePreflightTest`
-- [2026-05-10-15-40-00] - ADD - frontend/entry/src/test/unit/common/MultipartFormData.test.ets - 鏂板 multipart smoke 娴嬭瘯
-- [2026-05-10-15-40-00] - ADD - frontend/entry/src/test/unit/social-share/ShareErrorMapper.test.ets - 鏂板鍒嗕韩閿欒鏄犲皠鍗曞厓娴嬭瘯
-- [2026-05-10-15-40-00] - ADD - frontend/entry/src/test/unit/social-share/SharePreflight.test.ets - 鏂板鍒嗕韩鍓嶆鏌ュ崟鍏冩祴璇?
-- [2026-05-10-15-40-00] - TEST - frontend/build.ps1 test - 鏈湴 Hypium 娴嬭瘯 12 椤瑰叏閮ㄩ€氳繃锛?Failure 0 / Error 0 / Pass 12锛?
-- [2026-05-10-16-20-00] - UPDATE - frontend/entry/src/main/ets/feature/social-share/services/ShareService.ets - 鏂板 `createFormData()` / `sendRequest()` 娴嬭瘯缂濓紝淇濇寔榛樿缃戠粶琛屼负涓嶅彉
-- [2026-05-10-16-20-00] - ADD - frontend/entry/src/test/unit/social-share/ShareService.test.ets - 鏂板 publish/status/revoke 鍗忚灞傚崟鍏冩祴璇?
-- [2026-05-10-16-20-00] - ADD - frontend/entry/src/test/unit/social-share/SharePhotoHelper.test.ets - 鏂板 cloud-only / missing path 杩囨护娴嬭瘯
-- [2026-05-10-16-20-00] - TEST - frontend/build.ps1 test - 鏈湴 Hypium 娴嬭瘯鎵╁睍鍒?20 椤瑰叏閮ㄩ€氳繃锛?Failure 0 / Error 0 / Pass 20锛?
-- [2026-05-10-17-05-00] - UPDATE - frontend/entry/src/main/ets/feature/social-share/services/SharePhotoHelper.ets - add hook seams for file existence, sanitize upload, and temporary cleanup so share photo preparation can be tested without device I/O
-- [2026-05-10-17-05-00] - UPDATE - frontend/entry/src/test/unit/social-share/SharePhotoHelper.test.ets - add light integration coverage for prepare/sanitize/cleanup flows
-- [2026-05-10-17-05-00] - TEST - frontend/build.ps1 test - Hypium passed 23 tests with 0 failures and 0 errors
-- [2026-05-10-18-05-00] - UPDATE - frontend/entry/src/main/ets/common/data/RdbHelper.ets - add narrow testing seams for fake predicate/time/store injection without changing production call sites
-- [2026-05-10-18-05-00] - ADD - frontend/entry/src/test/integration/data/RdbHelper.test.ets - add light integration coverage for sync state, sync queue, wipe-all-data, and uninitialized store behavior
-- [2026-05-10-18-05-00] - UPDATE - frontend/entry/src/test/List.test.ets - register `RdbHelperTest` in the default Hypium suite
-- [2026-05-10-18-05-00] - TEST - frontend/build.ps1 test - Hypium passed 27 tests with 0 failures and 0 errors
-- [2026-05-10-18-35-00] - UPDATE - AGENTS.md - require all new memory entries to be written in English only to avoid encoding-related corruption
-- [2026-05-10-18-35-00] - UPDATE - frontend/entry/src/test/unit/social-share/ShareService.test.ets - add expiry-hours fallback coverage, omitted optional field coverage, three-photo ordering checks, and status error-envelope checks
-- [2026-05-10-18-35-00] - TEST - frontend/build.ps1 test - Hypium passed 29 tests with 0 failures and 0 errors
-- [2026-05-10-19-20-00] - ADD - frontend/entry/src/test/integration/data/FakeRdbSupport.ets - add shared fake store, fake predicates, fake result set, and deterministic time helpers for repository integration tests
-- [2026-05-10-19-20-00] - UPDATE - frontend/entry/src/main/ets/common/data/TravelRepository.ets - add narrow testing seams for owner UID, current time, and predicate creation
-- [2026-05-10-19-20-00] - UPDATE - frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets - add narrow testing seams for owner UID, current time, predicate creation, and injected travel repository lookups
-- [2026-05-10-19-20-00] - ADD - frontend/entry/src/test/integration/data/TravelRepository.test.ets - add light integration coverage for create/load, update metadata transitions, and delete with child-node cleanup
-- [2026-05-10-19-20-00] - ADD - frontend/entry/src/test/integration/data/MemoryNodeRepository.test.ets - add light integration coverage for create, move, and reorder flows
-- [2026-05-10-19-20-00] - UPDATE - frontend/entry/src/test/integration/data/RdbHelper.test.ets - refactor to reuse shared fake RDB support helpers
-- [2026-05-10-19-20-00] - UPDATE - frontend/entry/src/test/List.test.ets - register repository integration tests in the default Hypium suite
-- [2026-05-10-19-20-00] - TEST - frontend/build.ps1 test - Hypium passed 35 tests with 0 failures and 0 errors
-- [2026-05-13-02-35-00] - UPDATE - scripts/watch-jenkins-build.ps1 - collapse excessive blank-line runs after Jenkins/Hvigor control-sequence cleanup so uploaded Jenkins console logs no longer contain hundreds of empty lines.
-- [2026-05-13-02-05-00] - UPDATE - frontend/build.ps1 - default Jenkins and CI invocations to `--no-daemon` unless an explicit daemon flag is provided, to avoid recurring hvigor `ECONNREFUSED 127.0.0.1:45000` failures in compile and test stages after Jenkinsfile rollbacks.
-- [2026-05-14-16-45-00] - UPDATE - documents/ - reorganize project documents into design, deployment, features, planning, and testing categories; add `documents/README.md` as the directory index.
-- [2026-05-14-16-55-00] - MOVE - LLM-SERVER-API-SPEC.md -> documents/features/ai-copy/llm-server-api-spec.md - place the AI copy LLM server API specification under the feature-specific document set.
-- [2026-05-14-17-35-00] - UPDATE - final-report-team26s-7.md - refresh the Part II metrics and CI/CD pipeline report using build-11 metrics, pipeline configuration links, and available CI screenshots.
+## 2026-05-19 (ArkTS compile fix)
+
+- [2026-05-19-00-00-00] - UPDATE - `frontend/entry/src/main/ets/feature/map-travel/views/TripListView.ets` - Replaced the misspelled `TransitionEffect.OPPHONENT` reference with `TransitionEffect.OPACITY`.
+- [2026-05-19-00-00-00] - UPDATE - `frontend/entry/src/main/ets/feature/ai-copy/pages/AiCopyPage.ets` - Restored the `LengthMetrics` import from `@kit.ArkUI` and used `LengthMetrics.vp(8)` for Flex spacing.
+- [2026-05-19-00-00-00] - BUILD - `frontend/build.ps1 --mode module -p module=entry@default assembleHap` succeeded after the fix; only pre-existing warnings remain.

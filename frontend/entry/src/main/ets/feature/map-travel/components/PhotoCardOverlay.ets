@@ -70,7 +70,7 @@ export struct PhotoCardOverlay {
       }
       .width('100%')
       .height(250)
-      .autoPlay(true)
+      .autoPlay(false)
       .interval(3000)
       .indicator(
         this.currentNode.photos.length > 1
@@ -83,7 +83,7 @@ export struct PhotoCardOverlay {
               .selectedColor(this.styleKit.progressBlockColor)
           : false
       )
-      .borderRadius({ topLeft: 16, topRight: 16 })
+      .borderRadius({ topLeft: AppDimens.RADIUS_SM, topRight: AppDimens.RADIUS_SM })
     } else {
       Column() {
         Text('📷')
@@ -97,21 +97,15 @@ export struct PhotoCardOverlay {
       .height(250)
       .justifyContent(FlexAlign.Center)
       .backgroundColor(this.styleKit.cardPhotoBackground)
-      .borderRadius({ topLeft: 16, topRight: 16 })
+      .borderRadius({ topLeft: AppDimens.RADIUS_SM, topRight: AppDimens.RADIUS_SM })
     }
   }
 
   private getOverlayBackground(): string {
-    if (!this.useBlurOverlay) {
-      return this.styleKit.overlayPanelBackground
+    if (this.useBlurOverlay) {
+      return AppDimens.SURFACE_TINT
     }
-    if (this.styleKit.id === ReplayStyleKitCatalog.DEFAULT_ID) {
-      return 'rgba(255, 255, 255, 0.82)'
-    }
-    if (this.styleKit.id === ReplayStyleKitId.DARK_NIGHT) {
-      return 'rgba(13, 20, 32, 0.84)'
-    }
-    return 'rgba(249, 241, 228, 0.84)'
+    return this.styleKit.overlayPanelBackground
   }
 
   build() {
@@ -128,16 +122,6 @@ export struct PhotoCardOverlay {
         .onClick(() => this.hide())
 
         Column() {
-          Row() {
-            Blank()
-              .width(40)
-              .height(4)
-              .backgroundColor(this.styleKit.controlMutedColor)
-              .borderRadius(2)
-          }
-          .width('100%')
-          .padding({ top: 12, bottom: 8 })
-
           this.PhotoSwiper()
 
           Text(this.currentNode.title)
@@ -145,6 +129,7 @@ export struct PhotoCardOverlay {
             .fontWeight(FontWeight.Bold)
             .fontColor(this.styleKit.overlayTextColor)
             .width('100%')
+            .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG })
             .margin({ top: 16, bottom: 8 })
 
           Row() {
@@ -172,15 +157,22 @@ export struct PhotoCardOverlay {
             Blank()
 
             if (this.currentNode.photos.length > 0) {
-              Text(`${this.currentNode.photos.length} 张`)
-                .fontSize(AppDimens.FONT_SM)
-                .fontColor(this.styleKit.overlaySecondaryTextColor)
-                .backgroundColor(this.styleKit.cardTagBackground)
-                .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-                .borderRadius(12)
+              Row({ space: 4 }) {
+                Text('▧')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(this.styleKit.overlaySecondaryTextColor)
+                Text(this.currentNode.photos.length.toString())
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(this.styleKit.overlaySecondaryTextColor)
+              }
+              .backgroundColor(this.styleKit.cardTagBackground)
+              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+              .borderRadius(12)
             }
           }
           .width('100%')
+          .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG })
           .margin({ bottom: 8 })
 
           Scroll() {
@@ -206,9 +198,9 @@ export struct PhotoCardOverlay {
         .height('65%')
         .backgroundColor(this.getOverlayBackground())
         .border({ width: 1, color: this.styleKit.overlayPanelBorderColor })
-        .borderRadius({ topLeft: 20, topRight: 20 })
+        .borderRadius({ topLeft: AppDimens.RADIUS_LG, topRight: AppDimens.RADIUS_LG })
         .position({ x: 0, y: '35%' })
-        .shadow({ radius: 16, color: this.styleKit.shadowColor, offsetY: -4 })
+        .shadow({ radius: 20, color: AppDimens.SHADOW_FLOAT, offsetY: -6 })
       }
       .width('100%')
       .height('100%')

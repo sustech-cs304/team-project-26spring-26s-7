@@ -466,43 +466,6 @@ export class AiGatewayClient {
       data: mockResponse
     };
   }
-
-  /**
-   * 内容审核
-   */
-  async moderateContent(text: string): Promise<HttpResponse<ModerateResponse>> {
-    logger.info(TAG, 'Moderating content...');
-
-    const mockData: ModerateResponseData = {
-      is_safe: true,
-      categories: []
-    };
-    const mockResponse: ModerateResponse = {
-      code: 0,
-      data: mockData
-    };
-
-    return {
-      statusCode: 200,
-      data: mockResponse
-    };
-  }
-}
-
-/**
- * 内容审核响应数据结构
- */
-interface ModerateResponseData {
-  is_safe: boolean;
-  categories: string[];
-}
-
-/**
- * 内容审核响应结构
- */
-interface ModerateResponse {
-  code: number;
-  data: ModerateResponseData;
 }
 
 /**
@@ -529,6 +492,10 @@ function formatExifDate(raw: string): string | undefined {
  * 不再输出 GPS 数字（对模型无意义）和拍摄设备/曝光等技术参数
  */
 function describeSinglePhoto(md: PhotoMetadata): string {
+  // 没有"画面内容"或"画面中文字"时，仅时段/日期对 LLM 无信息价值，直接返空。
+  if (md.objectTags.length === 0 && (!md.ocrText || md.ocrText.length === 0)) {
+    return '';
+  }
   const parts: string[] = [];
   if (md.objectTags.length > 0) {
     parts.push(`画面内容：${md.objectTags.join('、')}`);
@@ -584,6 +551,12 @@ function describePhotoBatch(list: PhotoMetadata[]): string {
     }
   }
 
+  // 没有"画面内容"或"画面中文字"时，只剩张数+时段+日期对 LLM 没什么信息价值，
+  // 反而占 prompt 长度，直接返空让 buildBatchPrompt 跳过整个【照片元数据】section。
+  if (objectSet.size === 0 && ocrSet.size === 0) {
+    return '';
+  }
+
   const parts: string[] = [];
   if (list.length > 1) {
     parts.push(`共 ${list.length} 张照片`);
@@ -613,43 +586,60 @@ function describePhotoBatch(list: PhotoMetadata[]): string {
 }
 
 /**
- * 多图 prompt 模板
- * - 直接给写作任务，不用"旅行博主"角色扮演（套路过气）
- * - 不塞 GPS 数字 / 节点定位坐标（对模型无信息量，且容易让模型机械地复述坐标）
- * - cloud-on 时加"请仔细观察这张照片"前缀 + "必须基于照片中实际看到"约束：
- *   Qwen-VL 是 prompt-sensitive 的，没有这两条，模型可能把图片当 optional context
- *   略过，落到只看文本的模式（实测会瞎编画面里没有的细节，比如把温和海滩说成
- *   "波涛汹涌"），这是后端跑对账实验定位出来的。
+ * 多图 prompt 模板（v2，2026-05-15 重构）
+ *
+ * 设计原则：
+ * - **结构化分段**：用【任务】/【场景信息】/【照片元数据】/【输出要求】把上下文和指令分块，
+ *   LLM 比读一大段连续文本更可靠地遵守约束（实测 Qwen3 系列改善明显）。
+ * - **空字段不渲染**：没填的字段（如 mood）直接省略对应行，prompt 不混入空 "心情:"。
+ * - **明确输出格式**：显式说"直接给正文，不要标题/前言/总结/Markdown"，避免模型加 # 或 *。
+ * - **cloud-on 必加 grounding 句**：Qwen-VL prompt-sensitive，没有"基于照片实际画面"约束，
+ *   模型容易把图片当 optional context 略过，瞎编画面里没有的细节。
+ * - **不做角色扮演**：不用"你是旅行博主"，直接给任务；不塞 GPS 数字（模型会机械复述）。
+ *
+ * 详细规则与各字段含义参见根目录 PROMPT_RULES.md。
  */
 function buildBatchPrompt(request: ImagesCopyRequest, exifDesc: string): string {
   const styleDesc = STYLE_PROMPTS[request.style] || request.style;
   const lengthDesc = LENGTH_PROMPTS[request.lengthLevel] || LENGTH_PROMPTS['medium'];
-  const poiHint = request.poiName && request.poiName.length > 0
-    ? `地点：${request.poiName}。`
-    : '';
-  const moodHint = request.mood && request.mood.length > 0
-    ? `心情：${request.mood}。`
-    : '';
-  const tagsHint = request.tags && request.tags.length > 0
-    ? `标签：${request.tags.join('、')}。`
-    : '';
-  const userHint = request.userPrompt && request.userPrompt.length > 0
-    ? `用户补充：${request.userPrompt}。`
-    : '';
-
-  // cloud-on（首张图随 prompt 一起发）→ 必须明确指示"看图"，否则模型可能略过图片
   const cloudOn = request.enableCloudTagging === true && request.context !== undefined;
-  const intro = cloudOn
-    ? `请仔细观察这张照片的画面内容。然后根据照片内容和以下记忆节点的元数据，用${styleDesc}的风格写一段中文旅行短文。`
-    : `根据以下记忆节点的元数据，用${styleDesc}的风格写一段中文旅行短文。`;
-  const groundingNote = cloudOn
-    ? `必须基于照片中实际看到的人物、场景、物品来描绘，不要编造画面里没有的内容；`
-    : '';
 
-  return intro +
-    `${exifDesc}` +
-    `${poiHint}${moodHint}${tagsHint}${userHint}` +
-    `长度：${lengthDesc}。` +
-    `要求：${groundingNote}生动描绘场景和氛围；如果"画面中文字"是地名、招牌或菜名，可自然融入文中。`;
+  // 【场景信息】子项：空字段一律不出现，避免 prompt 里挂"地点："这种空 placeholder
+  const sceneLines: string[] = [];
+  if (request.poiName && request.poiName.length > 0) {
+    sceneLines.push(`- 地点：${request.poiName}`);
+  }
+  if (request.mood && request.mood.length > 0) {
+    sceneLines.push(`- 心情：${request.mood}`);
+  }
+  if (request.tags && request.tags.length > 0) {
+    sceneLines.push(`- 标签：${request.tags.join('、')}`);
+  }
+  if (request.userPrompt && request.userPrompt.length > 0) {
+    sceneLines.push(`- 用户补充：${request.userPrompt}`);
+  }
+
+  // 【输出要求】子项：固定 + 条件式
+  const reqLines: string[] = [
+    `- 长度：${lengthDesc}`,
+    `- 直接给正文，不要标题、前言、总结，不要 Markdown 格式`,
+    `- 生动描绘场景与氛围`,
+    `- 照片里出现的地名、招牌、菜名可自然融入文中`,
+  ];
+  if (cloudOn) {
+    reqLines.unshift('- 基于照片中实际看到的画面来写，不要编造画面里没有的内容');
+  }
+
+  const parts: string[] = [];
+  parts.push(`【任务】用「${styleDesc}」的风格写一段中文旅行短文。`);
+  if (sceneLines.length > 0) {
+    parts.push(`\n\n【场景信息】\n${sceneLines.join('\n')}`);
+  }
+  if (exifDesc && exifDesc.length > 0) {
+    parts.push(`\n\n【照片元数据】\n${exifDesc}`);
+  }
+  parts.push(`\n\n【输出要求】\n${reqLines.join('\n')}`);
+
+  return parts.join('');
 }
 

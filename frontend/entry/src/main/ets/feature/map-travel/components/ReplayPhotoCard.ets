@@ -84,7 +84,7 @@ export struct ReplayPhotoCard {
               .selectedColor(this.styleKit.progressBlockColor)
           : false
       )
-      .borderRadius({ topLeft: 16, topRight: 16, bottomLeft: 0, bottomRight: 0 })
+      .borderRadius({ topLeft: AppDimens.RADIUS_SM, topRight: AppDimens.RADIUS_SM, bottomLeft: 0, bottomRight: 0 })
     } else {
       Column() {
         Text('📷')
@@ -98,7 +98,7 @@ export struct ReplayPhotoCard {
       .height(180)
       .justifyContent(FlexAlign.Center)
       .backgroundColor(this.styleKit.cardPhotoBackground)
-      .borderRadius({ topLeft: 16, topRight: 16, bottomLeft: 0, bottomRight: 0 })
+      .borderRadius({ topLeft: AppDimens.RADIUS_SM, topRight: AppDimens.RADIUS_SM, bottomLeft: 0, bottomRight: 0 })
     }
   }
 
@@ -123,7 +123,7 @@ export struct ReplayPhotoCard {
                   .fontColor(this.styleKit.cardTagTextColor)
                   .backgroundColor(this.styleKit.cardTagBackground)
                   .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                  .borderRadius(5)
+                  .borderRadius(12)
                   .margin({ right: 4 })
               })
             }
@@ -141,10 +141,16 @@ export struct ReplayPhotoCard {
           }
 
           if (this.node.photos.length > 0) {
-            Text(`${this.node.photos.length} 张照片`)
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(this.styleKit.cardMutedColor)
-              .margin({ top: 6 })
+            Row({ space: 4 }) {
+              Text('▧')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(this.styleKit.cardMutedColor)
+              Text(this.node.photos.length.toString())
+                .fontSize(AppDimens.FONT_SM)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(this.styleKit.cardMutedColor)
+            }
+            .margin({ top: 6 })
           }
 
           if (!this.isPlaying && this.node.photos.length > 1) {
@@ -157,10 +163,10 @@ export struct ReplayPhotoCard {
         .width('100%')
         .padding(AppDimens.PADDING_MD)
         .backgroundColor(this.styleKit.cardContentBackground)
-        .borderRadius({ bottomLeft: 16, bottomRight: 16 })
+        .borderRadius({ bottomLeft: AppDimens.RADIUS_SM, bottomRight: AppDimens.RADIUS_SM })
       }
       .width(280)
-      .shadow({ radius: 14, color: this.styleKit.shadowColor, offsetY: 8, offsetX: 0 })
+      .shadow({ radius: 18, color: AppDimens.SHADOW_SOFT, offsetY: 7 })
       .border({ width: 1, color: this.styleKit.overlayPanelBorderColor })
       .onClick(() => {
         if (this.onExpand && this.node) {

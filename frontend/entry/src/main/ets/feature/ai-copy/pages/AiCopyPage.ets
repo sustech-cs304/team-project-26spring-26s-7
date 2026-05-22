@@ -1,4 +1,4 @@
-import { router, promptAction } from '@kit.ArkUI'
+import { router, promptAction, LengthMetrics } from '@kit.ArkUI'
 import { common } from '@kit.AbilityKit'
 import { pasteboard } from '@kit.BasicServicesKit'
 import {
@@ -61,9 +61,10 @@ export struct AiCopyPage {
   @State isGenerating: boolean = false
   @State generatedCopy: string = ''
   @State alternatives: string[] = []
-  // 调试：实际发送给后端的 prompt
+  // 给用户看的"提示词预览"。让用户看到 AI 实际收到什么；也方便答辩时展示
+  // 风格/长度/POI/mood/tags 切换如何影响 prompt 结构。默认收起避免视觉嘈杂。
   @State debugPrompt: string = ''
-  @State debugPromptExpanded: boolean = true
+  @State debugPromptExpanded: boolean = false
   @State isPreviewingPrompt: boolean = false
   // 云端打标签同意状态（来自 ConsentManager）
   @StorageProp('aiCloudTaggingEnabled') @Watch('onCloudTaggingChanged') cloudTaggingEnabled: boolean = false
@@ -90,9 +91,9 @@ export struct AiCopyPage {
 
   // 文章长度选项
   private lengthOptions: LengthOption[] = [
-    { value: 'short', label: '短 (1~2句)' },
-    { value: 'medium', label: '中 (3~5句)' },
-    { value: 'long', label: '长 (6~10句)' }
+    { value: 'short', label: '简短' },
+    { value: 'medium', label: '适中' },
+    { value: 'long', label: '详细' }
   ]
 
   aboutToAppear(): void {
@@ -431,6 +432,26 @@ export struct AiCopyPage {
   }
 
   /**
+   * 页内 banner 上的开关：用户直接切换"是否同意上传照片做云端识别"。
+   * 调 recordPromptResult 一次性把 enabled + prompted 都写到 preferences，
+   * 既持久化用户选择，也让自动 JIT 对话框逻辑（needs !prompted）不会再误触发。
+   */
+  private async handleCloudTaggingToggle(turningOn: boolean): Promise<void> {
+    const uiCtx = this.getUIContext();
+    const ctx = uiCtx.getHostContext() as common.UIAbilityContext;
+    if (!ctx) {
+      promptAction.showToast({ message: '无法获取应用上下文' });
+      return;
+    }
+    await ConsentManager.recordPromptResult(ctx, turningOn);
+    promptAction.showToast({
+      message: turningOn
+        ? '已开启云端识别（生成时 AI 可看到首张照片）'
+        : '已关闭，AI 仅使用本机元数据'
+    });
+  }
+
+  /**
    * 复制 debug prompt 到剪贴板
    */
   private async handleCopyPrompt(): Promise<void> {
@@ -479,6 +500,26 @@ export struct AiCopyPage {
     router.back();
   }
 
+  private getPillButtonBg(): string {
+    return AppDimens.PHOTO_SURFACE
+  }
+
+  private getPillButtonBorder(): string {
+    return AppColors.DIVIDER
+  }
+
+  private getSelectedPillBg(): string {
+    return AppDimens.CTA_DARK
+  }
+
+  private getSelectedPillTextColor(): string {
+    return AppColors.TEXT_ON_PRIMARY
+  }
+
+  private getSoftPanelBg(): string {
+    return AppDimens.PHOTO_SURFACE
+  }
+
   build() {
     Stack() {
       Column() {
@@ -488,7 +529,7 @@ export struct AiCopyPage {
           .fontSize(AppDimens.FONT_XL)
           .fontColor(AppColors.TEXT_PRIMARY)
           .onClick(() => router.back())
-          .padding(AppDimens.PADDING_MD)
+          .padding(AppDimens.PADDING_MD) 
 
         Text('AI 文案助手')
           .fontSize(AppDimens.FONT_LG)
@@ -586,38 +627,6 @@ export struct AiCopyPage {
               .height(96)
             }
 
-            // 端侧元数据摘要 —— 让用户知道有哪些信息会进入 prompt
-            if (this.isExtracting) {
-              Row({ space: 8 }) {
-                LoadingProgress().width(16).height(16)
-                Text('正在端侧识别照片元数据...')
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_HINT)
-              }
-              .width('100%')
-              .margin({ top: 12 })
-            } else if (this.metadataSummary.length > 0) {
-              Column() {
-                Text(
-                  this.cloudTaggingEnabled
-                    ? '已识别端侧元数据（点击生成时还会把首张照片的剥离 EXIF 副本一并发送，让模型直接看图写文案）'
-                    : '已识别端侧元数据（仅文本进入 prompt，照片本体不会上传）'
-                )
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.PRIMARY)
-                  .margin({ bottom: 6 })
-                Text(this.metadataSummary)
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_SECONDARY)
-                  .lineHeight(20)
-              }
-              .width('100%')
-              .padding(10)
-              .margin({ top: 12 })
-              .backgroundColor(AppColors.PRIMARY + '10')
-              .borderRadius(AppDimens.RADIUS_SM)
-              .alignItems(HorizontalAlign.Start)
-            }
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
@@ -625,6 +634,44 @@ export struct AiCopyPage {
           .borderRadius(AppDimens.RADIUS_SM)
           .margin({ bottom: 12 })
           .alignItems(HorizontalAlign.Start)
+
+          // 云端识别同意 banner —— 让用户一眼看到"AI 会不会动我的图片" + 直接切换
+          Column() {
+            Row() {
+              Text(this.cloudTaggingEnabled ? '☁️' : '🔒')
+                .fontSize(20)
+                .margin({ right: 10 })
+
+              Column() {
+                Text(this.cloudTaggingEnabled ? '已开启云端识别' : '未开启云端识别')
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(AppColors.TEXT_PRIMARY)
+                Text(this.cloudTaggingEnabled
+                  ? '生成时会把首张照片送至云端 AI（经审核后使用）'
+                  : '不会上传照片到云端，AI 仅使用本机抽取的元数据')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_SECONDARY)
+                  .lineHeight(18)
+                  .margin({ top: 2 })
+              }
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Start)
+
+              Toggle({ type: ToggleType.Switch, isOn: this.cloudTaggingEnabled })
+                .onChange((isOn: boolean) => this.handleCloudTaggingToggle(isOn))
+            }
+            .width('100%')
+            .alignItems(VerticalAlign.Center)
+          }
+          .width('100%')
+          .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: 12, bottom: 12 })
+          .backgroundColor(this.cloudTaggingEnabled ? this.getSoftPanelBg() : AppColors.CARD_BG)
+          .borderRadius(AppDimens.RADIUS_SM)
+          .margin({ bottom: 12 })
+          .border(this.cloudTaggingEnabled
+            ? { width: 1, color: this.getPillButtonBorder(), style: BorderStyle.Solid }
+            : { width: 1, color: AppColors.DIVIDER, style: BorderStyle.Solid })
 
           // 文案风格选择
           Column() {
@@ -642,17 +689,17 @@ export struct AiCopyPage {
                       .fontSize(28)
                     Text(style.label)
                       .fontSize(AppDimens.FONT_SM)
-                      .fontColor(this.selectedStyle === style.value ? AppColors.PRIMARY : AppColors.TEXT_SECONDARY)
+                      .fontColor(this.selectedStyle === style.value ? this.getSelectedPillTextColor() : AppColors.TEXT_SECONDARY)
                       .margin({ top: 4 })
                   }
                   .width('100%')
                   .height(70)
                   .justifyContent(FlexAlign.Center)
-                  .backgroundColor(this.selectedStyle === style.value ? AppColors.PRIMARY + '20' : AppColors.BACKGROUND)
+                  .backgroundColor(this.selectedStyle === style.value ? this.getSelectedPillBg() : this.getPillButtonBg())
                   .borderRadius(AppDimens.RADIUS_SM)
                   .border({
-                    width: 2,
-                    color: this.selectedStyle === style.value ? AppColors.PRIMARY : 'transparent'
+                    width: 1,
+                    color: this.selectedStyle === style.value ? this.getSelectedPillBg() : this.getPillButtonBorder()
                   })
                   .onClick(() => { this.selectedStyle = style.value })
                 }
@@ -676,17 +723,20 @@ export struct AiCopyPage {
               .fontColor(AppColors.TEXT_PRIMARY)
               .margin({ bottom: 12 })
 
-            Row({ space: 12 }) {
+            Row({ space: 8 }) {
               ForEach(this.lengthOptions, (option: LengthOption) => {
                 Text(option.label)
                   .fontSize(AppDimens.FONT_MD)
-                  .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+                  .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+                  .textAlign(TextAlign.Center)
+                  .layoutWeight(1)
                   .backgroundColor(this.selectedLength === option.value ? AppColors.PRIMARY : AppColors.BACKGROUND)
                   .fontColor(this.selectedLength === option.value ? Color.White : AppColors.TEXT_SECONDARY)
                   .borderRadius(AppDimens.RADIUS_SM)
                   .onClick(() => { this.selectedLength = option.value })
               })
             }
+            .width('100%')
           }
           .width('100%')
           .padding(AppDimens.PADDING_MD)
@@ -770,13 +820,21 @@ export struct AiCopyPage {
           // 生成按钮
           if (this.isGenerating) {
             Row({ space: 12 }) {
-              Button('生成中...')
-                .fontSize(AppDimens.FONT_LG)
-                .layoutWeight(1)
-                .height(50)
-                .backgroundColor(AppColors.TEXT_HINT)
-                .fontColor(Color.White)
-                .enabled(false)
+              Button() {
+                Row({ space: 8 }) {
+                  LoadingProgress()
+                    .width(20)
+                    .height(20)
+                    .color(Color.White)
+                  Text('生成中...')
+                    .fontSize(AppDimens.FONT_LG)
+                    .fontColor(Color.White)
+                }
+              }
+              .layoutWeight(1)
+              .height(50)
+              .backgroundColor(AppColors.TEXT_HINT)
+              .enabled(false)
 
               Button('取消')
                 .fontSize(AppDimens.FONT_LG)
@@ -795,8 +853,8 @@ export struct AiCopyPage {
                 .height(50)
                 .layoutWeight(1)
                 .backgroundColor(AppColors.BACKGROUND)
-                .fontColor(AppColors.PRIMARY)
-                .border({ width: 1, color: AppColors.PRIMARY })
+                .fontColor(AppColors.TEXT_PRIMARY)
+                .border({ width: 1, color: this.getPillButtonBorder() })
                 .enabled(this.imagePaths.length > 0 && !this.isPreviewingPrompt)
                 .onClick(() => this.handlePreviewPrompt())
 
@@ -806,10 +864,10 @@ export struct AiCopyPage {
                 .layoutWeight(2)
                 .backgroundColor(
                   this.imagePaths.length > 0 && !this.isPreviewingPrompt
-                    ? AppColors.PRIMARY
+                    ? AppColors.PRIMARY_DARK
                     : AppColors.TEXT_HINT
                 )
-                .fontColor(Color.White)
+                .fontColor(AppColors.TEXT_ON_PRIMARY)
                 .enabled(this.imagePaths.length > 0 && !this.isPreviewingPrompt)
                 .onClick(() => this.handleGenerate())
             }
@@ -817,25 +875,27 @@ export struct AiCopyPage {
             .margin({ bottom: 12 })
           }
 
-          // 调试：实际发送的 prompt
+          // 提示词预览：透明展示 AI 实际收到的输入，也方便答辩演示"切换选项 → prompt 变化"
           if (this.debugPrompt.length > 0) {
             Column() {
               Row() {
-                Text('🔧 实际 prompt（调试）')
+                Text('AI 看到的提示词')
                   .fontSize(AppDimens.FONT_MD)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(AppColors.TEXT_PRIMARY)
                 Blank()
-                Text(this.debugPromptExpanded ? '收起' : '展开')
+                Text(this.debugPromptExpanded ? '收起' : '查看')
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.PRIMARY)
                   .padding({ left: 8, right: 8 })
                   .onClick(() => { this.debugPromptExpanded = !this.debugPromptExpanded })
-                Text('复制')
-                  .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.PRIMARY)
-                  .padding({ left: 8, right: 8 })
-                  .onClick(() => this.handleCopyPrompt())
+                if (this.debugPromptExpanded) {
+                  Text('复制')
+                    .fontSize(AppDimens.FONT_SM)
+                    .fontColor(AppColors.PRIMARY)
+                    .padding({ left: 8, right: 8 })
+                    .onClick(() => this.handleCopyPrompt())
+                }
               }
               .width('100%')
               .margin({ bottom: 8 })
@@ -916,8 +976,8 @@ export struct AiCopyPage {
               .fontSize(AppDimens.FONT_MD)
               .width('100%')
               .height(46)
-              .backgroundColor(AppColors.PRIMARY)
-              .fontColor(Color.White)
+              .backgroundColor(AppDimens.CTA_DARK)
+              .fontColor(AppColors.TEXT_ON_PRIMARY)
               .borderRadius(AppDimens.RADIUS_SM)
               .margin({ top: 12 })
               .onClick(() => this.handleApplyToNode())
@@ -1008,8 +1068,8 @@ export struct AiCopyPage {
                 .fontSize(AppDimens.FONT_MD)
                 .layoutWeight(1)
                 .height(44)
-                .backgroundColor(AppColors.PRIMARY)
-                .fontColor(Color.White)
+                .backgroundColor(AppDimens.CTA_DARK)
+                .fontColor(AppColors.TEXT_ON_PRIMARY)
                 .onClick(() => this.handleConsentChoice(true))
             }
             .width('100%')

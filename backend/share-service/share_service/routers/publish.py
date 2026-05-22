@@ -18,6 +18,8 @@ from typing import Any, Deque, Optional
 
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
+    Depends,
     File,
     Form,
     HTTPException,
@@ -28,6 +30,8 @@ from fastapi import (
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import ValidationError
 
+from ..core.audit_task import audit_share
+from ..core.auth_tokens import require_share_token
 from ..core.config import get_settings
 from ..core.lifecycle import (
     REVOKE_REASON_PRIVATE,
@@ -111,7 +115,11 @@ def _cache_root() -> Path:
     status_code=status.HTTP_201_CREATED,
     response_model=PublishResponse,
 )
-async def publish(request: Request):
+async def publish(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    owner_uid: str = Depends(require_share_token),
+):
     settings = get_settings()
     client_host = request.client.host if request.client else "unknown"
     if not _check_publish_rate(client_host):
@@ -391,6 +399,10 @@ async def publish(request: Request):
             "sig_hex": sig_hex,
             "replay_prefs_json": replay_prefs_json,
         })
+        # v1.2：异步审查文本 + 图片。命中后台静默 revoke (写 audit_status='rejected'
+        # + revoked_reason='CONTENT_VIOLATION' + 清 cache)，viewer 显示固定话术。
+        # FastAPI BackgroundTasks 在 response 返回后 schedule，所以不影响 publish 响应延迟。
+        background_tasks.add_task(audit_share, short_code)
     except Exception as e:
         # rmtree is robust against partial state — empty dirs, dirs with
         # only some webp files, missing manifest, all fine. Anything we
@@ -466,16 +478,18 @@ async def status_endpoint(shortcode: str) -> StatusResponse:
     "/api/v1/share/revoke-by-trip",
     response_model=RevokeByTripResponse,
 )
-async def revoke_by_trip(body: RevokeByTripRequest) -> RevokeByTripResponse:
+async def revoke_by_trip(
+    body: RevokeByTripRequest,
+    owner_uid: str = Depends(require_share_token),
+) -> RevokeByTripResponse:
     """v0.8: Trip 改为私密时由前端调用，关停该 trip 全部分享链接。
 
     DB 行保留（带 revoked_reason='PRIVATE'）让 viewer 能识别原因显示
     "该用户已设置该路线为私密"；cache 子目录立刻删干净，确保数据真的
     不再可读。
 
-    无认证 — 调用方持有 tripId 即可撤销该 trip 的全部分享。tripId 是
-    本地 UUID，外人难以拿到，对 MVP 风险可接受。AGC Auth 接入后会再
-    加 ownerUid 校验作为二次防御。
+    v1.2: 要求 share_token (HMAC scope=share) 或 dev X-Dev-Uid 头。
+    AGC Auth 已接入；tripId 仍由前端传，后续会加 ownerUid 强校验作为二次防御。
     """
     if not body.tripId:
         return RevokeByTripResponse(
