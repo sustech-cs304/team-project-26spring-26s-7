@@ -803,8 +803,10 @@ export struct NodeEditPage {
                 .fontWeight(FontWeight.Medium)
                 .fontColor(AppColors.PRIMARY)
                 .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-                .backgroundColor(AppColors.PRIMARY + '12')
+                .backgroundColor(this.getPillButtonBg())
                 .borderRadius(16)
+                .border({ width: 1, color: this.getPillButtonBorder() })
+                .shadow({ radius: 8, color: AppDimens.SHADOW_SOFT, offsetY: 2 })
                 .onClick(() => {
                   if (this.showQuickTripCreator) {
                     this.cancelQuickTripCreator()
@@ -844,9 +846,11 @@ export struct NodeEditPage {
                   Button(this.isCreatingQuickTrip ? '创建中...' : '创建')
                     .height(34)
                     .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.TEXT_ON_PRIMARY)
-                    .backgroundColor(AppColors.PRIMARY)
+                    .fontColor(AppColors.PRIMARY)
+                    .backgroundColor(this.getPillButtonBg())
                     .borderRadius(17)
+                    .border({ width: 1, color: this.getPillButtonBorder() })
+                    .shadow({ radius: 8, color: AppDimens.SHADOW_SOFT, offsetY: 2 })
                     .margin({ left: 8 })
                     .enabled(!this.isCreatingQuickTrip)
                     .onClick(() => this.handleQuickCreateTrip())
@@ -875,9 +879,11 @@ export struct NodeEditPage {
                 Button('新建旅行')
                   .height(38)
                   .fontSize(AppDimens.FONT_SM)
-                  .fontColor(AppColors.TEXT_ON_PRIMARY)
-                  .backgroundColor(AppColors.PRIMARY)
+                  .fontColor(AppColors.PRIMARY)
+                  .backgroundColor(this.getPillButtonBg())
                   .borderRadius(19)
+                  .border({ width: 1, color: this.getPillButtonBorder() })
+                  .shadow({ radius: 8, color: AppDimens.SHADOW_SOFT, offsetY: 2 })
                   .margin({ top: 14 })
                   .onClick(() => this.openQuickTripCreator())
               }
@@ -910,22 +916,23 @@ export struct NodeEditPage {
                         .fontColor(AppColors.PRIMARY)
                         .fontWeight(FontWeight.Medium)
                         .padding({ left: 10, right: 10, top: 5, bottom: 5 })
-                        .backgroundColor(AppColors.PRIMARY + '12')
+                        .backgroundColor(AppDimens.ACCENT_SOFT_BG)
+                        .border({ width: 1, color: AppColors.PRIMARY })
                         .borderRadius(12)
                     }
                   }
                   .width('100%')
                   .padding({ left: 14, right: 14, top: 14, bottom: 14 })
-                  .margin({ bottom: 10 })
+                  .margin({ top: 12, bottom: 10 })
                   .backgroundColor(
                     this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
-                      ? AppColors.PRIMARY + '10'
+                      ? AppDimens.ACCENT_SOFT_BG
                       : AppColors.BACKGROUND
                   )
                   .borderRadius(18)
                   .border({
                     width: this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID ? 1 : 0,
-                    color: this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID ? AppColors.PRIMARY + '55' : 'transparent'
+                    color: this.tripId === TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID ? AppColors.PRIMARY : 'transparent'
                   })
                   .onClick(() => this.selectNoTrip())
 
@@ -953,18 +960,19 @@ export struct NodeEditPage {
                           .fontColor(AppColors.PRIMARY)
                           .fontWeight(FontWeight.Medium)
                           .padding({ left: 10, right: 10, top: 5, bottom: 5 })
-                          .backgroundColor(AppColors.PRIMARY + '12')
+                          .backgroundColor(AppDimens.ACCENT_SOFT_BG)
+                          .border({ width: 1, color: AppColors.PRIMARY })
                           .borderRadius(12)
                       }
                     }
                     .width('100%')
                     .padding({ left: 14, right: 14, top: 14, bottom: 14 })
                     .margin({ bottom: 10 })
-                    .backgroundColor(trip.id === this.tripId ? AppColors.PRIMARY + '10' : AppColors.BACKGROUND)
+                    .backgroundColor(trip.id === this.tripId ? AppDimens.ACCENT_SOFT_BG : AppColors.BACKGROUND)
                     .borderRadius(18)
                     .border({
                       width: trip.id === this.tripId ? 1 : 0,
-                      color: trip.id === this.tripId ? AppColors.PRIMARY + '55' : 'transparent'
+                      color: trip.id === this.tripId ? AppColors.PRIMARY : 'transparent'
                     })
                     .onClick(() => this.chooseTrip(trip))
                   })

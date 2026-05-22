@@ -402,7 +402,7 @@ struct ProfileEditPage {
             Text('💡 提示')
               .fontSize(AppDimens.FONT_SM)
               .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.PRIMARY)
+              .fontColor(AppColors.TEXT_PRIMARY)
 
             Text('修改保存后，昵称和签名会在多设备间自动同步。')
               .fontSize(AppDimens.FONT_SM)
@@ -412,7 +412,8 @@ struct ProfileEditPage {
           .width('100%')
           .padding(AppDimens.PADDING_MD)
           .margin({ top: 12 })
-          .backgroundColor(AppColors.PRIMARY + '10')
+          .backgroundColor(AppColors.CARD_BG)
+          .border({ width: 1, color: AppColors.DIVIDER })
           .borderRadius(AppDimens.RADIUS_SM)
           .alignItems(HorizontalAlign.Start)
         }
