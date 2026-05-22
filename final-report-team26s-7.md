@@ -24,8 +24,8 @@ Frontend CI artifact:
 
 Backend CI artifact:
 
-- Runner path: `D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\log\backend\metrics\summary.txt`
-- Repo-relative path: `log/backend/metrics/summary.txt`
+- Runner path: `D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\backend\metrics\summary.txt`
+- Repo-relative path: `backend/metrics/summary.txt`
 - CI build: backend Jenkins build 27, commit `8497f59f`
 
 ### 1.2 Project Summary
