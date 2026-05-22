@@ -14,7 +14,7 @@ def create_app() -> FastAPI:
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
     settings = get_settings()
-    app = FastAPI(title="TravelPin Share Service", version="0.1.0")
+    app = FastAPI(title="ItsMapPin Share Service", version="0.1.0")
 
     # §九: CORS for the AGC Hosting H5 viewer + local dev origins.
     # 上架硬性要求：必须显式配置允许来源，禁止隐式 "*" 回退。

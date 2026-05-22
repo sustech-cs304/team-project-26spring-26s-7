@@ -1,5 +1,5 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, AuthService, ImageCensorService } from '../../../common'
+import { AppColors, AppDimens, AuthService, ImageCensorService, RouterUrls } from '../../../common'
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
@@ -16,14 +16,29 @@ const TAG = 'ProfileEditPage';
 @Component
 struct ProfileEditPage {
   @StorageLink('appThemeVersion') themeVersion: number = 0
-  @State nickname: string = 'TravelPin 用户'
+  @State nickname: string = 'ItsMapPin 用户'
   @State avatar: string = ''
   @State bio: string = ''
   @State isSaving: boolean = false
   @State isCheckingAvatar: boolean = false
+  @State saveProgressText: string = ''
 
   aboutToAppear(): void {
     this.loadProfile()
+  }
+
+  onPageShow(): void {
+    const cropApplied = AppStorage.get('avatarCropApplied') as boolean
+    if (!cropApplied) {
+      return
+    }
+
+    const cropPath = (AppStorage.get('avatarCropPath') as string) || ''
+    AppStorage.setOrCreate('avatarCropApplied', false)
+    AppStorage.setOrCreate('avatarCropPath', '')
+    if (cropPath.length > 0) {
+      void this.auditSelectedAvatar(cropPath)
+    }
   }
 
   private async loadProfile(): Promise<void> {
@@ -37,7 +52,7 @@ struct ProfileEditPage {
         this.bio = effective.bio
       } else {
         const status = await AuthService.getAuthStatus()
-        this.nickname = status.user?.displayName ?? 'TravelPin 用户'
+        this.nickname = status.user?.displayName ?? 'ItsMapPin 用户'
         this.avatar = status.user?.avatarUrl ?? ''
       }
     } catch (_) {
@@ -103,18 +118,11 @@ struct ProfileEditPage {
           fs.closeSync(targetFile);
         }
 
-        this.isCheckingAvatar = true;
-        promptAction.showToast({ message: '正在审核头像安全性...' });
-        const auditResult = await ImageCensorService.checkLocalImage(targetPath);
-        if (!auditResult.is_safe) {
-          this.deleteAvatarCandidate(targetPath);
-          this.showAvatarViolationDialog(auditResult.conclusion);
-          return;
-        }
-
-        // 存储沙箱路径（不含 file:// 前缀，loadProfile 时统一加）
-        this.avatar = targetPath;
-        promptAction.showToast({ message: '头像已选择' });
+        router.pushUrl({
+          url: RouterUrls.PROFILE_AVATAR_CROP,
+          params: { sourcePath: targetPath }
+        })
+        candidatePath = ''
       }
     } catch (err) {
       if (candidatePath.length > 0) {
@@ -133,6 +141,45 @@ struct ProfileEditPage {
         })
       } else {
         promptAction.showToast({ message: '选择头像失败，请重试' });
+      }
+    } finally {
+      this.isCheckingAvatar = false
+    }
+  }
+
+  private async auditSelectedAvatar(candidatePath: string): Promise<void> {
+    if (this.isCheckingAvatar) {
+      this.deleteAvatarCandidate(candidatePath)
+      return
+    }
+
+    this.isCheckingAvatar = true
+    try {
+      promptAction.showToast({ message: '正在审核头像安全性...' })
+      const auditResult = await ImageCensorService.checkLocalImage(candidatePath)
+      if (!auditResult.is_safe) {
+        this.deleteAvatarCandidate(candidatePath)
+        this.showAvatarViolationDialog(auditResult.conclusion)
+        return
+      }
+
+      this.avatar = candidatePath
+      promptAction.showToast({ message: '头像已选择' })
+    } catch (err) {
+      this.deleteAvatarCandidate(candidatePath)
+      const error = err as BusinessError
+      hilog.warn(DOMAIN, TAG, `Avatar audit failed: ${error?.code ?? 'unknown'} - ${error?.message ?? error}`)
+      if ((err as Error).message === 'IMAGE_CENSOR_NETWORK_ERROR') {
+        AlertDialog.show({
+          title: '头像审核失败',
+          message: '图片安全审核服务暂不可用，请检查网络后重试。',
+          primaryButton: {
+            value: '我知道了',
+            action: () => {}
+          }
+        })
+      } else {
+        promptAction.showToast({ message: '头像审核失败，请重试' })
       }
     } finally {
       this.isCheckingAvatar = false
@@ -159,6 +206,11 @@ struct ProfileEditPage {
     }
   }
 
+  private bumpProfileVersion(): void {
+    const version = AppStorage.get<number>('profile_version') ?? 0
+    AppStorage.setOrCreate('profile_version', version + 1)
+  }
+
   private async handleSave(): Promise<void> {
     if (!this.isNetworkOnline()) {
       promptAction.showToast({ message: '当前无网络，请在联网后保存资料' })
@@ -171,6 +223,7 @@ struct ProfileEditPage {
     }
 
     this.isSaving = true
+    this.saveProgressText = '正在审核并保存资料...'
 
     try {
       await AuthService.saveLocalProfile({
@@ -180,8 +233,7 @@ struct ProfileEditPage {
         userModified: true  // 标记为用户主动修改，登录时不再被华为账号覆盖
       })
       // 写一个递增版本号，让 ProfileView 检测到返回事件并刷新
-      const currentVersion = (AppStorage.get<number>('profile_version') ?? 0) + 1
-      AppStorage.setOrCreate('profile_version', currentVersion)
+      this.bumpProfileVersion()
       promptAction.showToast({ message: '保存成功' })
       router.back()
     } catch (err) {
@@ -189,6 +241,7 @@ struct ProfileEditPage {
       promptAction.showToast({ message: error.message || '保存失败，请重试' });
     } finally {
       this.isSaving = false
+      this.saveProgressText = ''
     }
   }
 
@@ -218,6 +271,23 @@ struct ProfileEditPage {
       .height(56)
       .backgroundColor(AppColors.CARD_BG)
 
+      if (this.isSaving) {
+        Row() {
+          LoadingProgress()
+            .width(18)
+            .height(18)
+            .color(AppColors.PRIMARY)
+          Text(this.saveProgressText)
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_SECONDARY)
+            .margin({ left: 8 })
+        }
+        .width('100%')
+        .height(40)
+        .justifyContent(FlexAlign.Center)
+        .backgroundColor(AppColors.CARD_BG)
+      }
+
       // 表单内容
       Scroll() {
         Column() {
@@ -231,33 +301,47 @@ struct ProfileEditPage {
             Row() {
               // 头像预览 / 添加按钮
               Column() {
-                if (this.avatar) {
-                  Image(this.avatar.startsWith('file://') || this.avatar.startsWith('http')
-                    ? this.avatar : `file://${this.avatar}`)
-                    .width(80)
-                    .height(80)
-                    .borderRadius(40)
-                } else {
-                  Text('+')
-                    .fontSize(32)
-                    .fontColor(AppColors.TEXT_HINT)
-                  Text('添加头像')
-                    .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.TEXT_HINT)
-                    .margin({ top: 4 })
+                Column() {
+                  if (this.avatar) {
+                    Image(this.avatar.startsWith('file://') || this.avatar.startsWith('http')
+                      ? this.avatar : `file://${this.avatar}`)
+                      .width(80)
+                      .height(80)
+                      .borderRadius(40)
+                  } else {
+                    Text('+')
+                      .fontSize(32)
+                      .fontColor(AppColors.TEXT_HINT)
+                    Text('添加头像')
+                      .fontSize(AppDimens.FONT_SM)
+                      .fontColor(AppColors.TEXT_HINT)
+                      .margin({ top: 4 })
+                  }
                 }
+                .width(80)
+                .height(80)
+                .backgroundColor(AppColors.BACKGROUND)
+                .borderRadius(40)
+                .justifyContent(FlexAlign.Center)
+
                 if (this.isCheckingAvatar) {
-                  Text('审核中')
-                    .fontSize(AppDimens.FONT_SM)
-                    .fontColor(AppColors.PRIMARY)
-                    .margin({ top: 4 })
+                  Row() {
+                    LoadingProgress()
+                      .width(16)
+                      .height(16)
+                      .color(AppColors.PRIMARY)
+                    Text('正在审核头像...')
+                      .fontSize(AppDimens.FONT_SM)
+                      .fontColor(AppColors.PRIMARY)
+                      .margin({ left: 6 })
+                  }
+                  .margin({ top: 8 })
+                  .justifyContent(FlexAlign.Center)
                 }
               }
-              .width(80)
-              .height(80)
-              .backgroundColor(AppColors.BACKGROUND)
-              .borderRadius(40)
+              .width(140)
               .justifyContent(FlexAlign.Center)
+              .alignItems(HorizontalAlign.Center)
               .onClick(() => this.handlePickAvatar())
             }
             .margin({ top: 8 })
@@ -318,7 +402,7 @@ struct ProfileEditPage {
             Text('💡 提示')
               .fontSize(AppDimens.FONT_SM)
               .fontWeight(FontWeight.Medium)
-              .fontColor(AppColors.PRIMARY)
+              .fontColor(AppColors.TEXT_PRIMARY)
 
             Text('修改保存后，昵称和签名会在多设备间自动同步。')
               .fontSize(AppDimens.FONT_SM)
@@ -328,7 +412,8 @@ struct ProfileEditPage {
           .width('100%')
           .padding(AppDimens.PADDING_MD)
           .margin({ top: 12 })
-          .backgroundColor(AppColors.PRIMARY + '10')
+          .backgroundColor(AppColors.CARD_BG)
+          .border({ width: 1, color: AppColors.DIVIDER })
           .borderRadius(AppDimens.RADIUS_SM)
           .alignItems(HorizontalAlign.Start)
         }

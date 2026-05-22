@@ -10,6 +10,8 @@ frontend/cc4frontend.md
 backend/cc4backend.md
 .mcp.json
 .playwright-mcp
+Backend_ItsMapPin/
+.codex_tmp
 
 # ========================
 # Temporary files
@@ -19,7 +21,6 @@ Temp/
 temp/
 .ci-logs/
 .ci-tmps/
-ci-artifacts/
 __pycache__/
 *.pyc
 *.log
@@ -88,6 +89,7 @@ frontend/.idea/
 .env.*
 !backend/picture-check/.env.production.example
 agc-apiclient-*.json
+agconnect-services.json
 backend/picture-check/.venv/
 backend/picture-check/logs/
 backend/picture-check/secure/
@@ -95,20 +97,24 @@ backend/picture-check/secure/
 # package
 package-lock.json
 package.json
+frontend/build-profile.json5
 
 # local CI hook config — keep .example.json templates tracked, ignore everything else
 .local-ci/*
 !.local-ci/local-jenkins-hook.example.json
 !.local-ci/local-jenkins-hook-backend.example.json
 
-frontend/build-profile.json5
+# ci storage
+.be-ci-artifacts/
+ci-artifacts/
+backend/share-service/share_service/core/test_poster.py
+backend/share-service/share_service/core/test.png
+backend/share-service/share_service/core/poster_test_from_import.jpg
 
-# ========================
-# Backend CI 本地状态（runner-only, never tracked）
-# ========================
+# Backend CI 本地状态
 backend/.ci-venv/
 backend/build-artifacts/
 build-artifacts/
-.ci-logs/
-.be-ci-artifacts/
-ci-artifacts/
+
+# backup icons
+icon_backup/

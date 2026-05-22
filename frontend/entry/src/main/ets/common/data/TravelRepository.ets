@@ -67,9 +67,6 @@ interface NodePhotoData {
 }
 
 export class TravelRepository {
-  static ownerUidProvider: (() => Promise<string>) | null = null;
-  static nowProvider: (() => number) | null = null;
-  static predicatesFactory: ((table: string) => Object) | null = null;
   private rdbHelper: RdbHelper;
 
   constructor() {
@@ -78,20 +75,6 @@ export class TravelRepository {
 
   private async getRdbStore(): Promise<rdb.RdbStore> {
     return await this.rdbHelper.getStore();
-  }
-
-  private static createPredicates(table: string): rdb.RdbPredicates {
-    if (TravelRepository.predicatesFactory) {
-      return TravelRepository.predicatesFactory(table) as rdb.RdbPredicates;
-    }
-    return new rdb.RdbPredicates(table);
-  }
-
-  private static now(): number {
-    if (TravelRepository.nowProvider) {
-      return TravelRepository.nowProvider();
-    }
-    return Date.now();
   }
 
   private closeResultSet(resultSet?: rdb.ResultSet): void {
@@ -119,9 +102,6 @@ export class TravelRepository {
   }
 
   private async getOwnerUid(): Promise<string> {
-    if (TravelRepository.ownerUidProvider) {
-      return await TravelRepository.ownerUidProvider();
-    }
     const user = await AuthService.getCurrentUser();
     return user?.uid ?? '';
   }
@@ -184,7 +164,7 @@ export class TravelRepository {
     try {
       const store = await this.getRdbStore();
       const ownerUid = await this.getOwnerUid();
-      const predicates = TravelRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('owner_uid', ownerUid);
       predicates.equalTo('deleted_at', 0);
       predicates.orderByDesc('created_at');
@@ -210,7 +190,7 @@ export class TravelRepository {
     try {
       const store = await this.getRdbStore();
       const ownerUid = await this.getOwnerUid();
-      const predicates = TravelRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('owner_uid', ownerUid);
       predicates.orderByDesc('updated_at');
       resultSet = await store.query(predicates);
@@ -235,7 +215,7 @@ export class TravelRepository {
     try {
       const store = await this.getRdbStore();
       const ownerUid = await this.getOwnerUid();
-      const predicates = TravelRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'travel id'));
       predicates.equalTo('owner_uid', ownerUid);
       predicates.equalTo('deleted_at', 0);
@@ -256,7 +236,7 @@ export class TravelRepository {
   async createTravel(travel: CreateTravelInput): Promise<string> {
     try {
       const store = await this.getRdbStore();
-      const now = TravelRepository.now();
+      const now = Date.now();
       const ownerUid = await this.getOwnerUid();
       const valueBucket: rdb.ValuesBucket = {
         'name': travel.name,
@@ -298,7 +278,7 @@ export class TravelRepository {
         return false;
       }
       const valueBucket: rdb.ValuesBucket = {
-        'updated_at': TravelRepository.now(),
+        'updated_at': Date.now(),
         'sync_status': currentTrip.cloudId && currentTrip.cloudId.length > 0 ? 'pending_update' : 'pending_create',
         'version': (currentTrip.version ?? 1) + 1
       };
@@ -341,7 +321,7 @@ export class TravelRepository {
       if (travel.replayEnableBlurOverlay !== undefined) {
         valueBucket['replay_enable_blur_overlay'] = travel.replayEnableBlurOverlay ? 1 : 0;
       }
-      const predicates = TravelRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'travel id'));
       predicates.equalTo('owner_uid', currentTrip.ownerUid);
       const affectedRows = await store.update(valueBucket, predicates);
@@ -360,7 +340,7 @@ export class TravelRepository {
       if (!currentTrip) {
         return false;
       }
-      const now = TravelRepository.now();
+      const now = Date.now();
       const travelId = this.toDbId(id, 'travel id');
 
       const nodeValues: rdb.ValuesBucket = {
@@ -368,7 +348,7 @@ export class TravelRepository {
         updated_at: now,
         sync_status: currentTrip.cloudId && currentTrip.cloudId.length > 0 ? 'pending_update' : 'pending_create'
       };
-      const nodePredicates = TravelRepository.createPredicates('memory_nodes');
+      const nodePredicates = new rdb.RdbPredicates('memory_nodes');
       nodePredicates.equalTo('travel_id', travelId);
       nodePredicates.equalTo('owner_uid', currentTrip.ownerUid);
       nodePredicates.equalTo('deleted_at', 0);
@@ -403,7 +383,7 @@ export class TravelRepository {
           photos: nodePhotoData.photos,
           photo_manifest: nodePhotoData.photoManifest.length > 0 ? nodePhotoData.photoManifest : nodePhotoData.photos
         };
-        const restorePhotoPredicates = TravelRepository.createPredicates('memory_nodes');
+        const restorePhotoPredicates = new rdb.RdbPredicates('memory_nodes');
         restorePhotoPredicates.equalTo('id', nodeId);
         restorePhotoPredicates.equalTo('owner_uid', currentTrip.ownerUid);
         await store.update(restorePhotoValues, restorePhotoPredicates);
@@ -416,7 +396,7 @@ export class TravelRepository {
         sync_status: 'pending_delete',
         version: (currentTrip.version ?? 1) + 1
       };
-      const travelPredicates = TravelRepository.createPredicates(TABLE_NAME);
+      const travelPredicates = new rdb.RdbPredicates(TABLE_NAME);
       travelPredicates.equalTo('id', travelId);
       travelPredicates.equalTo('owner_uid', currentTrip.ownerUid);
       travelPredicates.equalTo('deleted_at', 0);
@@ -434,7 +414,7 @@ export class TravelRepository {
     try {
       const store = await this.getRdbStore();
       const ownerUid = await this.getOwnerUid();
-      const predicates = TravelRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('cloud_id', cloudId);
       predicates.equalTo('owner_uid', ownerUid);
       resultSet = await store.query(predicates);
@@ -457,7 +437,7 @@ export class TravelRepository {
       sync_status: syncStatus,
       last_synced_at: lastSyncedAt
     };
-    const predicates = TravelRepository.createPredicates(TABLE_NAME);
+    const predicates = new rdb.RdbPredicates(TABLE_NAME);
     predicates.equalTo('id', this.toDbId(id, 'travel id'));
     predicates.equalTo('owner_uid', await this.getOwnerUid());
     await store.update(valueBucket, predicates);
@@ -466,7 +446,7 @@ export class TravelRepository {
   async upsertFromCloud(travel: Trip): Promise<void> {
     const store = await this.getRdbStore();
     const ownerUid = travel.ownerUid ?? '';
-    const predicates = TravelRepository.createPredicates(TABLE_NAME);
+    const predicates = new rdb.RdbPredicates(TABLE_NAME);
     predicates.equalTo('cloud_id', travel.cloudId ?? '');
     predicates.equalTo('owner_uid', ownerUid);
     const resultSet = await store.query(predicates);
@@ -481,7 +461,7 @@ export class TravelRepository {
       cloud_id: travel.cloudId ?? '',
       sync_status: 'synced',
       deleted_at: travel.deletedAt ?? 0,
-      last_synced_at: TravelRepository.now(),
+      last_synced_at: Date.now(),
       version: travel.version ?? 1,
       sensitivity: 'S1',
       is_public: travel.isPublic ? 1 : 0,
@@ -496,7 +476,7 @@ export class TravelRepository {
 
     try {
       if (resultSet.goToFirstRow()) {
-        const updatePredicates = TravelRepository.createPredicates(TABLE_NAME);
+        const updatePredicates = new rdb.RdbPredicates(TABLE_NAME);
         updatePredicates.equalTo('cloud_id', travel.cloudId ?? '');
         updatePredicates.equalTo('owner_uid', ownerUid);
         await store.update(valueBucket, updatePredicates);
@@ -511,11 +491,11 @@ export class TravelRepository {
   async markDeletedByCloud(cloudId: string): Promise<void> {
     const store = await this.getRdbStore();
     const valueBucket: rdb.ValuesBucket = {
-      deleted_at: TravelRepository.now(),
+      deleted_at: Date.now(),
       sync_status: 'synced',
-      last_synced_at: TravelRepository.now()
+      last_synced_at: Date.now()
     };
-    const predicates = TravelRepository.createPredicates(TABLE_NAME);
+    const predicates = new rdb.RdbPredicates(TABLE_NAME);
     predicates.equalTo('cloud_id', cloudId);
     predicates.equalTo('owner_uid', await this.getOwnerUid());
     await store.update(valueBucket, predicates);
@@ -528,7 +508,7 @@ export class TravelRepository {
       const ownerUid = await this.getOwnerUid();
       let lookupResultSet: rdb.ResultSet | undefined = undefined;
       try {
-        const lookupPredicates = TravelRepository.createPredicates(TABLE_NAME);
+        const lookupPredicates = new rdb.RdbPredicates(TABLE_NAME);
         lookupPredicates.equalTo('id', travelId);
         lookupPredicates.equalTo('owner_uid', ownerUid);
         lookupResultSet = await store.query(lookupPredicates);
@@ -540,12 +520,12 @@ export class TravelRepository {
       }
       // Explicitly delete child nodes first, then delete travel.
       // This works even if FK cascade is not enabled by runtime.
-      const nodePredicates = TravelRepository.createPredicates('memory_nodes');
+      const nodePredicates = new rdb.RdbPredicates('memory_nodes');
       nodePredicates.equalTo('travel_id', travelId);
       nodePredicates.equalTo('owner_uid', ownerUid);
       await store.delete(nodePredicates);
 
-      const travelPredicates = TravelRepository.createPredicates(TABLE_NAME);
+      const travelPredicates = new rdb.RdbPredicates(TABLE_NAME);
       travelPredicates.equalTo('id', travelId);
       travelPredicates.equalTo('owner_uid', ownerUid);
       const affectedRows = await store.delete(travelPredicates);
@@ -558,11 +538,5 @@ export class TravelRepository {
       logger.error(TAG, `deleteTravel failed: ${JSON.stringify(err)}`);
       return false;
     }
-  }
-
-  static resetTestingHooks(): void {
-    TravelRepository.ownerUidProvider = null;
-    TravelRepository.nowProvider = null;
-    TravelRepository.predicatesFactory = null;
   }
 }

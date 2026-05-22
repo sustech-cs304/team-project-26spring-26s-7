@@ -468,9 +468,11 @@ struct LocationPickerPage {
 
           Button('确认选点')
             .fontSize(AppDimens.FONT_MD)
-            .fontColor(AppColors.TEXT_ON_PRIMARY)
-            .backgroundColor(AppColors.PRIMARY)
+            .fontColor(AppColors.PRIMARY)
+            .backgroundColor(AppDimens.PHOTO_SURFACE)
             .borderRadius(AppDimens.RADIUS_SM)
+            .border({ width: 1, color: AppColors.DIVIDER })
+            .shadow({ radius: 8, color: AppDimens.SHADOW_SOFT, offsetY: 2 })
             .height(40)
             .padding({ left: 20, right: 20 })
             .onClick(() => this.handleConfirm())

@@ -104,6 +104,9 @@ _ERR_410 = ("此链接已过期", 410)
 # v0.8: trip 改为私密时 owner 撤销了此分享，仍用 410（资源已不可达），
 # 文案说明具体原因，与"自然过期"区分开。
 _ERR_PRIVATE = ("该用户已设置该路线为私密", 410)
+# v1.2: 内容审查命中（异步 audit 后 BackgroundTask 把行标为 rejected）。
+# 既不暴露具体命中词，也明确告诉用户和接收方"为什么打不开"。
+_ERR_CONTENT_VIOLATION = ("该分享因内容审核未通过已下线", 410)
 
 
 def _err_html(text: str, status_code: int) -> HTMLResponse:
@@ -150,6 +153,8 @@ def _validate_and_fetch_share(
         return _err_html(*_ERR_403)
     if row.get("revoked_reason") == "PRIVATE":
         return _err_html(*_ERR_PRIVATE)
+    if row.get("revoked_reason") == "CONTENT_VIOLATION":
+        return _err_html(*_ERR_CONTENT_VIOLATION)
     if row["expires_at_s"] <= int(time.time()):
         delete_share(short_code)
         return _err_html(*_ERR_410)
@@ -224,7 +229,7 @@ def _render_publish_viewer(
     settings = get_settings()
     base = settings.public_base.rstrip("/")
     nodes_out = route_data["nodes"]
-    trip_name = route_data["tripName"] or "TravelPin 分享"
+    trip_name = route_data["tripName"] or "ItsMapPin 分享"
 
     # Inline JSON has to survive being inside `<script>...</script>`. Two
     # particular escapes matter: `</script>` (would close early) and
@@ -237,7 +242,7 @@ def _render_publish_viewer(
     )
 
     # ---- v0.7: build OG / social-meta values for the template ------------
-    html_title = f"{trip_name} - TravelPin"
+    html_title = f"{trip_name} - ItsMapPin"
     description = _build_share_description(
         trip_name=trip_name,
         total_distance=route_data["totalDistance"],
@@ -292,7 +297,7 @@ async def viewer_replay(
     settings = get_settings()
     base = settings.public_base.rstrip("/")
     nodes_out = route_data["nodes"]
-    trip_name = route_data["tripName"] or "TravelPin 分享"
+    trip_name = route_data["tripName"] or "ItsMapPin 分享"
 
     payload = (
         json.dumps(route_data, ensure_ascii=False, separators=(",", ":"))
@@ -453,7 +458,7 @@ async def share_poster(
         cache_dir.mkdir(parents=True, exist_ok=True)
         poster_bytes = compose_poster(
             share_url=share_url,
-            trip_name=route_data.get("tripName", "") or "TravelPin 分享",
+            trip_name=route_data.get("tripName", "") or "ItsMapPin 分享",
             node_count=len(route_data.get("nodes") or []),
             total_distance=float(route_data.get("totalDistance") or 0),
             route_preview=_build_route_preview(route_data.get("nodes") or []),
@@ -528,7 +533,7 @@ def _build_share_description(
       ① 节点数 · 总距离  ←前置 chip
       ② 路线预览：前 3 个节点的 POI / 标题用 → 串起来；多于 3 个尾接"…"
       ③ 第一节点的 mood 当氛围 chip（如有）
-      ④ 收尾标识"TravelPin 旅行回放"
+      ④ 收尾标识"ItsMapPin 旅行回放"
     保持 ~140 字以内（微信描述大约 120-150 截断）；不做 HTML 实体（调用方
     用 html.escape 包一层）。"""
     nodes = nodes or []
@@ -557,7 +562,7 @@ def _build_share_description(
         parts.append(preview)
     if mood:
         parts.append(f"#{mood}")
-    parts.append("TravelPin 旅行回放")
-    desc = "  ".join(parts) if parts else f"{trip_name} · TravelPin 分享"
+    parts.append("ItsMapPin 旅行回放")
+    desc = "  ".join(parts) if parts else f"{trip_name} · ItsMapPin 分享"
     # 兜底裁剪到 150（避免极端长 trip_name 撑爆）
     return desc[:150]

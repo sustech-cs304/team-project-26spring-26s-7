@@ -1,0 +1,35 @@
+[Unit]
+Description=ItsMapPin Sensitive Word Filter (standalone HTTP API)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=itsmappin
+Group=itsmappin
+WorkingDirectory=/opt/itsmappin/Backend_ItsMapPin/sensitive-filter
+EnvironmentFile=/opt/itsmappin/Backend_ItsMapPin/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=SF_WORDS_FILE=/opt/itsmappin/Backend_ItsMapPin/sensitive-filter/data/sensitive_words.txt
+Environment=SF_WHITELIST_FILE=/opt/itsmappin/Backend_ItsMapPin/sensitive-filter/data/whitelist.txt
+Environment=SF_HOST=127.0.0.1
+Environment=SF_PORT=9100
+Environment=SF_LOG_DIR=/var/log/itsmappin
+
+ExecStart=/opt/itsmappin/Backend_ItsMapPin/.venv/bin/python sensitive_filter_service.py
+
+Restart=always
+RestartSec=5
+StartLimitInterval=300
+StartLimitBurst=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/itsmappin
+StandardOutput=append:/var/log/itsmappin/sensitive-filter.log
+StandardError=append:/var/log/itsmappin/sensitive-filter.err
+
+[Install]
+WantedBy=multi-user.target

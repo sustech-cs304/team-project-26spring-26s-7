@@ -2,19 +2,19 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "TravelPin 主模块"
+      "value": "ItsMapPin 主模块"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "TravelPin 旅行日记"
+      "value": "ItsMapPin 旅行日记"
     },
     {
       "name": "EntryAbility_label",
-      "value": "TravelPin"
+      "value": "ItsMapPin"
     },
     {
       "name": "app_name",
-      "value": "TravelPin"
+      "value": "ItsMapPin"
     },
     {
       "name": "location_reason",
@@ -38,7 +38,7 @@
     },
     {
       "name": "privacy_dialog_content",
-      "value": "欢迎使用 TravelPin。在使用本应用前，请您仔细阅读《用户协议》和《隐私政策》。我们将通过隐私政策向您说明：\n\n• 我们如何收集、使用、存储和保护您的个人信息（包括位置、照片、账号信息等）\n• 您所享有的访问、更正、删除和注销账号等权利\n• 我们如何使用华为云服务进行数据同步\n• 我们如何使用 AI 服务对您选择上传的照片进行内容识别\n\n如您同意上述内容，请点击\"同意并继续\"开始使用。"
+      "value": "欢迎使用 ItsMapPin。在使用本应用前，请您仔细阅读《用户协议》和《隐私政策》。我们将通过隐私政策向您说明：\n\n• 我们如何收集、使用、存储和保护您的个人信息（包括位置、照片、账号信息等）\n• 您所享有的访问、更正、删除和注销账号等权利\n• 我们如何使用华为云服务进行数据同步\n• 我们如何使用 AI 服务对您选择上传的照片进行内容识别\n\n如您同意上述内容，请点击\"同意并继续\"开始使用。"
     },
     {
       "name": "privacy_dialog_agree",

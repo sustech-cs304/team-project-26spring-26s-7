@@ -1,5 +1,5 @@
 <!--
-  TravelPin 分享查看页 — Vue 3 + AMap (高德) 地图版
+  ItsMapPin 分享查看页 — Vue 3 + AMap (高德) 地图版
 
   编辑指引：
     A. <style> 块             —— 配色、地图高度、节点列表样式
@@ -17,7 +17,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <title>TravelPin · 分享 · 地图</title>
+  <title>ItsMapPin · 分享 · 地图</title>
   <link rel="preconnect" href="https://webapi.amap.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
 
@@ -332,7 +332,7 @@ createApp({
         }
         const data = await r.json();
         state.value = { kind: "ok", data };
-        document.title = `${data.snapshot?.trip?.name || "TravelPin 分享"} · TravelPin`;
+        document.title = `${data.snapshot?.trip?.name || "ItsMapPin 分享"} · ItsMapPin`;
         await nextTick();
         initMap(sortedNodes.value);
 

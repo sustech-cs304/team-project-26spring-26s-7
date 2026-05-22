@@ -67,7 +67,7 @@ struct Index {
         Column() {
           Text('📍')
             .fontSize(64)
-          Text('TravelPin')
+          Text('ItsMapPin')
             .fontSize(AppDimens.FONT_TITLE)
             .fontWeight(FontWeight.Bold)
             .fontColor(AppColors.PRIMARY)

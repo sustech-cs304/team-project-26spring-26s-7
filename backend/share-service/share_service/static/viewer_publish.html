@@ -1,5 +1,5 @@
 <!--
-  TravelPin 分享查看页 — Spec 模式（P08 API 规范 §5.2）
+  ItsMapPin 分享查看页 — Spec 模式（P08 API 规范 §5.2）
   服务端在渲染时会把数据序列化进 window.__ROUTE_DATA__；
   以及把标题、描述、封面图填到下面的 OG / social meta 标签里。
   详见 routers/viewer.py 的 _render_publish_viewer。
@@ -23,7 +23,7 @@
   <meta property="og:description" content="{{SHARE_DESCRIPTION}}">
   <meta property="og:url"         content="{{SHARE_URL}}">
   <meta property="og:image"       content="{{COVER_PHOTO_URL}}">
-  <meta property="og:site_name"   content="TravelPin">
+  <meta property="og:site_name"   content="ItsMapPin">
   <meta property="og:locale"      content="zh_CN">
 
   <meta name="twitter:card"        content="summary_large_image">
@@ -352,10 +352,10 @@
             : `<div class="state"><div class="icon">📭</div>这次旅行还没有节点</div>`}
         </main>
         <footer>
-          <span>TravelPin · 临时分享</span>
+          <span>ItsMapPin · 临时分享</span>
         </footer>
       `;
-      document.title = `${d.tripName || "TravelPin 分享"} · TravelPin`;
+      document.title = `${d.tripName || "ItsMapPin 分享"} · ItsMapPin`;
       wireCollapse();
       wireReplayOverlay();
     }
