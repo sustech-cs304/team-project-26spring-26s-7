@@ -101,6 +101,7 @@ def test_publish_happy_path_returns_spec_envelope():
     trip = _trip(node_photo_counts=(2, 1))
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart(trip, [_jpeg(), _jpeg(), _jpeg()]),
     )
     assert r.status_code == 201, r.text
@@ -120,6 +121,7 @@ def test_publish_link_renders_via_viewer():
     trip = _trip(node_photo_counts=(1,))
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart(trip, [_jpeg()]),
     )
     body = r.json()["data"]
@@ -147,6 +149,7 @@ def test_publish_invalid_photo_count_400_40001():
     trip = _trip(node_photo_counts=(2, 1))  # expects 3
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart(trip, [_jpeg(), _jpeg()]),  # only 2
     )
     assert r.status_code == 400
@@ -181,6 +184,7 @@ def test_publish_invalid_expiry_400_40007():
     trip = _trip(node_photo_counts=(0,))
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart(trip, [], expiry_hours=999),
     )
     assert r.status_code == 400
@@ -204,6 +208,7 @@ def test_publish_with_expiry_minutes_5():
     trip = _trip(node_photo_counts=(0,))
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart_minutes(trip, [], 5),
     )
     assert r.status_code == 201
@@ -232,6 +237,7 @@ def test_publish_below_min_expiry_400():
     trip = _trip(node_photo_counts=(0,))
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart_minutes(trip, [], 0),
     )
     assert r.status_code == 400
@@ -264,6 +270,7 @@ def _publish_one(node_photo_counts=(1,), expiry_minutes: int = 60):
     photos = [_jpeg() for _ in range(sum(node_photo_counts))]
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart_minutes(trip, photos, expiry_minutes),
     )
     assert r.status_code == 201, r.text
@@ -279,6 +286,7 @@ def test_replace_happy_path_revokes_old_after_new_succeeds():
     trip = _trip(node_photo_counts=(1,))
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart_with_replace(
             trip, [_jpeg()],
             replace_code=old_code,
@@ -301,6 +309,7 @@ def test_replace_bad_sig_rejects_400_and_old_preserved():
     trip = _trip(node_photo_counts=(1,))
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart_with_replace(
             trip, [_jpeg()],
             replace_code=old["shortCode"],
@@ -341,6 +350,7 @@ def test_replace_target_already_gone_is_not_an_error():
     trip = _trip(node_photo_counts=(1,))
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart_with_replace(
             trip, [_jpeg()],
             replace_code=nonexistent_code,
@@ -372,6 +382,7 @@ def test_replace_atomicity_when_new_publish_fails(monkeypatch):
     trip = _trip(node_photo_counts=(1,))
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart_with_replace(
             trip, [_jpeg()],
             replace_code=old_code,
@@ -445,6 +456,7 @@ def test_revoke_by_trip_marks_all_shares_for_that_trip():
     # 调撤销
     rv = client.post(
         "/api/v1/share/revoke-by-trip",
+        headers=_AUTH,
         json={"tripId": "trip_target"},
     )
     assert rv.status_code == 200
@@ -512,6 +524,7 @@ def test_revoke_by_trip_no_match_is_zero_count_no_error():
     """tripId 没对应任何 share — 不算错误，revokedCount=0。"""
     rv = client.post(
         "/api/v1/share/revoke-by-trip",
+        headers=_AUTH,
         json={"tripId": "trip_does_not_exist"},
     )
     assert rv.status_code == 200
@@ -655,12 +668,12 @@ def test_revoke_by_trip_idempotent():
     client.post("/api/v1/share/publish", headers=_AUTH, files=_multipart(trip, []))
 
     first = client.post(
-        "/api/v1/share/revoke-by-trip", json={"tripId": "trip_idempotent"},
+        "/api/v1/share/revoke-by-trip", headers=_AUTH, json={"tripId": "trip_idempotent"},
     )
     assert first.json()["data"]["revokedCount"] == 1
 
     second = client.post(
-        "/api/v1/share/revoke-by-trip", json={"tripId": "trip_idempotent"},
+        "/api/v1/share/revoke-by-trip", headers=_AUTH, json={"tripId": "trip_idempotent"},
     )
     assert second.json()["data"]["revokedCount"] == 0
 
@@ -1011,6 +1024,7 @@ def test_publish_writes_manifest_json_alongside_webp():
     trip = _trip(node_photo_counts=(2, 1))
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart(trip, [_jpeg(), _jpeg(), _jpeg()]),
     )
     code = r.json()["data"]["shortCode"]
@@ -1034,6 +1048,7 @@ def test_publish_uses_flat_idx_filenames_unique_within_dir():
     trip = _trip(node_photo_counts=(2, 1))
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_multipart(trip, [_jpeg(), _jpeg(), _jpeg()]),
     )
     code = r.json()["data"]["shortCode"]

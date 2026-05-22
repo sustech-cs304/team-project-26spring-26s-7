@@ -111,6 +111,7 @@ def test_publish_without_replay_fields_keeps_db_null():
     Viewer will then inject __REPLAY_PREFS__ = null and use defaults JS-side."""
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_files(_trip_one_node()),
     )
     assert r.status_code == 201, r.text
@@ -125,6 +126,7 @@ def test_publish_without_replay_fields_keeps_db_null():
 def test_publish_with_replay_fields_stores_normalized_json():
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_files(_trip_one_node(), prefs={
             "replayStyleKitId": "vintage_film",
             "replayBgmId": "tropical_chill_travel",
@@ -156,6 +158,7 @@ def test_publish_with_partial_invalid_fields_falls_back_per_field():
     keeps bgm. (Backend normalize_replay_prefs is per-field.)"""
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_files(_trip_one_node(), prefs={
             "replayStyleKitId": "WHATEVER",          # invalid → default
             "replayBgmId": "morning_chill_birds",    # valid
@@ -176,6 +179,7 @@ def test_publish_with_partial_invalid_fields_falls_back_per_field():
 def _publish_and_get_replay_html(prefs: dict | None) -> str:
     r = client.post(
         "/api/v1/share/publish",
+        headers=_AUTH,
         files=_files(_trip_one_node(), prefs=prefs),
     )
     assert r.status_code == 201, r.text
