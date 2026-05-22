@@ -86,8 +86,8 @@ export { getDataService } from './ServiceConfig';
 export { HttpClient, HttpResponse } from './api/index';
 export { AiGatewayClient, ImageCopyRequest, ImagesCopyRequest } from './api/index';
 export { AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION } from './api/index';
-export { ImageCensorService, ImageCensorResult } from './api/index';
-export { MultipartFormData, VisionLLMClient, VisionLLMRequest, VisionLLMResponse } from './api/index';
+export { ImageCensorService, ImageCensorResult, ContentFilterService } from './api/index';
+export { MultipartFormData, VisionLLMClient, VisionLLMRequest, VisionLLMResponse, TextLLMRequest } from './api/index';
 
 // AI Layer 导出
 export { LocalImageTagger } from './ai/index';

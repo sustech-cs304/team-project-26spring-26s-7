@@ -17,13 +17,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "../certificates/test_new.cer",
-          "keyAlias": "test",
-          "keyPassword": "0000001D46AEE7BECDC3435F9BA877BEF78899CF537F625815675EA60AF332BD264E34E4CE6482F44BFAECB72A",
-          "profile": "../certificates/test_newDebug.p7b",
-          "signAlg": "SHA256withECDSA",
           "storeFile": "../certificates/1.p12",
-          "storePassword": "0000001DE4CDE13220B6018FEAD18389527CF700F9D2738AB17CB6C905E7FDFC6C3A7759074C116EA87CB50938"
+          "storePassword": "0000001DFE90AD897E8CEB698E194B0A9F3FA113E6194D5BC88D06EC58F39FEE176DBA8C0F5AE08BBF0D14514C",
+          "keyAlias": "test",
+          "keyPassword": "0000001DBBF84AA06C058EBC479E51FC14073F80E036348CDEADE3A2ADD0ACCDD7CE25CAE0ACFF032A703CAF7F",
+          "signAlg": "SHA256withECDSA",
+          "profile": "C:/Users/21333/Documents/GitHub/team-project-26spring-26s-7/certificates/release_test_newRelease.p7b",
+          "certpath": "C:/Users/21333/Documents/GitHub/team-project-26spring-26s-7/certificates/release_new.cer"
         }
       },
       {
@@ -32,11 +32,11 @@
         "material": {
           "certpath": "../certificates/release_new.cer",
           "keyAlias": "test",
-          "keyPassword": "0000001D350E36DAD77B0FB926AADCD582855788ABEDCE507B380CA78EFCF6D7B12546B892B2925C065523FAA3",
+          "keyPassword": "0000001DA26E146E6C7493593840FE88CF46474683C3664E3CF2A854E3F84411F109DF2E4C2135EA2161D893C3",
           "profile": "../certificates/release_test_newRelease.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "../certificates/1.p12",
-          "storePassword": "0000001D70548735FE8598ADF5BF421F11A624F8F92973DF077F0F5364316230D1D8A07B3BBB28CED741ECBFB3"
+          "storePassword": "0000001D71C3B8B2163761B15D2E63CB1DAB529082038651DEE5ABA01607B722E09EE3918B22D90C9FD802C381"
         }
       }
     ],

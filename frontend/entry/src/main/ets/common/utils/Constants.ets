@@ -243,4 +243,5 @@ export class RouterUrls {
   static readonly PROFILE_AVATAR_CROP: string = 'feature/profile/pages/AvatarCropPage'
   static readonly USER_AGREEMENT: string = 'pages/UserAgreementPage'
   static readonly PRIVACY_POLICY: string = 'pages/PrivacyPolicyPage'
+  static readonly PERF_TEST: string = 'feature/perf-test/pages/PerfTestPage'
 }

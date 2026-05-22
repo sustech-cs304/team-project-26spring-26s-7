@@ -559,6 +559,8 @@ export struct ProfileView {
           this.settingItem('隐私政策', '', () => router.pushUrl({ url: RouterUrls.PRIVACY_POLICY }))
           Divider().color(AppColors.DIVIDER)
           this.settingItem('关于 ItsMapPin', 'v1.0.0', () => this.showAbout())
+          Divider().color(AppColors.DIVIDER)
+          this.settingItem('性能测试', '', () => router.pushUrl({ url: RouterUrls.PERF_TEST }))
         }
         .margin({ top: 12 })
         .backgroundColor(AppColors.CARD_BG)

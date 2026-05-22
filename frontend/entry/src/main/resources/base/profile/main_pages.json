@@ -15,6 +15,7 @@
     "feature/ai-copy/pages/AiCopyPage",
     "feature/ai-copy/pages/VisionLLMPage",
     "feature/profile/pages/ProfileEditPage",
-    "feature/profile/pages/AvatarCropPage"
+    "feature/profile/pages/AvatarCropPage",
+    "feature/perf-test/pages/PerfTestPage"
   ]
 }

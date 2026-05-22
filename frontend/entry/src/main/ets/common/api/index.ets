@@ -20,5 +20,6 @@ export { AiGatewayClient, ImageCopyRequest, ImagesCopyRequest } from './AiGatewa
 export { AiEndpoints, ShareEndpoints, HttpTimeout, API_BASE_URL, API_VERSION, VISION_LLM_BASE_URL } from './ApiEndpoints';
 export { AiTokenManager } from './AiTokenManager';
 export { ImageCensorService, ImageCensorResult } from './ImageCensorService';
+export { ContentFilterService, CheckResult, MaskResult } from './ContentFilterService';
 export { MultipartFormData } from './MultipartFormData';
 export { VisionLLMClient, VisionLLMRequest, VisionLLMResponse, TextLLMRequest } from './VisionLLMClient';
