@@ -529,7 +529,7 @@ export struct AiCopyPage {
           .fontSize(AppDimens.FONT_XL)
           .fontColor(AppColors.TEXT_PRIMARY)
           .onClick(() => router.back())
-          .padding(AppDimens.PADDING_MD)
+          .padding(AppDimens.PADDING_MD) 
 
         Text('AI 文案助手')
           .fontSize(AppDimens.FONT_LG)

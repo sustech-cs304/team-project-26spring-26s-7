@@ -316,7 +316,11 @@ export struct TripListView {
             .margin({ top: 8 })
           Button('创建第一条 Track')
             .margin({ top: 20 })
-            .backgroundColor(AppColors.PRIMARY)
+            .fontColor(AppColors.PRIMARY)
+            .backgroundColor(AppDimens.PHOTO_SURFACE)
+            .border({ width: 1, color: AppColors.DIVIDER })
+            .borderRadius(16)
+            .shadow({ radius: 8, color: AppDimens.SHADOW_SOFT, offsetY: 2 })
             .onClick(() => this.openTripEdit())
         }
         .width('100%')
