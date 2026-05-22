@@ -31,10 +31,6 @@ export struct ProfileView {
   @State exifStripAlwaysOn: boolean = true
   /** AI 云端打标签开关，绑定 ConsentManager 持久化的同意状态 */
   @StorageLink('aiCloudTaggingEnabled') aiCloudTaggingEnabled: boolean = false
-  @State wifiOnlySync: boolean = true
-  @Watch('onShareLinkExpiryChanged')
-  @StorageLink('shareLinkExpiryDays') shareLinkExpiryDays: number = 7
-  @State shareLinkExpiry: string = '7 天'
   @StorageLink('networkJustReconnected') networkJustReconnected: boolean = false
   @Watch('onTabRefresh')
   @StorageLink('tabRefreshToken') tabRefreshToken: number = 0
@@ -43,7 +39,6 @@ export struct ProfileView {
   @StorageLink('profile_version') profileVersion: number = 0
 
   aboutToAppear(): void {
-    this.syncShareLinkExpiryFromStorage()
     void this.loadAuthStatus()
     const uiContext = this.getUIContext()
     const ctx = uiContext.getHostContext() as common.UIAbilityContext
@@ -53,13 +48,11 @@ export struct ProfileView {
   }
 
   onPageShow(): void {
-    this.syncShareLinkExpiryFromStorage()
     void this.loadAuthStatus()
   }
 
   private onTabRefresh(): void {
     if (this.activeTabIndex === 3) {
-      this.syncShareLinkExpiryFromStorage()
       void this.loadAuthStatus()
     }
   }
@@ -68,15 +61,6 @@ export struct ProfileView {
     if (this.activeTabIndex === 3) {
       void this.loadAuthStatus()
     }
-  }
-
-  private syncShareLinkExpiryFromStorage(): void {
-    const days = AppStorage.get<number>('shareLinkExpiryDays') ?? 7
-    this.shareLinkExpiry = `${days} 天`
-  }
-
-  private onShareLinkExpiryChanged(): void {
-    this.shareLinkExpiry = `${this.shareLinkExpiryDays} 天`
   }
 
   private formatSyncTime(timestamp: number): string {
@@ -276,31 +260,6 @@ export struct ProfileView {
     await ConsentManager.setCloudTaggingEnabled(ctx, next)
     promptAction.showToast({
       message: next ? '已开启 AI 云端识别' : '已关闭 AI 云端识别'
-    })
-  }
-
-  private showStorageSettings(): void {
-    AlertDialog.show({
-      title: '流量与存储',
-      message:
-        `仅 Wi-Fi 同步：${this.wifiOnlySync ? '已开启' : '已关闭'}\n\n` +
-        '开启后，蜂窝网络下仅加载缩略图，原图和批量同步会延后到 Wi-Fi 环境执行。',
-      confirm: {
-        value: '关闭',
-        action: () => {}
-      }
-    })
-  }
-
-  private showExpirySettings(): void {
-    ActionSheet.show({
-      title: '分享链接默认有效期',
-      message: '选择通过链接分享路线时的默认有效期。',
-      sheets: [
-        { title: '1 天', action: () => { this.shareLinkExpiryDays = 1 } },
-        { title: '7 天', action: () => { this.shareLinkExpiryDays = 7 } },
-        { title: '30 天', action: () => { this.shareLinkExpiryDays = 30 } },
-      ]
     })
   }
 
@@ -548,10 +507,6 @@ export struct ProfileView {
             this.aiCloudTaggingEnabled ? '云端识别 已开启 · EXIF 自动剥离' : 'EXIF 自动剥离 · 云端识别 已关闭',
             () => this.showPrivacySettings()
           )
-          Divider().color(AppColors.DIVIDER)
-          this.settingItem('流量与存储', this.wifiOnlySync ? '仅 Wi-Fi' : '', () => this.showStorageSettings())
-          Divider().color(AppColors.DIVIDER)
-          this.settingItem('分享链接默认有效期', this.shareLinkExpiry, () => this.showExpirySettings())
           Divider().color(AppColors.DIVIDER)
           this.settingItem('离线地图', '下载全球基础包', () => this.showOfflineMapGuide())
           this.settingItem('用户协议', '', () => router.pushUrl({ url: RouterUrls.USER_AGREEMENT }))

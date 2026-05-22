@@ -122,16 +122,6 @@ export struct PhotoCardOverlay {
         .onClick(() => this.hide())
 
         Column() {
-          Row() {
-            Blank()
-              .width(40)
-              .height(4)
-              .backgroundColor(this.styleKit.controlMutedColor)
-              .borderRadius(2)
-          }
-          .width('100%')
-          .padding({ top: 12, bottom: 8 })
-
           this.PhotoSwiper()
 
           Text(this.currentNode.title)
@@ -139,6 +129,7 @@ export struct PhotoCardOverlay {
             .fontWeight(FontWeight.Bold)
             .fontColor(this.styleKit.overlayTextColor)
             .width('100%')
+            .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG })
             .margin({ top: 16, bottom: 8 })
 
           Row() {
@@ -181,6 +172,7 @@ export struct PhotoCardOverlay {
             }
           }
           .width('100%')
+          .padding({ left: AppDimens.PADDING_LG, right: AppDimens.PADDING_LG })
           .margin({ bottom: 8 })
 
           Scroll() {
