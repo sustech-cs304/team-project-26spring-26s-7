@@ -178,14 +178,24 @@ export class VisionLLMClient {
 
       logger.info(TAG, `Sending POST request to: ${url}`);
 
-      // 请求配置
+      // 请求配置：vision_token 给 ai-relay；filter_token 透传给 sensitive-check 做内容审查
       const visionToken = await AiTokenManager.getVisionToken();
+      let filterToken = '';
+      try {
+        filterToken = await AiTokenManager.getFilterToken();
+      } catch (_) {
+        // 未登录拿不到 filter_token，让 ai-relay 走 fail-open 路径
+      }
+      const reqHeader: Record<string, string> = {
+        'Content-Type': formData.getContentType(),
+        'Authorization': `Bearer ${visionToken}`,
+      };
+      if (filterToken) {
+        reqHeader['X-Filter-Token'] = filterToken;
+      }
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
-        header: {
-          'Content-Type': formData.getContentType(),
-          'Authorization': `Bearer ${visionToken}`
-        },
+        header: reqHeader,
         readTimeout: this.timeout,
         connectTimeout: this.timeout,
         expectDataType: http.HttpDataType.OBJECT,
@@ -265,12 +275,22 @@ export class VisionLLMClient {
       logger.info(TAG, `Sending POST request to: ${url}`);
 
       const visionToken = await AiTokenManager.getVisionToken();
+      let filterToken = '';
+      try {
+        filterToken = await AiTokenManager.getFilterToken();
+      } catch (_) {
+        // 未登录拿不到 filter_token，让 ai-relay 走 fail-open 路径
+      }
+      const reqHeader: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${visionToken}`,
+      };
+      if (filterToken) {
+        reqHeader['X-Filter-Token'] = filterToken;
+      }
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
-        header: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${visionToken}`
-        },
+        header: reqHeader,
         readTimeout: this.timeout,
         connectTimeout: this.timeout,
         expectDataType: http.HttpDataType.OBJECT,

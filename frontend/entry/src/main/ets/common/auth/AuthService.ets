@@ -5,6 +5,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import auth, { SignInResult } from '@hw-agconnect/auth';
 import { CloudStorageService } from './CloudStorageService';
+import { AppSessionManager } from './AppSessionManager';
 import { RdbHelper } from '../data/RdbHelper';
 import { ContentFilterService } from '../api/ContentFilterService';
 import { CloudSyncService } from '../sync/CloudSyncService';
@@ -55,6 +56,30 @@ let appContext: common.UIAbilityContext | null = null;
 let cachedEffectiveProfile: EffectiveProfile | null = null;
 
 export class AuthService {
+  private static async checkProfileText(field: string, text: string, blockedMessage: string): Promise<void> {
+    if (text.length === 0) {
+      hilog.info(DOMAIN, TAG, `saveLocalProfile: skip ${field} check, empty`)
+      return
+    }
+
+    hilog.info(DOMAIN, TAG, `saveLocalProfile: calling check for ${field}="${text}"`)
+    try {
+      const result = await ContentFilterService.check(text)
+      hilog.info(DOMAIN, TAG, `saveLocalProfile: ${field} check done, blocked="${result.blocked}", hit="${result.hit}"`)
+      if (result.blocked) {
+        hilog.warn(DOMAIN, TAG, `saveLocalProfile: ${field} blocked, hit="${result.hit}"`)
+        throw new Error(blockedMessage)
+      }
+    } catch (err) {
+      const msg = (err as Error).message
+      if (msg === 'CONTENT_CHECK_NETWORK_ERROR') {
+        hilog.error(DOMAIN, TAG, `saveLocalProfile: ${field} check network error`)
+        throw new Error('内容检测服务不可用，请检查网络后重试')
+      }
+      throw err as Error
+    }
+  }
+
   static init(context: common.UIAbilityContext): void {
     if (initialized) {
       return;
@@ -63,6 +88,7 @@ export class AuthService {
     const file = context.resourceManager.getRawFileContentSync('agconnect-services.json');
     const json: string = buffer.from(file.buffer).toString();
     auth.init(context, json);
+    AppSessionManager.init(context);
     CloudStorageService.setContext(context);
     initialized = true;
     hilog.info(DOMAIN, TAG, 'Auth initialized');
@@ -79,7 +105,7 @@ export class AuthService {
       }
       currentUser = {
         uid: user.getUid(),
-        displayName: user.getDisplayName() ?? 'TravelPin 用户',
+        displayName: user.getDisplayName() ?? 'ItsMapPin 用户',
         avatarUrl: user.getPhotoUrl() ?? ''
       };
       return currentUser;
@@ -239,50 +265,42 @@ export class AuthService {
 
     hilog.info(DOMAIN, TAG, `saveLocalProfile: uid="${uid}", displayName="${profile.displayName}", avatarPath="${profile.avatarPath}"`)
 
-    // 1. 安全审查 — nickname（敏感词直接阻止）
-    hilog.info(DOMAIN, TAG, `saveLocalProfile: calling check for nickname="${profile.displayName}"`)
-    try {
-      const nicknameResult = await ContentFilterService.check(profile.displayName)
-      hilog.info(DOMAIN, TAG, `saveLocalProfile: nickname check done, blocked="${nicknameResult.blocked}", hit="${nicknameResult.hit}"`)
-      if (nicknameResult.blocked) {
-        hilog.warn(DOMAIN, TAG, `saveLocalProfile: nickname blocked, hit="${nicknameResult.hit}"`)
-        throw new Error('昵称包含敏感内容，请修改后重试')
-      }
-    } catch (err) {
-      const msg = (err as Error).message
-      if (msg === 'CONTENT_CHECK_NETWORK_ERROR') {
-        hilog.error(DOMAIN, TAG, `saveLocalProfile: nickname check network error`)
-        throw new Error('内容检测服务不可用，请检查网络后重试')
-      }
-      throw err as Error
-    }
-
-    // 2. 安全审查 — bio（敏感词直接阻止，不脱敏）
-    hilog.info(DOMAIN, TAG, `saveLocalProfile: calling check for bio="${profile.bio.trim()}"`)
-    try {
-      const bioResult = await ContentFilterService.check(profile.bio.trim())
-      hilog.info(DOMAIN, TAG, `saveLocalProfile: bio check done, blocked="${bioResult.blocked}", hit="${bioResult.hit}"`)
-      if (bioResult.blocked) {
-        hilog.warn(DOMAIN, TAG, `saveLocalProfile: bio blocked, hit="${bioResult.hit}"`)
-        throw new Error('个性签名包含敏感内容，请修改后重试')
-      }
-    } catch (err) {
-      const msg = (err as Error).message
-      if (msg === 'CONTENT_CHECK_NETWORK_ERROR') {
-        hilog.error(DOMAIN, TAG, `saveLocalProfile: bio check network error`)
-        throw new Error('内容检测服务不可用，请检查网络后重试')
-      }
-      throw err as Error
-    }
-
+    const finalDisplayName = profile.displayName.trim()
     const finalBio = profile.bio.trim()
+    let previousDisplayName = ''
+    let previousBio = ''
+    if (cachedEffectiveProfile !== null) {
+      previousDisplayName = cachedEffectiveProfile.displayName.trim()
+      previousBio = cachedEffectiveProfile.bio.trim()
+    } else {
+      const localProfile = await RdbHelper.getInstance().loadUserProfile(uid)
+      previousDisplayName = (localProfile?.displayName ?? '').trim()
+      previousBio = (localProfile?.bio ?? '').trim()
+    }
+
+    const checkTasks: Promise<void>[] = []
+    if (finalDisplayName !== previousDisplayName) {
+      checkTasks.push(AuthService.checkProfileText('nickname', finalDisplayName, '昵称包含敏感内容，请修改后重试'))
+    } else {
+      hilog.info(DOMAIN, TAG, 'saveLocalProfile: skip nickname check, unchanged')
+    }
+
+    if (finalBio !== previousBio) {
+      checkTasks.push(AuthService.checkProfileText('bio', finalBio, '个性签名包含敏感内容，请修改后重试'))
+    } else {
+      hilog.info(DOMAIN, TAG, 'saveLocalProfile: skip bio check, unchanged')
+    }
+
+    if (checkTasks.length > 0) {
+      await Promise.all(checkTasks)
+    }
 
     hilog.info(DOMAIN, TAG, `saveLocalProfile: displayName="${profile.displayName}", avatarPath="${profile.avatarPath}"`)
 
     // 3. 写本地 RDB（头像路径用本地沙箱路径，avatarCloudPath 后续上传成功再更新）
     await RdbHelper.getInstance().saveUserProfile(
       uid,
-      profile.displayName,
+      finalDisplayName,
       profile.avatarPath,
       finalBio
     )
@@ -310,7 +328,7 @@ export class AuthService {
       const profileData: ProfilePayload = {
         ownerUid: uid,
         cloudId: `profile_${uid}`,
-        nickname: profile.displayName,
+        nickname: finalDisplayName,
         bio: finalBio,
         avatarCloudPath: cloudAvatarPath,
         version: 1,
@@ -327,11 +345,24 @@ export class AuthService {
 
     // 6. 更新内存缓存
     cachedEffectiveProfile = {
-      displayName: profile.displayName,
+      displayName: finalDisplayName,
       avatarUrl: profile.avatarPath.replace(/^file:\/\//, ''),
       bio: finalBio
     };
     hilog.info(DOMAIN, TAG, `saveLocalProfile: done, cached="${cachedEffectiveProfile.displayName}"`)
+  }
+
+  static async getAppSessionToken(): Promise<string> {
+    const user = await AuthService.getCurrentUser();
+    if (!user) {
+      throw new Error('用户未登录，无法调用审核服务');
+    }
+
+    const token = await AppSessionManager.getToken(user.uid);
+    if (!token) {
+      throw new Error('审核登录凭证已过期，请重新登录');
+    }
+    return token;
   }
 
   static async signInWithHuaweiID(hostContext: common.UIAbilityContext): Promise<AuthUser> {
@@ -359,11 +390,11 @@ export class AuthService {
     if (!credential) {
       throw new Error('未获取到华为账号凭证');
     }
-    if (!credential.authorizationCode) {
+    if (false) {
       throw new Error('未获取到授权码，请重试');
     }
 
-    hilog.info(DOMAIN, TAG, `signInWithHuaweiID: AccountKit success, authCodeLength=${credential.authorizationCode.length}, hasUnionId=${credential.unionID !== undefined && credential.unionID.length > 0}, hasOpenId=${credential.openID !== undefined && credential.openID.length > 0}, hasIdToken=${credential.idToken !== undefined && credential.idToken.length > 0}`);
+    hilog.info(DOMAIN, TAG, `signInWithHuaweiID: AccountKit success, authCodeLength=${credential.authorizationCode?.length ?? 0}, hasUnionId=${credential.unionID !== undefined && credential.unionID.length > 0}, hasOpenId=${credential.openID !== undefined && credential.openID.length > 0}, hasIdToken=${credential.idToken !== undefined && credential.idToken.length > 0}`);
 
     let signInResult: SignInResult;
     try {
@@ -376,11 +407,21 @@ export class AuthService {
     } catch (err) {
       const error = err as BusinessError;
       hilog.error(DOMAIN, TAG, `signInWithHuaweiID: AGC auth.signIn failed, code=${error.code}, message=${error.message}`);
+      if (error.code === 1210005) {
+        hilog.warn(DOMAIN, TAG, 'signInWithHuaweiID: AGC already has a user, signOut and retry once');
+        await auth.signOut();
+        signInResult = await auth.signIn({
+          credentialInfo: { kind: 'hwid' },
+          autoCreateUser: true
+        });
+        hilog.info(DOMAIN, TAG, 'signInWithHuaweiID: AGC auth.signIn retry success');
+      } else {
       throw new Error(error.message);
+      }
     }
 
     const agcUser = signInResult.getUser();
-    let displayName = agcUser.getDisplayName() ?? 'TravelPin 用户';
+    let displayName = agcUser.getDisplayName() ?? 'ItsMapPin 用户';
     let avatarUrl = agcUser.getPhotoUrl() ?? '';
 
     try {
@@ -409,6 +450,11 @@ export class AuthService {
       unionId: credential.unionID
     };
 
+    const auditSessionToken = await AppSessionManager.refreshFromAgcAuth(currentUser.uid);
+    if (!auditSessionToken) {
+      hilog.warn(DOMAIN, TAG, 'signInWithHuaweiID: audit auth unavailable, continue with AGC login');
+    }
+
     // 不再在登录时把华为数据写入 RDB！！！
     // 本地 profile 只在用户主动修改时保存，登录时不能覆盖
     hilog.info(DOMAIN, TAG, `signInWithHuaweiID: done, currentUser="${currentUser.displayName}", RDB preserved`);
@@ -420,6 +466,7 @@ export class AuthService {
       await auth.signOut();
     } finally {
       currentUser = null;
+      await AppSessionManager.clear();
       // 注意：不清除本地 profile 数据！这样重新登录时可以保留用户修改的昵称/头像
       cachedEffectiveProfile = null;
       CloudStorageService.reset();
@@ -504,6 +551,7 @@ export class AuthService {
 
     currentUser = null;
     cachedEffectiveProfile = null;
+    await AppSessionManager.clear();
     CloudStorageService.reset();
 
     hilog.info(DOMAIN, TAG, 'deleteAccount done');

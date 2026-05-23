@@ -66,11 +66,27 @@ export interface SoftDeleteResult {
 }
 
 export class MemoryNodeRepository {
-  static ownerUidProvider: (() => Promise<string>) | null = null;
-  static nowProvider: (() => number) | null = null;
-  static predicatesFactory: ((table: string) => Object) | null = null;
-  static travelRepositoryFactory: (() => TravelRepository) | null = null;
   private rdbHelper: RdbHelper;
+
+  // Test-overridable hooks. Reassigned by integration tests
+  // (see frontend/entry/src/test/integration/data/MemoryNodeRepository.test.ets).
+  // Default values let production go through the real rdb / AuthService / TravelRepository.
+  static ownerUidProvider: (() => Promise<string>) | null = null;
+  static predicatesFactory: (table: string) => Object = (table: string): Object => {
+    return new rdb.RdbPredicates(table);
+  };
+  static travelRepositoryFactory: (() => TravelRepository) | null = null;
+  static nowProvider: (() => number) | null = null;
+
+  /** Reset all static test hooks back to defaults. */
+  static resetTestingHooks(): void {
+    MemoryNodeRepository.ownerUidProvider = null;
+    MemoryNodeRepository.predicatesFactory = (table: string): Object => {
+      return new rdb.RdbPredicates(table);
+    };
+    MemoryNodeRepository.travelRepositoryFactory = null;
+    MemoryNodeRepository.nowProvider = null;
+  }
 
   constructor() {
     this.rdbHelper = RdbHelper.getInstance();
@@ -78,27 +94,6 @@ export class MemoryNodeRepository {
 
   private async getRdbStore(): Promise<rdb.RdbStore> {
     return await this.rdbHelper.getStore();
-  }
-
-  private static createPredicates(table: string): rdb.RdbPredicates {
-    if (MemoryNodeRepository.predicatesFactory) {
-      return MemoryNodeRepository.predicatesFactory(table) as rdb.RdbPredicates;
-    }
-    return new rdb.RdbPredicates(table);
-  }
-
-  private static now(): number {
-    if (MemoryNodeRepository.nowProvider) {
-      return MemoryNodeRepository.nowProvider();
-    }
-    return Date.now();
-  }
-
-  private createTravelRepository(): TravelRepository {
-    if (MemoryNodeRepository.travelRepositoryFactory) {
-      return MemoryNodeRepository.travelRepositoryFactory();
-    }
-    return new TravelRepository();
   }
 
   private closeResultSet(resultSet?: rdb.ResultSet): void {
@@ -126,9 +121,6 @@ export class MemoryNodeRepository {
   }
 
   private async getOwnerUid(): Promise<string> {
-    if (MemoryNodeRepository.ownerUidProvider) {
-      return await MemoryNodeRepository.ownerUidProvider();
-    }
     const user = await AuthService.getCurrentUser();
     return user?.uid ?? '';
   }
@@ -213,7 +205,7 @@ export class MemoryNodeRepository {
     let resultSet: rdb.ResultSet | undefined = undefined;
     try {
       const ownerUid = await this.getOwnerUid();
-      const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('travel_id', this.toDbId(travelId, 'travel id'));
       predicates.equalTo('owner_uid', ownerUid);
       predicates.equalTo('deleted_at', 0);
@@ -237,7 +229,7 @@ export class MemoryNodeRepository {
     try {
       const store = await this.getRdbStore();
       const ownerUid = await this.getOwnerUid();
-      const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('owner_uid', ownerUid);
       predicates.orderByAsc(NODE_ORDER_COLUMN);
       resultSet = await store.query(predicates);
@@ -262,7 +254,7 @@ export class MemoryNodeRepository {
     try {
       const store = await this.getRdbStore();
       const ownerUid = await this.getOwnerUid();
-      const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('travel_id', this.toDbId(travelId, 'travel id'));
       predicates.equalTo('owner_uid', ownerUid);
       predicates.equalTo('deleted_at', 0);
@@ -289,7 +281,7 @@ export class MemoryNodeRepository {
     try {
       const store = await this.getRdbStore();
       const ownerUid = await this.getOwnerUid();
-      const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'node id'));
       predicates.equalTo('owner_uid', ownerUid);
       predicates.equalTo('deleted_at', 0);
@@ -310,10 +302,10 @@ export class MemoryNodeRepository {
   async createNode(node: CreateNodeInput): Promise<string> {
     try {
       const store = await this.getRdbStore();
-      const now = MemoryNodeRepository.now();
+      const now = Date.now();
       const ownerUid = await this.getOwnerUid();
       if (node.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
-        const parentTravel = await this.createTravelRepository().getTravelById(node.travelId);
+        const parentTravel = await new TravelRepository().getTravelById(node.travelId);
         if (!parentTravel || parentTravel.ownerUid !== ownerUid) {
           throw new Error(`Travel not found or not owned by current user: ${node.travelId}`);
         }
@@ -361,13 +353,13 @@ export class MemoryNodeRepository {
       }
       const ownerUid = currentNode.ownerUid;
       const valueBucket: rdb.ValuesBucket = {
-        'updated_at': MemoryNodeRepository.now(),
+        'updated_at': Date.now(),
         'sync_status': currentNode.cloudId && currentNode.cloudId.length > 0 ? 'pending_update' : 'pending_create',
         'version': (currentNode.version ?? 1) + 1
       };
       if (node.travelId !== undefined) {
         if (node.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
-          const parentTravel = await this.createTravelRepository().getTravelById(node.travelId);
+          const parentTravel = await new TravelRepository().getTravelById(node.travelId);
           if (!parentTravel || parentTravel.ownerUid !== ownerUid) {
             return false;
           }
@@ -414,7 +406,7 @@ export class MemoryNodeRepository {
         // 现在的契约：调用方（RdbDataService.updateNode）在 photos 变更后立即用 home dir 重算
         // manifest 并通过 updatePhotoManifest 显式写回，确保同一事务结束时 manifest 始终正确。
       }
-      const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'node id'));
       predicates.equalTo('owner_uid', ownerUid);
       const affectedRows = await store.update(valueBucket, predicates);
@@ -429,10 +421,10 @@ export class MemoryNodeRepository {
   async moveNodesToTravel(oldTravelId: string, newTravelId: string): Promise<number> {
     try {
       const store = await this.getRdbStore();
-      const now = MemoryNodeRepository.now();
+      const now = Date.now();
       const ownerUid = await this.getOwnerUid();
       if (newTravelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) {
-        const targetTravel = await this.createTravelRepository().getTravelById(newTravelId);
+        const targetTravel = await new TravelRepository().getTravelById(newTravelId);
         if (!targetTravel || targetTravel.ownerUid !== ownerUid) {
           return 0;
         }
@@ -450,7 +442,7 @@ export class MemoryNodeRepository {
           'version': (currentNode.version ?? 1) + 1
         };
         valueBucket[NODE_ORDER_COLUMN] = nextNodeOrder;
-        const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+        const predicates = new rdb.RdbPredicates(TABLE_NAME);
         predicates.equalTo('id', this.toDbId(currentNode.id, 'node id'));
         predicates.equalTo('owner_uid', ownerUid);
         predicates.equalTo('deleted_at', 0);
@@ -479,12 +471,12 @@ export class MemoryNodeRepository {
       }
       const travelId = currentNode.travelId;
       const valueBucket: rdb.ValuesBucket = {
-        'deleted_at': MemoryNodeRepository.now(),
-        'updated_at': MemoryNodeRepository.now(),
+        'deleted_at': Date.now(),
+        'updated_at': Date.now(),
         'sync_status': 'pending_delete',
         'version': (currentNode.version ?? 1) + 1
       };
-      const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'node id'));
       predicates.equalTo('owner_uid', currentNode.ownerUid);
       predicates.equalTo('deleted_at', 0);
@@ -504,7 +496,7 @@ export class MemoryNodeRepository {
     try {
       const store = await this.getRdbStore();
       const ownerUid = await this.getOwnerUid();
-      const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('cloud_id', cloudId);
       predicates.equalTo('owner_uid', ownerUid);
       resultSet = await store.query(predicates);
@@ -527,7 +519,7 @@ export class MemoryNodeRepository {
       sync_status: syncStatus,
       last_synced_at: lastSyncedAt
     };
-    const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+    const predicates = new rdb.RdbPredicates(TABLE_NAME);
     predicates.equalTo('id', this.toDbId(id, 'node id'));
     predicates.equalTo('owner_uid', await this.getOwnerUid());
     await store.update(valueBucket, predicates);
@@ -538,7 +530,7 @@ export class MemoryNodeRepository {
     const valueBucket: rdb.ValuesBucket = {
       photo_manifest: manifest
     };
-    const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+    const predicates = new rdb.RdbPredicates(TABLE_NAME);
     predicates.equalTo('id', this.toDbId(id, 'node id'));
     predicates.equalTo('owner_uid', await this.getOwnerUid());
     await store.update(valueBucket, predicates);
@@ -569,7 +561,7 @@ export class MemoryNodeRepository {
       cloud_id: node.cloudId ?? '',
       sync_status: 'synced',
       deleted_at: node.deletedAt ?? 0,
-      last_synced_at: MemoryNodeRepository.now(),
+      last_synced_at: Date.now(),
       version: node.version ?? 1,
       sensitivity: 'S2',
       visited_at: node.visitedAt ?? 0
@@ -581,7 +573,7 @@ export class MemoryNodeRepository {
           TAG,
           `[debug] upsertFromCloud update cloudId=${node.cloudId ?? ''}, travelId=${node.travelId}, deletedAt=${node.deletedAt ?? 0}, photoCount=${node.photos.length}, photoManifest=${node.photoManifest ?? ''}`
         );
-        const updatePredicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+        const updatePredicates = new rdb.RdbPredicates(TABLE_NAME);
         updatePredicates.equalTo('cloud_id', node.cloudId ?? '');
         updatePredicates.equalTo('owner_uid', ownerUid);
         await store.update(valueBucket, updatePredicates);
@@ -600,11 +592,11 @@ export class MemoryNodeRepository {
   async markDeletedByCloud(cloudId: string): Promise<void> {
     const store = await this.getRdbStore();
     const valueBucket: rdb.ValuesBucket = {
-      deleted_at: MemoryNodeRepository.now(),
+      deleted_at: Date.now(),
       sync_status: 'synced',
-      last_synced_at: MemoryNodeRepository.now()
+      last_synced_at: Date.now()
     };
-    const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+    const predicates = new rdb.RdbPredicates(TABLE_NAME);
     predicates.equalTo('cloud_id', cloudId);
     predicates.equalTo('owner_uid', await this.getOwnerUid());
     await store.update(valueBucket, predicates);
@@ -618,7 +610,7 @@ export class MemoryNodeRepository {
       let travelId: string | undefined = undefined;
       let lookupResultSet: rdb.ResultSet | undefined = undefined;
       try {
-        const lookupPredicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+        const lookupPredicates = new rdb.RdbPredicates(TABLE_NAME);
         lookupPredicates.equalTo('id', this.toDbId(id, 'node id'));
         lookupPredicates.equalTo('owner_uid', ownerUid);
         lookupResultSet = await store.query(lookupPredicates);
@@ -629,7 +621,7 @@ export class MemoryNodeRepository {
         this.closeResultSet(lookupResultSet);
       }
 
-      const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+      const predicates = new rdb.RdbPredicates(TABLE_NAME);
       predicates.equalTo('id', this.toDbId(id, 'node id'));
       predicates.equalTo('owner_uid', ownerUid);
       const affectedRows = await store.delete(predicates);
@@ -655,10 +647,10 @@ export class MemoryNodeRepository {
       for (let i = 0; i < nodeIds.length; i++) {
         const valueBucket: rdb.ValuesBucket = {
           node_order: i,
-          'updated_at': MemoryNodeRepository.now(),
+          'updated_at': Date.now(),
           'sync_status': 'pending_reorder'
         };
-        const predicates = MemoryNodeRepository.createPredicates(TABLE_NAME);
+        const predicates = new rdb.RdbPredicates(TABLE_NAME);
         predicates.equalTo('id', this.toDbId(nodeIds[i], 'node id'));
         predicates.equalTo('owner_uid', ownerUid);
         await store.update(valueBucket, predicates);
@@ -667,12 +659,5 @@ export class MemoryNodeRepository {
     } catch (err) {
       logger.error(TAG, `reorderNodes failed: ${JSON.stringify(err)}`);
     }
-  }
-
-  static resetTestingHooks(): void {
-    MemoryNodeRepository.ownerUidProvider = null;
-    MemoryNodeRepository.nowProvider = null;
-    MemoryNodeRepository.predicatesFactory = null;
-    MemoryNodeRepository.travelRepositoryFactory = null;
   }
 }

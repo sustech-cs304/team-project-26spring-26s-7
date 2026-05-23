@@ -10,7 +10,7 @@ def test_viewer_simple_returns_html():
     assert r.status_code == 200
     assert "text/html" in r.headers["content-type"]
     body = r.text
-    assert "<title>TravelPin" in body
+    assert "<title>ItsMapPin" in body
     assert "/api/share/" in body  # the JS fetch URL is embedded
 
 

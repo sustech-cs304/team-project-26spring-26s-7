@@ -1,5 +1,5 @@
 <!--
-  TravelPin 分享查看页 — 演示版（单文件 vanilla JS，零构建）。
+  ItsMapPin 分享查看页 — 演示版（单文件 vanilla JS，零构建）。
 
   路径分工（编辑指引）：
     1. 顶部 <style> 块：调色 / 字体 / 间距
@@ -18,7 +18,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <title>TravelPin · 分享</title>
+  <title>ItsMapPin · 分享</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -188,7 +188,7 @@
           <span>有效期至 ${new Date(data.expireAt).toLocaleString("zh-CN")}</span>
         </footer>
       `;
-      document.title = `${trip.name || "TravelPin 分享"} · TravelPin`;
+      document.title = `${trip.name || "ItsMapPin 分享"} · ItsMapPin`;
       wireCollapse();
     }
 

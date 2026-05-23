@@ -30,9 +30,14 @@ export interface SharePhotoBatchResult {
   issues: SharePhotoIssue[]
 }
 
+/**
+ * Side-effect hooks for SharePhotoHelper. Overridable in tests so we can
+ * substitute fakes for filesystem / image-sanitizer / cleanup without standing
+ * up the real sandbox.
+ */
 export interface SharePhotoHelperHooks {
   fileExists(path: string): boolean
-  sanitizeUpload(ctx: common.UIAbilityContext, filePath: string): Promise<string | undefined>
+  sanitizeUpload(ctx: common.UIAbilityContext, path: string): Promise<string | undefined>
   deleteTemporary(path: string): void
 }
 
@@ -40,14 +45,12 @@ class DefaultSharePhotoHelperHooks implements SharePhotoHelperHooks {
   fileExists(path: string): boolean {
     return fs.accessSync(path)
   }
-
   async sanitizeUpload(
     ctx: common.UIAbilityContext,
-    filePath: string
+    path: string
   ): Promise<string | undefined> {
-    return ImageSanitizer.sanitizeForUpload(ctx, filePath)
+    return await ImageSanitizer.sanitizeForUpload(ctx, path)
   }
-
   deleteTemporary(path: string): void {
     ImageSanitizer.deleteSanitized(path)
   }
@@ -65,6 +68,7 @@ class DefaultSharePhotoHelperHooks implements SharePhotoHelperHooks {
  *   - 推断 contentType（按扩展名）
  */
 export class SharePhotoHelper {
+  /** Test-overridable hooks. Default delegates to fs / ImageSanitizer. */
   static hooks: SharePhotoHelperHooks = new DefaultSharePhotoHelperHooks()
 
   /**

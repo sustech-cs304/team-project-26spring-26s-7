@@ -18,35 +18,35 @@ being added together.
 
 Frontend CI artifact:
 
-- Runner path: `D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\ci-artifacts\build-11\metrics\summary.txt`
-- Repo-relative path: `ci-artifacts/build-11/metrics/summary.txt`
-- CI build: frontend Jenkins build 11
+- Runner path: `D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\log\ci-artifacts-build-21\metrics\summary.txt`
+- Repo-relative path: `log/ci-artifacts-build-21/metrics/summary.txt`
+- CI build: frontend Jenkins build 21
 
 Backend CI artifact:
 
-- Runner path: `D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\.be-ci-artifacts\team-project-backend-12-53bac8dc\backend\metrics\summary.txt`
-- Repo-relative path: `.be-ci-artifacts/team-project-backend-12-53bac8dc/backend/metrics/summary.txt`
-- CI build: backend Jenkins build 12, commit `53bac8dc`
+- Runner path: `D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\backend\metrics\summary.txt`
+- Repo-relative path: `backend/metrics/summary.txt`
+- CI build: backend Jenkins build 27, commit `8497f59f`
 
 ### 1.2 Project Summary
 
 | Metric | Frontend | Backend | Project Total | Notes |
 |---|---:|---:|---:|---|
-| Source files | 87 `.ets` | 36 `.py` | 123 | CI source-file counts |
-| LOC, total lines | 25,747 | 5,673 | 31,420 | Frontend total lines + backend service lines |
+| Source files | 89 `.ets` | 38 `.py` | 127 | CI source-file counts |
+| LOC, total lines | 27,868 | 6,705 | 34,573 | Frontend total lines + backend service lines |
 | Direct dependencies | 6 | 11 | 17 | Frontend package manifest + backend service requirements |
 
 ### 1.3 Frontend Metrics
 
 | Metric | Value | Source / Notes |
 |---|---:|---|
-| Source files | 87 | `.ets` files counted by frontend CI |
-| LOC, total lines | 25,747 | `LOC (total lines)` |
-| NLOC | 21,036 | `NLOC (lizard)` |
-| Comment/blank density | 18.3% | From frontend metrics summary |
-| Functions detected | 807 | PowerShell brace-matched scan |
-| File-level cyclomatic complexity | 2,402 total / 27.6 average per file | Regex-based file-level CCN |
-| Function-level cyclomatic complexity | 2,777 total / 3.44 average per function | PowerShell per-function parser |
+| Source files | 89 | `.ets` files counted by frontend CI |
+| LOC, total lines | 27,868 | `LOC (total lines)` |
+| NLOC | 0 | `NLOC (lizard)` - not available |
+| Comment/blank density | 100% | From frontend metrics summary |
+| Functions detected | 883 | PowerShell brace-matched scan |
+| File-level cyclomatic complexity | 2,652 total / 29.8 average per file | Regex-based file-level CCN |
+| Function-level cyclomatic complexity | 3,057 total / 3.46 average per function | PowerShell per-function parser |
 | Direct dependencies | 6 | 4 runtime + 2 dev dependencies |
 
 Frontend direct dependencies:
@@ -59,13 +59,16 @@ Frontend complexity hotspots:
 
 | CCN | File | LOC |
 |---:|---|---:|
-| 221 | `feature/map-travel/views/MapHomeView.ets` | 1,877 |
-| 149 | `feature/map-travel/pages/TripReplayPage.ets` | 1,335 |
+| 226 | `feature/map-travel/views/MapHomeView.ets` | 1,975 |
+| 147 | `feature/map-travel/pages/TripReplayPage.ets` | 1,351 |
 | 121 | `common/service/RdbDataService.ets` | 914 |
-| 105 | `feature/ai-copy/pages/AiCopyPage.ets` | 1,034 |
-| 103 | `common/data/MemoryNodeRepository.ets` | 679 |
-| 103 | `common/sync/SyncManager.ets` | 546 |
-| 100 | `common/data/TravelRepository.ets` | 569 |
+| 110 | `feature/ai-copy/pages/AiCopyPage.ets` | 1,094 |
+| 107 | `common/sync/SyncManager.ets` | 550 |
+| 105 | `feature/social-share/pages/SharePage.ets` | 916 |
+| 99 | `common/data/MemoryNodeRepository.ets` | 664 |
+| 98 | `feature/map-travel/pages/NodeDetailPage.ets` | 980 |
+| 97 | `common/data/TravelRepository.ets` | 561 |
+| 90 | `common/api/AiGatewayClient.ets` | 646 |
 
 Frontend test result in the same CI build:
 
@@ -77,21 +80,21 @@ Tests run: 35, Failure: 0, Error: 0, Pass: 35, Ignore: 0
 
 | Metric | Value | Source / Notes |
 |---|---:|---|
-| Source files | 36 | Python files across backend service targets |
-| LOC, total lines | 5,673 | Backend Jenkins `loc.txt` |
-| Radon CC entries | 280 | Parsed from `cyclomatic-complexity.txt` |
-| Radon CC total | 1,001 | Sum of reported Radon CC entries |
-| Radon CC average | 3.58 | Computed from Radon CC entries |
+| Source files | 38 | Python files across backend service targets |
+| LOC, total lines | 6,705 | Backend Jenkins `loc.txt` |
+| Radon CC entries | 317 | Parsed from `cyclomatic-complexity.txt` |
+| Radon CC total | 1,123 | Sum of reported Radon CC entries |
+| Radon CC average | 3.54 | Computed from Radon CC entries |
 | Direct dependencies | 11 | Unique backend service requirements |
 
 Backend service-level metrics:
 
 | Service | Files | LOC | Average Radon CC |
 |---|---:|---:|---|
-| `ai-relay` | 1 | 431 | B, 5.07 |
+| `ai-relay` | 1 | 611 | A, 4.86 |
 | `sensitive-filter` | 1 | 300 | A, 3.85 |
 | `picture-check` | 3 | 441 | A, 2.00 |
-| `share-service` | 31 | 4,501 | A, 3.58 |
+| `share-service` | 33 | 5,353 | A, 3.52 |
 
 Backend direct dependencies:
 
@@ -112,10 +115,13 @@ Backend complexity hotspots from Radon:
 | CCN | Function | File |
 |---:|---|---|
 | 48 | `publish` | `share-service/share_service/routers/publish.py` |
-| 19 | `chat_completions_image` | `ai-relay/siliconflow_relay.py` |
+| 23 | `chat_completions_image` | `ai-relay/siliconflow_relay.py` |
 | 17 | `test_viewer_html_has_og_meta_tags` | `share-service/share_service/tests/test_publish_api.py` |
-| 16 | `chat_completions` | `ai-relay/siliconflow_relay.py` |
+| 16 | `audit_share` | `share-service/share_service/core/audit_task.py` |
+| 15 | `chat_completions` | `ai-relay/siliconflow_relay.py` |
+| 15 | `_verify_token` | `share-service/share_service/core/auth.py` |
 | 14 | `SensitiveWordFilter.__init__` | `sensitive-filter/sensitive_filter_service.py` |
+| 13 | `find_all_hits` | `sensitive-filter/sensitive_filter_service.py` |
 
 ## 2. CI/CD Pipeline Description
 
@@ -192,10 +198,10 @@ Frontend proof:
 - GitHub Actions run URL:
   <https://github.com/sustech-cs304/team-project-26spring-26s-7/actions/runs/25851795537/job/75959874734>
 - Local artifact directory on the runner:
-  `D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\ci-artifacts\build-11`
+  `D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\log\ci-artifacts-build-21`
 - Packaged HAP artifacts:
-  - `ci-artifacts/build-11/packages/entry-default-signed.hap`
-  - `ci-artifacts/build-11/packages/entry-default-unsigned.hap`
+  - `log/ci-artifacts-build-21/packages/entry-default-signed.hap`
+  - `log/ci-artifacts-build-21/packages/entry-default-unsigned.hap`
 
 ![Frontend GitHub Actions success](documents/screenshots/frontend_jenkins_github_success_total.jpg)
 

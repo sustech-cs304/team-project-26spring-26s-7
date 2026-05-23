@@ -2,6 +2,9 @@ import { router, promptAction } from '@kit.ArkUI'
 import { common } from '@kit.AbilityKit'
 import { http } from '@kit.NetworkKit'
 import { pasteboard } from '@kit.BasicServicesKit'
+import { image } from '@kit.ImageKit'
+import { hilog } from '@kit.PerformanceAnalysisKit'
+import { fileIo as fs, fileUri } from '@kit.CoreFileKit'
 import { AppColors, AppDimens, getDataService, ReplayPreferences, RouterParam, SharePlatform } from '../../../common'
 import type { MemoryNode, Trip } from '../../../common'
 import { ShareErrorMapper } from '../services/ShareErrorMapper'
@@ -9,7 +12,6 @@ import { SharePhoto, ShareService } from '../services/ShareService'
 import { SharePhotoBatchResult, SharePhotoHelper } from '../services/SharePhotoHelper'
 import { SharePreflight } from '../services/SharePreflight'
 import { SystemShareService, SystemSharePayload, SystemShareImagePayload } from '../services/SystemShareService'
-import { fileIo as fs } from '@kit.CoreFileKit'
 import {
   ReplaceLink,
   ReplayPrefsForShare,
@@ -21,6 +23,9 @@ import {
 const KIND_RDB: string = 'rdb'
 const KIND_DEMO: string = 'demo'
 const KIND_ERROR: string = 'error'
+
+const POSTER_DOMAIN: number = 0x0000
+const POSTER_TAG: string = 'SharePoster'
 
 interface TripResolution {
   kind: string
@@ -49,6 +54,10 @@ export struct SharePage {
   @State shareUrl: string = ''
   @State copyText: string = ''
   @State isLoading: boolean = true
+  @State loadingMessage: string = '正在生成分享链接...'
+  // 页面已被导航走（aboutToDisappear 后）时设 false。
+  // 所有 await 之后的 toast / 状态更新都要 gate 一下，避免用户已经离开还弹"链接已生成"。
+  private isPageActive: boolean = true
   @State errorMsg: string = ''
   @State currentTripName: string = ''
   @State selectedExpiryIdx: number = 2
@@ -73,15 +82,14 @@ export struct SharePage {
   ]
 
   private sharePlatforms: SharePlatform[] = [
-    new SharePlatform('W', '微信'),
-    new SharePlatform('Q', 'QQ'),
-    // v1.1：海报分享 — 后端合成带 QR 的图，转发给微信/QQ/微博/邮件，
-    // 接收方扫码就能跳到分享链接，绕过国内对 trycloudflare 域的卡片渲染拒绝
-    new SharePlatform('P', '海报'),
-    new SharePlatform('C', '复制链接'),
+    new SharePlatform('💬', '微信'),
+    new SharePlatform('🐧', 'QQ'),
+    new SharePlatform('🖼', '海报'),
+    new SharePlatform('🔗', '复制链接'),
   ]
 
   aboutToAppear(): void {
+    this.isPageActive = true
     const params = router.getParams() as RouterParam
     if (params && params.tripId) {
       this.currentTripId = params.tripId
@@ -94,6 +102,24 @@ export struct SharePage {
       void ReplayPreferences.ensureLoaded(ctxEarly)
     }
     void this.publishShare()
+  }
+
+  aboutToDisappear(): void {
+    // 用户离开分享页（点返回 / 切走）。所有 in-flight 的 async 流程（publish、海报、分享）
+    // 完成后都会先检查 isPageActive，发现是 false 就静默退出，不再 toast / 不再改状态。
+    this.isPageActive = false
+  }
+
+  /** 仅当页面还在前台时弹 toast；async 完成时检查，避免"已经返回了还弹链接已生成" */
+  private safeToast(message: string, duration?: number): void {
+    if (!this.isPageActive) {
+      return
+    }
+    if (duration !== undefined) {
+      promptAction.showToast({ message, duration })
+    } else {
+      promptAction.showToast({ message })
+    }
   }
 
   private syncSelectedExpiryFromStorage(): void {
@@ -115,6 +141,7 @@ export struct SharePage {
   }
 
   private async publishShare(): Promise<void> {
+    this.loadingMessage = '正在生成分享链接...'
     this.isLoading = true
     this.errorMsg = ''
     this.shareUrl = ''
@@ -183,6 +210,10 @@ export struct SharePage {
 
       const result = await this.shareService.publish(
         req, photos, hours, minutes, replace, replayPrefs)
+      // 用户在 publish 期间已经退出页面 → 不要弹任何 toast、也别折腾状态
+      if (!this.isPageActive) {
+        return
+      }
       if (result.ok && result.data) {
         this.shareUrl = result.data.url
         this.copyText = `我刚分享了一段旅行：${req.tripName}\n${result.data.url}`
@@ -197,14 +228,16 @@ export struct SharePage {
         const toast = isReplacing
           ? `已替换为新链接（原链接已失效，有效期：${opt.label}）`
           : `分享链接已生成（有效期：${opt.label}）`
-        promptAction.showToast({ message: toast })
+        this.safeToast(toast)
       } else {
         this.errorMsg = ShareErrorMapper.formatPublishResult(result)
         this.isLoading = false
       }
     } catch (e) {
-      this.errorMsg = `异常：${JSON.stringify(e)}`
-      this.isLoading = false
+      if (this.isPageActive) {
+        this.errorMsg = `异常：${JSON.stringify(e)}`
+        this.isLoading = false
+      }
     } finally {
       SharePhotoHelper.cleanupTemporaryPhotos(photos)
     }
@@ -430,8 +463,8 @@ export struct SharePage {
     const payload: SystemSharePayload = {
       url: this.shareUrl,
       title: this.currentTripName
-        ? `${this.currentTripName} - TravelPin`
-        : 'TravelPin 分享',
+        ? `${this.currentTripName} - ItsMapPin`
+        : 'ItsMapPin 分享',
       description,
       thumbnail,
     }
@@ -446,11 +479,9 @@ export struct SharePage {
       const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text)
       const board = pasteboard.getSystemPasteboard()
       await board.setData(data)
-      promptAction.showToast({
-        message: `系统分享不可用，已复制内容，请前往${platform}粘贴`
-      })
+      this.safeToast(`系统分享不可用，已复制内容，请前往${platform}粘贴`)
     } catch (e) {
-      promptAction.showToast({ message: `分享失败：${JSON.stringify(e)}` })
+      this.safeToast(`分享失败：${JSON.stringify(e)}`)
     }
   }
 
@@ -478,16 +509,34 @@ export struct SharePage {
     }
     const link = this.lastLink
     const ctx = getContext(this) as common.UIAbilityContext
-    promptAction.showToast({ message: '正在生成海报…', duration: 1500 })
 
-    const bytes = await this.shareService.fetchPoster(
-      link.shortCode, link.expirySec, link.sig)
+    // 用 isLoading + 动态文案持续显示进度（toast 1.5s 会消失，看不见后续步骤）
+    this.loadingMessage = '正在生成海报...'
+    this.isLoading = true
+    promptAction.showToast({ message: '正在生成海报…', duration: 1500 })
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step1: fetchPoster code=${link.shortCode}`)
+
+    let bytes: Uint8Array | undefined
+    try {
+      bytes = await this.shareService.fetchPoster(
+        link.shortCode, link.expirySec, link.sig)
+    } catch (e) {
+      hilog.error(POSTER_DOMAIN, POSTER_TAG, `fetchPoster threw: ${JSON.stringify(e)}`)
+    }
     if (!bytes || bytes.byteLength === 0) {
-      promptAction.showToast({ message: '海报生成失败，请重试' })
+      hilog.error(POSTER_DOMAIN, POSTER_TAG, `fetchPoster returned empty`)
+      this.isLoading = false
+      this.safeToast('海报生成失败，请检查网络后重试')
       return
     }
+    // fetchPoster 期间用户已退出 → 静默放弃
+    if (!this.isPageActive) {
+      this.isLoading = false
+      return
+    }
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step2: got ${bytes.byteLength}B`)
 
-    // 把字节写到沙箱 cacheDir；同 shortCode 重复分享会覆盖同一文件
+    // 把字节写到沙箱 cacheDir
     const filePath = `${ctx.cacheDir}/poster-${link.shortCode}.jpg`
     try {
       const file = fs.openSync(
@@ -497,23 +546,41 @@ export struct SharePage {
       fs.writeSync(file.fd, bytes.buffer)
       fs.closeSync(file)
     } catch (e) {
-      promptAction.showToast({
-        message: `海报保存失败：${JSON.stringify(e)}`
-      })
+      hilog.error(POSTER_DOMAIN, POSTER_TAG, `write file failed: ${JSON.stringify(e)}`)
+      this.isLoading = false
+      this.safeToast(`海报保存失败：${JSON.stringify(e)}`)
       return
     }
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step3: wrote to ${filePath}`)
+
+    // Share Kit 接收方 app 需要规范的 URI，不能裸 file://${absPath}
+    let shareUri = ''
+    try {
+      shareUri = fileUri.getUriFromPath(filePath)
+    } catch (e) {
+      hilog.error(POSTER_DOMAIN, POSTER_TAG, `getUriFromPath failed: ${JSON.stringify(e)}, fallback to manual file://`)
+      shareUri = `file://${filePath}`
+    }
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step4: uri=${shareUri}`)
+
+    // 缩略图 ≤ 100KB，避免 IPC 超限
+    const thumb = await this.shrinkBytesForIpc(bytes)
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step5: thumb=${thumb?.byteLength ?? 0}B`)
 
     const payload: SystemShareImagePayload = {
-      fileUri: `file://${filePath}`,
+      fileUri: shareUri,
       title: this.currentTripName
-        ? `${this.currentTripName} - TravelPin`
-        : 'TravelPin 分享',
+        ? `${this.currentTripName} - ItsMapPin`
+        : 'ItsMapPin 分享',
       description: this.buildShareDescription(),
-      thumbnail: bytes,    // 复用海报字节做面板预览，避免再请求 cover
+      thumbnail: thumb,
     }
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step6: calling shareImage`)
     const ok = await SystemShareService.shareImage(ctx, payload)
+    hilog.info(POSTER_DOMAIN, POSTER_TAG, `step7: shareImage returned ${ok}`)
+    this.isLoading = false
     if (!ok) {
-      promptAction.showToast({ message: '系统分享面板未能打开，请重试' })
+      this.safeToast('系统分享面板未能打开，请重试')
     }
   }
 
@@ -529,12 +596,12 @@ export struct SharePage {
    * 与后端 _build_share_description 字段顺序对齐（手动粘贴 URL 时微信
    * 走 og:meta 的那条路，看到的也是同样格式，体验一致）。
    *
-   * 字段缺省的兜底：没有 cachedReq → "TravelPin 旅行回放"。
+   * 字段缺省的兜底：没有 cachedReq → "ItsMapPin 旅行回放"。
    */
   private buildShareDescription(): string {
     const req = this.cachedReq
     if (!req || req.nodes.length === 0) {
-      return 'TravelPin 旅行回放'
+      return 'ItsMapPin 旅行回放'
     }
     const parts: string[] = []
     // ① 节点数 + 总距离
@@ -577,11 +644,58 @@ export struct SharePage {
    * ArrayBuffer，所以这里包一层）。任何失败都返 undefined，调用方 share
    * 时直接不带缩略图，不让分享按钮卡住。
    */
+  /**
+   * 把 JPEG/PNG 字节压到 ≤ 100KB 用于 systemShare 缩略图。
+   * 失败或缩放后仍太大 → 返回 undefined，让面板不带缩略图。
+   */
+  private async shrinkBytesForIpc(input: Uint8Array): Promise<Uint8Array | undefined> {
+    const MAX_BYTES = 100 * 1024
+    if (input.byteLength <= MAX_BYTES) {
+      return input
+    }
+    let source: image.ImageSource | undefined
+    let pixelMap: image.PixelMap | undefined
+    let packer: image.ImagePacker | undefined
+    try {
+      source = image.createImageSource(input.buffer)
+      pixelMap = await source.createPixelMap({
+        desiredSize: { width: 320, height: 320 },
+      })
+      packer = image.createImagePacker()
+      const packed = await packer.packing(pixelMap, {
+        format: 'image/jpeg',
+        quality: 50,
+      })
+      if (packed.byteLength > MAX_BYTES) {
+        return undefined
+      }
+      return new Uint8Array(packed)
+    } catch (_) {
+      return undefined
+    } finally {
+      try { await pixelMap?.release() } catch (_) {}
+      try { await source?.release() } catch (_) {}
+      try { await packer?.release() } catch (_) {}
+    }
+  }
+
+  /**
+   * 拉取封面并压缩成 ≤ 100KB 的 JPEG 供 systemShare 走 IPC 投递。
+   *
+   * 直接传原图会触发 HMOS systemShare 的 IPC 数据上限（约 200KB 实测），
+   * 报 code=1003702002 "IPC data is oversized"，整个分享面板调起失败。
+   *
+   * 流程：HTTP 拿 cover.jpg → ImageKit 解码 → 320x320 内缩放 + JPEG quality 50
+   * → 体积通常 < 30KB。任何步骤失败都返回 undefined，让 systemShare 不带缩略图
+   * 调起（链接卡片由微信/QQ 回头抓 og:meta，仍能正常渲染）。
+   */
   private async fetchCoverThumbnail(): Promise<Uint8Array | undefined> {
     if (!this.coverPhotoUrl) {
       return undefined
     }
+    const MAX_THUMB_BYTES = 100 * 1024  // IPC 安全余量
     const httpReq = http.createHttp()
+    let rawBuf: ArrayBuffer | undefined
     try {
       const resp = await httpReq.request(this.coverPhotoUrl, {
         method: http.RequestMethod.GET,
@@ -590,14 +704,47 @@ export struct SharePage {
         expectDataType: http.HttpDataType.ARRAY_BUFFER,
       })
       if (resp.responseCode === 200 && resp.result instanceof ArrayBuffer) {
-        return new Uint8Array(resp.result as ArrayBuffer)
+        rawBuf = resp.result as ArrayBuffer
       }
-      return undefined
     } catch (e) {
-      // 网络抖动 / 超时 / DNS 等任何错误 — 不带缩略图也能分享
       return undefined
     } finally {
       httpReq.destroy()
+    }
+    if (!rawBuf) {
+      return undefined
+    }
+
+    // 原图已经够小：直接返回，省一次编解码
+    if (rawBuf.byteLength <= MAX_THUMB_BYTES) {
+      return new Uint8Array(rawBuf)
+    }
+
+    // 用 ImageKit 缩放 + 重编码到 JPEG ≤ ~30KB
+    let source: image.ImageSource | undefined
+    let pixelMap: image.PixelMap | undefined
+    let packer: image.ImagePacker | undefined
+    try {
+      source = image.createImageSource(rawBuf)
+      pixelMap = await source.createPixelMap({
+        desiredSize: { width: 320, height: 320 },
+      })
+      packer = image.createImagePacker()
+      const packed = await packer.packing(pixelMap, {
+        format: 'image/jpeg',
+        quality: 50,
+      })
+      if (packed.byteLength > MAX_THUMB_BYTES) {
+        // 极端情况：缩放后还是太大 → 放弃缩略图
+        return undefined
+      }
+      return new Uint8Array(packed)
+    } catch (_) {
+      return undefined
+    } finally {
+      try { await pixelMap?.release() } catch (_) {}
+      try { await source?.release() } catch (_) {}
+      try { await packer?.release() } catch (_) {}
     }
   }
 
@@ -634,10 +781,14 @@ export struct SharePage {
               ForEach(this.expiryOptions, (opt: ExpiryOption, idx: number) => {
                 Text(opt.label)
                   .fontSize(AppDimens.FONT_SM)
-                  .fontColor(idx === this.selectedExpiryIdx ? Color.White : AppColors.TEXT_SECONDARY)
-                  .backgroundColor(idx === this.selectedExpiryIdx ? AppColors.PRIMARY : AppColors.INPUT_BG)
+                  .fontColor(idx === this.selectedExpiryIdx ? AppColors.PRIMARY : AppColors.TEXT_SECONDARY)
+                  .backgroundColor(idx === this.selectedExpiryIdx ? AppDimens.ACCENT_SOFT_BG : AppColors.INPUT_BG)
                   .padding({ left: 12, right: 12, top: 6, bottom: 6 })
                   .borderRadius(16)
+                  .border({
+                    width: 1,
+                    color: idx === this.selectedExpiryIdx ? AppColors.PRIMARY : AppColors.DIVIDER
+                  })
                   .opacity(this.isLoading ? 0.5 : 1.0)
                   .onClick(() => this.onPickExpiry(idx))
               })
@@ -654,7 +805,7 @@ export struct SharePage {
             if (this.isLoading) {
               Row() {
                 LoadingProgress().width(20).height(20)
-                Text('正在生成分享链接...')
+                Text(this.loadingMessage)
                   .fontSize(AppDimens.FONT_SM)
                   .fontColor(AppColors.TEXT_HINT)
                   .margin({ left: 8 })

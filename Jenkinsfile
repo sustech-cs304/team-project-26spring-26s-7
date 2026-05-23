@@ -8,10 +8,14 @@ pipeline {
     }
 
     environment {
-        DEVECO_SDK_HOME = 'C:\\Apps\\DevEco Studio\\sdk'
-        DEVECO_NODE = 'C:\\Apps\\DevEco Studio\\tools\\node\\node.exe'
-        DEVECO_OHPM = 'C:\\Apps\\DevEco Studio\\tools\\ohpm\\bin\\ohpm.bat'
-        LOCAL_ARTIFACT_ROOT_DEFAULT = 'D:\\Mydata\\1University\\3Junior\\Software_Engineering\\project\\frontendv1\\team-project-26spring-26s-7\\ci-artifacts'
+        DEVECO_SDK_HOME = 'D:\\Program Files\\Huawei\\DevEco Studio\\sdk'
+        DEVECO_NODE = 'D:\\Program Files\\Huawei\\DevEco Studio\\tools\\node\\node.exe'
+        DEVECO_OHPM = 'D:\\Program Files\\Huawei\\DevEco Studio\\tools\\ohpm\\bin\\ohpm.bat'
+        LOCAL_ARTIFACT_ROOT_DEFAULT = 'D:\\ci-artifacts\\team-project-26spring-26s-7'
+        // JDK 21 tightened zip64 validation; hap-signer-tool's fat-jar has non-strict entries
+        // and fails SignHap with "Invalid CEN header (invalid zip64 extra data field size)".
+        // Toggle the JDK opt-out so the signer's JVM accepts the bundled jar.
+        _JAVA_OPTIONS = '-Djdk.util.zip.disableZip64ExtraFieldValidation=true'
         ANSI_RESET = '[0m'
         ANSI_GREEN = '[32m'
         ANSI_RED = '[31m'

@@ -23,7 +23,7 @@ const TAG = 'SystemShareService'
 /**
  * 调起系统分享面板时给到 ShareKit 的载荷。
  * url        —— 限时分享 URL（必填，会作为 hyperlink 主体）
- * title      —— 在分享卡片头部显示的标题，如 "深圳湾骑行 - TravelPin"
+ * title      —— 在分享卡片头部显示的标题，如 "深圳湾骑行 - ItsMapPin"
  * description —— 摘要，如 "4 个节点 · 12.5km · 始于红树林"
  * thumbnail  —— 可选，封面图字节（推荐 ≤ 200KB 的 JPEG/WebP）。
  *               注意：HMOS SharedRecord.thumbnail 类型是 Uint8Array，

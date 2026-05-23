@@ -34,39 +34,39 @@ export interface ThemePalette {
 }
 
 const LIGHT_THEME: ThemePalette = {
-  PRIMARY: '#1890FF',
-  PRIMARY_DARK: '#0050B3',
-  BACKGROUND: '#F5F6F8',
+  PRIMARY: '#FF6A1A',
+  PRIMARY_DARK: '#18221D',
+  BACKGROUND: '#F4F5F6',
   CARD_BG: '#FFFFFF',
-  TEXT_PRIMARY: '#1A1A1A',
-  TEXT_SECONDARY: '#666666',
-  TEXT_HINT: '#999999',
+  TEXT_PRIMARY: '#1D1F1E',
+  TEXT_SECONDARY: '#62645F',
+  TEXT_HINT: '#9B9A93',
   TEXT_ON_PRIMARY: '#FFFFFF',
-  DIVIDER: '#E8E8E8',
-  DANGER: '#FF4D4F',
-  SUCCESS: '#52C41A',
-  INPUT_BG: '#F5F6F8',
-  INPUT_TEXT: '#1A1A1A',
-  INPUT_PLACEHOLDER: '#999999',
-  INPUT_CARET: '#1890FF'
+  DIVIDER: '#E7E8EA',
+  DANGER: '#E0483E',
+  SUCCESS: '#4F8C67',
+  INPUT_BG: '#F2FFFFFF',
+  INPUT_TEXT: '#1D1F1E',
+  INPUT_PLACEHOLDER: '#A7A49C',
+  INPUT_CARET: '#FF6A1A'
 }
 
 const DARK_THEME: ThemePalette = {
-  PRIMARY: '#69B1FF',
-  PRIMARY_DARK: '#3C89E8',
-  BACKGROUND: '#111418',
-  CARD_BG: '#1B2128',
-  TEXT_PRIMARY: '#F5F7FA',
-  TEXT_SECONDARY: '#C4CCD4',
-  TEXT_HINT: '#8B98A7',
-  TEXT_ON_PRIMARY: '#F5F7FA',
-  DIVIDER: '#2B333D',
-  DANGER: '#FF7875',
-  SUCCESS: '#95DE64',
-  INPUT_BG: '#242B34',
-  INPUT_TEXT: '#F5F7FA',
-  INPUT_PLACEHOLDER: '#8B98A7',
-  INPUT_CARET: '#69B1FF'
+  PRIMARY: '#FF8A45',
+  PRIMARY_DARK: '#EEF1E8',
+  BACKGROUND: '#121513',
+  CARD_BG: '#1E2420',
+  TEXT_PRIMARY: '#F5F1EA',
+  TEXT_SECONDARY: '#D2CCC2',
+  TEXT_HINT: '#9F988E',
+  TEXT_ON_PRIMARY: '#121513',
+  DIVIDER: '#343A35',
+  DANGER: '#FF7A70',
+  SUCCESS: '#8ED0A6',
+  INPUT_BG: '#CC2A302B',
+  INPUT_TEXT: '#F5F1EA',
+  INPUT_PLACEHOLDER: '#9F988E',
+  INPUT_CARET: '#FF8A45'
 }
 
 export class AppTheme {
@@ -179,15 +179,43 @@ export class AppDimens {
   static readonly PADDING_SM: number = 8
   static readonly PADDING_MD: number = 16
   static readonly PADDING_LG: number = 24
-  static readonly RADIUS_SM: number = 8
-  static readonly RADIUS_MD: number = 12
-  static readonly RADIUS_LG: number = 16
+  static readonly RADIUS_SM: number = 12
+  static readonly RADIUS_MD: number = 18
+  static readonly RADIUS_LG: number = 28
+  static readonly RADIUS_PILL: number = 999
   static readonly FONT_XS: number = 10
   static readonly FONT_SM: number = 12
   static readonly FONT_MD: number = 14
   static readonly FONT_LG: number = 16
   static readonly FONT_XL: number = 20
   static readonly FONT_TITLE: number = 24
+  static get SHADOW_SOFT(): string {
+    return AppTheme.isDarkMode() ? '#66000000' : '#14101820'
+  }
+
+  static get SHADOW_FLOAT(): string {
+    return AppTheme.isDarkMode() ? '#99000000' : '#24101820'
+  }
+
+  static get ACCENT_SOFT_BG(): string {
+    return AppTheme.isDarkMode() ? '#33FF8A45' : '#1AFF6A1A'
+  }
+
+  static get SURFACE_TINT(): string {
+    return AppTheme.isDarkMode() ? '#B8262B28' : '#EEFFFFFF'
+  }
+
+  static get GLASS_BORDER(): string {
+    return AppTheme.isDarkMode() ? '#38FFFFFF' : '#B8FFFFFF'
+  }
+
+  static get CTA_DARK(): string {
+    return AppTheme.isDarkMode() ? '#EAF0EA' : '#191919'
+  }
+
+  static get PHOTO_SURFACE(): string {
+    return AppTheme.isDarkMode() ? '#202622' : '#F3F4F6'
+  }
 }
 
 export class TravelSpecialValues {
@@ -212,6 +240,7 @@ export class RouterUrls {
   static readonly AI_COPY: string = 'feature/ai-copy/pages/AiCopyPage'
   static readonly VISION_LLM: string = 'feature/ai-copy/pages/VisionLLMPage'
   static readonly PROFILE_EDIT: string = 'feature/profile/pages/ProfileEditPage'
+  static readonly PROFILE_AVATAR_CROP: string = 'feature/profile/pages/AvatarCropPage'
   static readonly USER_AGREEMENT: string = 'pages/UserAgreementPage'
   static readonly PRIVACY_POLICY: string = 'pages/PrivacyPolicyPage'
 }

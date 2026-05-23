@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Import style -->
+  <link rel="stylesheet" href="..\..\index.css" />
+  <link rel="stylesheet" href="..\..\prettify.css" />
+  <!-- Import Vue 3 -->
+  <script src="..\..\vue.global.prod.js"></script>
+  <!-- Import component library -->
+  <script src="..\..\index.full.min.js"></script>
+  <script src="..\..\prettify.js"></script>
+  <title>Coverage</title>
+</head>
+
+<body>
+  <div id="app" class="common-layout">
+    <el-container>
+      <el-header>
+        <el-row :gutter="10">
+          <el-col :span="5">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <el-link type="primary" :href="relativeHome">
+                    <h2>&lt;</h2>
+                  </el-link>
+                </el-text></div>
+              <div><el-text class="mx-1 "><h2>{{title}}</h2></el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info"></el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.functions.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Functions</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.functions.covered}}/{{file.summary.functions.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.branches.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Branches</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.branches.covered}}/{{file.summary.branches.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.lines.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Lines</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.lines.covered}}/{{file.summary.lines.total}}</el-text></div>
+            </el-space>
+          </el-col>
+        </el-row>
+        <el-divider />
+      </el-header>
+      <el-main>
+        <el-row>
+        </el-row>
+        <pre>
+          <table class="coverage">
+            <tr>
+              <td class="line-count quiet">
+                <pre class="prettyprint lang-js">
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+                </pre>
+        </td>
+        <td class="text">
+          <pre class="prettyprint linenums lang-js">
+/* 
+ * Copyright (c) 2024 Huawei Device Co., Ltd. 
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); 
+ * you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at 
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0 
+ * 
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and 
+ * limitations under the License. 
+ */ 
+ 
+import { relationalStore as rdb } from &#39;@kit.ArkData&#39;; 
+import { logger } from &#39;../utils/Logger&#39;; 
+import { TravelSpecialValues } from &#39;../utils/Constants&#39;; 
+import { RdbHelper } from &#39;./RdbHelper&#39;; 
+import { AuthService } from &#39;../auth&#39;; 
+import { TravelRepository } from &#39;./TravelRepository&#39;; 
+import type { MemoryNode } from &#39;../service/types&#39;; 
+ 
+const TAG = &#39;MemoryNodeRepository&#39;; 
+const TABLE_NAME = &#39;memory_nodes&#39;; 
+const NODE_ORDER_COLUMN = &#39;node_order&#39;; 
+ 
+/** 
+ * 创建节点的输入数据 
+ */ 
+export interface CreateNodeInput { 
+  travelId: string; 
+  title?: string; 
+  latitude: number; 
+  longitude: number; 
+  poiName?: string; 
+  description?: string; 
+  address?: string; 
+  photos?: string[]; 
+  tags?: string[]; 
+  mood?: string; 
+  sensitivity?: string; 
+  visitedAt?: number; 
+} 
+ 
+/** 
+ * 更新节点的输入数据 
+ */ 
+export interface UpdateNodeInput { 
+  travelId?: string; 
+  title?: string; 
+  latitude?: number; 
+  longitude?: number; 
+  poiName?: string; 
+  description?: string; 
+  address?: string; 
+  photos?: string[]; 
+  tags?: string[]; 
+  mood?: string; 
+  visitedAt?: number; 
+} 
+ 
+export interface SoftDeleteResult { 
+  success: boolean; 
+  travelId: string; 
+} 
+ 
+export class MemoryNodeRepository { 
+  private rdbHelper: RdbHelper; 
+ 
+  // Test-overridable hooks. Reassigned by integration tests 
+  // (see frontend/entry/src/test/integration/data/MemoryNodeRepository.test.ets). 
+  // Default values let production go through the real rdb / AuthService / TravelRepository. 
+  static ownerUidProvider: (() =&gt; Promise&lt;string&gt;) | null = null; 
+  static predicatesFactory: (table: string) =&gt; Object = (table: string): Object =&gt; { 
+    return new rdb.RdbPredicates(table); 
+  }; 
+  static travelRepositoryFactory: (() =&gt; TravelRepository) | null = null; 
+  static nowProvider: (() =&gt; number) | null = null; 
+ 
+  /** Reset all static test hooks back to defaults. */ 
+  static resetTestingHooks(): void { 
+    MemoryNodeRepository.ownerUidProvider = null; 
+    MemoryNodeRepository.predicatesFactory = (table: string): Object =&gt; { 
+      return new rdb.RdbPredicates(table); 
+    }; 
+    MemoryNodeRepository.travelRepositoryFactory = null; 
+    MemoryNodeRepository.nowProvider = null; 
+  } 
+ 
+  constructor() { 
+    this.rdbHelper = RdbHelper.getInstance(); 
+  } 
+ 
+  private async getRdbStore(): Promise&lt;rdb.RdbStore&gt; { 
+    return await this.rdbHelper.getStore(); 
+  } 
+ 
+  private closeResultSet(resultSet?: rdb.ResultSet): void { 
+    if (!resultSet) { 
+      return; 
+    } 
+    try { 
+      resultSet.close(); 
+    } catch (err) { 
+      logger.warn(TAG, `Failed to close ResultSet: ${JSON.stringify(err)}`); 
+    } 
+  } 
+ 
+  private toError(err: Object): Error { 
+    return new Error(JSON.stringify(err)); 
+  } 
+ 
+  private toDbId(id: string, fieldName: string): number { 
+    const parsed = Number(id); 
+    const uncategorizedId = Number(TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID); 
+    if (!Number.isInteger(parsed) || parsed === 0 || parsed &lt; uncategorizedId) { 
+      throw new Error(`Invalid ${fieldName}: ${id}`); 
+    } 
+    return parsed; 
+  } 
+ 
+  private async getOwnerUid(): Promise&lt;string&gt; { 
+    const user = await AuthService.getCurrentUser(); 
+    return user?.uid ?? &#39;&#39;; 
+  } 
+ 
+  private parseJsonArray(jsonStr: string): string[] { 
+    if (!jsonStr || jsonStr.length === 0) { 
+      return []; 
+    } 
+    try { 
+      const parsed: Object = JSON.parse(jsonStr) as Object; 
+      if (Array.isArray(parsed)) { 
+        const values = parsed as Object[]; 
+        const result: string[] = []; 
+        for (let i = 0; i &lt; values.length; i++) { 
+          const value = values[i]; 
+          if (typeof value === &#39;string&#39;) { 
+            result.push(value); 
+          } 
+        } 
+        return result; 
+      } 
+      return []; 
+    } catch (e) { 
+      return []; 
+    } 
+  } 
+ 
+  private mapResultSetToNode(resultSet: rdb.ResultSet): MemoryNode { 
+    const idIdx = resultSet.getColumnIndex(&#39;id&#39;); 
+    const travelIdIdx = resultSet.getColumnIndex(&#39;travel_id&#39;); 
+    const latIdx = resultSet.getColumnIndex(&#39;latitude&#39;); 
+    const lngIdx = resultSet.getColumnIndex(&#39;longitude&#39;); 
+    const titleIdx = resultSet.getColumnIndex(&#39;title&#39;); 
+    const poiIdx = resultSet.getColumnIndex(&#39;poi_name&#39;); 
+    const descIdx = resultSet.getColumnIndex(&#39;description&#39;); 
+    const moodIdx = resultSet.getColumnIndex(&#39;mood&#39;); 
+    const tagsIdx = resultSet.getColumnIndex(&#39;tags&#39;); 
+    const photosIdx = resultSet.getColumnIndex(&#39;photos&#39;); 
+    const createdIdx = resultSet.getColumnIndex(&#39;created_at&#39;); 
+    const updatedIdx = resultSet.getColumnIndex(&#39;updated_at&#39;); 
+    const nodeOrderIdx = resultSet.getColumnIndex(NODE_ORDER_COLUMN); 
+    const ownerUidIdx = resultSet.getColumnIndex(&#39;owner_uid&#39;); 
+    const cloudIdIdx = resultSet.getColumnIndex(&#39;cloud_id&#39;); 
+    const syncStatusIdx = resultSet.getColumnIndex(&#39;sync_status&#39;); 
+    const deletedAtIdx = resultSet.getColumnIndex(&#39;deleted_at&#39;); 
+    const lastSyncedAtIdx = resultSet.getColumnIndex(&#39;last_synced_at&#39;); 
+    const versionIdx = resultSet.getColumnIndex(&#39;version&#39;); 
+    const photoManifestIdx = resultSet.getColumnIndex(&#39;photo_manifest&#39;); 
+    const visitedAtIdx = resultSet.getColumnIndex(&#39;visited_at&#39;); 
+ 
+    const title = titleIdx &gt;= 0 ? (resultSet.getString(titleIdx) ?? &#39;&#39;) : &#39;&#39;; 
+    const poiName = resultSet.getString(poiIdx) ?? &#39;&#39;; 
+    const description = resultSet.getString(descIdx) ?? &#39;&#39;; 
+ 
+    const node: MemoryNode = { 
+      id: resultSet.getDouble(idIdx).toString(), 
+      travelId: resultSet.getDouble(travelIdIdx).toString(), 
+      title: title.length &gt; 0 ? title : poiName, 
+      content: description, 
+      latitude: resultSet.getDouble(latIdx), 
+      longitude: resultSet.getDouble(lngIdx), 
+      poiName: poiName, 
+      photos: this.parseJsonArray(resultSet.getString(photosIdx) ?? &#39;&#39;), 
+      mood: resultSet.getString(moodIdx) ?? &#39;&#39;, 
+      tags: this.parseJsonArray(resultSet.getString(tagsIdx) ?? &#39;&#39;), 
+      createdAt: resultSet.getDouble(createdIdx), 
+      updatedAt: resultSet.getDouble(updatedIdx), 
+      nodeOrder: nodeOrderIdx &gt;= 0 ? resultSet.getDouble(nodeOrderIdx) : 0, 
+      ownerUid: ownerUidIdx &gt;= 0 ? (resultSet.getString(ownerUidIdx) ?? &#39;&#39;) : &#39;&#39;, 
+      cloudId: cloudIdIdx &gt;= 0 ? (resultSet.getString(cloudIdIdx) ?? &#39;&#39;) : &#39;&#39;, 
+      syncStatus: syncStatusIdx &gt;= 0 ? (resultSet.getString(syncStatusIdx) ?? &#39;local_only&#39;) : &#39;local_only&#39;, 
+      deletedAt: deletedAtIdx &gt;= 0 ? resultSet.getDouble(deletedAtIdx) : 0, 
+      lastSyncedAt: lastSyncedAtIdx &gt;= 0 ? resultSet.getDouble(lastSyncedAtIdx) : 0, 
+      version: versionIdx &gt;= 0 ? resultSet.getDouble(versionIdx) : 1, 
+      photoManifest: photoManifestIdx &gt;= 0 ? (resultSet.getString(photoManifestIdx) ?? &#39;&#39;) : &#39;&#39;, 
+      visitedAt: visitedAtIdx &gt;= 0 ? resultSet.getDouble(visitedAtIdx) : 0 
+    }; 
+    return node; 
+  } 
+ 
+  private async getNextNodeOrder(store: rdb.RdbStore, travelId: string): Promise&lt;number&gt; { 
+    let resultSet: rdb.ResultSet | undefined = undefined; 
+    try { 
+      const ownerUid = await this.getOwnerUid(); 
+      const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+      predicates.equalTo(&#39;travel_id&#39;, this.toDbId(travelId, &#39;travel id&#39;)); 
+      predicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+      predicates.equalTo(&#39;deleted_at&#39;, 0); 
+      predicates.orderByDesc(NODE_ORDER_COLUMN); 
+      resultSet = await store.query(predicates); 
+      if (resultSet.goToFirstRow()) { 
+        const orderIndex = resultSet.getColumnIndex(NODE_ORDER_COLUMN); 
+        return resultSet.getDouble(orderIndex) + 1; 
+      } 
+      return 0; 
+    } catch (err) { 
+      logger.warn(TAG, `Failed to calculate node order: ${JSON.stringify(err)}`); 
+      return 0; 
+    } finally { 
+      this.closeResultSet(resultSet); 
+    } 
+  } 
+ 
+  async getAllNodesIncludingDeleted(): Promise&lt;MemoryNode[]&gt; { 
+    let resultSet: rdb.ResultSet | undefined = undefined; 
+    try { 
+      const store = await this.getRdbStore(); 
+      const ownerUid = await this.getOwnerUid(); 
+      const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+      predicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+      predicates.orderByAsc(NODE_ORDER_COLUMN); 
+      resultSet = await store.query(predicates); 
+      const nodes: MemoryNode[] = []; 
+      if (resultSet.goToFirstRow()) { 
+        do { 
+          nodes.push(this.mapResultSetToNode(resultSet)); 
+        } while (resultSet.goToNextRow()); 
+      } 
+      logger.info(TAG, `Loaded ${nodes.length} nodes including deleted`); 
+      return nodes; 
+    } catch (err) { 
+      logger.error(TAG, `getAllNodesIncludingDeleted failed: ${JSON.stringify(err)}`); 
+      return []; 
+    } finally { 
+      this.closeResultSet(resultSet); 
+    } 
+  } 
+ 
+  async getNodesByTravelId(travelId: string): Promise&lt;MemoryNode[]&gt; { 
+    let resultSet: rdb.ResultSet | undefined = undefined; 
+    try { 
+      const store = await this.getRdbStore(); 
+      const ownerUid = await this.getOwnerUid(); 
+      const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+      predicates.equalTo(&#39;travel_id&#39;, this.toDbId(travelId, &#39;travel id&#39;)); 
+      predicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+      predicates.equalTo(&#39;deleted_at&#39;, 0); 
+      predicates.orderByAsc(NODE_ORDER_COLUMN); 
+      resultSet = await store.query(predicates); 
+      const nodes: MemoryNode[] = []; 
+      if (resultSet.goToFirstRow()) { 
+        do { 
+          nodes.push(this.mapResultSetToNode(resultSet)); 
+        } while (resultSet.goToNextRow()); 
+      } 
+      logger.info(TAG, `Loaded ${nodes.length} nodes for travel ${travelId}`); 
+      return nodes; 
+    } catch (err) { 
+      logger.error(TAG, `getNodesByTravelId failed: ${JSON.stringify(err)}`); 
+      return []; 
+    } finally { 
+      this.closeResultSet(resultSet); 
+    } 
+  } 
+ 
+  async getNodeById(id: string): Promise&lt;MemoryNode | undefined&gt; { 
+    let resultSet: rdb.ResultSet | undefined = undefined; 
+    try { 
+      const store = await this.getRdbStore(); 
+      const ownerUid = await this.getOwnerUid(); 
+      const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+      predicates.equalTo(&#39;id&#39;, this.toDbId(id, &#39;node id&#39;)); 
+      predicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+      predicates.equalTo(&#39;deleted_at&#39;, 0); 
+      resultSet = await store.query(predicates); 
+      let node: MemoryNode | undefined = undefined; 
+      if (resultSet.goToFirstRow()) { 
+        node = this.mapResultSetToNode(resultSet); 
+      } 
+      return node; 
+    } catch (err) { 
+      logger.error(TAG, `getNodeById failed: ${JSON.stringify(err)}`); 
+      return undefined; 
+    } finally { 
+      this.closeResultSet(resultSet); 
+    } 
+  } 
+ 
+  async createNode(node: CreateNodeInput): Promise&lt;string&gt; { 
+    try { 
+      const store = await this.getRdbStore(); 
+      const now = Date.now(); 
+      const ownerUid = await this.getOwnerUid(); 
+      if (node.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) { 
+        const parentTravel = await new TravelRepository().getTravelById(node.travelId); 
+        if (!parentTravel || parentTravel.ownerUid !== ownerUid) { 
+          throw new Error(`Travel not found or not owned by current user: ${node.travelId}`); 
+        } 
+      } 
+      const nodeOrder = await this.getNextNodeOrder(store, node.travelId); 
+      const valueBucket: rdb.ValuesBucket = { 
+        &#39;travel_id&#39;: this.toDbId(node.travelId, &#39;travel id&#39;), 
+        &#39;latitude&#39;: node.latitude, 
+        &#39;longitude&#39;: node.longitude, 
+        &#39;title&#39;: node.title ?? &#39;&#39;, 
+        &#39;poi_name&#39;: node.poiName ?? &#39;&#39;, 
+        &#39;description&#39;: node.description ?? &#39;&#39;, 
+        &#39;address&#39;: node.address ?? &#39;&#39;, 
+        &#39;mood&#39;: node.mood ?? &#39;&#39;, 
+        &#39;tags&#39;: JSON.stringify(node.tags ?? []), 
+        &#39;photos&#39;: JSON.stringify(node.photos ?? []), 
+        &#39;photo_manifest&#39;: &#39;[]&#39;, 
+        node_order: nodeOrder, 
+        &#39;created_at&#39;: now, 
+        &#39;updated_at&#39;: now, 
+        &#39;sensitivity&#39;: node.sensitivity ?? &#39;S2&#39;, 
+        &#39;visited_at&#39;: node.visitedAt ?? now, 
+        &#39;owner_uid&#39;: ownerUid, 
+        &#39;cloud_id&#39;: &#39;&#39;, 
+        &#39;sync_status&#39;: &#39;pending_create&#39;, 
+        &#39;deleted_at&#39;: 0, 
+        &#39;last_synced_at&#39;: 0, 
+        &#39;version&#39;: 1 
+      }; 
+      const rowId = await store.insert(TABLE_NAME, valueBucket); 
+      logger.info(TAG, `Created node for travel ${node.travelId}, id=${rowId}`); 
+      return rowId.toString(); 
+    } catch (err) { 
+      logger.error(TAG, `createNode failed: ${JSON.stringify(err)}`); 
+      throw this.toError(err); 
+    } 
+  } 
+ 
+  async updateNode(id: string, node: UpdateNodeInput): Promise&lt;boolean&gt; { 
+    try { 
+      const store = await this.getRdbStore(); 
+      const currentNode = await this.getNodeById(id); 
+      if (!currentNode) { 
+        return false; 
+      } 
+      const ownerUid = currentNode.ownerUid; 
+      const valueBucket: rdb.ValuesBucket = { 
+        &#39;updated_at&#39;: Date.now(), 
+        &#39;sync_status&#39;: currentNode.cloudId &amp;&amp; currentNode.cloudId.length &gt; 0 ? &#39;pending_update&#39; : &#39;pending_create&#39;, 
+        &#39;version&#39;: (currentNode.version ?? 1) + 1 
+      }; 
+      if (node.travelId !== undefined) { 
+        if (node.travelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) { 
+          const parentTravel = await new TravelRepository().getTravelById(node.travelId); 
+          if (!parentTravel || parentTravel.ownerUid !== ownerUid) { 
+            return false; 
+          } 
+        } 
+        valueBucket[&#39;travel_id&#39;] = this.toDbId(node.travelId, &#39;travel id&#39;); 
+        if (node.travelId !== currentNode.travelId) { 
+          valueBucket[NODE_ORDER_COLUMN] = await this.getNextNodeOrder(store, node.travelId); 
+          valueBucket[&#39;photos&#39;] = JSON.stringify(currentNode.photos ?? []); 
+          valueBucket[&#39;photo_manifest&#39;] = currentNode.photoManifest ?? &#39;[]&#39;; 
+        } 
+      } 
+      if (node.title !== undefined) { 
+        valueBucket[&#39;title&#39;] = node.title; 
+      } 
+      if (node.latitude !== undefined) { 
+        valueBucket[&#39;latitude&#39;] = node.latitude; 
+      } 
+      if (node.longitude !== undefined) { 
+        valueBucket[&#39;longitude&#39;] = node.longitude; 
+      } 
+      if (node.poiName !== undefined) { 
+        valueBucket[&#39;poi_name&#39;] = node.poiName; 
+      } 
+      if (node.description !== undefined) { 
+        valueBucket[&#39;description&#39;] = node.description; 
+      } 
+      if (node.address !== undefined) { 
+        valueBucket[&#39;address&#39;] = node.address; 
+      } 
+      if (node.mood !== undefined) { 
+        valueBucket[&#39;mood&#39;] = node.mood; 
+      } 
+      if (node.visitedAt !== undefined) { 
+        valueBucket[&#39;visited_at&#39;] = node.visitedAt; 
+      } 
+      if (node.tags !== undefined) { 
+        valueBucket[&#39;tags&#39;] = JSON.stringify(node.tags); 
+      } 
+      if (node.photos !== undefined) { 
+        valueBucket[&#39;photos&#39;] = JSON.stringify(node.photos); 
+        // 不再把 photo_manifest 重置成 &#39;[]&#39;：跨 travel 时如果 manifest 被这条 reset 抹掉， 
+        // 紧接着 sortNodesByVisitedAt → syncNodeOrdersToCloud 会用 sibling.travelId（新 travel） 
+        // 兜底 buildPhotoManifest 算出错的路径并入队。 
+        // 现在的契约：调用方（RdbDataService.updateNode）在 photos 变更后立即用 home dir 重算 
+        // manifest 并通过 updatePhotoManifest 显式写回，确保同一事务结束时 manifest 始终正确。 
+      } 
+      const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+      predicates.equalTo(&#39;id&#39;, this.toDbId(id, &#39;node id&#39;)); 
+      predicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+      const affectedRows = await store.update(valueBucket, predicates); 
+      logger.info(TAG, `Updated node ${id}, affected=${affectedRows}`); 
+      return affectedRows &gt; 0; 
+    } catch (err) { 
+      logger.error(TAG, `updateNode failed: ${JSON.stringify(err)}`); 
+      return false; 
+    } 
+  } 
+ 
+  async moveNodesToTravel(oldTravelId: string, newTravelId: string): Promise&lt;number&gt; { 
+    try { 
+      const store = await this.getRdbStore(); 
+      const now = Date.now(); 
+      const ownerUid = await this.getOwnerUid(); 
+      if (newTravelId !== TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID) { 
+        const targetTravel = await new TravelRepository().getTravelById(newTravelId); 
+        if (!targetTravel || targetTravel.ownerUid !== ownerUid) { 
+          return 0; 
+        } 
+      } 
+      const currentNodes = await this.getNodesByTravelId(oldTravelId); 
+      let movedCount = 0; 
+      let nextNodeOrder = await this.getNextNodeOrder(store, newTravelId); 
+ 
+      for (let i = 0; i &lt; currentNodes.length; i++) { 
+        const currentNode = currentNodes[i]; 
+        const valueBucket: rdb.ValuesBucket = { 
+          &#39;travel_id&#39;: this.toDbId(newTravelId, &#39;travel id&#39;), 
+          &#39;updated_at&#39;: now, 
+          &#39;sync_status&#39;: currentNode.cloudId &amp;&amp; currentNode.cloudId.length &gt; 0 ? &#39;pending_update&#39; : &#39;pending_create&#39;, 
+          &#39;version&#39;: (currentNode.version ?? 1) + 1 
+        }; 
+        valueBucket[NODE_ORDER_COLUMN] = nextNodeOrder; 
+        const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+        predicates.equalTo(&#39;id&#39;, this.toDbId(currentNode.id, &#39;node id&#39;)); 
+        predicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+        predicates.equalTo(&#39;deleted_at&#39;, 0); 
+        const affectedRows = await store.update(valueBucket, predicates); 
+        if (affectedRows &gt; 0) { 
+          movedCount += affectedRows; 
+          nextNodeOrder += 1; 
+        } 
+      } 
+ 
+      logger.info(TAG, `Moved ${movedCount} nodes from travel ${oldTravelId} to ${newTravelId}`); 
+      return movedCount; 
+    } catch (err) { 
+      logger.error(TAG, `moveNodesToTravel failed: ${JSON.stringify(err)}`); 
+      return 0; 
+    } 
+  } 
+ 
+  async softDeleteNode(id: string): Promise&lt;SoftDeleteResult&gt; { 
+    try { 
+      const store = await this.getRdbStore(); 
+      const currentNode = await this.getNodeById(id); 
+      if (!currentNode) { 
+        const fail: SoftDeleteResult = { success: false, travelId: &#39;&#39; }; 
+        return fail; 
+      } 
+      const travelId = currentNode.travelId; 
+      const valueBucket: rdb.ValuesBucket = { 
+        &#39;deleted_at&#39;: Date.now(), 
+        &#39;updated_at&#39;: Date.now(), 
+        &#39;sync_status&#39;: &#39;pending_delete&#39;, 
+        &#39;version&#39;: (currentNode.version ?? 1) + 1 
+      }; 
+      const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+      predicates.equalTo(&#39;id&#39;, this.toDbId(id, &#39;node id&#39;)); 
+      predicates.equalTo(&#39;owner_uid&#39;, currentNode.ownerUid); 
+      predicates.equalTo(&#39;deleted_at&#39;, 0); 
+      const affectedRows = await store.update(valueBucket, predicates); 
+      logger.info(TAG, `Soft deleted node ${id}, affected=${affectedRows}`); 
+      const ok: SoftDeleteResult = { success: affectedRows &gt; 0, travelId: travelId }; 
+      return ok; 
+    } catch (err) { 
+      logger.error(TAG, `softDeleteNode failed: ${JSON.stringify(err)}`); 
+      const fail: SoftDeleteResult = { success: false, travelId: &#39;&#39; }; 
+      return fail; 
+    } 
+  } 
+ 
+  async findLocalIdByCloudId(cloudId: string): Promise&lt;string | null&gt; { 
+    let resultSet: rdb.ResultSet | undefined = undefined; 
+    try { 
+      const store = await this.getRdbStore(); 
+      const ownerUid = await this.getOwnerUid(); 
+      const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+      predicates.equalTo(&#39;cloud_id&#39;, cloudId); 
+      predicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+      resultSet = await store.query(predicates); 
+      if (!resultSet.goToFirstRow()) { 
+        return null; 
+      } 
+      return resultSet.getDouble(resultSet.getColumnIndex(&#39;id&#39;)).toString(); 
+    } catch (err) { 
+      logger.error(TAG, `findLocalIdByCloudId failed: ${JSON.stringify(err)}`); 
+      return null; 
+    } finally { 
+      this.closeResultSet(resultSet); 
+    } 
+  } 
+ 
+  async updateSyncMetadata(id: string, cloudId: string, syncStatus: string, lastSyncedAt: number): Promise&lt;void&gt; { 
+    const store = await this.getRdbStore(); 
+    const valueBucket: rdb.ValuesBucket = { 
+      cloud_id: cloudId, 
+      sync_status: syncStatus, 
+      last_synced_at: lastSyncedAt 
+    }; 
+    const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+    predicates.equalTo(&#39;id&#39;, this.toDbId(id, &#39;node id&#39;)); 
+    predicates.equalTo(&#39;owner_uid&#39;, await this.getOwnerUid()); 
+    await store.update(valueBucket, predicates); 
+  } 
+ 
+  async updatePhotoManifest(id: string, manifest: string): Promise&lt;void&gt; { 
+    const store = await this.getRdbStore(); 
+    const valueBucket: rdb.ValuesBucket = { 
+      photo_manifest: manifest 
+    }; 
+    const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+    predicates.equalTo(&#39;id&#39;, this.toDbId(id, &#39;node id&#39;)); 
+    predicates.equalTo(&#39;owner_uid&#39;, await this.getOwnerUid()); 
+    await store.update(valueBucket, predicates); 
+  } 
+ 
+  async upsertFromCloud(node: MemoryNode): Promise&lt;void&gt; { 
+    const store = await this.getRdbStore(); 
+    const ownerUid = node.ownerUid ?? &#39;&#39;; 
+    const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+    predicates.equalTo(&#39;cloud_id&#39;, node.cloudId ?? &#39;&#39;); 
+    predicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+    const resultSet = await store.query(predicates); 
+    const valueBucket: rdb.ValuesBucket = { 
+      travel_id: this.toDbId(node.travelId, &#39;travel id&#39;), 
+      latitude: node.latitude, 
+      longitude: node.longitude, 
+      title: node.title, 
+      poi_name: node.poiName, 
+      description: node.content, 
+      mood: node.mood, 
+      tags: JSON.stringify(node.tags), 
+      photos: JSON.stringify(node.photos), 
+      photo_manifest: node.photoManifest &amp;&amp; node.photoManifest.length &gt; 2 ? node.photoManifest : &#39;[]&#39;, 
+      node_order: node.nodeOrder ?? 0, 
+      created_at: node.createdAt, 
+      updated_at: node.updatedAt, 
+      owner_uid: node.ownerUid ?? &#39;&#39;, 
+      cloud_id: node.cloudId ?? &#39;&#39;, 
+      sync_status: &#39;synced&#39;, 
+      deleted_at: node.deletedAt ?? 0, 
+      last_synced_at: Date.now(), 
+      version: node.version ?? 1, 
+      sensitivity: &#39;S2&#39;, 
+      visited_at: node.visitedAt ?? 0 
+    }; 
+ 
+    try { 
+      if (resultSet.goToFirstRow()) { 
+        logger.info( 
+          TAG, 
+          `[debug] upsertFromCloud update cloudId=${node.cloudId ?? &#39;&#39;}, travelId=${node.travelId}, deletedAt=${node.deletedAt ?? 0}, photoCount=${node.photos.length}, photoManifest=${node.photoManifest ?? &#39;&#39;}` 
+        ); 
+        const updatePredicates = new rdb.RdbPredicates(TABLE_NAME); 
+        updatePredicates.equalTo(&#39;cloud_id&#39;, node.cloudId ?? &#39;&#39;); 
+        updatePredicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+        await store.update(valueBucket, updatePredicates); 
+      } else { 
+        logger.info( 
+          TAG, 
+          `[debug] upsertFromCloud insert cloudId=${node.cloudId ?? &#39;&#39;}, travelId=${node.travelId}, deletedAt=${node.deletedAt ?? 0}, photoCount=${node.photos.length}, photoManifest=${node.photoManifest ?? &#39;&#39;}` 
+        ); 
+        await store.insert(TABLE_NAME, valueBucket); 
+      } 
+    } finally { 
+      resultSet.close(); 
+    } 
+  } 
+ 
+  async markDeletedByCloud(cloudId: string): Promise&lt;void&gt; { 
+    const store = await this.getRdbStore(); 
+    const valueBucket: rdb.ValuesBucket = { 
+      deleted_at: Date.now(), 
+      sync_status: &#39;synced&#39;, 
+      last_synced_at: Date.now() 
+    }; 
+    const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+    predicates.equalTo(&#39;cloud_id&#39;, cloudId); 
+    predicates.equalTo(&#39;owner_uid&#39;, await this.getOwnerUid()); 
+    await store.update(valueBucket, predicates); 
+  } 
+ 
+  async deleteNode(id: string): Promise&lt;boolean&gt; { 
+    try { 
+      const store = await this.getRdbStore(); 
+      const ownerUid = await this.getOwnerUid(); 
+      // Read travelId before deleting so we can renormalize afterwards 
+      let travelId: string | undefined = undefined; 
+      let lookupResultSet: rdb.ResultSet | undefined = undefined; 
+      try { 
+        const lookupPredicates = new rdb.RdbPredicates(TABLE_NAME); 
+        lookupPredicates.equalTo(&#39;id&#39;, this.toDbId(id, &#39;node id&#39;)); 
+        lookupPredicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+        lookupResultSet = await store.query(lookupPredicates); 
+        if (lookupResultSet.goToFirstRow()) { 
+          travelId = lookupResultSet.getDouble(lookupResultSet.getColumnIndex(&#39;travel_id&#39;)).toString(); 
+        } 
+      } finally { 
+        this.closeResultSet(lookupResultSet); 
+      } 
+ 
+      const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+      predicates.equalTo(&#39;id&#39;, this.toDbId(id, &#39;node id&#39;)); 
+      predicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+      const affectedRows = await store.delete(predicates); 
+      logger.info(TAG, `Deleted node ${id}, affected=${affectedRows}`); 
+      if (affectedRows &gt; 0 &amp;&amp; travelId !== undefined) { 
+        const siblings = await this.getNodesByTravelId(travelId); 
+        const siblingIds = siblings.map((n: MemoryNode) =&gt; n.id); 
+        if (siblingIds.length &gt; 0) { 
+          await this.reorderNodes(travelId, siblingIds); 
+        } 
+      } 
+      return affectedRows &gt; 0; 
+    } catch (err) { 
+      logger.error(TAG, `deleteNode failed: ${JSON.stringify(err)}`); 
+      return false; 
+    } 
+  } 
+ 
+  async reorderNodes(travelId: string, nodeIds: string[]): Promise&lt;void&gt; { 
+    try { 
+      const store = await this.getRdbStore(); 
+      const ownerUid = await this.getOwnerUid(); 
+      for (let i = 0; i &lt; nodeIds.length; i++) { 
+        const valueBucket: rdb.ValuesBucket = { 
+          node_order: i, 
+          &#39;updated_at&#39;: Date.now(), 
+          &#39;sync_status&#39;: &#39;pending_reorder&#39; 
+        }; 
+        const predicates = new rdb.RdbPredicates(TABLE_NAME); 
+        predicates.equalTo(&#39;id&#39;, this.toDbId(nodeIds[i], &#39;node id&#39;)); 
+        predicates.equalTo(&#39;owner_uid&#39;, ownerUid); 
+        await store.update(valueBucket, predicates); 
+      } 
+      logger.info(TAG, `Reordered ${nodeIds.length} nodes for travel ${travelId}`); 
+    } catch (err) { 
+      logger.error(TAG, `reorderNodes failed: ${JSON.stringify(err)}`); 
+    } 
+  } 
+} 
+
+              </pre>
+        </td>
+        </tr>
+        </table>
+        </pre>
+      </el-main>
+      <el-footer align="middle" class="footer">
+        Code coverage generated by <el-link href="https://github.com/SMAT-Lab/bjc" type="primary"
+          target="_blank">bjc</el-link> at {{date}}
+      </el-footer>
+    </el-container>
+  </div>
+</body>
+
+<script>
+  const App = {
+    data() {
+      return {"date":"Fri May 22 2026 22:32:24 GMT+0800 (中国标准时间)","file":{"version":"bjc v1.0.0","versionCode":10000,"path":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend/entry/src/main/ets/common/data/MemoryNodeRepository.ets","hash":"c412f48f6cffcbcce6d2f3ab06e6b3d2860d2e2e5851471f7a63fa1f8737f624","lineCnt":664,"count":0,"projectPath":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend","functions":[{"name":"anonymous_0","count":0,"regions":[{"startLoc":{"line":74,"col":29},"endLoc":{"line":74,"col":50},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":0},{"name":"anonymous_1","count":0,"regions":[{"startLoc":{"line":75,"col":29},"endLoc":{"line":75,"col":54},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":1},{"name":"anonymous_2","count":0,"regions":[{"startLoc":{"line":75,"col":57},"endLoc":{"line":77,"col":4},"count":0,"ignored":0},{"startLoc":{"line":76,"col":5},"endLoc":{"line":77,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":2},{"name":"anonymous_3","count":0,"regions":[{"startLoc":{"line":78,"col":36},"endLoc":{"line":78,"col":58},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":3},{"name":"anonymous_4","count":0,"regions":[{"startLoc":{"line":79,"col":24},"endLoc":{"line":79,"col":36},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":4},{"name":"MemoryNodeRepository.resetTestingHooks","count":3,"regions":[{"startLoc":{"line":82,"col":3},"endLoc":{"line":89,"col":4},"count":3,"ignored":0},{"startLoc":{"line":83,"col":5},"endLoc":{"line":89,"col":4},"count":3,"ignored":0}],"branches":[],"ignored":0,"index":5},{"name":"anonymous_5","count":0,"regions":[{"startLoc":{"line":84,"col":46},"endLoc":{"line":86,"col":6},"count":0,"ignored":0},{"startLoc":{"line":85,"col":7},"endLoc":{"line":86,"col":6},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":6},{"name":"MemoryNodeRepository.constructor","count":3,"regions":[{"startLoc":{"line":91,"col":3},"endLoc":{"line":93,"col":4},"count":3,"ignored":0},{"startLoc":{"line":92,"col":5},"endLoc":{"line":93,"col":4},"count":3,"ignored":0}],"branches":[],"ignored":0,"index":7},{"name":"MemoryNodeRepository.getRdbStore","count":6,"regions":[{"startLoc":{"line":95,"col":3},"endLoc":{"line":97,"col":4},"count":6,"ignored":0},{"startLoc":{"line":96,"col":5},"endLoc":{"line":97,"col":4},"count":6,"ignored":0}],"branches":[],"ignored":0,"index":8},{"name":"MemoryNodeRepository.closeResultSet","count":3,"regions":[{"startLoc":{"line":99,"col":3},"endLoc":{"line":108,"col":4},"count":3,"ignored":0},{"startLoc":{"line":100,"col":21},"endLoc":{"line":102,"col":6},"count":3,"ignored":0},{"startLoc":{"line":103,"col":9},"endLoc":{"line":105,"col":6},"count":0,"ignored":0},{"startLoc":{"line":105,"col":7},"endLoc":{"line":107,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":100,"col":9},"endLoc":{"line":100,"col":19},"trueCount":3,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":9},{"name":"MemoryNodeRepository.toError","count":1,"regions":[{"startLoc":{"line":110,"col":3},"endLoc":{"line":112,"col":4},"count":1,"ignored":0},{"startLoc":{"line":111,"col":5},"endLoc":{"line":112,"col":4},"count":1,"ignored":0}],"branches":[],"ignored":0,"index":10},{"name":"MemoryNodeRepository.toDbId","count":6,"regions":[{"startLoc":{"line":114,"col":3},"endLoc":{"line":121,"col":4},"count":6,"ignored":0},{"startLoc":{"line":117,"col":80},"endLoc":{"line":119,"col":6},"count":0,"ignored":0},{"startLoc":{"line":120,"col":5},"endLoc":{"line":121,"col":4},"count":6,"ignored":0}],"branches":[{"startLoc":{"line":117,"col":9},"endLoc":{"line":117,"col":78},"trueCount":0,"falseCount":6,"group":[],"ignored":0}],"ignored":0,"index":11},{"name":"MemoryNodeRepository.getOwnerUid","count":5,"regions":[{"startLoc":{"line":123,"col":3},"endLoc":{"line":126,"col":4},"count":5,"ignored":0},{"startLoc":{"line":124,"col":5},"endLoc":{"line":126,"col":4},"count":5,"ignored":0}],"branches":[],"ignored":0,"index":12},{"name":"MemoryNodeRepository.parseJsonArray","count":0,"regions":[{"startLoc":{"line":128,"col":3},"endLoc":{"line":149,"col":4},"count":0,"ignored":0},{"startLoc":{"line":132,"col":9},"endLoc":{"line":146,"col":6},"count":0,"ignored":0},{"startLoc":{"line":134,"col":34},"endLoc":{"line":144,"col":8},"count":0,"ignored":0},{"startLoc":{"line":137,"col":9},"endLoc":{"line":142,"col":10},"count":0,"ignored":0},{"startLoc":{"line":129,"col":43},"endLoc":{"line":131,"col":6},"count":0,"ignored":0},{"startLoc":{"line":146,"col":7},"endLoc":{"line":148,"col":6},"count":0,"ignored":0},{"startLoc":{"line":139,"col":42},"endLoc":{"line":141,"col":12},"count":0,"ignored":0},{"startLoc":{"line":145,"col":7},"endLoc":{"line":146,"col":6},"count":0,"ignored":0},{"startLoc":{"line":143,"col":9},"endLoc":{"line":144,"col":8},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":129,"col":9},"endLoc":{"line":129,"col":41},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":134,"col":11},"endLoc":{"line":134,"col":32},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":139,"col":15},"endLoc":{"line":139,"col":40},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":13},{"name":"MemoryNodeRepository.mapResultSetToNode","count":0,"regions":[{"startLoc":{"line":151,"col":3},"endLoc":{"line":202,"col":4},"count":0,"ignored":0},{"startLoc":{"line":152,"col":5},"endLoc":{"line":202,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":174,"col":19},"endLoc":{"line":174,"col":77},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":181,"col":14},"endLoc":{"line":181,"col":48},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":191,"col":18},"endLoc":{"line":191,"col":75},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":192,"col":17},"endLoc":{"line":192,"col":81},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":193,"col":16},"endLoc":{"line":193,"col":78},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":194,"col":19},"endLoc":{"line":194,"col":107},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":195,"col":18},"endLoc":{"line":195,"col":75},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":196,"col":21},"endLoc":{"line":196,"col":84},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":197,"col":16},"endLoc":{"line":197,"col":69},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":198,"col":22},"endLoc":{"line":198,"col":96},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":199,"col":18},"endLoc":{"line":199,"col":75},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":14},{"name":"MemoryNodeRepository.getNextNodeOrder","count":0,"regions":[{"startLoc":{"line":204,"col":3},"endLoc":{"line":225,"col":4},"count":0,"ignored":0},{"startLoc":{"line":206,"col":9},"endLoc":{"line":219,"col":6},"count":0,"ignored":0},{"startLoc":{"line":219,"col":7},"endLoc":{"line":222,"col":6},"count":0,"ignored":0},{"startLoc":{"line":214,"col":37},"endLoc":{"line":217,"col":8},"count":0,"ignored":0},{"startLoc":{"line":222,"col":15},"endLoc":{"line":224,"col":6},"count":0,"ignored":0},{"startLoc":{"line":218,"col":7},"endLoc":{"line":219,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":214,"col":11},"endLoc":{"line":214,"col":35},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":15},{"name":"MemoryNodeRepository.getAllNodesIncludingDeleted","count":0,"regions":[{"startLoc":{"line":227,"col":3},"endLoc":{"line":250,"col":4},"count":0,"ignored":0},{"startLoc":{"line":229,"col":9},"endLoc":{"line":244,"col":6},"count":0,"ignored":0},{"startLoc":{"line":237,"col":37},"endLoc":{"line":241,"col":8},"count":0,"ignored":0},{"startLoc":{"line":244,"col":7},"endLoc":{"line":247,"col":6},"count":0,"ignored":0},{"startLoc":{"line":247,"col":15},"endLoc":{"line":249,"col":6},"count":0,"ignored":0},{"startLoc":{"line":238,"col":9},"endLoc":{"line":240,"col":43},"count":0,"ignored":0},{"startLoc":{"line":242,"col":7},"endLoc":{"line":244,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":237,"col":11},"endLoc":{"line":237,"col":35},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":16},{"name":"MemoryNodeRepository.getNodesByTravelId","count":1,"regions":[{"startLoc":{"line":252,"col":3},"endLoc":{"line":277,"col":4},"count":1,"ignored":0},{"startLoc":{"line":254,"col":9},"endLoc":{"line":271,"col":6},"count":1,"ignored":0},{"startLoc":{"line":264,"col":37},"endLoc":{"line":268,"col":8},"count":0,"ignored":0},{"startLoc":{"line":271,"col":7},"endLoc":{"line":274,"col":6},"count":1,"ignored":0},{"startLoc":{"line":274,"col":15},"endLoc":{"line":276,"col":6},"count":1,"ignored":0},{"startLoc":{"line":265,"col":9},"endLoc":{"line":267,"col":43},"count":0,"ignored":0},{"startLoc":{"line":269,"col":7},"endLoc":{"line":271,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":264,"col":11},"endLoc":{"line":264,"col":35},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":17},{"name":"MemoryNodeRepository.getNodeById","count":2,"regions":[{"startLoc":{"line":279,"col":3},"endLoc":{"line":300,"col":4},"count":2,"ignored":0},{"startLoc":{"line":281,"col":9},"endLoc":{"line":294,"col":6},"count":2,"ignored":0},{"startLoc":{"line":294,"col":7},"endLoc":{"line":297,"col":6},"count":2,"ignored":0},{"startLoc":{"line":297,"col":15},"endLoc":{"line":299,"col":6},"count":2,"ignored":0},{"startLoc":{"line":290,"col":37},"endLoc":{"line":292,"col":8},"count":0,"ignored":0},{"startLoc":{"line":293,"col":7},"endLoc":{"line":294,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":290,"col":11},"endLoc":{"line":290,"col":35},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":18},{"name":"MemoryNodeRepository.createNode","count":1,"regions":[{"startLoc":{"line":302,"col":3},"endLoc":{"line":345,"col":4},"count":1,"ignored":0},{"startLoc":{"line":303,"col":9},"endLoc":{"line":341,"col":6},"count":1,"ignored":0},{"startLoc":{"line":313,"col":7},"endLoc":{"line":341,"col":6},"count":0,"ignored":0},{"startLoc":{"line":307,"col":74},"endLoc":{"line":312,"col":8},"count":1,"ignored":0},{"startLoc":{"line":341,"col":7},"endLoc":{"line":344,"col":6},"count":1,"ignored":0},{"startLoc":{"line":309,"col":66},"endLoc":{"line":311,"col":10},"count":1,"ignored":0}],"branches":[{"startLoc":{"line":307,"col":11},"endLoc":{"line":307,"col":72},"trueCount":1,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":309,"col":13},"endLoc":{"line":309,"col":64},"trueCount":1,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":19},{"name":"MemoryNodeRepository.updateNode","count":1,"regions":[{"startLoc":{"line":347,"col":3},"endLoc":{"line":419,"col":4},"count":1,"ignored":0},{"startLoc":{"line":348,"col":9},"endLoc":{"line":415,"col":6},"count":1,"ignored":0},{"startLoc":{"line":360,"col":40},"endLoc":{"line":373,"col":8},"count":0,"ignored":0},{"startLoc":{"line":401,"col":38},"endLoc":{"line":408,"col":8},"count":0,"ignored":0},{"startLoc":{"line":409,"col":7},"endLoc":{"line":415,"col":6},"count":0,"ignored":0},{"startLoc":{"line":361,"col":76},"endLoc":{"line":366,"col":10},"count":0,"ignored":0},{"startLoc":{"line":368,"col":53},"endLoc":{"line":372,"col":10},"count":0,"ignored":0},{"startLoc":{"line":415,"col":7},"endLoc":{"line":418,"col":6},"count":0,"ignored":0},{"startLoc":{"line":351,"col":25},"endLoc":{"line":353,"col":8},"count":1,"ignored":0},{"startLoc":{"line":363,"col":68},"endLoc":{"line":365,"col":12},"count":0,"ignored":0},{"startLoc":{"line":374,"col":37},"endLoc":{"line":376,"col":8},"count":0,"ignored":0},{"startLoc":{"line":377,"col":40},"endLoc":{"line":379,"col":8},"count":0,"ignored":0},{"startLoc":{"line":380,"col":41},"endLoc":{"line":382,"col":8},"count":0,"ignored":0},{"startLoc":{"line":383,"col":39},"endLoc":{"line":385,"col":8},"count":0,"ignored":0},{"startLoc":{"line":386,"col":43},"endLoc":{"line":388,"col":8},"count":0,"ignored":0},{"startLoc":{"line":389,"col":39},"endLoc":{"line":391,"col":8},"count":0,"ignored":0},{"startLoc":{"line":392,"col":36},"endLoc":{"line":394,"col":8},"count":0,"ignored":0},{"startLoc":{"line":395,"col":41},"endLoc":{"line":397,"col":8},"count":0,"ignored":0},{"startLoc":{"line":398,"col":36},"endLoc":{"line":400,"col":8},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":351,"col":11},"endLoc":{"line":351,"col":23},"trueCount":1,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":357,"col":24},"endLoc":{"line":357,"col":115},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":360,"col":11},"endLoc":{"line":360,"col":38},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":361,"col":13},"endLoc":{"line":361,"col":74},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":363,"col":15},"endLoc":{"line":363,"col":66},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":368,"col":13},"endLoc":{"line":368,"col":51},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":374,"col":11},"endLoc":{"line":374,"col":35},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":377,"col":11},"endLoc":{"line":377,"col":38},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":380,"col":11},"endLoc":{"line":380,"col":39},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":383,"col":11},"endLoc":{"line":383,"col":37},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":386,"col":11},"endLoc":{"line":386,"col":41},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":389,"col":11},"endLoc":{"line":389,"col":37},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":392,"col":11},"endLoc":{"line":392,"col":34},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":395,"col":11},"endLoc":{"line":395,"col":39},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":398,"col":11},"endLoc":{"line":398,"col":34},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":401,"col":11},"endLoc":{"line":401,"col":36},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":20},{"name":"MemoryNodeRepository.moveNodesToTravel","count":0,"regions":[{"startLoc":{"line":421,"col":3},"endLoc":{"line":462,"col":4},"count":0,"ignored":0},{"startLoc":{"line":422,"col":9},"endLoc":{"line":458,"col":6},"count":0,"ignored":0},{"startLoc":{"line":436,"col":7},"endLoc":{"line":454,"col":8},"count":0,"ignored":0},{"startLoc":{"line":426,"col":72},"endLoc":{"line":431,"col":8},"count":0,"ignored":0},{"startLoc":{"line":458,"col":7},"endLoc":{"line":461,"col":6},"count":0,"ignored":0},{"startLoc":{"line":450,"col":31},"endLoc":{"line":453,"col":10},"count":0,"ignored":0},{"startLoc":{"line":428,"col":66},"endLoc":{"line":430,"col":10},"count":0,"ignored":0},{"startLoc":{"line":456,"col":7},"endLoc":{"line":458,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":426,"col":11},"endLoc":{"line":426,"col":70},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":428,"col":13},"endLoc":{"line":428,"col":64},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":441,"col":26},"endLoc":{"line":441,"col":117},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":450,"col":13},"endLoc":{"line":450,"col":29},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":21},{"name":"MemoryNodeRepository.softDeleteNode","count":0,"regions":[{"startLoc":{"line":464,"col":3},"endLoc":{"line":492,"col":4},"count":0,"ignored":0},{"startLoc":{"line":465,"col":9},"endLoc":{"line":487,"col":6},"count":0,"ignored":0},{"startLoc":{"line":472,"col":7},"endLoc":{"line":487,"col":6},"count":0,"ignored":0},{"startLoc":{"line":487,"col":7},"endLoc":{"line":491,"col":6},"count":0,"ignored":0},{"startLoc":{"line":468,"col":25},"endLoc":{"line":471,"col":8},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":468,"col":11},"endLoc":{"line":468,"col":23},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":22},{"name":"MemoryNodeRepository.findLocalIdByCloudId","count":0,"regions":[{"startLoc":{"line":494,"col":3},"endLoc":{"line":513,"col":4},"count":0,"ignored":0},{"startLoc":{"line":496,"col":9},"endLoc":{"line":507,"col":6},"count":0,"ignored":0},{"startLoc":{"line":507,"col":7},"endLoc":{"line":510,"col":6},"count":0,"ignored":0},{"startLoc":{"line":510,"col":15},"endLoc":{"line":512,"col":6},"count":0,"ignored":0},{"startLoc":{"line":503,"col":38},"endLoc":{"line":505,"col":8},"count":0,"ignored":0},{"startLoc":{"line":506,"col":7},"endLoc":{"line":507,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":503,"col":11},"endLoc":{"line":503,"col":36},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":23},{"name":"MemoryNodeRepository.updateSyncMetadata","count":0,"regions":[{"startLoc":{"line":515,"col":3},"endLoc":{"line":526,"col":4},"count":0,"ignored":0},{"startLoc":{"line":516,"col":5},"endLoc":{"line":526,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":24},{"name":"MemoryNodeRepository.updatePhotoManifest","count":0,"regions":[{"startLoc":{"line":528,"col":3},"endLoc":{"line":537,"col":4},"count":0,"ignored":0},{"startLoc":{"line":529,"col":5},"endLoc":{"line":537,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":25},{"name":"MemoryNodeRepository.upsertFromCloud","count":0,"regions":[{"startLoc":{"line":539,"col":3},"endLoc":{"line":590,"col":4},"count":0,"ignored":0},{"startLoc":{"line":570,"col":9},"endLoc":{"line":587,"col":6},"count":0,"ignored":0},{"startLoc":{"line":571,"col":37},"endLoc":{"line":580,"col":8},"count":0,"ignored":0},{"startLoc":{"line":580,"col":14},"endLoc":{"line":586,"col":8},"count":0,"ignored":0},{"startLoc":{"line":587,"col":15},"endLoc":{"line":589,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":556,"col":23},"endLoc":{"line":556,"col":102},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":571,"col":11},"endLoc":{"line":571,"col":35},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":26},{"name":"MemoryNodeRepository.markDeletedByCloud","count":0,"regions":[{"startLoc":{"line":592,"col":3},"endLoc":{"line":603,"col":4},"count":0,"ignored":0},{"startLoc":{"line":593,"col":5},"endLoc":{"line":603,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":27},{"name":"MemoryNodeRepository.deleteNode","count":0,"regions":[{"startLoc":{"line":605,"col":3},"endLoc":{"line":641,"col":4},"count":0,"ignored":0},{"startLoc":{"line":606,"col":9},"endLoc":{"line":637,"col":6},"count":0,"ignored":0},{"startLoc":{"line":612,"col":11},"endLoc":{"line":620,"col":8},"count":0,"ignored":0},{"startLoc":{"line":629,"col":55},"endLoc":{"line":635,"col":8},"count":0,"ignored":0},{"startLoc":{"line":637,"col":7},"endLoc":{"line":640,"col":6},"count":0,"ignored":0},{"startLoc":{"line":620,"col":17},"endLoc":{"line":622,"col":8},"count":0,"ignored":0},{"startLoc":{"line":617,"col":45},"endLoc":{"line":619,"col":10},"count":0,"ignored":0},{"startLoc":{"line":632,"col":36},"endLoc":{"line":634,"col":10},"count":0,"ignored":0},{"startLoc":{"line":636,"col":7},"endLoc":{"line":637,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":617,"col":13},"endLoc":{"line":617,"col":43},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":629,"col":11},"endLoc":{"line":629,"col":53},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":632,"col":13},"endLoc":{"line":632,"col":34},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":28},{"name":"anonymous_6","count":0,"regions":[{"startLoc":{"line":631,"col":41},"endLoc":{"line":631,"col":64},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":29},{"name":"MemoryNodeRepository.reorderNodes","count":1,"regions":[{"startLoc":{"line":643,"col":3},"endLoc":{"line":662,"col":4},"count":1,"ignored":0},{"startLoc":{"line":644,"col":9},"endLoc":{"line":659,"col":6},"count":1,"ignored":0},{"startLoc":{"line":647,"col":7},"endLoc":{"line":657,"col":8},"count":3,"ignored":0},{"startLoc":{"line":659,"col":7},"endLoc":{"line":661,"col":6},"count":0,"ignored":0},{"startLoc":{"line":658,"col":7},"endLoc":{"line":659,"col":6},"count":1,"ignored":0}],"branches":[],"ignored":0,"index":30}],"exeLine":{"0":16,"1":17,"2":18,"3":19,"4":20,"5":21,"6":22,"7":24,"8":25,"9":26,"10":31,"11":32,"12":33,"13":34,"14":35,"15":36,"16":37,"17":38,"18":39,"19":40,"20":41,"21":42,"22":43,"23":49,"24":50,"25":51,"26":52,"27":53,"28":54,"29":55,"30":56,"31":57,"32":58,"33":59,"34":60,"35":63,"36":64,"37":65,"38":68,"39":69,"40":74,"41":75,"42":76,"43":78,"44":79,"45":82,"46":83,"47":84,"48":85,"49":87,"50":88,"51":91,"52":92,"53":95,"54":96,"55":99,"56":100,"57":101,"58":103,"59":104,"60":105,"61":106,"62":110,"63":111,"64":114,"65":115,"66":116,"67":117,"68":118,"69":120,"70":123,"71":124,"72":125,"73":128,"74":129,"75":130,"76":132,"77":133,"78":134,"79":135,"80":136,"81":137,"82":138,"83":139,"84":140,"85":143,"86":145,"87":146,"88":147,"89":151,"90":152,"91":153,"92":154,"93":155,"94":156,"95":157,"96":158,"97":159,"98":160,"99":161,"100":162,"101":163,"102":164,"103":165,"104":166,"105":167,"106":168,"107":169,"108":170,"109":171,"110":172,"111":174,"112":175,"113":176,"114":178,"115":179,"116":180,"117":181,"118":182,"119":183,"120":184,"121":185,"122":186,"123":187,"124":188,"125":189,"126":190,"127":191,"128":192,"129":193,"130":194,"131":195,"132":196,"133":197,"134":198,"135":199,"136":201,"137":204,"138":205,"139":206,"140":207,"141":208,"142":209,"143":210,"144":211,"145":212,"146":213,"147":214,"148":215,"149":216,"150":218,"151":219,"152":220,"153":221,"154":222,"155":223,"156":227,"157":228,"158":229,"159":230,"160":231,"161":232,"162":233,"163":234,"164":235,"165":236,"166":237,"167":238,"168":239,"169":240,"170":242,"171":243,"172":244,"173":245,"174":246,"175":247,"176":248,"177":252,"178":253,"179":254,"180":255,"181":256,"182":257,"183":258,"184":259,"185":260,"186":261,"187":262,"188":263,"189":264,"190":265,"191":266,"192":267,"193":269,"194":270,"195":271,"196":272,"197":273,"198":274,"199":275,"200":279,"201":280,"202":281,"203":282,"204":283,"205":284,"206":285,"207":286,"208":287,"209":288,"210":289,"211":290,"212":291,"213":293,"214":294,"215":295,"216":296,"217":297,"218":298,"219":302,"220":303,"221":304,"222":305,"223":306,"224":307,"225":308,"226":309,"227":310,"228":313,"229":314,"230":315,"231":316,"232":317,"233":318,"234":319,"235":320,"236":321,"237":322,"238":323,"239":324,"240":325,"241":326,"242":327,"243":328,"244":329,"245":330,"246":331,"247":332,"248":333,"249":334,"250":335,"251":336,"252":338,"253":339,"254":340,"255":341,"256":342,"257":343,"258":347,"259":348,"260":349,"261":350,"262":351,"263":352,"264":354,"265":355,"266":356,"267":357,"268":358,"269":360,"270":361,"271":362,"272":363,"273":364,"274":367,"275":368,"276":369,"277":370,"278":371,"279":374,"280":375,"281":377,"282":378,"283":380,"284":381,"285":383,"286":384,"287":386,"288":387,"289":389,"290":390,"291":392,"292":393,"293":395,"294":396,"295":398,"296":399,"297":401,"298":402,"299":409,"300":410,"301":411,"302":412,"303":413,"304":414,"305":415,"306":416,"307":417,"308":421,"309":422,"310":423,"311":424,"312":425,"313":426,"314":427,"315":428,"316":429,"317":432,"318":433,"319":434,"320":436,"321":437,"322":438,"323":439,"324":440,"325":441,"326":442,"327":444,"328":445,"329":446,"330":447,"331":448,"332":449,"333":450,"334":451,"335":452,"336":456,"337":457,"338":458,"339":459,"340":460,"341":464,"342":465,"343":466,"344":467,"345":468,"346":469,"347":470,"348":472,"349":473,"350":474,"351":475,"352":476,"353":477,"354":479,"355":480,"356":481,"357":482,"358":483,"359":484,"360":485,"361":486,"362":487,"363":488,"364":489,"365":490,"366":494,"367":495,"368":496,"369":497,"370":498,"371":499,"372":500,"373":501,"374":502,"375":503,"376":504,"377":506,"378":507,"379":508,"380":509,"381":510,"382":511,"383":515,"384":516,"385":517,"386":518,"387":519,"388":520,"389":522,"390":523,"391":524,"392":525,"393":528,"394":529,"395":530,"396":531,"397":533,"398":534,"399":535,"400":536,"401":539,"402":540,"403":541,"404":542,"405":543,"406":544,"407":545,"408":546,"409":547,"410":548,"411":549,"412":550,"413":551,"414":552,"415":553,"416":554,"417":555,"418":556,"419":557,"420":558,"421":559,"422":560,"423":561,"424":562,"425":563,"426":564,"427":565,"428":566,"429":567,"430":570,"431":571,"432":572,"433":573,"434":574,"435":576,"436":577,"437":578,"438":579,"439":580,"440":581,"441":582,"442":583,"443":585,"444":587,"445":588,"446":592,"447":593,"448":594,"449":595,"450":596,"451":597,"452":599,"453":600,"454":601,"455":602,"456":605,"457":606,"458":607,"459":608,"460":610,"461":611,"462":612,"463":613,"464":614,"465":615,"466":616,"467":617,"468":618,"469":620,"470":621,"471":624,"472":625,"473":626,"474":627,"475":628,"476":629,"477":630,"478":631,"479":632,"480":633,"481":636,"482":637,"483":638,"484":639,"485":643,"486":644,"487":645,"488":646,"489":647,"490":648,"491":649,"492":650,"493":651,"494":653,"495":654,"496":655,"497":656,"498":658,"499":659,"500":660},"summary":{"lines":{"total":461,"covered":89,"pct":19.31,"executedLineCount":[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,-1,0,0,-1,-1,3,3,0,0,-1,3,3,-1,-1,3,3,-1,-1,6,6,-1,-1,3,3,3,-1,0,0,0,0,-1,-1,-1,1,1,-1,-1,6,6,6,6,0,-1,6,-1,-1,5,5,5,-1,-1,0,0,0,-1,0,0,0,0,0,0,0,0,0,-1,-1,0,-1,0,0,0,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,-1,-1,-1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,-1,0,0,0,1,1,1,1,-1,-1,-1,2,2,2,2,2,2,2,2,2,2,2,0,0,-1,0,0,2,2,2,2,-1,-1,-1,1,1,1,1,1,1,1,1,1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,1,1,1,-1,-1,-1,1,1,1,1,1,1,-1,1,1,1,0,1,-1,0,0,0,0,0,-1,-1,0,0,0,0,0,-1,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,0,0,0,0,0,0,0,0,-1,-1,0,0,0,-1,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,0,0,0,0,-1,-1,-1,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,-1,-1,-1,0,0,0,0,0,0,-1,0,0,0,0,-1,-1,0,0,0,0,-1,0,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,-1,0,-1,0,0,-1,-1,-1,0,0,0,0,0,0,-1,0,0,0,0,-1,-1,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,-1,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,-1,-1,0,0,0,0,-1,-1,-1,1,1,1,1,3,3,3,3,3,-1,3,3,3,3,-1,1,1,0,-1,-1,-1,-1]},"functions":{"total":31,"covered":12,"pct":38.71},"branches":{"total":98,"covered":5,"pct":5.102}}},"title":"MemoryNodeRepository.ets.html","relativeHome":"..\\..\\index.html"};
+    }
+  };
+
+  const app = Vue.createApp(App);
+  app.use(ElementPlus);
+  app.mount("#app");
+
+  window.onload = function () {
+    prettyPrint();
+  }
+</script>
+
+<style scoped>
+  table.coverage {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 0 0;
+    padding: 0;
+  }
+
+  table.coverage td {
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  table.coverage td.line-count {
+    width: 12%;
+    text-align: right;
+    padding: 0 5px 0 20px;
+  }
+
+  table.coverage td.line-coverage {
+    text-align: right;
+    padding-right: 10px;
+    min-width: 20px;
+  }
+
+  table.coverage td span.cline-any {
+    display: inline-block;
+    padding: 0 5px;
+    width: 100%;
+    height: 18px;
+  }
+
+  .low,
+  .cline-no {
+    background: #FCE1E5
+  }
+
+  .high,
+  .cline-yes {
+    background: rgb(230, 245, 208)
+  }
+
+  span.cline-neutral {
+    background: #eaeaea;
+  }
+
+  pre.prettyprint {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .el-main {
+    box-sizing: border-box;
+    display: block;
+    flex: 1;
+    flex-basis: auto;
+    overflow: auto;
+    padding: var(--el-main-padding)
+  }
+
+  .el-container {
+    min-height: 100vh;
+    height: 100%;
+  }
+
+  .footer {
+    font-size: small;
+  }
+
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .el-col {
+    border-radius: 4px;
+  }
+
+  .green {
+    color: var(--el-color-success);
+  }
+
+  .red {
+    color: var(--el-color-error);
+  }
+
+  .linenums li {
+    height: 18px;
+    line-height: 18px;
+  }
+
+  li.L0,
+  li.L1,
+  li.L2,
+  li.L3,
+  li.L5,
+  li.L6,
+  li.L7,
+  li.L8 {
+    list-style-type: decimal
+  }
+
+  .el-col-5 {
+    max-width: 100%;
+  }
+
+  .el-col-3 {
+    max-width: 100%;
+  }
+
+</style>
+
+</html>

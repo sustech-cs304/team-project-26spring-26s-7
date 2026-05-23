@@ -21,7 +21,7 @@ jobs:
     env:
       JENKINS_BASE_URL: http://127.0.0.1:8081
       JENKINS_JOB_NAME: travelpin-ci
-      LOCAL_CI_ARTIFACT_ROOT: D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\ci-artifacts
+      LOCAL_CI_ARTIFACT_ROOT: D:\ci-artifacts\team-project-26spring-26s-7
     steps:
       - name: Checkout
         uses: actions/checkout@v4

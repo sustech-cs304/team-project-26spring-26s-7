@@ -17,6 +17,7 @@ import { http } from '@kit.NetworkKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import {
   API_BASE_URL,
+  AiTokenManager,
   HttpTimeout,
   MultipartFormData,
   ShareEndpoints,
@@ -72,22 +73,6 @@ export class ShareService {
     this.timeout = timeout
   }
 
-  protected createFormData(): MultipartFormData {
-    return new MultipartFormData()
-  }
-
-  protected async sendRequest(
-    url: string,
-    options: http.HttpRequestOptions
-  ): Promise<http.HttpResponse> {
-    const httpReq = http.createHttp()
-    try {
-      return await httpReq.request(url, options)
-    } finally {
-      httpReq.destroy()
-    }
-  }
-
   /**
    * 发布分享 — 调用 POST /api/v1/share/publish
    *
@@ -125,7 +110,7 @@ export class ShareService {
       return errResult(40001, 'INVALID_PHOTO_COUNT', msg)
     }
 
-    const form = this.createFormData()
+    const form = new MultipartFormData()
     // §4.2 — tripData 作为文本字段（JSON 字符串）
     form.addField('tripData', JSON.stringify(trip))
     // §4.1 — 过期时长。expiryMinutes 优先于 expiryHours（与后端约定一致）
@@ -176,17 +161,23 @@ export class ShareService {
     const url = `${this.baseUrl}${ShareEndpoints.PUBLISH}`
     logger.info(TAG, `POST ${url} (${photos.length} photos, ${trip.nodes.length} nodes)`)
 
+    const shareToken = await AiTokenManager.getShareToken()
+    const httpReq = http.createHttp()
     try {
       const body = await form.build()
+      const reqHeader: Record<string, string> = {
+        'Content-Type': form.getContentType(),
+        'Authorization': `Bearer ${shareToken}`
+      }
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': form.getContentType() },
+        header: reqHeader,
         readTimeout: this.timeout,
         connectTimeout: this.timeout,
         expectDataType: http.HttpDataType.OBJECT,
         extraData: body,
       }
-      const resp = await this.sendRequest(url, options)
+      const resp = await httpReq.request(url, options)
       logger.info(TAG, `Response status: ${resp.responseCode}`)
 
       const parsed = parseEnvelope<SharePublishOk>(resp.result)
@@ -203,6 +194,8 @@ export class ShareService {
       const msg = `Network error: ${be?.message ?? JSON.stringify(e)}`
       logger.error(TAG, msg)
       return errResult(0, 'NETWORK_ERROR', msg)
+    } finally {
+      httpReq.destroy()
     }
   }
 
@@ -213,6 +206,7 @@ export class ShareService {
     const url = `${this.baseUrl}${ShareEndpoints.STATUS_PREFIX}/${shortCode}/status`
     logger.info(TAG, `GET ${url}`)
 
+    const httpReq = http.createHttp()
     try {
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.GET,
@@ -220,7 +214,7 @@ export class ShareService {
         connectTimeout: HttpTimeout.DEFAULT,
         expectDataType: http.HttpDataType.OBJECT,
       }
-      const resp = await this.sendRequest(url, options)
+      const resp = await httpReq.request(url, options)
       const parsed = parseEnvelope<ShareStatusOk>(resp.result)
       if (parsed.code === 0 && parsed.data) {
         return okResult(parsed.data)
@@ -229,6 +223,8 @@ export class ShareService {
     } catch (e) {
       const be = e as BusinessError
       return errResult(0, 'NETWORK_ERROR', be?.message ?? JSON.stringify(e))
+    } finally {
+      httpReq.destroy()
     }
   }
 
@@ -252,7 +248,8 @@ export class ShareService {
     try {
       const resp = await httpReq.request(url, {
         method: http.RequestMethod.GET,
-        readTimeout: 8000,
+        // 首次合成 PIL 处理 + 网络往返，给到 30s；命中 cache 后毫秒级
+        readTimeout: 30000,
         connectTimeout: 8000,
         expectDataType: http.HttpDataType.ARRAY_BUFFER,
       })
@@ -284,16 +281,22 @@ export class ShareService {
     const url = `${this.baseUrl}${ShareEndpoints.REVOKE_BY_TRIP}`
     logger.info(TAG, `POST ${url} tripId=${tripId}`)
 
+    const shareToken = await AiTokenManager.getShareToken()
+    const httpReq = http.createHttp()
     try {
+      const reqHeader: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${shareToken}`
+      }
       const options: http.HttpRequestOptions = {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/json' },
+        header: reqHeader,
         readTimeout: HttpTimeout.DEFAULT,
         connectTimeout: HttpTimeout.DEFAULT,
         expectDataType: http.HttpDataType.OBJECT,
         extraData: JSON.stringify({ tripId }),
       }
-      const resp = await this.sendRequest(url, options)
+      const resp = await httpReq.request(url, options)
       const parsed = parseEnvelope<RevokeByTripOk>(resp.result)
       if (resp.responseCode === 200 && parsed.code === 0 && parsed.data) {
         logger.info(TAG, `revoked ${parsed.data.revokedCount} shares for trip=${tripId}`)
@@ -307,6 +310,8 @@ export class ShareService {
       const msg = `Network error: ${be?.message ?? JSON.stringify(e)}`
       logger.warn(TAG, msg)
       return errResult(0, 'NETWORK_ERROR', msg)
+    } finally {
+      httpReq.destroy()
     }
   }
 }

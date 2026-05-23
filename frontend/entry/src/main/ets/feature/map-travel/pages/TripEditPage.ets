@@ -527,7 +527,11 @@ export struct TripEditPage {
                 Button(this.tripId.length > 0 ? '添加节点' : '先保存')
                   .height(34)
                   .fontSize(AppDimens.FONT_SM)
-                  .backgroundColor(AppColors.PRIMARY)
+                  .fontColor(AppColors.PRIMARY)
+                  .backgroundColor(AppDimens.PHOTO_SURFACE)
+                  .border({ width: 1, color: AppColors.DIVIDER })
+                  .borderRadius(17)
+                  .shadow({ radius: 8, color: AppDimens.SHADOW_SOFT, offsetY: 2 })
                   .onClick(() => this.handleAddNode())
               }
               .width('100%')
@@ -566,16 +570,16 @@ export struct TripEditPage {
             if (this.isEditMode) {
               Column() {
                 Text('危险操作')
-                  .fontSize(AppDimens.FONT_MD)
+                  .fontSize(0)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor(AppColors.TEXT_PRIMARY)
+                  .fontColor('#00000000')
 
                 Text('删除后，这条旅行及其节点关联将无法恢复。')
-                  .fontSize(AppDimens.FONT_SM)
+                  .fontSize(0)
                   .fontColor(AppColors.TEXT_HINT)
-                  .lineHeight(20)
+                  .lineHeight(0)
                   .width('100%')
-                  .margin({ top: 8 })
+                  .margin({ top: 0 })
 
                 Button('删除旅行')
                   .width('100%')

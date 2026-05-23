@@ -14,6 +14,7 @@
     "feature/social-share/pages/SharePage",
     "feature/ai-copy/pages/AiCopyPage",
     "feature/ai-copy/pages/VisionLLMPage",
-    "feature/profile/pages/ProfileEditPage"
+    "feature/profile/pages/ProfileEditPage",
+    "feature/profile/pages/AvatarCropPage"
   ]
 }

@@ -2,7 +2,8 @@ import { http } from '@kit.NetworkKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { hilog } from '@kit.PerformanceAnalysisKit'
 import { MultipartFormData } from './MultipartFormData'
-import { IMAGE_CENSOR_BASE_URL as CENSOR_BASE_URL } from './ApiEndpoints'
+import { IMAGE_CENSOR_BASE_URL as CENSOR_BASE_URL, HttpTimeout } from './ApiEndpoints'
+import { AiTokenManager } from './AiTokenManager'
 
 const DOMAIN = 0x0000
 const TAG = 'ImageCensorService'
@@ -20,7 +21,7 @@ export interface ImageCensorResult {
 }
 
 export class ImageCensorService {
-  static async checkLocalImage(imagePath: string): Promise<ImageCensorResult> {
+  static async checkLocalImage(imagePath: string, retry: boolean = true): Promise<ImageCensorResult> {
     const realPath = ImageCensorService.normalizeLocalPath(imagePath)
     const formData = new MultipartFormData()
     formData.addFile('image', ImageCensorService.extractFilename(realPath), realPath, 'application/octet-stream')
@@ -30,11 +31,15 @@ export class ImageCensorService {
     const httpRequest = http.createHttp()
 
     try {
+      const token = await AiTokenManager.getCensorToken()
       const response = await httpRequest.request(`${IMAGE_CENSOR_BASE_URL}/check`, {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': formData.getContentType() },
+        header: {
+          'Content-Type': formData.getContentType(),
+          'Authorization': `Bearer ${token}`
+        },
         extraData: requestBody,
-        readTimeout: 30000,
+        readTimeout: HttpTimeout.IMAGE_CENSOR,
         connectTimeout: 10000,
         expectDataType: http.HttpDataType.OBJECT
       })
@@ -43,10 +48,18 @@ export class ImageCensorService {
         return response.result as ImageCensorResult
       }
 
+      if (response.responseCode === 401 && retry) {
+        AiTokenManager.invalidate()
+        return ImageCensorService.checkLocalImage(imagePath, false)
+      }
+
       hilog.error(DOMAIN, TAG, `Image censor failed: HTTP ${response.responseCode}, body=${JSON.stringify(response.result)}`)
       throw new Error('IMAGE_CENSOR_NETWORK_ERROR')
     } catch (err) {
       const error = err as BusinessError
+      if ((err as Error).message === 'AUDIT_AUTH_REQUIRED') {
+        throw err as Error
+      }
       if ((err as Error).message === 'IMAGE_CENSOR_NETWORK_ERROR') {
         throw err as Error
       }

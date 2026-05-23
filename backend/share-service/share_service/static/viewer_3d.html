@@ -1,5 +1,5 @@
 <!--
-  TravelPin 分享查看页 — Vue 3 + Three.js 3D 演示版
+  ItsMapPin 分享查看页 — Vue 3 + Three.js 3D 演示版
 
   编辑指引（哪一段改什么）：
     A. <style> 块             —— 视觉：色板、字号、阴影、动效曲线
@@ -17,7 +17,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <title>TravelPin · 分享</title>
+  <title>ItsMapPin · 分享</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <!-- Three.js dropped its UMD bundle at r150, so we use ESM via importmap.
@@ -429,7 +429,7 @@ createApp({
         }
         const data = await r.json();
         state.value = { kind: "ok", data };
-        document.title = `${data.snapshot?.trip?.name || "TravelPin 分享"} · TravelPin`;
+        document.title = `${data.snapshot?.trip?.name || "ItsMapPin 分享"} · ItsMapPin`;
 
         await nextTick();
         const canvas = document.getElementById("hero-canvas");

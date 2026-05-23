@@ -15,6 +15,9 @@ import {
   setupRdbHelper,
 } from './FakeRdbSupport';
 
+// Test hook: mock TravelRepository.getOwnerUid to avoid AGC auth calls in CI
+TravelRepository.ownerUidProvider = async (): Promise<string> => 'user-a';
+
 class StubTravelRepository extends TravelRepository {
   private trips: Trip[]
 

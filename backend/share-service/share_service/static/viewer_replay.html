@@ -1,5 +1,5 @@
 <!--
-  TravelPin 分享查看页 — Plan A 路线回放（v0.9）
+  ItsMapPin 分享查看页 — Plan A 路线回放（v0.9）
 
   H5 复刻 TripReplayPage（feature/map-travel/pages/TripReplayPage.ets）：
     * 5 阶段状态机：FADE_IN 2s → STAYING 3s → FADE_OUT 1s → MOVING 1.5s
@@ -32,7 +32,7 @@
   <meta property="og:description" content="{{SHARE_DESCRIPTION}}">
   <meta property="og:url"         content="{{SHARE_URL}}">
   <meta property="og:image"       content="{{COVER_PHOTO_URL}}">
-  <meta property="og:site_name"   content="TravelPin">
+  <meta property="og:site_name"   content="ItsMapPin">
   <meta property="og:locale"      content="zh_CN">
 
   <link rel="preconnect" href="https://webapi.amap.com">
@@ -1379,7 +1379,7 @@ function boot() {
   syncProgressUI();
   $progress.max = NODES.length - 1;
 
-  document.title = (DATA.tripName || 'TravelPin 分享') + ' · 路线回放';
+  document.title = (DATA.tripName || 'ItsMapPin 分享') + ' · 路线回放';
 
   // v1.0.2 #5：进入页面后等 initMap fitBounds 稳定（~400ms 内动画收尾）
   // 直接 play() 自动开始状态机（旧版是只 showCard 进暂停态）。

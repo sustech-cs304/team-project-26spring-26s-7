@@ -1,8 +1,17 @@
-# Build script for TravelPin HarmonyOS Project
+# Build script for ItsMapPin HarmonyOS Project
 # Usage: powershell -ExecutionPolicy Bypass -File build.ps1 [--sync] [-p product=default] [other hvigor args]
 
-# Set DEVECO_SDK_HOME environment variable (fixes "Invalid value of DEVECO_SDK_HOME" error)
-$env:DEVECO_SDK_HOME = "C:\Apps\DevEco Studio\sdk"
+# CI can override DEVECO_SDK_HOME / DEVECO_NODE (set in Jenkinsfile). Local devs fall back to C:\Apps default.
+if (-not $env:DEVECO_SDK_HOME) {
+    $env:DEVECO_SDK_HOME = "C:\Apps\DevEco Studio\sdk"
+}
+if ($env:DEVECO_NODE) {
+    $node = $env:DEVECO_NODE
+    $hvigorw = Join-Path (Split-Path -Parent (Split-Path -Parent $node)) "hvigor\bin\hvigorw.js"
+} else {
+    $node = "C:\Apps\DevEco Studio\tools\node\node.exe"
+    $hvigorw = "C:\Apps\DevEco Studio\tools\hvigor\bin\hvigorw.js"
+}
 
 # Change to script directory
 Set-Location -Path $PSScriptRoot
@@ -20,4 +29,5 @@ if ($isCiBuild -and -not $hasDaemonFlag) {
 }
 
 # Run hvigor with all arguments passed to this script
-& "C:\Apps\DevEco Studio\tools\node\node.exe" "C:\Apps\DevEco Studio\tools\hvigor\bin\hvigorw.js" $hvigorArgs
+& $node $hvigorw $hvigorArgs
+exit $LASTEXITCODE

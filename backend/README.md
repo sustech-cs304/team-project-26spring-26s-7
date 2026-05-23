@@ -5,14 +5,32 @@
 
 > 所有源代码**复制自**项目原仓库，未做任何修改。原始位置如有更新，需手动同步。
 
+## 两条部署路径
+
+| 场景 | 用什么 |
+|---|---|
+| **生产部署到华为云**（HTTPS / ICP / 应用上架合规） | 看 **[deploy/DEPLOY_HUAWEI_CLOUD.md](deploy/DEPLOY_HUAWEI_CLOUD.md)** —— nginx + systemd + audit.itsmappin.top 单域名路径路由，含一键 install.sh |
+| **本地 / 校园网 dev 跑** | 看下面"一、环境准备" + "二、一键启动" —— nohup + quick tunnel，HTTP |
+
+ICP 备案的子域名清单见 [deploy/icp-subdomains.md](deploy/icp-subdomains.md)。
+
 ## 目录结构
 
 ```
 Backend_ItsMapPin/
-├── README.md                     ← 本文件：完整部署 + 启动教程
+├── README.md                     ← 本文件：本地 dev 启动教程
 ├── .env.example                  ← 凭证 / 配置模板，复制为 .env 后填值
-├── start_all.sh                  ← 一键启动 4 个服务
+├── start_all.sh                  ← 一键启动 4 个服务（本地 dev 用）
 ├── stop_all.sh                   ← 一键停止
+│
+├── deploy/                       ← 生产部署物（华为云）
+│   ├── DEPLOY_HUAWEI_CLOUD.md    ← 完整生产部署指南（两阶段：备案前 :8443 / 备案后 :80+:443）
+│   ├── icp-subdomains.md         ← ICP 备案要登记的子域名清单
+│   ├── nginx/audit.itsmappin.top.test.conf   ← 备案前测试模式（:8443）
+│   ├── nginx/audit.itsmappin.top.prod.conf   ← 备案后生产模式（:80 + :443）
+│   ├── systemd/*.service                 ← 4 个 systemd unit
+│   ├── scripts/install.sh                ← 华为云一键安装（默认装测试模式）
+│   └── scripts/enable-production.sh      ← ICP 通过后切到生产
 │
 ├── ai-relay/                     ← :8000 SiliconFlow Cloud 转发（AI 文案）
 │   ├── siliconflow_relay.py

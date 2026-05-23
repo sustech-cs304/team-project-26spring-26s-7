@@ -2,19 +2,19 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "TravelPin main module"
+      "value": "ItsMapPin main module"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "TravelPin travel journal"
+      "value": "ItsMapPin travel journal"
     },
     {
       "name": "EntryAbility_label",
-      "value": "TravelPin"
+      "value": "ItsMapPin"
     },
     {
       "name": "app_name",
-      "value": "TravelPin"
+      "value": "ItsMapPin"
     },
     {
       "name": "location_reason",
@@ -38,7 +38,7 @@
     },
     {
       "name": "privacy_dialog_content",
-      "value": "Welcome to TravelPin. Before using this app, please carefully read the User Agreement and Privacy Policy. The Privacy Policy explains:\n\n• How we collect, use, store, and protect your personal information (including location, photos, account info)\n• Your rights to access, correct, delete, and deactivate your account\n• How we use Huawei Cloud services for data synchronization\n• How we use AI services to recognize content in photos you choose to upload\n\nIf you agree, tap \"Agree and Continue\" to start using the app."
+      "value": "Welcome to ItsMapPin. Before using this app, please carefully read the User Agreement and Privacy Policy. The Privacy Policy explains:\n\n• How we collect, use, store, and protect your personal information (including location, photos, account info)\n• Your rights to access, correct, delete, and deactivate your account\n• How we use Huawei Cloud services for data synchronization\n• How we use AI services to recognize content in photos you choose to upload\n\nIf you agree, tap \"Agree and Continue\" to start using the app."
     },
     {
       "name": "privacy_dialog_agree",

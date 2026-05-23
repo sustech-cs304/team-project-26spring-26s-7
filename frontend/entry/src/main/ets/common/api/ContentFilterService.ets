@@ -1,208 +1,147 @@
-import { http } from '@kit.NetworkKit';
-import { hilog } from '@kit.PerformanceAnalysisKit';
-import { BusinessError } from '@kit.BasicServicesKit';
-import { CONTENT_FILTER_BASE_URL } from './ApiEndpoints';
+import { http } from '@kit.NetworkKit'
+import { hilog } from '@kit.PerformanceAnalysisKit'
+import { BusinessError } from '@kit.BasicServicesKit'
+import { CONTENT_FILTER_BASE_URL } from './ApiEndpoints'
+import { AiTokenManager } from './AiTokenManager'
 
-const DOMAIN = 0x0000;
-const TAG = 'ContentFilterService';
-const FILTER_BASE_URL = CONTENT_FILTER_BASE_URL;
+const DOMAIN = 0x0000
+const TAG = 'ContentFilterService'
 
 export interface CheckResult {
-  blocked: boolean;
-  hit: string | null;
-  hits_count: number;
+  blocked: boolean
+  hit: string | null
+  hits_count: number
 }
 
 export interface MaskResult {
-  masked: string;
-  hits: string[];
+  masked: string
+  hits: string[]
 }
 
-// 请求体类型
-class CheckIn {
-  text: string = '';
-  constructor(text: string) {
-    this.text = text;
-  }
+interface TextCheckIn {
+  text: string
+  user_id?: string
+  user_ip?: string
 }
 
-class BatchCheckIn {
-  texts: string[] = [];
-  constructor(texts: string[]) {
-    this.texts = texts;
-  }
+interface TextHit {
+  keyword?: string
+  msg?: string
 }
 
-class MaskIn {
-  text: string = '';
-  mask: string = '';
-  constructor(text: string, mask: string) {
-    this.text = text;
-    this.mask = mask;
-  }
+interface TextCheckOut {
+  conclusion: string
+  conclusionType: number
+  log_id: number
+  is_safe: boolean
+  is_hit: boolean
+  error_code?: number | null
+  error_msg?: string | null
+  data?: TextHit[]
 }
 
-class BatchCheckOut {
-  results: CheckResult[] = [];
-}
-
-// 返回值类型
 class CheckResultImpl implements CheckResult {
-  blocked: boolean;
-  hit: string | null;
-  hits_count: number;
+  blocked: boolean
+  hit: string | null
+  hits_count: number
 
   constructor(blocked: boolean, hit: string | null, hits_count: number) {
-    this.blocked = blocked;
-    this.hit = hit;
-    this.hits_count = hits_count;
+    this.blocked = blocked
+    this.hit = hit
+    this.hits_count = hits_count
   }
 }
 
 class MaskResultImpl implements MaskResult {
-  masked: string;
-  hits: string[];
+  masked: string
+  hits: string[]
 
   constructor(masked: string, hits: string[]) {
-    this.masked = masked;
-    this.hits = hits;
+    this.masked = masked
+    this.hits = hits
   }
 }
 
 export class ContentFilterService {
-  /**
-   * 网络状态检测（复用 EntryAbility 维护的全局状态）
-   */
   static isOnline(): boolean {
-    return (AppStorage.get('networkOnline') as boolean) ?? false;
+    return (AppStorage.get('networkOnline') as boolean) ?? false
   }
 
-  /**
-   * 单条文本内容安全审查
-   * POST /check
-   */
   static async check(text: string): Promise<CheckResult> {
-    if (!text || text.trim().length === 0) {
-      return new CheckResultImpl(false, null, 0);
+    const trimmed = text.trim()
+    if (!trimmed) {
+      return new CheckResultImpl(false, null, 0)
     }
 
-    const result = await ContentFilterService.requestCheck(
-      FILTER_BASE_URL + '/check',
-      new CheckIn(text.trim())
-    );
-    if (result === null) {
-      // 网络不通或超时，不 fallback，直接抛错让上层阻止保存
-      throw new Error('CONTENT_CHECK_NETWORK_ERROR');
-    }
-    return result;
+    const result = await ContentFilterService.requestTextCheck({ text: trimmed })
+    const hits = result.data ?? []
+    const firstHit = hits.length > 0 ? (hits[0].keyword ?? hits[0].msg ?? result.conclusion) : null
+    return new CheckResultImpl(!result.is_safe, firstHit, hits.length)
   }
 
-  /**
-   * 批量文本内容安全审查（一次 HTTP 请求查多条）
-   * POST /batch_check
-   */
   static async batchCheck(texts: string[]): Promise<CheckResult[]> {
-    if (!texts || texts.length === 0) {
-      return [];
+    const results: CheckResult[] = []
+    for (let i = 0; i < texts.length; i++) {
+      if (texts[i].trim().length > 0) {
+        results.push(await ContentFilterService.check(texts[i]))
+      }
     }
-
-    const nonEmpty = texts.map(t => t.trim()).filter(t => t.length > 0);
-    if (nonEmpty.length === 0) {
-      return [];
-    }
-
-    const result = await ContentFilterService.requestBatchCheck(new BatchCheckIn(nonEmpty));
-    return result?.results ?? [];
+    return results
   }
 
-  /**
-   * 内容脱敏（将敏感词替换为 maskChar）
-   * POST /mask
-   */
   static async mask(text: string, maskChar: string = '***'): Promise<MaskResult> {
-    if (!text || text.trim().length === 0) {
-      return new MaskResultImpl(text, []);
+    const result = await ContentFilterService.check(text)
+    if (!result.blocked || !result.hit) {
+      return new MaskResultImpl(text, [])
     }
-
-    const result = await ContentFilterService.requestMask(
-      FILTER_BASE_URL + '/mask',
-      new MaskIn(text.trim(), maskChar)
-    );
-    return result ?? new MaskResultImpl(text, []);
+    return new MaskResultImpl(text.replace(result.hit, maskChar), [result.hit])
   }
 
-  private static async requestCheck(url: string, body: CheckIn): Promise<CheckResult | null> {
-    const httpRequest = http.createHttp();
+  private static async requestTextCheck(body: TextCheckIn, retry: boolean = true): Promise<TextCheckOut> {
+    const token = await AiTokenManager.getCensorToken()
+    const httpRequest = http.createHttp()
+
     try {
-      const response = await httpRequest.request(url, {
+      const response = await httpRequest.request(`${CONTENT_FILTER_BASE_URL}/text_check`, {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/json' },
+        header: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         extraData: JSON.stringify(body),
-        readTimeout: 10000,
+        readTimeout: 30000,
         connectTimeout: 10000,
         expectDataType: http.HttpDataType.OBJECT
-      });
+      })
 
       if (response.responseCode === 200 || response.responseCode === 201) {
-        return response.result as CheckResult;
+        const result = response.result as TextCheckOut
+        if (result.error_code !== undefined && result.error_code !== null) {
+          hilog.error(DOMAIN, TAG, `text_check provider error: code=${result.error_code}, msg=${result.error_msg ?? ''}`)
+          throw new Error('CONTENT_CHECK_NETWORK_ERROR')
+        }
+        return result
       }
-      hilog.error(DOMAIN, TAG, `ContentFilter /check failed: HTTP ${response.responseCode}`);
-      return null;
-    } catch (err) {
-      hilog.error(DOMAIN, TAG, `ContentFilter /check error: ${(err as BusinessError).message}`);
-      return null;
-    } finally {
-      httpRequest.destroy();
-    }
-  }
 
-  private static async requestMask(url: string, body: MaskIn): Promise<MaskResult | null> {
-    const httpRequest = http.createHttp();
-    try {
-      const response = await httpRequest.request(url, {
-        method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/json' },
-        extraData: JSON.stringify(body),
-        readTimeout: 10000,
-        connectTimeout: 10000,
-        expectDataType: http.HttpDataType.OBJECT
-      });
-
-      if (response.responseCode === 200 || response.responseCode === 201) {
-        return response.result as MaskResult;
+      if (response.responseCode === 401 && retry) {
+        AiTokenManager.invalidate()
+        return ContentFilterService.requestTextCheck(body, false)
       }
-      hilog.error(DOMAIN, TAG, `ContentFilter /mask failed: HTTP ${response.responseCode}`);
-      return null;
+
+      hilog.error(DOMAIN, TAG, `text_check failed: HTTP ${response.responseCode}, body=${JSON.stringify(response.result)}`)
+      throw new Error('CONTENT_CHECK_NETWORK_ERROR')
     } catch (err) {
-      hilog.error(DOMAIN, TAG, `ContentFilter /mask error: ${(err as BusinessError).message}`);
-      return null;
-    } finally {
-      httpRequest.destroy();
-    }
-  }
-
-  private static async requestBatchCheck(body: BatchCheckIn): Promise<BatchCheckOut | null> {
-    const httpRequest = http.createHttp();
-    try {
-      const response = await httpRequest.request(FILTER_BASE_URL + '/batch_check', {
-        method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/json' },
-        extraData: JSON.stringify(body),
-        readTimeout: 10000,
-        connectTimeout: 10000,
-        expectDataType: http.HttpDataType.OBJECT
-      });
-
-      if (response.responseCode === 200 || response.responseCode === 201) {
-        return response.result as BatchCheckOut;
+      const error = err as BusinessError
+      if ((err as Error).message === 'AUDIT_AUTH_REQUIRED') {
+        throw err as Error
       }
-      hilog.error(DOMAIN, TAG, `ContentFilter /batch_check failed: HTTP ${response.responseCode}`);
-      return null;
-    } catch (err) {
-      hilog.error(DOMAIN, TAG, `ContentFilter /batch_check error: ${(err as BusinessError).message}`);
-      return null;
+      if ((err as Error).message === 'CONTENT_CHECK_NETWORK_ERROR') {
+        throw err as Error
+      }
+      hilog.error(DOMAIN, TAG, `text_check error: ${error.message ?? JSON.stringify(err)}`)
+      throw new Error('CONTENT_CHECK_NETWORK_ERROR')
     } finally {
-      httpRequest.destroy();
+      httpRequest.destroy()
     }
   }
 }
