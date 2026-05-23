@@ -158,6 +158,23 @@ cd team-project-26spring-26s-7
 - `frontend/build.ps1`：简单构建入口
 - `frontend/scripts/Invoke-HarmonyBuild.ps1`：更完整的 PowerShell 构建脚本
 
+## 已知问题与限制
+
+- 离线地图模式下暂不支持地址解析；如果设备无法访问在线地图或逆地理编码服务，位置可能只能以坐标形式展示。
+- 项目域名仍在申请配置中，当前后端使用临时域名与非标准端口
+- Replay 回放界面目前采用读条式行进，动画流畅度仍有优化空间。
+- 文件传输链路仍以功能可用为优先，大文件或弱网环境下传输效率较低，后续可考虑分片上传、断点续传或压缩策略。
+- AI 文案服务受上游 AI 服务能力限制，目前最多支持约 30 个并发请求；超过该并发量时可能触发排队、限流或请求失败。
+
+## 更多资源
+
+- [后端服务部署与 API 调试说明](backend/README.md)：包含 AI relay、敏感词过滤、图片审核、分享服务的启动、验证和故障排查方式。
+- [项目文档索引](documents/README.md)：按设计、部署、功能、测试等类别整理的项目文档入口。
+- [后端接口配置文件](frontend/entry/src/main/ets/common/api/ApiEndpoints.ets)：前端调用 AI、分享等服务时使用的基础地址配置。
+- [Replay 功能文档](documents/features/replay/)：Replay 相关方案、调研与媒体资源。
+- [Social Share 功能文档](documents/features/social-share/)：分享功能需求、接口与集成说明。
+- [AI Copy 功能文档](documents/features/ai-copy/)：AI 文案功能相关说明。
+
 
 ## License
 
