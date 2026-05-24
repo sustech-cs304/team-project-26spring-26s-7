@@ -1,0 +1,7 @@
+﻿{
+    "jobName":  "travelpin-ci",
+    "buildNumber":  21,
+    "buildUrl":  "http://127.0.0.1:8081/job/travelpin-ci/21",
+    "logPath":  "D:\\actions-runner\\_work\\team-project-26spring-26s-7\\team-project-26spring-26s-7\\.ci-logs\\jenkins-travelpin-ci-build-21.log",
+    "generatedAt":  "2026-05-22T22:29:10.9062101+08:00"
+}

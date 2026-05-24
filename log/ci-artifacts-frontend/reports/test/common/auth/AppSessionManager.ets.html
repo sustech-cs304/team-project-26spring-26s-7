@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Import style -->
+  <link rel="stylesheet" href="..\..\index.css" />
+  <link rel="stylesheet" href="..\..\prettify.css" />
+  <!-- Import Vue 3 -->
+  <script src="..\..\vue.global.prod.js"></script>
+  <!-- Import component library -->
+  <script src="..\..\index.full.min.js"></script>
+  <script src="..\..\prettify.js"></script>
+  <title>Coverage</title>
+</head>
+
+<body>
+  <div id="app" class="common-layout">
+    <el-container>
+      <el-header>
+        <el-row :gutter="10">
+          <el-col :span="5">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <el-link type="primary" :href="relativeHome">
+                    <h2>&lt;</h2>
+                  </el-link>
+                </el-text></div>
+              <div><el-text class="mx-1 "><h2>{{title}}</h2></el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info"></el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.functions.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Functions</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.functions.covered}}/{{file.summary.functions.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.branches.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Branches</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.branches.covered}}/{{file.summary.branches.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.lines.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Lines</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.lines.covered}}/{{file.summary.lines.total}}</el-text></div>
+            </el-space>
+          </el-col>
+        </el-row>
+        <el-divider />
+      </el-header>
+      <el-main>
+        <el-row>
+        </el-row>
+        <pre>
+          <table class="coverage">
+            <tr>
+              <td class="line-count quiet">
+                <pre class="prettyprint lang-js">
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+                </pre>
+        </td>
+        <td class="text">
+          <pre class="prettyprint linenums lang-js">
+import { common } from &#39;@kit.AbilityKit&#39; 
+import { BusinessError } from &#39;@kit.BasicServicesKit&#39; 
+import { preferences } from &#39;@kit.ArkData&#39; 
+import { http } from &#39;@kit.NetworkKit&#39; 
+import { hilog } from &#39;@kit.PerformanceAnalysisKit&#39; 
+import auth from &#39;@hw-agconnect/auth&#39; 
+import { IMAGE_CENSOR_BASE_URL } from &#39;../api/ApiEndpoints&#39; 
+ 
+const DOMAIN = 0x0000 
+const TAG = &#39;AppSessionManager&#39; 
+const STORE_NAME = &#39;audit_app_session_v1&#39; 
+const KEY_TOKEN = &#39;appSessionToken&#39; 
+const KEY_UID = &#39;uid&#39; 
+const KEY_EXPIRES_AT = &#39;expiresAt&#39; 
+const EXPIRY_LEEWAY_SEC = 60 
+ 
+interface AgcLoginResp { 
+  app_session_token?: string 
+  issued_at?: number 
+  expires_in?: number 
+  uid?: string 
+} 
+ 
+function stringifyHttpResult(result: Object | string | ArrayBuffer | undefined): string { 
+  if (result === undefined || result === null) { 
+    return &#39;&#39; 
+  } 
+  if (typeof result === &#39;string&#39;) { 
+    return result 
+  } 
+  try { 
+    return JSON.stringify(result) 
+  } catch (_) { 
+    return String(result) 
+  } 
+} 
+ 
+export class AppSessionManager { 
+  private static context: common.UIAbilityContext | null = null 
+  private static loaded: boolean = false 
+  private static token: string = &#39;&#39; 
+  private static uid: string = &#39;&#39; 
+  private static expiresAt: number = 0 
+  private static loadingPromise: Promise&lt;void&gt; | null = null 
+ 
+  static init(context: common.UIAbilityContext): void { 
+    AppSessionManager.context = context 
+  } 
+ 
+  static async save(uid: string, token: string, issuedAt: number, expiresIn: number): Promise&lt;void&gt; { 
+    AppSessionManager.uid = uid 
+    AppSessionManager.token = token 
+    AppSessionManager.expiresAt = issuedAt + expiresIn - EXPIRY_LEEWAY_SEC 
+    AppSessionManager.loaded = true 
+    await AppSessionManager.persist() 
+  } 
+ 
+  static async getToken(expectedUid: string = &#39;&#39;): Promise&lt;string | null&gt; { 
+    await AppSessionManager.ensureLoaded() 
+ 
+    const now = Math.floor(Date.now() / 1000) 
+    if (!AppSessionManager.token || AppSessionManager.expiresAt &lt;= now) { 
+      await AppSessionManager.clear() 
+      return null 
+    } 
+ 
+    if (expectedUid &amp;&amp; AppSessionManager.uid &amp;&amp; AppSessionManager.uid !== expectedUid) { 
+      await AppSessionManager.clear() 
+      return null 
+    } 
+ 
+    return AppSessionManager.token 
+  } 
+ 
+  static async refreshFromAgcAuth(expectedUid: string = &#39;&#39;): Promise&lt;string | null&gt; { 
+    let uid = &#39;&#39; 
+    let agcAccessToken = &#39;&#39; 
+    try { 
+      const user = await auth.getCurrentUser() 
+      if (!user) { 
+        hilog.warn(DOMAIN, TAG, &#39;refreshFromAgcAuth skipped: AGC user missing&#39;) 
+        return null 
+      } 
+      uid = user.getUid() 
+      if (expectedUid &amp;&amp; uid !== expectedUid) { 
+        hilog.warn(DOMAIN, TAG, `refreshFromAgcAuth uid mismatch, expected=${expectedUid}, actual=${uid}`) 
+        await AppSessionManager.clear() 
+        return null 
+      } 
+      const tokenResult = await user.getToken(true) 
+      agcAccessToken = tokenResult.getString() 
+    } catch (err) { 
+      const error = err as BusinessError 
+      hilog.error(DOMAIN, TAG, `refreshFromAgcAuth get AGC token failed: ${error.message ?? JSON.stringify(err)}`) 
+      return null 
+    } 
+ 
+    if (!agcAccessToken) { 
+      hilog.error(DOMAIN, TAG, &#39;refreshFromAgcAuth missing AGC access token&#39;) 
+      return null 
+    } 
+ 
+    const httpRequest = http.createHttp() 
+    try { 
+      const response = await httpRequest.request(`${IMAGE_CENSOR_BASE_URL}/api/v1/auth/agc_login`, { 
+        method: http.RequestMethod.POST, 
+        header: { &#39;Content-Type&#39;: &#39;application/json&#39; }, 
+        extraData: JSON.stringify({ access_token: agcAccessToken }), 
+        readTimeout: 15000, 
+        connectTimeout: 10000, 
+        expectDataType: http.HttpDataType.OBJECT 
+      }) 
+ 
+      if (response.responseCode !== 200 &amp;&amp; response.responseCode !== 201) { 
+        hilog.error(DOMAIN, TAG, `refreshFromAgcAuth failed: HTTP ${response.responseCode}, body=${stringifyHttpResult(response.result)}`) 
+        await AppSessionManager.clear() 
+        return null 
+      } 
+ 
+      const body = response.result as AgcLoginResp 
+      if (!body || !body.app_session_token || body.issued_at === undefined || body.expires_in === undefined) { 
+        hilog.error(DOMAIN, TAG, `refreshFromAgcAuth invalid response: ${JSON.stringify(response.result)}`) 
+        await AppSessionManager.clear() 
+        return null 
+      } 
+ 
+      await AppSessionManager.save(uid || body.uid || &#39;&#39;, body.app_session_token, body.issued_at, body.expires_in) 
+      hilog.info(DOMAIN, TAG, `refreshFromAgcAuth success, expiresIn=${body.expires_in}`) 
+      return body.app_session_token 
+    } catch (err) { 
+      const error = err as BusinessError 
+      hilog.error(DOMAIN, TAG, `refreshFromAgcAuth error: ${error.message ?? JSON.stringify(err)}`) 
+      await AppSessionManager.clear() 
+      return null 
+    } finally { 
+      httpRequest.destroy() 
+    } 
+  } 
+ 
+  static async clear(): Promise&lt;void&gt; { 
+    AppSessionManager.token = &#39;&#39; 
+    AppSessionManager.uid = &#39;&#39; 
+    AppSessionManager.expiresAt = 0 
+    AppSessionManager.loaded = true 
+ 
+    const ctx = AppSessionManager.context 
+    if (!ctx) { 
+      return 
+    } 
+ 
+    try { 
+      const store = await preferences.getPreferences(ctx, { name: STORE_NAME }) 
+      await store.delete(KEY_TOKEN) 
+      await store.delete(KEY_UID) 
+      await store.delete(KEY_EXPIRES_AT) 
+      await store.flush() 
+    } catch (err) { 
+      hilog.warn(DOMAIN, TAG, `clear failed: ${JSON.stringify(err)}`) 
+    } 
+  } 
+ 
+  private static async ensureLoaded(): Promise&lt;void&gt; { 
+    if (AppSessionManager.loaded) { 
+      return 
+    } 
+    if (AppSessionManager.loadingPromise) { 
+      return AppSessionManager.loadingPromise 
+    } 
+    AppSessionManager.loadingPromise = AppSessionManager.load() 
+    return AppSessionManager.loadingPromise 
+  } 
+ 
+  private static async load(): Promise&lt;void&gt; { 
+    const ctx = AppSessionManager.context 
+    if (!ctx) { 
+      AppSessionManager.loaded = true 
+      AppSessionManager.loadingPromise = null 
+      return 
+    } 
+ 
+    try { 
+      const store = await preferences.getPreferences(ctx, { name: STORE_NAME }) 
+      AppSessionManager.token = await store.get(KEY_TOKEN, &#39;&#39;) as string 
+      AppSessionManager.uid = await store.get(KEY_UID, &#39;&#39;) as string 
+      AppSessionManager.expiresAt = await store.get(KEY_EXPIRES_AT, 0) as number 
+      AppSessionManager.loaded = true 
+    } catch (err) { 
+      hilog.warn(DOMAIN, TAG, `load failed: ${JSON.stringify(err)}`) 
+      AppSessionManager.loaded = true 
+    } finally { 
+      AppSessionManager.loadingPromise = null 
+    } 
+  } 
+ 
+  private static async persist(): Promise&lt;void&gt; { 
+    const ctx = AppSessionManager.context 
+    if (!ctx) { 
+      return 
+    } 
+ 
+    try { 
+      const store = await preferences.getPreferences(ctx, { name: STORE_NAME }) 
+      await store.put(KEY_TOKEN, AppSessionManager.token) 
+      await store.put(KEY_UID, AppSessionManager.uid) 
+      await store.put(KEY_EXPIRES_AT, AppSessionManager.expiresAt) 
+      await store.flush() 
+    } catch (err) { 
+      hilog.warn(DOMAIN, TAG, `persist failed: ${JSON.stringify(err)}`) 
+    } 
+  } 
+} 
+
+              </pre>
+        </td>
+        </tr>
+        </table>
+        </pre>
+      </el-main>
+      <el-footer align="middle" class="footer">
+        Code coverage generated by <el-link href="https://github.com/SMAT-Lab/bjc" type="primary"
+          target="_blank">bjc</el-link> at {{date}}
+      </el-footer>
+    </el-container>
+  </div>
+</body>
+
+<script>
+  const App = {
+    data() {
+      return {"date":"Fri May 22 2026 22:32:24 GMT+0800 (中国标准时间)","file":{"version":"bjc v1.0.0","versionCode":10000,"path":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend/entry/src/main/ets/common/auth/AppSessionManager.ets","hash":"af84738bb6c7ace1baa4c1e66b6c13f9856d7c2f0fd626f0c3c00927bea79405","lineCnt":212,"count":0,"projectPath":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend","functions":[{"name":"stringifyHttpResult","count":0,"regions":[{"startLoc":{"line":24,"col":1},"endLoc":{"line":36,"col":2},"count":0,"ignored":0},{"startLoc":{"line":25,"col":48},"endLoc":{"line":27,"col":4},"count":0,"ignored":0},{"startLoc":{"line":28,"col":35},"endLoc":{"line":30,"col":4},"count":0,"ignored":0},{"startLoc":{"line":31,"col":7},"endLoc":{"line":33,"col":4},"count":0,"ignored":0},{"startLoc":{"line":33,"col":5},"endLoc":{"line":35,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":25,"col":7},"endLoc":{"line":25,"col":46},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":28,"col":7},"endLoc":{"line":28,"col":33},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":0},{"name":"AppSessionManager.init","count":0,"regions":[{"startLoc":{"line":46,"col":3},"endLoc":{"line":48,"col":4},"count":0,"ignored":0},{"startLoc":{"line":47,"col":5},"endLoc":{"line":48,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":1},{"name":"AppSessionManager.save","count":0,"regions":[{"startLoc":{"line":50,"col":3},"endLoc":{"line":56,"col":4},"count":0,"ignored":0},{"startLoc":{"line":51,"col":5},"endLoc":{"line":56,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":2},{"name":"AppSessionManager.getToken","count":5,"regions":[{"startLoc":{"line":58,"col":3},"endLoc":{"line":73,"col":4},"count":5,"ignored":0},{"startLoc":{"line":62,"col":73},"endLoc":{"line":65,"col":6},"count":5,"ignored":0},{"startLoc":{"line":67,"col":88},"endLoc":{"line":70,"col":6},"count":0,"ignored":0},{"startLoc":{"line":72,"col":5},"endLoc":{"line":73,"col":4},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":62,"col":9},"endLoc":{"line":62,"col":71},"trueCount":5,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":67,"col":9},"endLoc":{"line":67,"col":86},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":3},{"name":"AppSessionManager.refreshFromAgcAuth","count":5,"regions":[{"startLoc":{"line":75,"col":3},"endLoc":{"line":138,"col":4},"count":5,"ignored":0},{"startLoc":{"line":104,"col":9},"endLoc":{"line":130,"col":6},"count":0,"ignored":0},{"startLoc":{"line":78,"col":9},"endLoc":{"line":92,"col":6},"count":5,"ignored":0},{"startLoc":{"line":130,"col":7},"endLoc":{"line":135,"col":6},"count":0,"ignored":0},{"startLoc":{"line":92,"col":7},"endLoc":{"line":96,"col":6},"count":5,"ignored":0},{"startLoc":{"line":85,"col":47},"endLoc":{"line":89,"col":8},"count":0,"ignored":0},{"startLoc":{"line":114,"col":75},"endLoc":{"line":118,"col":8},"count":0,"ignored":0},{"startLoc":{"line":121,"col":110},"endLoc":{"line":125,"col":8},"count":0,"ignored":0},{"startLoc":{"line":80,"col":18},"endLoc":{"line":83,"col":8},"count":0,"ignored":0},{"startLoc":{"line":98,"col":26},"endLoc":{"line":101,"col":6},"count":0,"ignored":0},{"startLoc":{"line":127,"col":7},"endLoc":{"line":130,"col":6},"count":0,"ignored":0},{"startLoc":{"line":135,"col":15},"endLoc":{"line":137,"col":6},"count":0,"ignored":0},{"startLoc":{"line":90,"col":7},"endLoc":{"line":92,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":80,"col":11},"endLoc":{"line":80,"col":16},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":85,"col":11},"endLoc":{"line":85,"col":45},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":98,"col":9},"endLoc":{"line":98,"col":24},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":114,"col":11},"endLoc":{"line":114,"col":73},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":121,"col":11},"endLoc":{"line":121,"col":108},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":4},{"name":"AppSessionManager.clear","count":5,"regions":[{"startLoc":{"line":140,"col":3},"endLoc":{"line":160,"col":4},"count":5,"ignored":0},{"startLoc":{"line":151,"col":9},"endLoc":{"line":157,"col":6},"count":0,"ignored":0},{"startLoc":{"line":147,"col":15},"endLoc":{"line":149,"col":6},"count":5,"ignored":0},{"startLoc":{"line":157,"col":7},"endLoc":{"line":159,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":147,"col":9},"endLoc":{"line":147,"col":13},"trueCount":5,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":5},{"name":"AppSessionManager.ensureLoaded","count":5,"regions":[{"startLoc":{"line":162,"col":3},"endLoc":{"line":171,"col":4},"count":5,"ignored":0},{"startLoc":{"line":163,"col":35},"endLoc":{"line":165,"col":6},"count":4,"ignored":0},{"startLoc":{"line":166,"col":43},"endLoc":{"line":168,"col":6},"count":0,"ignored":0},{"startLoc":{"line":169,"col":5},"endLoc":{"line":171,"col":4},"count":1,"ignored":0}],"branches":[{"startLoc":{"line":163,"col":9},"endLoc":{"line":163,"col":33},"trueCount":4,"falseCount":1,"group":[],"ignored":0},{"startLoc":{"line":166,"col":9},"endLoc":{"line":166,"col":41},"trueCount":0,"falseCount":1,"group":[],"ignored":0}],"ignored":0,"index":6},{"name":"AppSessionManager.load","count":1,"regions":[{"startLoc":{"line":173,"col":3},"endLoc":{"line":193,"col":4},"count":1,"ignored":0},{"startLoc":{"line":181,"col":9},"endLoc":{"line":187,"col":6},"count":0,"ignored":0},{"startLoc":{"line":175,"col":15},"endLoc":{"line":179,"col":6},"count":1,"ignored":0},{"startLoc":{"line":187,"col":7},"endLoc":{"line":190,"col":6},"count":0,"ignored":0},{"startLoc":{"line":190,"col":15},"endLoc":{"line":192,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":175,"col":9},"endLoc":{"line":175,"col":13},"trueCount":1,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":7},{"name":"AppSessionManager.persist","count":0,"regions":[{"startLoc":{"line":195,"col":3},"endLoc":{"line":210,"col":4},"count":0,"ignored":0},{"startLoc":{"line":201,"col":9},"endLoc":{"line":207,"col":6},"count":0,"ignored":0},{"startLoc":{"line":197,"col":15},"endLoc":{"line":199,"col":6},"count":0,"ignored":0},{"startLoc":{"line":207,"col":7},"endLoc":{"line":209,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":197,"col":9},"endLoc":{"line":197,"col":13},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":8}],"exeLine":{"0":1,"1":2,"2":3,"3":4,"4":5,"5":6,"6":7,"7":9,"8":10,"9":11,"10":12,"11":13,"12":14,"13":15,"14":17,"15":18,"16":19,"17":20,"18":21,"19":24,"20":25,"21":26,"22":28,"23":29,"24":31,"25":32,"26":33,"27":34,"28":38,"29":39,"30":40,"31":41,"32":42,"33":43,"34":44,"35":46,"36":47,"37":50,"38":51,"39":52,"40":53,"41":54,"42":55,"43":58,"44":59,"45":61,"46":62,"47":63,"48":64,"49":67,"50":68,"51":69,"52":72,"53":75,"54":76,"55":77,"56":78,"57":79,"58":80,"59":81,"60":82,"61":84,"62":85,"63":86,"64":87,"65":88,"66":90,"67":91,"68":92,"69":93,"70":94,"71":95,"72":98,"73":99,"74":100,"75":103,"76":104,"77":105,"78":106,"79":107,"80":108,"81":109,"82":110,"83":111,"84":114,"85":115,"86":116,"87":117,"88":120,"89":121,"90":122,"91":123,"92":124,"93":127,"94":128,"95":129,"96":130,"97":131,"98":132,"99":133,"100":134,"101":135,"102":136,"103":140,"104":141,"105":142,"106":143,"107":144,"108":146,"109":147,"110":148,"111":151,"112":152,"113":153,"114":154,"115":155,"116":156,"117":157,"118":158,"119":162,"120":163,"121":164,"122":166,"123":167,"124":169,"125":170,"126":173,"127":174,"128":175,"129":176,"130":177,"131":178,"132":181,"133":182,"134":183,"135":184,"136":185,"137":186,"138":187,"139":188,"140":189,"141":190,"142":191,"143":195,"144":196,"145":197,"146":198,"147":201,"148":202,"149":203,"150":204,"151":205,"152":206,"153":207,"154":208},"summary":{"lines":{"total":129,"covered":36,"pct":27.91,"executedLineCount":[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,-1,0,0,-1,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,-1,-1,0,0,0,0,0,0,-1,-1,5,5,-1,5,5,5,5,-1,-1,0,0,0,-1,-1,0,-1,-1,5,5,5,5,5,0,0,0,-1,5,0,0,0,0,-1,0,0,0,5,5,5,-1,-1,0,0,0,-1,-1,5,0,0,0,0,0,0,0,0,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,5,5,5,5,5,-1,5,5,5,-1,-1,0,0,0,0,0,0,0,0,-1,-1,-1,5,5,4,-1,1,0,-1,1,1,-1,-1,1,1,1,1,1,1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,0,0,0,-1,-1,0,0,0,0,0,0,0,0,-1,-1,-1,-1]},"functions":{"total":9,"covered":5,"pct":55.56},"branches":{"total":28,"covered":6,"pct":21.43}}},"title":"AppSessionManager.ets.html","relativeHome":"..\\..\\index.html"};
+    }
+  };
+
+  const app = Vue.createApp(App);
+  app.use(ElementPlus);
+  app.mount("#app");
+
+  window.onload = function () {
+    prettyPrint();
+  }
+</script>
+
+<style scoped>
+  table.coverage {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 0 0;
+    padding: 0;
+  }
+
+  table.coverage td {
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  table.coverage td.line-count {
+    width: 12%;
+    text-align: right;
+    padding: 0 5px 0 20px;
+  }
+
+  table.coverage td.line-coverage {
+    text-align: right;
+    padding-right: 10px;
+    min-width: 20px;
+  }
+
+  table.coverage td span.cline-any {
+    display: inline-block;
+    padding: 0 5px;
+    width: 100%;
+    height: 18px;
+  }
+
+  .low,
+  .cline-no {
+    background: #FCE1E5
+  }
+
+  .high,
+  .cline-yes {
+    background: rgb(230, 245, 208)
+  }
+
+  span.cline-neutral {
+    background: #eaeaea;
+  }
+
+  pre.prettyprint {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .el-main {
+    box-sizing: border-box;
+    display: block;
+    flex: 1;
+    flex-basis: auto;
+    overflow: auto;
+    padding: var(--el-main-padding)
+  }
+
+  .el-container {
+    min-height: 100vh;
+    height: 100%;
+  }
+
+  .footer {
+    font-size: small;
+  }
+
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .el-col {
+    border-radius: 4px;
+  }
+
+  .green {
+    color: var(--el-color-success);
+  }
+
+  .red {
+    color: var(--el-color-error);
+  }
+
+  .linenums li {
+    height: 18px;
+    line-height: 18px;
+  }
+
+  li.L0,
+  li.L1,
+  li.L2,
+  li.L3,
+  li.L5,
+  li.L6,
+  li.L7,
+  li.L8 {
+    list-style-type: decimal
+  }
+
+  .el-col-5 {
+    max-width: 100%;
+  }
+
+  .el-col-3 {
+    max-width: 100%;
+  }
+
+</style>
+
+</html>

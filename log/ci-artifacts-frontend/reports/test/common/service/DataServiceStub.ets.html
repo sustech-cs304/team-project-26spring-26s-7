@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Import style -->
+  <link rel="stylesheet" href="..\..\index.css" />
+  <link rel="stylesheet" href="..\..\prettify.css" />
+  <!-- Import Vue 3 -->
+  <script src="..\..\vue.global.prod.js"></script>
+  <!-- Import component library -->
+  <script src="..\..\index.full.min.js"></script>
+  <script src="..\..\prettify.js"></script>
+  <title>Coverage</title>
+</head>
+
+<body>
+  <div id="app" class="common-layout">
+    <el-container>
+      <el-header>
+        <el-row :gutter="10">
+          <el-col :span="5">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <el-link type="primary" :href="relativeHome">
+                    <h2>&lt;</h2>
+                  </el-link>
+                </el-text></div>
+              <div><el-text class="mx-1 "><h2>{{title}}</h2></el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info"></el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.functions.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Functions</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.functions.covered}}/{{file.summary.functions.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.branches.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Branches</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.branches.covered}}/{{file.summary.branches.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.lines.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Lines</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.lines.covered}}/{{file.summary.lines.total}}</el-text></div>
+            </el-space>
+          </el-col>
+        </el-row>
+        <el-divider />
+      </el-header>
+      <el-main>
+        <el-row>
+        </el-row>
+        <pre>
+          <table class="coverage">
+            <tr>
+              <td class="line-count quiet">
+                <pre class="prettyprint lang-js">
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+                </pre>
+        </td>
+        <td class="text">
+          <pre class="prettyprint linenums lang-js">
+/* 
+ * Copyright (c) 2024 Huawei Device Co., Ltd. 
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); 
+ * you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at 
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0 
+ * 
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and 
+ * limitations under the License. 
+ */ 
+ 
+import { logger } from &#39;../utils/Logger&#39;; 
+import { IDataService, CreateTravelInput, UpdateTravelInput, CreateNodeInput, UpdateNodeInput } from &#39;./IDataService&#39;; 
+import { Trip, MemoryNode, ReplayTripPreferences } from &#39;./types&#39;; 
+ 
+const TAG = &#39;DataServiceStub&#39;; 
+ 
+/** 
+ * 数据库占位服务 - 用于数据库功能完成前的过渡 
+ * 
+ * 与 MockDataService 的区别： 
+ * - MockDataService: 返回模拟数据，用于 UI 展示和开发 
+ * - DataServiceStub: 返回空数据/默认值，用于&quot;数据库未启用&quot;状态 
+ * 
+ * 使用场景： 
+ * - 数据库代码未完成时，避免调用报错 
+ * - 华为云同步功能未完成时的降级处理 
+ * - 可选功能的安全降级（如无数据时显示空状态） 
+ * 
+ * --- 
+ * 设计说明： 
+ * 所有读取操作返回空数组或 null，不报错 
+ * 所有写入操作记录日志但不执行，返回&quot;成功&quot;假象 
+ * 这样上层调用不会因异常而崩溃 
+ */ 
+export class DataServiceStub implements IDataService { 
+  constructor() { 
+    logger.warn(TAG, &#39;DataServiceStub is active - database features are not available&#39;); 
+  } 
+ 
+  // ==================== Travel 相关 ==================== 
+ 
+  async getAllTravels(): Promise&lt;Trip[]&gt; { 
+    logger.debug(TAG, &#39;getAllTravels() called - returning empty array (STUB)&#39;); 
+    // 返回空数组，让 UI 显示&quot;无数据&quot;状态 
+    return []; 
+  } 
+ 
+  async getTravelById(travelId: string): Promise&lt;Trip | null&gt; { 
+    logger.debug(TAG, `getTravelById(${travelId}) called - returning null (STUB)`); 
+    return null; 
+  } 
+ 
+  async createTravel(travel: CreateTravelInput): Promise&lt;Trip&gt; { 
+    logger.warn(TAG, `createTravel() called but not implemented - returning mock travel (STUB)`); 
+    // 返回一个 mock 对象，避免上层崩溃 
+    return { 
+      id: &#39;stub-travel-001&#39;, 
+      name: travel.name || &#39;未命名旅行&#39;, 
+      description: &#39;&#39;, 
+      coverPhoto: &#39;&#39;, 
+      isPublic: travel.isPublic ?? false, 
+      startDate: Date.now(), 
+      endDate: Date.now(), 
+      replayStyleKitId: travel.replayStyleKitId, 
+      replayBgmId: travel.replayBgmId, 
+      replayFilterId: travel.replayFilterId, 
+      replayTransitionType: travel.replayTransitionType, 
+      replayEnableRipple: travel.replayEnableRipple, 
+      replayEnableBlurOverlay: travel.replayEnableBlurOverlay, 
+      nodeIds: [], 
+      totalDistance: 0, 
+      createdAt: Date.now(), 
+      updatedAt: Date.now() 
+    }; 
+  } 
+ 
+  async updateTravel(travelId: string, data: UpdateTravelInput): Promise&lt;Trip&gt; { 
+    logger.warn(TAG, `updateTravel(${travelId}) called but not implemented (STUB)`); 
+    // 返回一个 mock 对象 
+    return { 
+      id: travelId, 
+      name: &#39;&#39;, 
+      description: &#39;&#39;, 
+      coverPhoto: &#39;&#39;, 
+      isPublic: data.isPublic ?? false, 
+      startDate: 0, 
+      endDate: 0, 
+      replayStyleKitId: data.replayStyleKitId, 
+      replayBgmId: data.replayBgmId, 
+      replayFilterId: data.replayFilterId, 
+      replayTransitionType: data.replayTransitionType, 
+      replayEnableRipple: data.replayEnableRipple, 
+      replayEnableBlurOverlay: data.replayEnableBlurOverlay, 
+      nodeIds: [], 
+      totalDistance: 0, 
+      createdAt: Date.now(), 
+      updatedAt: Date.now() 
+    }; 
+  } 
+ 
+  async deleteTravel(travelId: string): Promise&lt;void&gt; { 
+    logger.warn(TAG, `deleteTravel(${travelId}) called but not implemented (STUB)`); 
+    // 不执行任何操作，假装成功 
+  } 
+ 
+  async getTripReplayPreferences(travelId: string): Promise&lt;ReplayTripPreferences&gt; { 
+    logger.warn(TAG, `getTripReplayPreferences(${travelId}) called but not implemented (STUB)`); 
+    return {}; 
+  } 
+ 
+  async updateTripReplayPreferences(travelId: string, data: ReplayTripPreferences): Promise&lt;ReplayTripPreferences&gt; { 
+    logger.warn(TAG, `updateTripReplayPreferences(${travelId}) called but not implemented (STUB)`); 
+    return data; 
+  } 
+ 
+  // ==================== MemoryNode 相关 ==================== 
+ 
+  async getNodesByTravelId(travelId: string): Promise&lt;MemoryNode[]&gt; { 
+    logger.debug(TAG, `getNodesByTravelId(${travelId}) called - returning empty array (STUB)`); 
+    return []; 
+  } 
+ 
+  async getNodeById(nodeId: string): Promise&lt;MemoryNode | null&gt; { 
+    logger.debug(TAG, `getNodeById(${nodeId}) called - returning null (STUB)`); 
+    return null; 
+  } 
+ 
+  async createNode(node: CreateNodeInput): Promise&lt;MemoryNode&gt; { 
+    logger.warn(TAG, `createNode() called but not implemented - returning mock node (STUB)`); 
+    return { 
+      id: &#39;stub-node-001&#39;, 
+      travelId: node.travelId, 
+      title: &#39;&#39;, 
+      content: &#39;&#39;, 
+      latitude: 0, 
+      longitude: 0, 
+      poiName: &#39;&#39;, 
+      photos: [], 
+      mood: &#39;&#39;, 
+      tags: [], 
+      createdAt: Date.now(), 
+      updatedAt: Date.now() 
+    }; 
+  } 
+ 
+  async updateNode(nodeId: string, data: UpdateNodeInput): Promise&lt;MemoryNode&gt; { 
+    logger.warn(TAG, `updateNode(${nodeId}) called but not implemented (STUB)`); 
+    return { 
+      id: nodeId, 
+      travelId: data.travelId ?? &#39;&#39;, 
+      title: &#39;&#39;, 
+      content: &#39;&#39;, 
+      latitude: 0, 
+      longitude: 0, 
+      poiName: &#39;&#39;, 
+      photos: [], 
+      mood: &#39;&#39;, 
+      tags: [], 
+      createdAt: Date.now(), 
+      updatedAt: Date.now() 
+    }; 
+  } 
+ 
+  async deleteNode(nodeId: string): Promise&lt;void&gt; { 
+    logger.warn(TAG, `deleteNode(${nodeId}) called but not implemented (STUB)`); 
+    // 不执行任何操作 
+  } 
+ 
+  async reorderNodes(travelId: string, nodeIds: string[]): Promise&lt;void&gt; { 
+    logger.warn(TAG, `reorderNodes() called but not implemented (STUB)`); 
+    // 不执行任何操作 
+  } 
+ 
+  async syncNodeOrdersToCloud(travelId: string): Promise&lt;void&gt; { 
+    logger.warn(TAG, `syncNodeOrdersToCloud(${travelId}) called but not implemented (STUB)`); 
+    // 不执行任何操作 
+  } 
+ 
+  async sortNodesByVisitedAt(travelId: string): Promise&lt;void&gt; { 
+    logger.warn(TAG, `sortNodesByVisitedAt(${travelId}) called but not implemented (STUB)`); 
+  } 
+} 
+
+              </pre>
+        </td>
+        </tr>
+        </table>
+        </pre>
+      </el-main>
+      <el-footer align="middle" class="footer">
+        Code coverage generated by <el-link href="https://github.com/SMAT-Lab/bjc" type="primary"
+          target="_blank">bjc</el-link> at {{date}}
+      </el-footer>
+    </el-container>
+  </div>
+</body>
+
+<script>
+  const App = {
+    data() {
+      return {"date":"Fri May 22 2026 22:32:24 GMT+0800 (中国标准时间)","file":{"version":"bjc v1.0.0","versionCode":10000,"path":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend/entry/src/main/ets/common/service/DataServiceStub.ets","hash":"688bf1e0822c639f5afa2ce5336e18db9a89abb1bece57cca9d6eb24f3e12036","lineCnt":188,"count":0,"projectPath":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend","functions":[{"name":"DataServiceStub.constructor","count":0,"regions":[{"startLoc":{"line":41,"col":3},"endLoc":{"line":43,"col":4},"count":0,"ignored":0},{"startLoc":{"line":42,"col":5},"endLoc":{"line":43,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":0},{"name":"DataServiceStub.getAllTravels","count":0,"regions":[{"startLoc":{"line":47,"col":3},"endLoc":{"line":51,"col":4},"count":0,"ignored":0},{"startLoc":{"line":48,"col":5},"endLoc":{"line":51,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":1},{"name":"DataServiceStub.getTravelById","count":0,"regions":[{"startLoc":{"line":53,"col":3},"endLoc":{"line":56,"col":4},"count":0,"ignored":0},{"startLoc":{"line":54,"col":5},"endLoc":{"line":56,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":2},{"name":"DataServiceStub.createTravel","count":0,"regions":[{"startLoc":{"line":58,"col":3},"endLoc":{"line":80,"col":4},"count":0,"ignored":0},{"startLoc":{"line":59,"col":5},"endLoc":{"line":80,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":3},{"name":"DataServiceStub.updateTravel","count":0,"regions":[{"startLoc":{"line":82,"col":3},"endLoc":{"line":104,"col":4},"count":0,"ignored":0},{"startLoc":{"line":83,"col":5},"endLoc":{"line":104,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":4},{"name":"DataServiceStub.deleteTravel","count":0,"regions":[{"startLoc":{"line":106,"col":3},"endLoc":{"line":109,"col":4},"count":0,"ignored":0},{"startLoc":{"line":107,"col":5},"endLoc":{"line":109,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":5},{"name":"DataServiceStub.getTripReplayPreferences","count":0,"regions":[{"startLoc":{"line":111,"col":3},"endLoc":{"line":114,"col":4},"count":0,"ignored":0},{"startLoc":{"line":112,"col":5},"endLoc":{"line":114,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":6},{"name":"DataServiceStub.updateTripReplayPreferences","count":0,"regions":[{"startLoc":{"line":116,"col":3},"endLoc":{"line":119,"col":4},"count":0,"ignored":0},{"startLoc":{"line":117,"col":5},"endLoc":{"line":119,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":7},{"name":"DataServiceStub.getNodesByTravelId","count":0,"regions":[{"startLoc":{"line":123,"col":3},"endLoc":{"line":126,"col":4},"count":0,"ignored":0},{"startLoc":{"line":124,"col":5},"endLoc":{"line":126,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":8},{"name":"DataServiceStub.getNodeById","count":0,"regions":[{"startLoc":{"line":128,"col":3},"endLoc":{"line":131,"col":4},"count":0,"ignored":0},{"startLoc":{"line":129,"col":5},"endLoc":{"line":131,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":9},{"name":"DataServiceStub.createNode","count":0,"regions":[{"startLoc":{"line":133,"col":3},"endLoc":{"line":149,"col":4},"count":0,"ignored":0},{"startLoc":{"line":134,"col":5},"endLoc":{"line":149,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":10},{"name":"DataServiceStub.updateNode","count":0,"regions":[{"startLoc":{"line":151,"col":3},"endLoc":{"line":167,"col":4},"count":0,"ignored":0},{"startLoc":{"line":152,"col":5},"endLoc":{"line":167,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":11},{"name":"DataServiceStub.deleteNode","count":0,"regions":[{"startLoc":{"line":169,"col":3},"endLoc":{"line":172,"col":4},"count":0,"ignored":0},{"startLoc":{"line":170,"col":5},"endLoc":{"line":172,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":12},{"name":"DataServiceStub.reorderNodes","count":0,"regions":[{"startLoc":{"line":174,"col":3},"endLoc":{"line":177,"col":4},"count":0,"ignored":0},{"startLoc":{"line":175,"col":5},"endLoc":{"line":177,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":13},{"name":"DataServiceStub.syncNodeOrdersToCloud","count":0,"regions":[{"startLoc":{"line":179,"col":3},"endLoc":{"line":182,"col":4},"count":0,"ignored":0},{"startLoc":{"line":180,"col":5},"endLoc":{"line":182,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":14},{"name":"DataServiceStub.sortNodesByVisitedAt","count":0,"regions":[{"startLoc":{"line":184,"col":3},"endLoc":{"line":186,"col":4},"count":0,"ignored":0},{"startLoc":{"line":185,"col":5},"endLoc":{"line":186,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":15}],"exeLine":{"0":16,"1":17,"2":18,"3":20,"4":40,"5":41,"6":42,"7":47,"8":48,"9":50,"10":53,"11":54,"12":55,"13":58,"14":59,"15":61,"16":62,"17":63,"18":64,"19":65,"20":66,"21":67,"22":68,"23":69,"24":70,"25":71,"26":72,"27":73,"28":74,"29":75,"30":76,"31":77,"32":78,"33":82,"34":83,"35":85,"36":86,"37":87,"38":88,"39":89,"40":90,"41":91,"42":92,"43":93,"44":94,"45":95,"46":96,"47":97,"48":98,"49":99,"50":100,"51":101,"52":102,"53":106,"54":107,"55":111,"56":112,"57":113,"58":116,"59":117,"60":118,"61":123,"62":124,"63":125,"64":128,"65":129,"66":130,"67":133,"68":134,"69":135,"70":136,"71":137,"72":138,"73":139,"74":140,"75":141,"76":142,"77":143,"78":144,"79":145,"80":146,"81":147,"82":151,"83":152,"84":153,"85":154,"86":155,"87":156,"88":157,"89":158,"90":159,"91":160,"92":161,"93":162,"94":163,"95":164,"96":165,"97":169,"98":170,"99":174,"100":175,"101":179,"102":180,"103":184,"104":185},"summary":{"lines":{"total":100,"covered":0,"pct":0,"executedLineCount":[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,-1,-1,-1,-1,0,0,-1,0,-1,-1,0,0,0,-1,-1,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,0,-1,-1,-1,0,0,0,-1,-1,0,0,0,-1,-1,-1,-1,0,0,0,-1,-1,0,0,0,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,0,-1,-1,-1,0,0,-1,-1,-1,0,0,-1,-1,-1,0,0,-1,-1,-1]},"functions":{"total":16,"covered":0,"pct":0},"branches":{"total":0,"covered":0,"pct":100}}},"title":"DataServiceStub.ets.html","relativeHome":"..\\..\\index.html"};
+    }
+  };
+
+  const app = Vue.createApp(App);
+  app.use(ElementPlus);
+  app.mount("#app");
+
+  window.onload = function () {
+    prettyPrint();
+  }
+</script>
+
+<style scoped>
+  table.coverage {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 0 0;
+    padding: 0;
+  }
+
+  table.coverage td {
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  table.coverage td.line-count {
+    width: 12%;
+    text-align: right;
+    padding: 0 5px 0 20px;
+  }
+
+  table.coverage td.line-coverage {
+    text-align: right;
+    padding-right: 10px;
+    min-width: 20px;
+  }
+
+  table.coverage td span.cline-any {
+    display: inline-block;
+    padding: 0 5px;
+    width: 100%;
+    height: 18px;
+  }
+
+  .low,
+  .cline-no {
+    background: #FCE1E5
+  }
+
+  .high,
+  .cline-yes {
+    background: rgb(230, 245, 208)
+  }
+
+  span.cline-neutral {
+    background: #eaeaea;
+  }
+
+  pre.prettyprint {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .el-main {
+    box-sizing: border-box;
+    display: block;
+    flex: 1;
+    flex-basis: auto;
+    overflow: auto;
+    padding: var(--el-main-padding)
+  }
+
+  .el-container {
+    min-height: 100vh;
+    height: 100%;
+  }
+
+  .footer {
+    font-size: small;
+  }
+
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .el-col {
+    border-radius: 4px;
+  }
+
+  .green {
+    color: var(--el-color-success);
+  }
+
+  .red {
+    color: var(--el-color-error);
+  }
+
+  .linenums li {
+    height: 18px;
+    line-height: 18px;
+  }
+
+  li.L0,
+  li.L1,
+  li.L2,
+  li.L3,
+  li.L5,
+  li.L6,
+  li.L7,
+  li.L8 {
+    list-style-type: decimal
+  }
+
+  .el-col-5 {
+    max-width: 100%;
+  }
+
+  .el-col-3 {
+    max-width: 100%;
+  }
+
+</style>
+
+</html>

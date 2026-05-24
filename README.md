@@ -2,6 +2,8 @@
 
 # TravelPin
 
+![APP海报](references/media/photos/poster.png)
+
 TravelPin 是一个基于 HarmonyOS 的旅行记忆应用，帮助用户将照片和地点绑定到地图上，并按旅行线路进行组织，同时支持生成 AI 旅行文案，方便记录与分享旅途中的精彩瞬间。
 
 本 README 介绍项目的核心功能、安装与配置方法、运行方式，以及几个简单的使用示例，方便新用户快速上手。

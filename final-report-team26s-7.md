@@ -1,8 +1,8 @@
-# Team Report - TravelPin
+# Team Report - ItsMapPin
 
 **Team ID**: team26s-7
 
-**Project**: TravelPin - HarmonyOS travel journal app
+**Project**: ItsMapPin - HarmonyOS travel journal app
 
 **Date**: 2026-05-14
 
@@ -18,13 +18,11 @@ being added together.
 
 Frontend CI artifact:
 
-- Runner path: `D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\log\ci-artifacts-build-21\metrics\summary.txt`
-- Repo-relative path: `log/ci-artifacts-build-21/metrics/summary.txt`
+- Repo-relative path: `log/ci-artifacts-frontend/metrics/summary.txt`
 - CI build: frontend Jenkins build 21
 
 Backend CI artifact:
 
-- Runner path: `D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\backend\metrics\summary.txt`
 - Repo-relative path: `backend/metrics/summary.txt`
 - CI build: backend Jenkins build 27, commit `8497f59f`
 
@@ -34,6 +32,7 @@ Backend CI artifact:
 |---|---:|---:|---:|---|
 | Source files | 89 `.ets` | 38 `.py` | 127 | CI source-file counts |
 | LOC, total lines | 27,868 | 6,705 | 34,573 | Frontend total lines + backend service lines |
+| Cyclomatic complexity (total / avg) | 3,057 / 3.46 | 1,123 / 3.54 | N/A | Function-level CCN; per-side, not summed across languages |
 | Direct dependencies | 6 | 11 | 17 | Frontend package manifest + backend service requirements |
 
 ### 1.3 Frontend Metrics
@@ -42,8 +41,6 @@ Backend CI artifact:
 |---|---:|---|
 | Source files | 89 | `.ets` files counted by frontend CI |
 | LOC, total lines | 27,868 | `LOC (total lines)` |
-| NLOC | 0 | `NLOC (lizard)` - not available |
-| Comment/blank density | 100% | From frontend metrics summary |
 | Functions detected | 883 | PowerShell brace-matched scan |
 | File-level cyclomatic complexity | 2,652 total / 29.8 average per file | Regex-based file-level CCN |
 | Function-level cyclomatic complexity | 3,057 total / 3.46 average per function | PowerShell per-function parser |
@@ -69,12 +66,6 @@ Frontend complexity hotspots:
 | 98 | `feature/map-travel/pages/NodeDetailPage.ets` | 980 |
 | 97 | `common/data/TravelRepository.ets` | 561 |
 | 90 | `common/api/AiGatewayClient.ets` | 646 |
-
-Frontend test result in the same CI build:
-
-```text
-Tests run: 35, Failure: 0, Error: 0, Pass: 35, Ignore: 0
-```
 
 ### 1.4 Backend Metrics
 
@@ -125,7 +116,7 @@ Backend complexity hotspots from Radon:
 
 ## 2. CI/CD Pipeline Description
 
-TravelPin uses a GitHub Actions and Jenkins bridge for the frontend CI pipeline.
+ItsMapPin uses a GitHub Actions and Jenkins bridge for the frontend CI pipeline.
 GitHub Actions runs on a Windows self-hosted runner, triggers the local Jenkins
 job, streams Jenkins logs back into the GitHub Actions job, and uploads the
 Jenkins output directory as a GitHub Actions artifact. Jenkins performs the
@@ -147,9 +138,19 @@ pytest, coverage generation, metrics collection, and artifact packaging.
 | Clean | Cleans build caches and previous generated outputs. | Windows shell / PowerShell |
 | Install Dependencies | Installs HarmonyOS frontend dependencies. | OHPM |
 | Compile | Builds the HarmonyOS HAP package. | `frontend/build.ps1 --mode module -p module=entry@default assembleHap`, Hvigor |
-| Test | Runs the business test suite. | `frontend/build.ps1 test`, Hypium |
+| Test | Runs the business test suite and collects per-test results plus ETS line-level coverage data. | `frontend/build.ps1 test`, Hypium |
 | Archive | Archives generated HAP packages and test/coverage reports. | Jenkins `archiveArtifacts`, GitHub Actions artifact upload |
 | Metrics | Computes source file count, LOC, CCN, function count, and dependency count. | Jenkinsfile PowerShell metrics script |
+
+**Note — Frontend Lint**: The frontend does not include a dedicated lint stage in the
+pipeline. ArkTS is a HarmonyOS-specific language whose type checking and lint
+infrastructure are deeply integrated into DevEco Studio (powered by the Hvigor build
+system and the ArkTS compiler). Unlike mainstream languages with standalone CLI linters
+(e.g., ESLint for JavaScript, Ruff for Python), ArkTS has no mature, externally
+triggerable lint tool that can run independently of the DevEco IDE environment.
+Therefore, ArkTS code quality checks are performed during development inside DevEco
+Studio rather than as a CI stage. The frontend Compile stage does surface compiler
+warnings, which are filtered and displayed in the build log.
 
 ### Backend Jenkins Pipeline Steps
 
@@ -162,8 +163,40 @@ pytest, coverage generation, metrics collection, and artifact packaging.
 | Lint | Runs Ruff on `ai-relay`, `sensitive-filter`, `picture-check`, `share-service`, and `ci`; lint is warn-only and writes `reports/lint-ruff.txt`. | `ruff==0.6.9` |
 | Compile | Performs Python syntax compilation for backend service and CI modules. | `python -m compileall -q` |
 | Test | Runs import smoke checks for `ai-relay`, `sensitive-filter`, and `picture-check`, then runs the `share-service` pytest suite with JUnit XML and coverage reports. | `backend/ci/smoke_imports.py`, `pytest`, `pytest-cov` |
-| Metrics | Counts Python files and LOC, computes Radon cyclomatic complexity, maintainability index, raw stats, and writes backend `metrics/summary.txt`. | `radon cc`, `radon mi`, `radon raw`, Bash |
+| Metrics | Counts Python files and LOC; computes Radon cyclomatic complexity, maintainability index, and raw stats; also generates documentation-level reports (`metrics/summary.txt`, `cyclomatic-complexity.txt`, `maintainability-index.txt`, `raw-stats.txt`, `loc.txt`) that serve as automated code-quality documentation for each build. | `radon cc`, `radon mi`, `radon raw`, Bash |
 | Archive | Packages backend source, reports, metrics, metadata, and logs into tarballs with checksums, then archives them in Jenkins. | `tar`, `sha256sum`, Jenkins `archiveArtifacts` |
+
+### Generated Test Reports and Documentation
+
+Both pipelines generate structured test reports and code-quality documentation as CI
+artifacts. The following table lists the key reports, their purpose, and their paths
+under the `log/` directory.
+
+**Frontend reports** (under `log/ci-artifacts-frontend/`):
+
+| Report | Path | Purpose |
+|---|---|---|
+| Per-test results | `reports/coverage/coverage_data/test_result.txt` | Lists each test case name, class, and pass/fail status from Hypium. |
+| Per-source coverage HTML | `reports/test/index.html` and per-package subdirectories | Line-level ETS coverage report browsable by package and file (e.g., `test/common/api/AiGatewayClient.ets.html`). |
+| Coverage JSON | `reports/test/coverageReport.json` | Machine-readable line-coverage summary for the entire test suite. |
+| ETS coverage data | `reports/coverage/etsCoverageData.json`, `reports/coverage/init_coverage.json` | Raw ETS line-coverage data used by the HTML report generator. |
+| JS coverage data | `reports/coverage/coverage_data/js_coverage.json` | JavaScript-level coverage data collected during test execution. |
+| Metrics summary | `metrics/summary.txt` | Aggregated metrics: source file count, LOC, function count, file- and function-level CCN, dependency list. |
+
+**Backend reports** (under `log/ci-artifacts-backend/`):
+
+| Report | Path | Purpose |
+|---|---|---|
+| JUnit test results | `reports/junit-share-service.xml` | JUnit XML report from pytest; consumed by Jenkins for test-result trending. |
+| Coverage XML (Cobertura) | `reports/coverage-share-service.xml` | Machine-readable coverage report in Cobertura format for CI integration. |
+| Coverage HTML | `reports/coverage-share-service-html/index.html` | Browsable per-file coverage report with line-level hit/miss highlighting. |
+| Lint findings | `reports/lint-ruff.txt` | Ruff lint output in GitHub annotation format; warn-only, does not fail the build. |
+| Cyclomatic complexity | `metrics/cyclomatic-complexity.txt` | Per-function Radon CC report ranked by complexity. |
+| Maintainability index | `metrics/maintainability-index.txt` | Radon MI scores per module, indicating overall code maintainability. |
+| Raw stats | `metrics/raw-stats.txt` | Radon raw metrics: LOC, lloc, sloc, comments, multi-line stats per file. |
+| LOC by service | `metrics/loc.txt` | Source file count and line count broken down by backend service. |
+| Metrics summary | `metrics/summary.txt` | Aggregated backend metrics with per-service breakdown and dependency list. |
+| Dependency freeze | `metrics/pip-freeze.txt` | Full pip freeze snapshot for reproducibility. |
 
 ### Triggering and Feedback
 
@@ -197,11 +230,11 @@ Frontend proof:
 
 - GitHub Actions run URL:
   <https://github.com/sustech-cs304/team-project-26spring-26s-7/actions/runs/25851795537/job/75959874734>
-- Local artifact directory on the runner:
-  `D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7\log\ci-artifacts-build-21`
 - Packaged HAP artifacts:
-  - `log/ci-artifacts-build-21/packages/entry-default-signed.hap`
-  - `log/ci-artifacts-build-21/packages/entry-default-unsigned.hap`
+  - `log/ci-artifacts-frontend/packages/entry-default-signed.hap`
+  - `log/ci-artifacts-frontend/packages/entry-default-unsigned.hap`
+- Packaged Logs:
+  - `log\ci-artifacts-frontend\logs`
 
 ![Frontend GitHub Actions success](documents/screenshots/frontend_jenkins_github_success_total.jpg)
 
@@ -215,6 +248,8 @@ Backend proof:
 
 - Backend Jenkins URL:
   <http://139.159.143.195:8080/job/team-project-backend-ci/>
+- Packaged Logs:
+  - `log\ci-artifacts-backend\logs`
 
 ![Backend Jenkins status](documents/screenshots/backend_jenkins_status.jpg)
 

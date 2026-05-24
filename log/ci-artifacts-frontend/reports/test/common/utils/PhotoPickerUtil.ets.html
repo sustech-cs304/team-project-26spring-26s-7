@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Import style -->
+  <link rel="stylesheet" href="..\..\index.css" />
+  <link rel="stylesheet" href="..\..\prettify.css" />
+  <!-- Import Vue 3 -->
+  <script src="..\..\vue.global.prod.js"></script>
+  <!-- Import component library -->
+  <script src="..\..\index.full.min.js"></script>
+  <script src="..\..\prettify.js"></script>
+  <title>Coverage</title>
+</head>
+
+<body>
+  <div id="app" class="common-layout">
+    <el-container>
+      <el-header>
+        <el-row :gutter="10">
+          <el-col :span="5">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <el-link type="primary" :href="relativeHome">
+                    <h2>&lt;</h2>
+                  </el-link>
+                </el-text></div>
+              <div><el-text class="mx-1 "><h2>{{title}}</h2></el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info"></el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.functions.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Functions</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.functions.covered}}/{{file.summary.functions.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.branches.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Branches</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.branches.covered}}/{{file.summary.branches.total}}</el-text></div>
+            </el-space>
+          </el-col>
+          <el-col :span="3">
+            <el-space :size="size" spacer="">
+              <div><el-text class="mx-1 ">
+                  <h2>{{file.summary.lines.pct}}%</h2>
+                </el-text></div>
+              <div><el-text class="mx-1 ">Lines</el-text></div>
+              <div><el-text class="mx-1 "
+                  type="info">{{file.summary.lines.covered}}/{{file.summary.lines.total}}</el-text></div>
+            </el-space>
+          </el-col>
+        </el-row>
+        <el-divider />
+      </el-header>
+      <el-main>
+        <el-row>
+        </el-row>
+        <pre>
+          <table class="coverage">
+            <tr>
+              <td class="line-count quiet">
+                <pre class="prettyprint lang-js">
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+                </pre>
+        </td>
+        <td class="text">
+          <pre class="prettyprint linenums lang-js">
+/* 
+ * Copyright (c) 2024 Huawei Device Co., Ltd. 
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); 
+ * you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at 
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0 
+ * 
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and 
+ * limitations under the License. 
+ */ 
+ 
+import { photoAccessHelper } from &#39;@kit.MediaLibraryKit&#39;; 
+import { fileIo as fs } from &#39;@kit.CoreFileKit&#39;; 
+import { common } from &#39;@kit.AbilityKit&#39;; 
+import { BusinessError } from &#39;@kit.BasicServicesKit&#39;; 
+import { logger } from &#39;./Logger&#39;; 
+ 
+const TAG = &#39;PhotoPickerUtil&#39;; 
+ 
+/** 
+ * 照片选择与沙箱存储工具类 
+ * 
+ * 实现流程： 
+ * 1. PhotoViewPicker.select() - 拉起系统图库选择照片 
+ * 2. fs.copyFile() - 复制照片到应用沙箱私有目录 
+ * 3. 返回沙箱路径数组 - 存入数据库，永久可访问 
+ * 
+ * 优势： 
+ * - 应用私有目录，不依赖外部权限 
+ * - 应用重启后仍可访问照片 
+ * - Replay 功能可直接使用沙箱路径 
+ */ 
+export class PhotoPickerUtil { 
+  /** 
+   * 选择照片并存储到沙箱 
+   * @param context UIAbilityContext 
+   * @param maxCount 最大选择数量（默认 9 张） 
+   * @returns 沙箱路径数组 
+   */ 
+  static async pickAndSavePhotos(context: common.UIAbilityContext, maxCount: number = 9): Promise&lt;string[]&gt; { 
+    try { 
+      logger.info(TAG, `Starting photo selection, maxCount=${maxCount}`); 
+ 
+      // Step 1: 拉起图库选择器 
+      const photoSelectOptions = new photoAccessHelper.PhotoSelectOptions(); 
+      photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE; 
+      photoSelectOptions.maxSelectNumber = maxCount; 
+ 
+      const photoViewPicker = new photoAccessHelper.PhotoViewPicker(); 
+      const selectResult = await photoViewPicker.select(photoSelectOptions); 
+      const uris = selectResult.photoUris; 
+ 
+      logger.info(TAG, `Selected ${uris.length} photos from gallery, uris=${JSON.stringify(uris)}`); 
+ 
+      if (uris.length === 0) { 
+        logger.info(TAG, &#39;No photos selected, returning empty array&#39;); 
+        return []; 
+      } 
+ 
+      // Step 2: 复制每张照片到沙箱 
+      const sandboxPaths: string[] = []; 
+      for (let i = 0; i &lt; uris.length; i++) { 
+        const uri = uris[i]; 
+        logger.info(TAG, `Copying photo ${i + 1}/${uris.length}: ${uri}`); 
+        const sandboxPath = await PhotoPickerUtil.copyToSandbox(context, uri); 
+        if (sandboxPath.length &gt; 0) { 
+          sandboxPaths.push(sandboxPath); 
+          logger.info(TAG, `Successfully copied to: ${sandboxPath}`); 
+        } else { 
+          logger.error(TAG, `Failed to copy photo ${i + 1}`); 
+        } 
+      } 
+ 
+      logger.info(TAG, `Successfully saved ${sandboxPaths.length}/${uris.length} photos to sandbox`); 
+      return sandboxPaths; 
+    } catch (err) { 
+      const error = err as BusinessError; 
+      logger.error(TAG, `pickAndSavePhotos failed: code=${error.code}, msg=${error.message}, stack=${error.stack}`); 
+      return []; 
+    } 
+  } 
+ 
+  /** 
+   * 复制单张照片到沙箱目录 
+   * @param context UIAbilityContext 
+   * @param sourceUri Picker 返回的临时 URI 
+   * @returns 沙箱路径 
+   */ 
+  private static async copyToSandbox(context: common.UIAbilityContext, sourceUri: string): Promise&lt;string&gt; { 
+    try { 
+      logger.info(TAG, `copyToSandbox: sourceUri=${sourceUri}`); 
+ 
+      // 确保沙箱照片目录存在 
+      const sandboxDir = PhotoPickerUtil.getSandboxPhotoDir(context); 
+      logger.info(TAG, `Target sandbox directory: ${sandboxDir}`); 
+ 
+      PhotoPickerUtil.ensureDirectoryExists(sandboxDir); 
+ 
+      // 生成唯一文件名 
+      const fileName = PhotoPickerUtil.generateFileName(); 
+      const targetPath = `${sandboxDir}/${fileName}`; 
+      logger.info(TAG, `Target file path: ${targetPath}`); 
+ 
+      // 打开源文件（临时 URI，只读权限） 
+      logger.info(TAG, `Opening source file...`); 
+      const sourceFile = fs.openSync(sourceUri, fs.OpenMode.READ_ONLY); 
+      logger.info(TAG, `Source file opened, fd=${sourceFile.fd}`); 
+ 
+      // 创建目标文件 
+      logger.info(TAG, `Creating target file...`); 
+      const targetFile = fs.openSync(targetPath, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY); 
+      logger.info(TAG, `Target file created, fd=${targetFile.fd}`); 
+ 
+      // 复制文件内容 
+      const bufferSize = 4096; 
+      const buffer = new ArrayBuffer(bufferSize); 
+      let totalBytes = 0; 
+ 
+      logger.info(TAG, `Starting file copy...`); 
+      let readLen = fs.readSync(sourceFile.fd, buffer); 
+      while (readLen &gt; 0) { 
+        fs.writeSync(targetFile.fd, buffer.slice(0, readLen)); 
+        totalBytes += readLen; 
+        readLen = fs.readSync(sourceFile.fd, buffer); 
+      } 
+ 
+      // 关闭文件 
+      fs.closeSync(sourceFile); 
+      fs.closeSync(targetFile); 
+ 
+      logger.info(TAG, `Successfully copied photo: ${targetPath} (${totalBytes} bytes)`); 
+      // 返回带 file:// 前缀的路径，供 Image 组件使用 
+      return `file://${targetPath}`; 
+    } catch (err) { 
+      const error = err as BusinessError; 
+      logger.error(TAG, `copyToSandbox failed: code=${error.code}, msg=${error.message}`); 
+      return &#39;&#39;; 
+    } 
+  } 
+ 
+  /** 
+   * 获取沙箱照片目录路径 
+   */ 
+  static getSandboxPhotoDir(context: common.UIAbilityContext): string { 
+    return `${context.filesDir}/photos`; 
+  } 
+ 
+  /** 
+   * 确保目录存在 
+   */ 
+  private static ensureDirectoryExists(dirPath: string): void { 
+    try { 
+      // 尝试创建目录（递归模式，如果已存在不会报错） 
+      fs.mkdirSync(dirPath, true); 
+      logger.info(TAG, `Directory ready: ${dirPath}`); 
+    } catch (err) { 
+      const error = err as BusinessError; 
+      // 如果目录已存在，会返回特定错误码，这是正常的 
+      logger.info(TAG, `Directory check result: code=${error.code}, msg=${error.message}`); 
+    } 
+  } 
+ 
+  /** 
+   * 生成唯一文件名 
+   */ 
+  private static generateFileName(): string { 
+    const timestamp = Date.now(); 
+    const random = Math.floor(Math.random() * 1000); 
+    return `photo_${timestamp}_${random}.jpg`; 
+  } 
+ 
+  /** 
+   * 删除沙箱中的照片文件 
+   * @param sandboxPath 沙箱路径（可能带 file:// 前缀） 
+   */ 
+  static async deletePhoto(sandboxPath: string): Promise&lt;boolean&gt; { 
+    try { 
+      // 移除 file:// 前缀（如果有） 
+      const realPath = sandboxPath.startsWith(&#39;file://&#39;) ? sandboxPath.substring(7) : sandboxPath; 
+      fs.unlinkSync(realPath); 
+      logger.info(TAG, `Deleted photo: ${realPath}`); 
+      return true; 
+    } catch (err) { 
+      const error = err as BusinessError; 
+      logger.error(TAG, `deletePhoto failed: ${error.message}`); 
+      return false; 
+    } 
+  } 
+ 
+  /** 
+   * 批量删除沙箱照片 
+   * @param sandboxPaths 沙箱路径数组 
+   */ 
+  static async deletePhotos(sandboxPaths: string[]): Promise&lt;void&gt; { 
+    for (const path of sandboxPaths) { 
+      await PhotoPickerUtil.deletePhoto(path); 
+    } 
+    logger.info(TAG, `Deleted ${sandboxPaths.length} photos from sandbox`); 
+  } 
+ 
+  /** 
+   * 检查沙箱照片是否存在 
+   */ 
+  static photoExists(sandboxPath: string): boolean { 
+    try { 
+      const realPath = sandboxPath.startsWith(&#39;file://&#39;) ? sandboxPath.substring(7) : sandboxPath; 
+      fs.accessSync(realPath); 
+      return true; 
+    } catch { 
+      return false; 
+    } 
+  } 
+}
+              </pre>
+        </td>
+        </tr>
+        </table>
+        </pre>
+      </el-main>
+      <el-footer align="middle" class="footer">
+        Code coverage generated by <el-link href="https://github.com/SMAT-Lab/bjc" type="primary"
+          target="_blank">bjc</el-link> at {{date}}
+      </el-footer>
+    </el-container>
+  </div>
+</body>
+
+<script>
+  const App = {
+    data() {
+      return {"date":"Fri May 22 2026 22:32:24 GMT+0800 (中国标准时间)","file":{"version":"bjc v1.0.0","versionCode":10000,"path":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend/entry/src/main/ets/common/utils/PhotoPickerUtil.ets","hash":"b8c5a7a2d6e2c95395f60de1892b47d33a7194dd58dcda42baa47535186e0633","lineCnt":217,"count":0,"projectPath":"C:/Windows/System32/config/systemprofile/AppData/Local/Jenkins/.jenkins/workspace/travelpin-ci@2/frontend","functions":[{"name":"PhotoPickerUtil.pickAndSavePhotos","count":0,"regions":[{"startLoc":{"line":44,"col":3},"endLoc":{"line":85,"col":4},"count":0,"ignored":0},{"startLoc":{"line":45,"col":9},"endLoc":{"line":80,"col":6},"count":0,"ignored":0},{"startLoc":{"line":66,"col":7},"endLoc":{"line":76,"col":8},"count":0,"ignored":0},{"startLoc":{"line":80,"col":7},"endLoc":{"line":84,"col":6},"count":0,"ignored":0},{"startLoc":{"line":59,"col":30},"endLoc":{"line":62,"col":8},"count":0,"ignored":0},{"startLoc":{"line":70,"col":37},"endLoc":{"line":73,"col":10},"count":0,"ignored":0},{"startLoc":{"line":73,"col":16},"endLoc":{"line":75,"col":10},"count":0,"ignored":0},{"startLoc":{"line":78,"col":7},"endLoc":{"line":80,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":59,"col":11},"endLoc":{"line":59,"col":28},"trueCount":0,"falseCount":0,"group":[],"ignored":0},{"startLoc":{"line":70,"col":13},"endLoc":{"line":70,"col":35},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":0},{"name":"PhotoPickerUtil.copyToSandbox","count":0,"regions":[{"startLoc":{"line":93,"col":3},"endLoc":{"line":143,"col":4},"count":0,"ignored":0},{"startLoc":{"line":94,"col":9},"endLoc":{"line":138,"col":6},"count":0,"ignored":0},{"startLoc":{"line":132,"col":7},"endLoc":{"line":138,"col":6},"count":0,"ignored":0},{"startLoc":{"line":138,"col":7},"endLoc":{"line":142,"col":6},"count":0,"ignored":0},{"startLoc":{"line":125,"col":7},"endLoc":{"line":129,"col":8},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":1},{"name":"PhotoPickerUtil.getSandboxPhotoDir","count":0,"regions":[{"startLoc":{"line":148,"col":3},"endLoc":{"line":150,"col":4},"count":0,"ignored":0},{"startLoc":{"line":149,"col":5},"endLoc":{"line":150,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":2},{"name":"PhotoPickerUtil.ensureDirectoryExists","count":0,"regions":[{"startLoc":{"line":155,"col":3},"endLoc":{"line":165,"col":4},"count":0,"ignored":0},{"startLoc":{"line":156,"col":9},"endLoc":{"line":160,"col":6},"count":0,"ignored":0},{"startLoc":{"line":160,"col":7},"endLoc":{"line":164,"col":6},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":3},{"name":"PhotoPickerUtil.generateFileName","count":0,"regions":[{"startLoc":{"line":170,"col":3},"endLoc":{"line":174,"col":4},"count":0,"ignored":0},{"startLoc":{"line":171,"col":5},"endLoc":{"line":174,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":4},{"name":"PhotoPickerUtil.deletePhoto","count":0,"regions":[{"startLoc":{"line":180,"col":3},"endLoc":{"line":192,"col":4},"count":0,"ignored":0},{"startLoc":{"line":181,"col":9},"endLoc":{"line":187,"col":6},"count":0,"ignored":0},{"startLoc":{"line":187,"col":7},"endLoc":{"line":191,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":183,"col":24},"endLoc":{"line":183,"col":98},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":5},{"name":"PhotoPickerUtil.deletePhotos","count":0,"regions":[{"startLoc":{"line":198,"col":3},"endLoc":{"line":203,"col":4},"count":0,"ignored":0},{"startLoc":{"line":199,"col":5},"endLoc":{"line":201,"col":6},"count":0,"ignored":0},{"startLoc":{"line":202,"col":5},"endLoc":{"line":203,"col":4},"count":0,"ignored":0}],"branches":[],"ignored":0,"index":6},{"name":"PhotoPickerUtil.photoExists","count":0,"regions":[{"startLoc":{"line":208,"col":3},"endLoc":{"line":216,"col":4},"count":0,"ignored":0},{"startLoc":{"line":209,"col":9},"endLoc":{"line":213,"col":6},"count":0,"ignored":0},{"startLoc":{"line":213,"col":7},"endLoc":{"line":215,"col":6},"count":0,"ignored":0}],"branches":[{"startLoc":{"line":210,"col":24},"endLoc":{"line":210,"col":98},"trueCount":0,"falseCount":0,"group":[],"ignored":0}],"ignored":0,"index":7}],"exeLine":{"0":16,"1":17,"2":18,"3":19,"4":20,"5":22,"6":37,"7":44,"8":45,"9":46,"10":49,"11":50,"12":51,"13":53,"14":54,"15":55,"16":57,"17":59,"18":60,"19":61,"20":65,"21":66,"22":67,"23":68,"24":69,"25":70,"26":71,"27":72,"28":73,"29":74,"30":78,"31":79,"32":80,"33":81,"34":82,"35":83,"36":93,"37":94,"38":95,"39":98,"40":99,"41":101,"42":104,"43":105,"44":106,"45":109,"46":110,"47":111,"48":114,"49":115,"50":116,"51":119,"52":120,"53":121,"54":123,"55":124,"56":125,"57":126,"58":127,"59":128,"60":132,"61":133,"62":135,"63":137,"64":138,"65":139,"66":140,"67":141,"68":148,"69":149,"70":155,"71":156,"72":158,"73":159,"74":160,"75":161,"76":163,"77":170,"78":171,"79":172,"80":173,"81":180,"82":181,"83":183,"84":184,"85":185,"86":186,"87":187,"88":188,"89":189,"90":190,"91":198,"92":199,"93":200,"94":202,"95":208,"96":209,"97":210,"98":211,"99":212,"100":213,"101":214},"summary":{"lines":{"total":95,"covered":0,"pct":0,"executedLineCount":[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,-1,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,-1,-1,0,0,-1,0,-1,-1,0,0,0,-1,-1,0,0,0,-1,-1,0,0,0,-1,-1,0,0,0,-1,0,0,0,0,0,0,-1,-1,-1,0,0,-1,0,-1,0,0,0,0,0,-1,-1,-1,-1,-1,-1,0,0,-1,-1,-1,-1,-1,0,0,-1,0,0,0,0,-1,0,-1,-1,-1,-1,-1,-1,0,0,0,0,-1,-1,-1,-1,-1,-1,0,0,-1,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,0,0,0,-1,0,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,-1,-1,-1]},"functions":{"total":8,"covered":0,"pct":0},"branches":{"total":8,"covered":0,"pct":0}}},"title":"PhotoPickerUtil.ets.html","relativeHome":"..\\..\\index.html"};
+    }
+  };
+
+  const app = Vue.createApp(App);
+  app.use(ElementPlus);
+  app.mount("#app");
+
+  window.onload = function () {
+    prettyPrint();
+  }
+</script>
+
+<style scoped>
+  table.coverage {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 0 0;
+    padding: 0;
+  }
+
+  table.coverage td {
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  table.coverage td.line-count {
+    width: 12%;
+    text-align: right;
+    padding: 0 5px 0 20px;
+  }
+
+  table.coverage td.line-coverage {
+    text-align: right;
+    padding-right: 10px;
+    min-width: 20px;
+  }
+
+  table.coverage td span.cline-any {
+    display: inline-block;
+    padding: 0 5px;
+    width: 100%;
+    height: 18px;
+  }
+
+  .low,
+  .cline-no {
+    background: #FCE1E5
+  }
+
+  .high,
+  .cline-yes {
+    background: rgb(230, 245, 208)
+  }
+
+  span.cline-neutral {
+    background: #eaeaea;
+  }
+
+  pre.prettyprint {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .el-main {
+    box-sizing: border-box;
+    display: block;
+    flex: 1;
+    flex-basis: auto;
+    overflow: auto;
+    padding: var(--el-main-padding)
+  }
+
+  .el-container {
+    min-height: 100vh;
+    height: 100%;
+  }
+
+  .footer {
+    font-size: small;
+  }
+
+  .el-row {
+    margin-bottom: 20px;
+  }
+
+  .el-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .el-col {
+    border-radius: 4px;
+  }
+
+  .green {
+    color: var(--el-color-success);
+  }
+
+  .red {
+    color: var(--el-color-error);
+  }
+
+  .linenums li {
+    height: 18px;
+    line-height: 18px;
+  }
+
+  li.L0,
+  li.L1,
+  li.L2,
+  li.L3,
+  li.L5,
+  li.L6,
+  li.L7,
+  li.L8 {
+    list-style-type: decimal
+  }
+
+  .el-col-5 {
+    max-width: 100%;
+  }
+
+  .el-col-3 {
+    max-width: 100%;
+  }
+
+</style>
+
+</html>
