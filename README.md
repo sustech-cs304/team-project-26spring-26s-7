@@ -356,6 +356,20 @@ cd team-project-26spring-26s-7
 - [Social Share 功能文档](documents/features/social-share/)：分享功能需求、接口与集成说明。
 - [AI Copy 功能文档](documents/features/ai-copy/)：AI 文案功能相关说明。
 
+## 关于开发者
+
+| 开发者 | GitHub | 主要贡献 |
+|--------|--------|----------|
+| blueroom18 | [@blueroom18](https://github.com/blueroom18) | 设计鸿蒙前端基础架构，负责路线回放功能的设计与增广，搭建部分测试框架和ci-cd流程 |
+| Zmjjeff7 | [@Zmjjeff7](https://github.com/Zmjjeff7) | 设计鸿蒙后端基础架构，负责分享链接生成服务和AI文案服务的部署 |
+| Redem714233 | [@Redem714233](https://github.com/Redem714233) | 搭建华为云服务基本框架，负责处理安全与上架备案相关事务 |
+| Grimm57 | [@Grimm57](https://github.com/Grimm57) | 负责软件基本功能的实现，构建了地图相关组件，主导性能测试 |
+| 1notsleepy | [@1notsleepy](https://github.com/1notsleepy) | 设计了独特UI界面，增强用户前端体验，并主导数据库等基础组件的设计与维护 |
+
+## 特别鸣谢
+
+本项目特别感谢 @小墨 作为内部测试员提出的各种软件使用优化建议，这对我们项目的用户体验提升至关重要；
+也致谢南方科技大学软件工程教务组的支持与指导，她们帮助我们和华为技术人员展开了沟通，让我们受益匪浅
 
 ## License
 
