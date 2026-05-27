@@ -178,7 +178,7 @@ export struct ProfileView {
         action: () => {}
       },
       secondaryButton: {
-        value: '我已知晓，继续',
+        value: '继续注销',
         fontColor: AppColors.DANGER,
         action: () => this.confirmDeleteAccount()
       }
@@ -227,9 +227,13 @@ export struct ProfileView {
 
   private showPrivacySettings(): void {
     const cloudOn = this.aiCloudTaggingEnabled
+    const exifOn = this.exifStripAlwaysOn
     const message =
-      `📷 EXIF 自动剥离：始终开启\n` +
-      `任何离开本设备的照片副本都会先去掉 GPS、相机型号等敏感字段，原图保留在本机。\n\n` +
+      `📷 EXIF 自动剥离（AI 上传 / 社交分享）：${exifOn ? '始终开启' : '已关闭'}\n` +
+      `${exifOn
+        ? '送往 AI 云端识别或通过分享离开本设备的照片副本，会先去掉 GPS、相机型号等敏感字段，原图保留在本机。'
+        : '已关闭：AI 上传和社交分享将不会剥离 EXIF。'}\n` +
+      `（华为云备份按原图存储以便完整恢复，不在此剥离范围内）\n\n` +
       `🤖 AI 云端识别画面内容：${cloudOn ? '已开启' : '已关闭'}\n` +
       (cloudOn
         ? '生成文案时，会把首张照片以剥离 EXIF 后的副本上传至 Qwen-VL 模型，让模型直接看图写文案，推理结束云端立即删除。\n首次上传前会单独询问。'
@@ -504,7 +508,8 @@ export struct ProfileView {
 
           this.settingItem(
             '隐私与安全',
-            this.aiCloudTaggingEnabled ? '云端识别 已开启 · EXIF 自动剥离' : 'EXIF 自动剥离 · 云端识别 已关闭',
+            (this.exifStripAlwaysOn ? 'EXIF 自动剥离' : 'EXIF 未剥离') + ' · ' +
+              (this.aiCloudTaggingEnabled ? '云端识别 已开启' : '云端识别 已关闭'),
             () => this.showPrivacySettings()
           )
           Divider().color(AppColors.DIVIDER)

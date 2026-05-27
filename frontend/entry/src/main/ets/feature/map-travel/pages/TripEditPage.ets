@@ -25,6 +25,8 @@ export struct TripEditPage {
   @State isLoading: boolean = false
   @State isSaving: boolean = false
   @State nodes: TripNodeItem[] = []
+  // #219: 标题 / isPublic 是否被改过；与 orderDirty 一起决定是否提示未保存
+  @State formDirty: boolean = false
   private orderDirty: boolean = false
   // v0.8: 进入编辑页时记下原始 isPublic，保存时如果是 公开 → 私密
   // 的过渡就发"关停所有分享"请求给后端
@@ -178,6 +180,43 @@ export struct TripEditPage {
     })()
   }
 
+  // #219: 标题、isPublic、节点排序任意一处变更都需在 attemptBack 时提醒
+  private hasUnsavedChanges(): boolean {
+    return this.formDirty || this.orderDirty
+  }
+
+  private attemptBack(): void {
+    if (!this.hasUnsavedChanges()) {
+      router.back()
+      return
+    }
+    AlertDialog.show({
+      title: '放弃修改？',
+      message: '当前 Track 还有未保存的修改，返回后这些更改将丢失。',
+      primaryButton: {
+        value: '继续编辑',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '放弃修改',
+        fontColor: AppColors.DANGER,
+        action: () => {
+          this.formDirty = false
+          this.orderDirty = false
+          router.back()
+        }
+      }
+    })
+  }
+
+  onBackPress(): boolean {
+    if (!this.hasUnsavedChanges()) {
+      return false
+    }
+    this.attemptBack()
+    return true
+  }
+
   private async handleSave(): Promise<void> {
     const trimmedTitle = this.title.trim()
     if (trimmedTitle.length === 0) {
@@ -204,6 +243,7 @@ export struct TripEditPage {
           this.revokeSharesAfterPrivacyToggle(this.tripId)
         }
         this.originalIsPublic = this.isPublic
+        this.formDirty = false
         promptAction.showToast({ message: 'Track 已更新' })
         router.back()
         return
@@ -287,14 +327,14 @@ export struct TripEditPage {
           .backgroundColor(!this.isPublic ? '#A55B00' : AppColors.BACKGROUND)
           .padding({ left: 16, right: 16, top: 10, bottom: 10 })
           .borderRadius(18)
-          .onClick(() => { this.isPublic = false })
+          .onClick(() => { this.isPublic = false; this.formDirty = true })
         Text('公开')
           .fontSize(AppDimens.FONT_MD)
           .fontColor(this.isPublic ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
           .backgroundColor(this.isPublic ? '#167D3E' : AppColors.BACKGROUND)
           .padding({ left: 16, right: 16, top: 10, bottom: 10 })
           .borderRadius(18)
-          .onClick(() => { this.isPublic = true })
+          .onClick(() => { this.isPublic = true; this.formDirty = true })
       }
       .margin({ top: 12 })
 
@@ -402,7 +442,7 @@ export struct TripEditPage {
           .fontSize(AppDimens.FONT_XL)
           .fontColor(AppColors.TEXT_PRIMARY)
           .padding(AppDimens.PADDING_MD)
-          .onClick(() => router.back())
+          .onClick(() => this.attemptBack())
         Text(this.isEditMode ? '编辑 Track' : '新建 Track')
           .fontSize(AppDimens.FONT_LG)
           .fontWeight(FontWeight.Bold)
@@ -494,7 +534,7 @@ export struct TripEditPage {
                 .placeholderColor(AppColors.INPUT_PLACEHOLDER)
                 .caretColor(AppColors.INPUT_CARET)
                 .backgroundColor(AppColors.INPUT_BG)
-                .onChange((value: string) => { this.title = value })
+                .onChange((value: string) => { this.title = value; this.formDirty = true })
             }
             .width('100%')
             .padding(AppDimens.PADDING_MD)

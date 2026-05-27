@@ -60,63 +60,71 @@ struct LoginPage {
   }
 
   build() {
-    Column() {
-      Blank()
-
-      // 品牌区域
+    // #226: 外层包 Scroll，确保桌面窗口极端缩小时仍可上下滚动；
+    // 内层 Column constraintSize 保证内容不少于窗口高度，从而保留 Blank() 居中效果
+    Scroll() {
       Column() {
-        Text('📍')
-          .fontSize(56)
-        Text('ItsMapPin')
-          .fontSize(AppDimens.FONT_TITLE)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(AppColors.TEXT_PRIMARY)
-          .margin({ top: 12 })
-        Text('钉住每一段旅途记忆')
-          .fontSize(AppDimens.FONT_MD)
-          .fontColor(AppColors.TEXT_SECONDARY)
-          .margin({ top: 8 })
-      }
+        Blank()
 
-      Blank()
-
-      // 登录按钮区域
-      Column() {
-        Button(this.isLoggingIn ? '处理中...' : '华为账号一键登录')
-          .width('80%')
-          .height(48)
-          .fontSize(AppDimens.FONT_LG)
-          .backgroundColor(AppColors.PRIMARY)
-          .enabled(!this.isLoggingIn)
-          .onClick(() => this.handleHuaweiLogin())
-
-        Row() {
-          if (this.isLoggingIn) {
-            LoadingProgress()
-              .width(18)
-              .height(18)
-              .color(AppColors.PRIMARY)
-            Text(this.loginProgressText)
-              .fontSize(AppDimens.FONT_SM)
-              .fontColor(AppColors.TEXT_SECONDARY)
-              .margin({ left: 8 })
-          }
+        // 品牌区域
+        Column() {
+          Text('📍')
+            .fontSize(56)
+          Text('ItsMapPin')
+            .fontSize(AppDimens.FONT_TITLE)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(AppColors.TEXT_PRIMARY)
+            .margin({ top: 12 })
+          Text('钉住每一段旅途记忆')
+            .fontSize(AppDimens.FONT_MD)
+            .fontColor(AppColors.TEXT_SECONDARY)
+            .margin({ top: 8 })
         }
-        .width('80%')
-        .height(28)
-        .justifyContent(FlexAlign.Center)
-        .margin({ top: 10 })
 
-        Text('登录即代表同意《用户协议》和《隐私政策》')
-          .fontSize(AppDimens.FONT_SM)
-          .fontColor(AppColors.TEXT_HINT)
-          .margin({ top: 16 })
+        Blank()
+
+        // 登录按钮区域
+        Column() {
+          Button(this.isLoggingIn ? '处理中...' : '华为账号一键登录')
+            .width('80%')
+            .height(48)
+            .fontSize(AppDimens.FONT_LG)
+            .backgroundColor(AppColors.PRIMARY)
+            .enabled(!this.isLoggingIn)
+            .onClick(() => this.handleHuaweiLogin())
+
+          Row() {
+            if (this.isLoggingIn) {
+              LoadingProgress()
+                .width(18)
+                .height(18)
+                .color(AppColors.PRIMARY)
+              Text(this.loginProgressText)
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_SECONDARY)
+                .margin({ left: 8 })
+            }
+          }
+          .width('80%')
+          .height(28)
+          .justifyContent(FlexAlign.Center)
+          .margin({ top: 10 })
+
+          Text('登录即代表同意《用户协议》和《隐私政策》')
+            .fontSize(AppDimens.FONT_SM)
+            .fontColor(AppColors.TEXT_HINT)
+            .margin({ top: 16 })
+        }
+        .margin({ bottom: 60 })
       }
-      .margin({ bottom: 60 })
+      .width('100%')
+      .constraintSize({ minHeight: '100%' })
+      .backgroundColor(AppColors.BACKGROUND)
+      .justifyContent(FlexAlign.Center)
     }
     .width('100%')
     .height('100%')
+    .scrollBar(BarState.Auto)
     .backgroundColor(AppColors.BACKGROUND)
-    .justifyContent(FlexAlign.Center)
   }
 }

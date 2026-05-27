@@ -35,6 +35,8 @@ export struct NodeEditPage {
   @State visitedAt: number = 0
   @State tempVisitedAt: number = 0
   @State showDatePicker: boolean = false
+  // #219: 是否有未保存改动；目前仅在标题、正文文本变化时打标，已足够覆盖主流编辑场景
+  @State isDirty: boolean = false
 
   private dataService = getDataService()
 
@@ -171,6 +173,38 @@ export struct NodeEditPage {
     return TravelSpecialValues.UNCATEGORIZED_TRAVEL_ID
   }
 
+  // #219: 物理返回键 / 顶部 < 都先走这里，若存在未保存内容会先弹确认
+  private attemptBack(): void {
+    if (!this.isDirty) {
+      router.back()
+      return
+    }
+    AlertDialog.show({
+      title: '放弃编辑？',
+      message: '当前有未保存的修改，返回后这些更改将丢失。',
+      primaryButton: {
+        value: '继续编辑',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '放弃修改',
+        fontColor: AppColors.DANGER,
+        action: () => {
+          this.isDirty = false
+          router.back()
+        }
+      }
+    })
+  }
+
+  onBackPress(): boolean {
+    if (!this.isDirty) {
+      return false
+    }
+    this.attemptBack()
+    return true
+  }
+
   private async handleSave(): Promise<void> {
     const trimmedTitle = this.title.trim()
     if (trimmedTitle.length === 0) {
@@ -231,6 +265,7 @@ export struct NodeEditPage {
         promptAction.showToast({ message: '记忆已保存' })
       }
       this.bumpTravelDataVersion()
+      this.isDirty = false
       router.back()
     } catch (_) {
       promptAction.showToast({ message: '保存失败，请稍后重试' })
@@ -349,12 +384,14 @@ export struct NodeEditPage {
     this.content = value.length > NODE_CONTENT_MAX_LENGTH
       ? value.slice(0, NODE_CONTENT_MAX_LENGTH)
       : value
+    this.isDirty = true
   }
 
   private updateTitle(value: string): void {
     this.title = value.length > NODE_TITLE_MAX_LENGTH
       ? value.slice(0, NODE_TITLE_MAX_LENGTH)
       : value
+    this.isDirty = true
   }
 
   private getTitleCounterColor(): string {
@@ -501,7 +538,7 @@ export struct NodeEditPage {
           Text('<')
             .fontSize(AppDimens.FONT_XL)
             .fontColor(AppColors.TEXT_PRIMARY)
-            .onClick(() => router.back())
+            .onClick(() => this.attemptBack())
             .padding(AppDimens.PADDING_MD)
           Text(this.isEditMode ? '编辑记忆' : '新建记忆')
             .fontSize(AppDimens.FONT_LG)

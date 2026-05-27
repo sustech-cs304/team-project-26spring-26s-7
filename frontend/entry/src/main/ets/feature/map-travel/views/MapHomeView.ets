@@ -745,6 +745,7 @@ export struct MapHomeView {
   @State isLocating: boolean = false
   @Watch('onTravelDataVersionChange')
   @StorageLink('travelDataVersion') travelDataVersion: number = 0
+  @Watch('onActiveTabChange')
   @StorageLink('activeTabIndex') activeTabIndex: number = 0
 
   // 地图配置：默认中心为深圳
@@ -843,6 +844,19 @@ export struct MapHomeView {
 
   private onTravelDataVersionChange(): void {
     this.loadNodes()
+  }
+
+  // #217: 离开地图 Tab 时自动收起筛选面板并复位筛选条件，避免回来时仍处于过滤状态
+  private onActiveTabChange(): void {
+    if (this.activeTabIndex !== 0) {
+      this.showFilter = false
+      this.selectedFilterTime = '全部'
+      this.selectedFilterTag = '全部'
+    }
+  }
+
+  private isFilterActive(): boolean {
+    return this.selectedFilterTime !== '全部' || this.selectedFilterTag !== '全部'
   }
 
   private async loadNodes(): Promise<void> {
@@ -1113,12 +1127,15 @@ export struct MapHomeView {
     this.clearSelectedSearchState()
     const keyword = this.normalizeText(value)
     this.searchToken += 1
-    this.isSearching = false
     if (keyword.length === 0) {
+      this.isSearching = false
       this.searchResults = []
       return
     }
 
+    // 保持 isSearching=true 覆盖到网络结果回来为止；
+    // 否则本地结果为空、网络搜索未发起的瞬间会闪过"未找到"（#218）
+    this.isSearching = true
     const localResults = this.buildNodeSearchResults(keyword)
     this.searchResults = localResults
     await this.searchSites(value.trim(), localResults)
@@ -1593,42 +1610,85 @@ export struct MapHomeView {
           .shadow({ radius: 18, color: this.getMapGlassShadowColor(), offsetY: 8 })
           .alignItems(VerticalAlign.Center)
 
-          Button() {
-            Column({ space: 4 }) {
-              Column()
-                .width(20)
-                .height(4)
-                .backgroundColor(this.getMapGlassTextColor())
-                .borderRadius(3)
-              Column()
-                .width(24)
-                .height(4)
-                .backgroundColor(this.getMapGlassTextColor())
-                .borderRadius(3)
-              Column()
-                .width(17)
-                .height(4)
-                .backgroundColor(this.getMapGlassTextColor())
-                .borderRadius(3)
+          Stack({ alignContent: Alignment.TopEnd }) {
+            Button() {
+              Column({ space: 4 }) {
+                Column()
+                  .width(20)
+                  .height(4)
+                  .backgroundColor(this.isFilterActive() ? AppColors.PRIMARY : this.getMapGlassTextColor())
+                  .borderRadius(3)
+                Column()
+                  .width(24)
+                  .height(4)
+                  .backgroundColor(this.isFilterActive() ? AppColors.PRIMARY : this.getMapGlassTextColor())
+                  .borderRadius(3)
+                Column()
+                  .width(17)
+                  .height(4)
+                  .backgroundColor(this.isFilterActive() ? AppColors.PRIMARY : this.getMapGlassTextColor())
+                  .borderRadius(3)
+              }
+              .width('100%')
+              .height('100%')
+              .alignItems(HorizontalAlign.Center)
+              .justifyContent(FlexAlign.Center)
             }
-            .width('100%')
-            .height('100%')
-            .alignItems(HorizontalAlign.Center)
-            .justifyContent(FlexAlign.Center)
+            .width(44)
+            .height(44)
+            .padding(0)
+            .backgroundColor(this.getMapGlassBackground())
+            .border({
+              width: this.isFilterActive() ? 2 : 1,
+              color: this.isFilterActive() ? AppColors.PRIMARY : this.getMapGlassBorder()
+            })
+            .borderRadius(22)
+            .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+            .shadow({ radius: 18, color: this.getMapGlassShadowColor(), offsetY: 8 })
+            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+            .onClick(() => { this.showFilter = !this.showFilter })
+
+            // #217: 筛选启用时的橙色小圆点，提示当前结果已被过滤
+            if (this.isFilterActive()) {
+              Column()
+                .width(10)
+                .height(10)
+                .borderRadius(5)
+                .backgroundColor(AppColors.PRIMARY)
+                .border({ width: 2, color: this.getMapGlassBackground() })
+                .margin({ top: -2, right: -2 })
+            }
           }
           .width(44)
           .height(44)
-          .padding(0)
-          .backgroundColor(this.getMapGlassBackground())
-          .border({ width: 1, color: this.getMapGlassBorder() })
-          .borderRadius(22)
-          .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
-          .shadow({ radius: 18, color: this.getMapGlassShadowColor(), offsetY: 8 })
-          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
-          .onClick(() => { this.showFilter = !this.showFilter })
         }
         .width('100%')
         .alignItems(VerticalAlign.Center)
+
+        // #217: 当筛选已启用且筛选面板已关闭时，显示明显的筛选状态条 + 一键清除
+        if (this.isFilterActive() && !this.showFilter) {
+          Row({ space: 8 }) {
+            Text(`已筛选：${this.selectedFilterTime}${this.selectedFilterTag === '全部' ? '' : ' · ' + this.selectedFilterTag}`)
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.PRIMARY)
+              .fontWeight(FontWeight.Medium)
+              .layoutWeight(1)
+            Text('清除')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.PRIMARY)
+              .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+              .onClick(() => {
+                this.selectedFilterTime = '全部'
+                this.selectedFilterTag = '全部'
+              })
+          }
+          .width('100%')
+          .padding({ left: 12, right: 8, top: 6, bottom: 6 })
+          .margin({ top: 8 })
+          .backgroundColor(AppDimens.ACCENT_SOFT_BG)
+          .border({ width: 1, color: AppColors.PRIMARY + '55' })
+          .borderRadius(AppDimens.RADIUS_SM)
+        }
 
         if (this.isSearching) {
           Text('搜索中...')
