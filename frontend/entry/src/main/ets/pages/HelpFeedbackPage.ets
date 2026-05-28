@@ -27,6 +27,21 @@ interface CategoryOption {
   icon: string
 }
 
+/** POST /api/v1/feedback body. ArkTS 严格模式禁止 Record<> 直接挂 object literal，
+ *  必须用显式 interface。contact 可选，未填时不发字段。 */
+interface FeedbackBody {
+  category: string
+  content: string
+  app_version: string
+  contact?: string
+}
+
+/** 发请求时的 HTTP header 容器；同样需要显式接口。Authorization 可选。 */
+interface FeedbackHeaders {
+  'Content-Type': string
+  'Authorization'?: string
+}
+
 @Entry
 @Component
 struct HelpFeedbackPage {
@@ -250,17 +265,17 @@ struct HelpFeedbackPage {
       const shareToken: string | null = await AiTokenManager.tryGetShareToken()
       const httpReq = http.createHttp()
       try {
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+        const headers: FeedbackHeaders = { 'Content-Type': 'application/json' }
         if (shareToken) {
           headers['Authorization'] = `Bearer ${shareToken}`
         }
-        const body: Record<string, string | undefined> = {
+        const body: FeedbackBody = {
           category: this.selectedCategory,
           content: this.content.trim(),
           app_version: '1.0.0',
         }
         if (this.contact.trim().length > 0) {
-          body['contact'] = this.contact.trim()
+          body.contact = this.contact.trim()
         }
         const resp = await httpReq.request(`${API_BASE_URL}/api/v1/feedback`, {
           method: http.RequestMethod.POST,
