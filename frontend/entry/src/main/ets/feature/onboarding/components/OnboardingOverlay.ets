@@ -1,20 +1,33 @@
-import { AppColors, AppDimens } from '../../../common'
+import { common } from '@kit.AbilityKit'
+import { AppColors, AppDimens, OnboardingStore } from '../../../common'
 
 /**
  * 首启 3 页轮播引导（方案 A 简版）。
  *
- * 用法：在 MainPage 的 Stack 顶层放一个 OnboardingOverlay()，组件内部读
- * @StorageLink('onboardingSeenV1') 自决是否渲染，第一次启动显示，关闭后写
- * true 进 PersistentStorage 永不再弹。
+ * 显示条件：onboardingLoaded === true && onboardingSeen === false
+ *   - onboardingLoaded：等到 OnboardingStore.ensureLoaded 读完磁盘前不弹，
+ *     避免冷启动期间的"先弹一下又消失"闪烁
+ *   - onboardingSeen：已经看过就永不再弹（看完 / 跳过 都算）
+ *
+ * dismiss 通过 OnboardingStore.markSeen 同时写 AppStorage 和 preferences 磁盘，
+ * 下次冷启动 ensureLoaded 会读到 true 直接不弹。
+ *
+ * MainPage.aboutToAppear 负责 fire-and-forget 调 ensureLoaded(ctx)；本组件只读
+ * 两个 @StorageLink 自决渲染。
  */
 @Component
 export struct OnboardingOverlay {
+  @StorageLink('onboardingLoaded') loaded: boolean = false
   @StorageLink('onboardingSeenV1') seen: boolean = false
   @State currentSlide: number = 0
   private readonly totalSlides: number = 3
 
   private dismiss(): void {
     this.seen = true
+    const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext | undefined
+    if (ctx) {
+      OnboardingStore.markSeen(ctx)
+    }
   }
 
   private goNext(): void {
@@ -129,7 +142,7 @@ export struct OnboardingOverlay {
   }
 
   build() {
-    if (!this.seen) {
+    if (this.loaded && !this.seen) {
       Stack({ alignContent: Alignment.Center }) {
         // 背景蒙层 — 全屏不透明卡片，挡住背后所有内容和点击
         Column()

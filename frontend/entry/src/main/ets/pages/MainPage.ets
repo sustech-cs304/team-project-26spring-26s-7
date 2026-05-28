@@ -1,10 +1,10 @@
-import { AppColors, AppDimens, AppTheme } from '../common'
+import { common } from '@kit.AbilityKit'
+import { AppColors, AppDimens, AppTheme, OnboardingStore } from '../common'
 import { MapHomeView } from '../feature/map-travel/views/MapHomeView'
 import { TripListView } from '../feature/map-travel/views/TripListView'
 import { NodeListView } from '../feature/map-travel/views/NodeListView'
 import { ProfileView } from '../feature/profile/views/ProfileView'
 import { OnboardingOverlay } from '../feature/onboarding/components/OnboardingOverlay'
-import { CoachMarkOverlay } from '../feature/onboarding/components/CoachMarkOverlay'
 
 @Entry
 @Component
@@ -19,8 +19,15 @@ struct MainPage {
   @StorageLink('networkDialogMessage') networkDialogMessage: string = ''
   @StorageLink('networkDialogTitle') networkDialogTitle: string = ''
   @StorageLink('nodeBulkActionMode') nodeBulkActionMode: boolean = false
-  // 新手引导：首启 onboarding + 创建节点 coach mark 的可见性条件
-  @StorageLink('onboardingSeenV1') onboardingSeen: boolean = false
+
+  aboutToAppear(): void {
+    // 加载首启教程的"是否看过"标志到 AppStorage；fire-and-forget，
+    // OnboardingOverlay 等 onboardingLoaded === true 才决定是否显示。
+    const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext | undefined
+    if (ctx) {
+      OnboardingStore.ensureLoaded(ctx)
+    }
+  }
 
   private tabTitles: string[] = ['地图', '旅途', '节点', '设置']
   private readonly tabIconSize: number = 22
@@ -265,19 +272,8 @@ struct MainPage {
         this.buildFloatingTabBar()
       }
 
-      // 引导层：onboardingSeen=false 时 OnboardingOverlay 全屏盖；看完后
-      // 用户进地图 tab 触发 CoachMarkOverlay 指向 "+" 按钮（顺次只显示一次）。
+      // 首启教程层：onboardingSeen=false 时 OnboardingOverlay 全屏盖
       OnboardingOverlay()
-
-      if (this.onboardingSeen && this.currentTabIndex === 0) {
-        CoachMarkOverlay({
-          storageKey: 'coachMarkCreateSeenV1',
-          emoji: '📍',
-          title: '在地图上创建你的记忆',
-          message: '点右下角的 "+" 在当前位置打钉，加照片和文字。一段旅程由多个节点串成。',
-          ctaLabel: '开始记录'
-        })
-      }
     }
     .width('100%')
     .height('100%')

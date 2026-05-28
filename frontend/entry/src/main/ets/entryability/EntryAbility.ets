@@ -118,12 +118,6 @@ export default class EntryAbility extends UIAbility {
     AppStorage.setOrCreate('mapCurrentLocationError', '');
     AppStorage.setOrCreate('mapCurrentLocationTimestamp', 0);
     AppStorage.setOrCreate('shareLinkExpiryDays', 7);
-    // 新手引导跨启动持久化标志：首启教程 + 3 个 coach mark 是否已看过
-    // 全部用 PersistentStorage 挂磁盘，下次冷启动自动恢复，@StorageLink 就能正常读
-    PersistentStorage.persistProp('onboardingSeenV1', false);
-    PersistentStorage.persistProp('coachMarkCreateSeenV1', false);
-    PersistentStorage.persistProp('coachMarkNodeDetailSeenV1', false);
-    PersistentStorage.persistProp('coachMarkReplaySeenV1', false);
     this.isOnline = this.getCurrentNetworkStatus();
     hilog.info(DOMAIN, 'testTag', 'Initial network status: %{public}s', this.isOnline ? 'true' : 'false');
     AppStorage.setOrCreate('networkOnline', this.isOnline);
