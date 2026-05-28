@@ -1678,8 +1678,10 @@ export struct MapHomeView {
               .fontColor(AppColors.PRIMARY)
               .padding({ left: 8, right: 8, top: 2, bottom: 2 })
               .onClick(() => {
-                this.selectedFilterTime = '全部'
-                this.selectedFilterTag = '全部'
+                // 用 updateFilters 而不是裸 set state——它会一并跑 applyFilters
+                // 和 syncMarkers，把地图上的实际筛选结果一起重置；之前只 set state
+                // 导致选项归位但地图节点仍处于过滤状态。
+                this.updateFilters('全部', '全部')
               })
           }
           .width('100%')
