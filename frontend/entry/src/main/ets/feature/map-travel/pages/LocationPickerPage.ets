@@ -453,16 +453,31 @@ struct LocationPickerPage {
       .position({ x: 0, y: 0 })
 
       Column() {
-        Button(this.isLocating ? '定位中...' : '⌖')
-          .width(48)
-          .height(48)
-          .fontSize(this.isLocating ? AppDimens.FONT_SM : 24)
-          .fontColor(AppColors.PRIMARY)
-          .backgroundColor(AppColors.CARD_BG)
-          .borderRadius(24)
-          .shadow({ radius: 4, color: '#0000001A', offsetY: 2 })
-          .enabled(!this.isLocating)
-          .onClick(() => this.recenterToCurrentLocation())
+        // Stack 默认 alignContent: Center，能让 ⌖ glyph 和 loading spinner 都在按钮里居中；
+        // 之前用 Button(text)，glyph 走 text baseline 渲染，视觉上偏向下不居中。
+        Stack() {
+          if (this.isLocating) {
+            LoadingProgress()
+              .width(24)
+              .height(24)
+              .color(AppColors.PRIMARY)
+          } else {
+            Text('⌖')
+              .fontSize(28)
+              .fontColor(AppColors.PRIMARY)
+              .textAlign(TextAlign.Center)
+          }
+        }
+        .width(48)
+        .height(48)
+        .backgroundColor(AppColors.CARD_BG)
+        .borderRadius(24)
+        .shadow({ radius: 4, color: '#0000001A', offsetY: 2 })
+        .onClick(() => {
+          if (!this.isLocating) {
+            this.recenterToCurrentLocation()
+          }
+        })
       }
       .position({ x: '82%', y: '72%' })
 

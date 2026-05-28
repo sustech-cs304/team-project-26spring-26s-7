@@ -51,7 +51,16 @@ export struct PhotoCardOverlay {
     if (this.currentNode && this.currentNode.photos.length > 0) {
       Swiper() {
         ForEach(this.currentNode.photos, (photo: string) => {
+          // 用同一张图模糊版铺底，再叠原图 Contain：原图竖横比和 250vp 卡片
+          // 不一致时不再露出纯色"白边"，改为同张照片的柔和模糊填充。
           Stack() {
+            Image(photo)
+              .width('100%')
+              .height('100%')
+              .objectFit(ImageFit.Cover)
+              .blur(40)
+              .opacity(0.55)
+
             Image(photo)
               .width('100%')
               .height('100%')
@@ -66,6 +75,7 @@ export struct PhotoCardOverlay {
           .width('100%')
           .height(250)
           .backgroundColor(this.styleKit.cardPhotoBackground)
+          .clip(true)
         })
       }
       .width('100%')

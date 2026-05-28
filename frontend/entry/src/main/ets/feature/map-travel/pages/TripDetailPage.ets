@@ -424,11 +424,14 @@ export struct TripDetailPage {
 
   @Builder
   private buildHeaderMenuButton() {
-    Button() {
-      Text('...')
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(AppColors.TEXT_SECONDARY)
+    // 用三个真正的圆点 (Circle Shape) 代替 Text('...')；ASCII '...'
+    // 是 baseline 字符贴底渲染，做不到视觉居中，跟常见三点 more 按钮不一致。
+    Stack() {
+      Row({ space: 4 }) {
+        Circle({ width: 4, height: 4 }).fill(AppColors.TEXT_SECONDARY)
+        Circle({ width: 4, height: 4 }).fill(AppColors.TEXT_SECONDARY)
+        Circle({ width: 4, height: 4 }).fill(AppColors.TEXT_SECONDARY)
+      }
     }
     .width(44)
     .height(44)

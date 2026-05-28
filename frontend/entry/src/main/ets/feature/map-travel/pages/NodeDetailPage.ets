@@ -810,21 +810,25 @@ export struct NodeDetailPage {
           .border({ width: 0.8, color: '#88FFFFFF' })
           .borderRadius(20)
         Blank()
-        Text('...')
-          .fontSize(22)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(AppColors.TEXT_SECONDARY)
-          .width(40)
-          .height(40)
-          .textAlign(TextAlign.Center)
-          .backgroundColor('#66FFFFFF')
-          .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
-          .border({ width: 0.8, color: '#88FFFFFF' })
-          .borderRadius(20)
-          .onClick(() => {
-            this.showActionMenu = !this.showActionMenu
-            this.showTripSelector = false
-          })
+        // 三个真正的圆点 (Circle Shape) 代替 ASCII '...'，Stack 默认居中——
+        // 之前 Text('...') 走 baseline 渲染，视觉上贴底不居中。
+        Stack() {
+          Row({ space: 4 }) {
+            Circle({ width: 4, height: 4 }).fill(AppColors.TEXT_SECONDARY)
+            Circle({ width: 4, height: 4 }).fill(AppColors.TEXT_SECONDARY)
+            Circle({ width: 4, height: 4 }).fill(AppColors.TEXT_SECONDARY)
+          }
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor('#66FFFFFF')
+        .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+        .border({ width: 0.8, color: '#88FFFFFF' })
+        .borderRadius(20)
+        .onClick(() => {
+          this.showActionMenu = !this.showActionMenu
+          this.showTripSelector = false
+        })
         Text('编辑')
           .fontSize(AppDimens.FONT_MD)
           .fontColor('#00000000')
