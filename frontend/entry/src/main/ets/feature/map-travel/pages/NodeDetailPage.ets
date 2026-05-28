@@ -3,6 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit'
 import { AppColors, AppDimens, RouterUrls, TravelSpecialValues, getDataService, PhotoPickerUtil } from '../../../common'
 import { RouterParam } from '../../../common'
 import type { MemoryNode, Trip } from '../../../common'
+import { CoachMarkOverlay } from '../../onboarding/components/CoachMarkOverlay'
 
 const DOMAIN = 0x0000
 const TAG = 'NodeDetailPage'
@@ -923,6 +924,15 @@ export struct NodeDetailPage {
       if (this.showTripSelector) {
         this.buildTripSelectorSheet()
       }
+
+      // 第一次打开节点详情时给一个 coach mark 介绍这页能做什么
+      CoachMarkOverlay({
+        storageKey: 'coachMarkNodeDetailSeenV1',
+        emoji: '📝',
+        title: '这是节点详情',
+        message: '在这里可以看 / 改照片和文字，左右滑切换同一段旅程的其他节点。右上角"…"还能换归属旅程或删除节点。',
+        ctaLabel: '明白了'
+      })
     }
     .width('100%')
     .height('100%')

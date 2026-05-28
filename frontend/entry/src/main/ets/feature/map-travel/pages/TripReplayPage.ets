@@ -23,6 +23,7 @@ import { ReplayPhotoCard } from '../components/ReplayPhotoCard'
 import { ReplayProgressBar } from '../components/ReplayProgressBar'
 import { PhotoCardOverlay } from '../components/PhotoCardOverlay'
 import { ReplaySettingsSheet } from '../components/ReplaySettingsSheet'
+import { CoachMarkOverlay } from '../../onboarding/components/CoachMarkOverlay'
 
 const DEFAULT_REPLAY_CENTER: mapCommon.LatLng = {
   latitude: 22.55,
@@ -1476,6 +1477,15 @@ export struct TripReplayPage {
           }
         })
       }
+
+      // 第一次打开回放页给一个 coach mark 介绍运镜效果
+      CoachMarkOverlay({
+        storageKey: 'coachMarkReplaySeenV1',
+        emoji: '🎬',
+        title: '试试旅程回放',
+        message: '点底部 ▶ 自动播放，运镜会带着相机沿你走过的路线飞一遍。右上角齿轮还能换音乐 / 配色 / 滤镜。',
+        ctaLabel: '开始播放'
+      })
     }
     .width('100%')
     .height('100%')
