@@ -981,23 +981,32 @@ export struct TripReplayPage {
   }
 
   /** 为给定节点 index 算合适 zoom。
-   * 优先看当前 → 下一节点的段长（决定即将进入的视觉感觉），如果是最后一个节点
-   * 就回退看 prev → 当前。短路线 / 单节点情况兜底 15。
+   *
+   * 旧版只看当前 → 下/上一节点的"路线顺序"邻居段长，会出现这种情况：
+   * 1-2-3-4 四节点路线，1/2/4 互相挨得很近、3 离它们远。回放到节点 2 时
+   * 只看 2→3 长段就用了低 zoom，结果同屏里 1/2/4 三个钉子全挤一起了；
+   * 节点 4 同理（只看 3→4 长段）。
+   *
+   * 改成按"到最近的其他节点的几何距离"算 zoom：哪怕路线顺序相邻段很长，
+   * 只要这个节点附近有别的钉子，就放大到能把它们视觉拉开的级别。
    */
   private replayZoomForIndex(index: number): number {
     if (!this.replayRoute) return 15
     const nodes = this.replayRoute.nodes
     if (nodes.length < 2) return 15
-    let from: Position
-    let to: Position
-    if (index < nodes.length - 1) {
-      from = nodes[index].position
-      to = nodes[index + 1].position
-    } else {
-      from = nodes[index - 1].position
-      to = nodes[index].position
+    const current = nodes[index].position
+    let minDist = Infinity
+    for (let i = 0; i < nodes.length; i++) {
+      if (i === index) continue
+      const d = this.haversineMeters(
+        current.latitude,
+        current.longitude,
+        nodes[i].position.latitude,
+        nodes[i].position.longitude
+      )
+      if (d < minDist) minDist = d
     }
-    return this.replayZoomForSegment(this.haversineMeters(from.latitude, from.longitude, to.latitude, to.longitude))
+    return this.replayZoomForSegment(minDist)
   }
 
   /** 计算到达节点 index 时"前向"运镜 bearing，跟自动播放 moveToNode 保持一致。
