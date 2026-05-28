@@ -47,6 +47,11 @@ struct LocationPickerPage {
   @State searchKeyword: string = ''
   @State searchResults: SearchLocation[] = []
   @State isSearching: boolean = false
+  // #218 修：原先"未找到"只看 searchResults.length===0，但用户选了一个结果后
+  //   selectSearchResult 会把 searchResults 清空（隐藏下拉），keyword 留下，
+  //   就误命中"keyword 非空 + results 空"→ 显示"未找到"。
+  //   现在只有当**最近一次实际完成的搜索**得到空结果且 keyword 没再改时才显示。
+  @State noResultsForKeyword: string = ''
   @State isLocating: boolean = false
 
   private readonly defaultCenter: mapCommon.LatLng = this.getInitialCenter()
@@ -180,12 +185,16 @@ struct LocationPickerPage {
         }
       }
       this.searchResults = mapped
+      // 记下 "搜过这个 keyword + 结果是 empty"。下次 keyword 改了或下次搜出结果都会清掉。
+      this.noResultsForKeyword = mapped.length === 0 ? keyword : ''
     } catch (error) {
       if (currentToken !== this.searchToken) {
         return
       }
       logger.warn('LocationPickerPage', `searchByText failed: ${JSON.stringify(error)}`)
       this.searchResults = []
+      // 错误不算"未找到"，是网络/服务故障，已有 toast 提示
+      this.noResultsForKeyword = ''
       if (this.shouldShowSearchFailureToast(error as Object)) {
         promptAction.showToast({ message: '地点搜索失败，请稍后重试' })
       }
@@ -227,6 +236,8 @@ struct LocationPickerPage {
     const keyword = this.normalizeText(value)
     this.searchToken += 1
     this.isSearching = false
+    // 用户改了 keyword → 之前的"未找到"判定失效
+    this.noResultsForKeyword = ''
     if (keyword.length === 0) {
       this.searchResults = []
       return
@@ -246,6 +257,8 @@ struct LocationPickerPage {
     this.searchResults = []
     this.searchToken += 1
     this.isSearching = false
+    // 选中后清掉"未找到"标记，避免 keyword=item.name + results=[] 时误显示
+    this.noResultsForKeyword = ''
     await this.selectLocation(item.latitude, item.longitude, this.formatLocationLabel(item.name, item.address))
   }
 
@@ -394,7 +407,10 @@ struct LocationPickerPage {
             .alignSelf(ItemAlign.Start)
         }
 
-        if (!this.isSearching && this.searchKeyword.trim().length > 0 && this.searchResults.length === 0) {
+        if (!this.isSearching
+            && this.searchKeyword.trim().length > 0
+            && this.noResultsForKeyword === this.searchKeyword.trim()
+            && this.searchResults.length === 0) {
           Text('未找到相关地点，可继续输入坐标或直接点地图')
             .fontSize(AppDimens.FONT_SM)
             .fontColor(AppColors.TEXT_SECONDARY)

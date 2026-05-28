@@ -253,6 +253,10 @@ export struct TripListView {
   }
 
   build() {
+    // #226: 桌面端窗口缩小时旧版无法滚动看不全内容。外层加 Scroll，
+    // 内层 Column 用 constraintSize 让正常高度时仍占满 viewport，
+    // 极端缩小时会触发滚动条。
+    Scroll() {
     Column() {
       Column() {
         Text('旅途')
@@ -360,8 +364,12 @@ export struct TripListView {
       }
     }
     .width('100%')
-    .height('100%')
+    .constraintSize({ minHeight: '100%' })
     .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: AppDimens.PADDING_MD, bottom: 0 })
     .backgroundColor(AppColors.BACKGROUND)
+    }
+    .width('100%')
+    .height('100%')
+    .scrollBar(BarState.Off)
   }
 }

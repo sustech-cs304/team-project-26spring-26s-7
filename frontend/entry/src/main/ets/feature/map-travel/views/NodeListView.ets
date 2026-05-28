@@ -759,6 +759,9 @@ export struct NodeListView {
 
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
+      // #226: 主内容包 Scroll，桌面窗口缩小时可上下翻；
+      // 浮动 bulk action bar 和 bulk trip selector overlay 依旧在 Stack 内对齐底部，不动。
+      Scroll() {
       Column() {
         this.buildHeaderCard()
 
@@ -833,9 +836,13 @@ export struct NodeListView {
         }
       }
       .width('100%')
-      .height('100%')
+      .constraintSize({ minHeight: '100%' })
       .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD, top: AppDimens.PADDING_MD, bottom: 0 })
       .backgroundColor(AppColors.BACKGROUND)
+      }
+      .width('100%')
+      .height('100%')
+      .scrollBar(BarState.Off)
 
       if (this.isManageMode && this.getFilteredNodes().length > 0) {
         this.buildBulkActionBar()

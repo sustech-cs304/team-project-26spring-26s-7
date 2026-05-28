@@ -180,6 +180,8 @@ export struct TripAlbumView {
   }
 
   build() {
+    // #226: 桌面窗口缩小时旧版无法上下滚动看不全相册内容
+    Scroll() {
     Column() {
       Row() {
         Text('旅行相册')
@@ -240,7 +242,11 @@ export struct TripAlbumView {
       }
     }
     .width('100%')
-    .height('100%')
+    .constraintSize({ minHeight: '100%' })
     .backgroundColor(AppColors.BACKGROUND)
+    }
+    .width('100%')
+    .height('100%')
+    .scrollBar(BarState.Off)
   }
 }

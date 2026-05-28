@@ -614,12 +614,14 @@ export struct TripReplayPage {
           positions[1].longitude
         )
         this.cameraBearing = bearing
+        // #221: 初始 zoom 按节点 0 -> 1 段长动态算, 避免短路线刚进来就一片空白
+        const initialZoom = this.replayZoomForIndex(0)
         const cameraUpdate = map.newCameraPosition({
           target: {
             latitude: positions[0].latitude + latitudeOffset,
             longitude: positions[0].longitude
           },
-          zoom: 15,
+          zoom: initialZoom,
           bearing: bearing,
           tilt: 45
         })
@@ -865,12 +867,14 @@ export struct TripReplayPage {
     this.routeTrailGeneration += 1
     const generation = this.routeTrailGeneration
 
+    // #221: 按段长动态 zoom, 短路线自动放大, animateCamera 会平滑过渡
+    const dynamicZoom = this.replayZoomForIndex(index)
     const cameraUpdate = map.newCameraPosition({
       target: {
         latitude: targetNode.position.latitude,
         longitude: targetNode.position.longitude
       },
-      zoom: 15,
+      zoom: dynamicZoom,
       bearing: bearing,
       tilt: 45
     })
@@ -934,6 +938,53 @@ export struct TripReplayPage {
       Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon)
     const bearing = Math.atan2(y, x) * 180 / Math.PI
     return (bearing + 360) % 360
+  }
+
+  /** #221: 段距离 → 推荐 zoom。
+   * 原先所有 moveToNode 都用固定 zoom=15 (~4.4m/px @ lat 22.5)。
+   * 当两节点相距 100m 时, 段在屏幕上只有 ~22px, 几乎看不到。
+   * 这里按段长阶梯放大, 让段大约占屏幕 30-40% 宽。
+   * AMap-side animateCamera 会平滑过渡 zoom, 视觉效果像"段越短越拉近"。
+   */
+  private haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6378137
+    const toRad = (d: number): number => d * Math.PI / 180
+    const dLat = toRad(lat2 - lat1)
+    const dLng = toRad(lng2 - lng1)
+    const sinDLat = Math.sin(dLat / 2)
+    const sinDLng = Math.sin(dLng / 2)
+    const a = sinDLat * sinDLat + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * sinDLng * sinDLng
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  }
+
+  private replayZoomForSegment(distMeters: number): number {
+    if (distMeters > 8000) return 12
+    if (distMeters > 3000) return 13
+    if (distMeters > 1000) return 14
+    if (distMeters > 400)  return 15
+    if (distMeters > 150)  return 16
+    if (distMeters > 50)   return 17
+    return 18
+  }
+
+  /** 为给定节点 index 算合适 zoom。
+   * 优先看当前 → 下一节点的段长（决定即将进入的视觉感觉），如果是最后一个节点
+   * 就回退看 prev → 当前。短路线 / 单节点情况兜底 15。
+   */
+  private replayZoomForIndex(index: number): number {
+    if (!this.replayRoute) return 15
+    const nodes = this.replayRoute.nodes
+    if (nodes.length < 2) return 15
+    let from: Position
+    let to: Position
+    if (index < nodes.length - 1) {
+      from = nodes[index].position
+      to = nodes[index + 1].position
+    } else {
+      from = nodes[index - 1].position
+      to = nodes[index].position
+    }
+    return this.replayZoomForSegment(this.haversineMeters(from.latitude, from.longitude, to.latitude, to.longitude))
   }
 
   private resetCameraToNorth(): void {
