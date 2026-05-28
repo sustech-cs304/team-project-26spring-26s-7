@@ -993,12 +993,14 @@ export struct TripReplayPage {
     }
     this.cameraBearing = 0
     const node = this.replayRoute.nodes[this.currentNodeIndex]
+    // #221 跟进：指北重置也按当前段长动态 zoom，跟自动回放的视觉保持一致
+    const dynamicZoom = this.replayZoomForIndex(this.currentNodeIndex)
     const cameraUpdate = map.newCameraPosition({
       target: {
         latitude: node.position.latitude,
         longitude: node.position.longitude
       },
-      zoom: 15,
+      zoom: dynamicZoom,
       bearing: 0,
       tilt: 0
     })
@@ -1033,12 +1035,15 @@ export struct TripReplayPage {
 
     const targetNode = this.replayRoute.nodes[index]
     if (this.mapController) {
+      // #221 跟进：手动点上/下一节点 / 拖进度条触发的跳转也走动态 zoom，
+      // 跟自动回放的视觉一致（之前固定 15 导致短路线手动跳过去又"缩回原大小"）
+      const dynamicZoom = this.replayZoomForIndex(index)
       const cameraUpdate = map.newCameraPosition({
         target: {
           latitude: targetNode.position.latitude,
           longitude: targetNode.position.longitude
         },
-        zoom: 15,
+        zoom: dynamicZoom,
         tilt: 45
       })
       this.mapController.animateCamera(cameraUpdate, 420)
