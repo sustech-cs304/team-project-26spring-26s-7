@@ -605,7 +605,6 @@ export struct TripReplayPage {
         })
       }
 
-      const latitudeOffset = 0.0025
       if (positions.length > 1) {
         const bearing = this.calculateBearing(
           positions[0].latitude,
@@ -616,9 +615,10 @@ export struct TripReplayPage {
         this.cameraBearing = bearing
         // #221: 初始 zoom 按节点 0 -> 1 段长动态算, 避免短路线刚进来就一片空白
         const initialZoom = this.replayZoomForIndex(0)
+        const initialLatOffset = this.cameraLatOffsetForZoom(positions[0].latitude, initialZoom)
         const cameraUpdate = map.newCameraPosition({
           target: {
-            latitude: positions[0].latitude + latitudeOffset,
+            latitude: positions[0].latitude + initialLatOffset,
             longitude: positions[0].longitude
           },
           zoom: initialZoom,
@@ -627,12 +627,14 @@ export struct TripReplayPage {
         })
         this.mapController.animateCamera(cameraUpdate, 1000)
       } else {
+        const singleZoom = 15
+        const singleLatOffset = this.cameraLatOffsetForZoom(positions[0].latitude, singleZoom)
         const cameraUpdate = map.newCameraPosition({
           target: {
-            latitude: positions[0].latitude + latitudeOffset,
+            latitude: positions[0].latitude + singleLatOffset,
             longitude: positions[0].longitude
           },
-          zoom: 15
+          zoom: singleZoom
         })
         this.mapController.animateCamera(cameraUpdate, 500)
       }
@@ -869,9 +871,10 @@ export struct TripReplayPage {
 
     // #221: 按段长动态 zoom, 短路线自动放大, animateCamera 会平滑过渡
     const dynamicZoom = this.replayZoomForIndex(index)
+    const latOffset = this.cameraLatOffsetForZoom(targetNode.position.latitude, dynamicZoom)
     const cameraUpdate = map.newCameraPosition({
       target: {
-        latitude: targetNode.position.latitude,
+        latitude: targetNode.position.latitude + latOffset,
         longitude: targetNode.position.longitude
       },
       zoom: dynamicZoom,
@@ -987,6 +990,19 @@ export struct TripReplayPage {
     return this.replayZoomForSegment(this.haversineMeters(from.latitude, from.longitude, to.latitude, to.longitude))
   }
 
+  /** 让节点卡片和地图定位钉错开：卡片显示在上方，钉子被推到地图视觉中心下方约
+   * vpShiftSouth 个 vp。原先固定 0.0025° 的纬度偏移在低 zoom（短路线）时几乎不动、
+   * 在高 zoom（远景）时又跑得太远，且只在首帧应用；这里换成基于 Web Mercator 的
+   * 缩放感知偏移，并在所有相机目标处一致应用。
+   */
+  private cameraLatOffsetForZoom(lat: number, zoom: number, vpShiftSouth: number = 230): number {
+    const cosLat = Math.cos(lat * Math.PI / 180)
+    const mPerPx = (cosLat * 2 * Math.PI * 6378137) / (256 * Math.pow(2, zoom))
+    const shiftPx = vp2px(vpShiftSouth)
+    const meters = shiftPx * mPerPx
+    return meters / 110540
+  }
+
   private resetCameraToNorth(): void {
     if (!this.mapController || !this.replayRoute) {
       return
@@ -995,9 +1011,10 @@ export struct TripReplayPage {
     const node = this.replayRoute.nodes[this.currentNodeIndex]
     // #221 跟进：指北重置也按当前段长动态 zoom，跟自动回放的视觉保持一致
     const dynamicZoom = this.replayZoomForIndex(this.currentNodeIndex)
+    const latOffset = this.cameraLatOffsetForZoom(node.position.latitude, dynamicZoom)
     const cameraUpdate = map.newCameraPosition({
       target: {
-        latitude: node.position.latitude,
+        latitude: node.position.latitude + latOffset,
         longitude: node.position.longitude
       },
       zoom: dynamicZoom,
@@ -1038,9 +1055,10 @@ export struct TripReplayPage {
       // #221 跟进：手动点上/下一节点 / 拖进度条触发的跳转也走动态 zoom，
       // 跟自动回放的视觉一致（之前固定 15 导致短路线手动跳过去又"缩回原大小"）
       const dynamicZoom = this.replayZoomForIndex(index)
+      const latOffset = this.cameraLatOffsetForZoom(targetNode.position.latitude, dynamicZoom)
       const cameraUpdate = map.newCameraPosition({
         target: {
-          latitude: targetNode.position.latitude,
+          latitude: targetNode.position.latitude + latOffset,
           longitude: targetNode.position.longitude
         },
         zoom: dynamicZoom,
@@ -1181,8 +1199,10 @@ export struct TripReplayPage {
             this.showOverlayCard(node)
           }
         })
-        .position({ x: '50%', y: '35%' })
-        .translate({ x: -140 + this.cardTranslateX, y: -90 })
+        // 卡片在上、定位钉在下：卡片贴顶部安全区下方固定锚定；定位钉通过
+        // cameraLatOffsetForZoom 推到地图视觉中心下方约 230vp 处，两者错开。
+        .position({ x: '50%', y: 96 })
+        .translate({ x: -140 + this.cardTranslateX, y: 0 })
         .scale({ x: this.cardScale, y: this.cardScale })
         .opacity(this.cardOpacity)
         .zIndex(70)
