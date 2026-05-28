@@ -39,6 +39,11 @@ interface RemovableOverlay {
   remove: () => void
 }
 
+interface CameraTargetOffset {
+  latOffset: number
+  lngOffset: number
+}
+
 @Entry
 @Component
 export struct TripReplayPage {
@@ -91,14 +96,13 @@ export struct TripReplayPage {
     },
     zoomControlsEnabled: false,
     compassControlsEnabled: false,
-    // 通过 padding 把地图视觉中心下移到屏幕下 1/3 处（约 70%），
-    // 让相机直接以节点为 target（map 围绕钉子旋转），
-    // 钉子落在屏幕下三分之一、卡片下方足够留白；
-    // 视觉中心 y = (vh - top) / 2 + top = vh/2 + 160（800vp 屏即 560vp ≈ 70%）
+    // HMOS MapKit 的 padding 经实测对 animateCamera(newCameraPosition({target}))
+    // 不生效（只在 fitBounds 类操作时收紧视野），所以这里干脆置 0，
+    // 钉子的屏幕位置改由相机目标偏移（cameraTargetOffsetForBearingZoom）控制。
     padding: {
       left: 0,
       right: 0,
-      top: 320,
+      top: 0,
       bottom: 0
     }
   }
@@ -618,12 +622,12 @@ export struct TripReplayPage {
         )
         this.cameraBearing = bearing
         // #221: 初始 zoom 按节点 0 -> 1 段长动态算, 避免短路线刚进来就一片空白
-        // 相机目标 = 节点本身，配合 mapOptions.padding 让钉子落在屏幕下半部
         const initialZoom = this.replayZoomForIndex(0)
+        const initialOffset = this.cameraTargetOffsetForBearingZoom(positions[0].latitude, initialZoom, bearing)
         const cameraUpdate = map.newCameraPosition({
           target: {
-            latitude: positions[0].latitude,
-            longitude: positions[0].longitude
+            latitude: positions[0].latitude + initialOffset.latOffset,
+            longitude: positions[0].longitude + initialOffset.lngOffset
           },
           zoom: initialZoom,
           bearing: bearing,
@@ -631,12 +635,14 @@ export struct TripReplayPage {
         })
         this.mapController.animateCamera(cameraUpdate, 1000)
       } else {
+        const singleZoom = 15
+        const singleOffset = this.cameraTargetOffsetForBearingZoom(positions[0].latitude, singleZoom, 0)
         const cameraUpdate = map.newCameraPosition({
           target: {
-            latitude: positions[0].latitude,
-            longitude: positions[0].longitude
+            latitude: positions[0].latitude + singleOffset.latOffset,
+            longitude: positions[0].longitude + singleOffset.lngOffset
           },
-          zoom: 15
+          zoom: singleZoom
         })
         this.mapController.animateCamera(cameraUpdate, 500)
       }
@@ -872,12 +878,12 @@ export struct TripReplayPage {
     const generation = this.routeTrailGeneration
 
     // #221: 按段长动态 zoom, 短路线自动放大, animateCamera 会平滑过渡
-    // 相机目标 = 节点本身，bearing 旋转直接围绕节点钉子转，钉子在屏幕上不漂移
     const dynamicZoom = this.replayZoomForIndex(index)
+    const offset = this.cameraTargetOffsetForBearingZoom(targetNode.position.latitude, dynamicZoom, bearing)
     const cameraUpdate = map.newCameraPosition({
       target: {
-        latitude: targetNode.position.latitude,
-        longitude: targetNode.position.longitude
+        latitude: targetNode.position.latitude + offset.latOffset,
+        longitude: targetNode.position.longitude + offset.lngOffset
       },
       zoom: dynamicZoom,
       bearing: bearing,
@@ -992,6 +998,35 @@ export struct TripReplayPage {
     return this.replayZoomForSegment(this.haversineMeters(from.latitude, from.longitude, to.latitude, to.longitude))
   }
 
+  /** 让钉子在屏幕上始终落在视觉中心下方约 vpShiftSouth vp（默认 200），
+   * 把卡片和钉子明显错开、钉子稳定在屏幕下三分之一。
+   *
+   * 关键点：bearing 旋转地图后，"屏幕正下方"在世界坐标里跟着转，
+   * 所以纯 lat 偏移在 bearing≠0 时会把钉子甩到屏幕侧面；
+   * 这里按 bearing 把南向偏移拆成 deltaNorth/deltaEast 两个分量,
+   * 钉子无论地图怎么转都落在屏幕正下方。
+   *
+   * 注意：Web Mercator 公式给的 m/px 是逻辑像素(HMOS 的 vp)，不要再 vp2px,
+   * 否则相机会被推到节点几公里外、钉子和路线全部移出视野。
+   */
+  private cameraTargetOffsetForBearingZoom(
+    lat: number,
+    zoom: number,
+    bearing: number,
+    vpShiftSouth: number = 200
+  ): CameraTargetOffset {
+    const cosLat = Math.cos(lat * Math.PI / 180)
+    const mPerPx = (cosLat * 2 * Math.PI * 6378137) / (256 * Math.pow(2, zoom))
+    const meters = vpShiftSouth * mPerPx
+    const bearingRad = bearing * Math.PI / 180
+    const deltaNorthMeters = meters * Math.cos(bearingRad)
+    const deltaEastMeters = meters * Math.sin(bearingRad)
+    return {
+      latOffset: deltaNorthMeters / 110540,
+      lngOffset: deltaEastMeters / (110540 * cosLat)
+    }
+  }
+
   private resetCameraToNorth(): void {
     if (!this.mapController || !this.replayRoute) {
       return
@@ -1000,10 +1035,11 @@ export struct TripReplayPage {
     const node = this.replayRoute.nodes[this.currentNodeIndex]
     // #221 跟进：指北重置也按当前段长动态 zoom，跟自动回放的视觉保持一致
     const dynamicZoom = this.replayZoomForIndex(this.currentNodeIndex)
+    const offset = this.cameraTargetOffsetForBearingZoom(node.position.latitude, dynamicZoom, 0)
     const cameraUpdate = map.newCameraPosition({
       target: {
-        latitude: node.position.latitude,
-        longitude: node.position.longitude
+        latitude: node.position.latitude + offset.latOffset,
+        longitude: node.position.longitude + offset.lngOffset
       },
       zoom: dynamicZoom,
       bearing: 0,
@@ -1041,12 +1077,14 @@ export struct TripReplayPage {
     const targetNode = this.replayRoute.nodes[index]
     if (this.mapController) {
       // #221 跟进：手动点上/下一节点 / 拖进度条触发的跳转也走动态 zoom，
-      // 跟自动回放的视觉一致（之前固定 15 导致短路线手动跳过去又"缩回原大小"）
+      // 跟自动回放的视觉一致（之前固定 15 导致短路线手动跳过去又"缩回原大小"）。
+      // 手动跳转不改 bearing，所以用当前 cameraBearing 计算偏移，保持钉子永远落在屏幕正下方
       const dynamicZoom = this.replayZoomForIndex(index)
+      const offset = this.cameraTargetOffsetForBearingZoom(targetNode.position.latitude, dynamicZoom, this.cameraBearing)
       const cameraUpdate = map.newCameraPosition({
         target: {
-          latitude: targetNode.position.latitude,
-          longitude: targetNode.position.longitude
+          latitude: targetNode.position.latitude + offset.latOffset,
+          longitude: targetNode.position.longitude + offset.lngOffset
         },
         zoom: dynamicZoom,
         tilt: 45
@@ -1187,8 +1225,8 @@ export struct TripReplayPage {
           }
         })
         // 卡片在上、定位钉在下：卡片贴顶部安全区下方固定锚定；
-        // 钉子直接落在地图视觉中心（mapOptions.padding 已下移到屏幕下半部），
-        // bearing 旋转时围绕钉子转，钉子在屏幕上不漂移。
+        // 钉子通过 cameraTargetOffsetForBearingZoom 推到屏幕视觉中心下方约
+        // 200vp 处（即屏幕下三分之一），bearing 旋转下也始终落在屏幕正下方。
         .position({ x: '50%', y: 96 })
         .translate({ x: -140 + this.cardTranslateX, y: 0 })
         .scale({ x: this.cardScale, y: this.cardScale })
