@@ -49,22 +49,19 @@ export struct PhotoCardOverlay {
   @Builder
   PhotoSwiper() {
     if (this.currentNode && this.currentNode.photos.length > 0) {
+      // 之前用模糊底图盖白边，但在"极简白""复古胶片"这种浅色 styleKit 下
+      // 0.55 opacity 的模糊层还是会透出 cardPhotoBackground 的白；
+      // 而且 Swiper 的圆角 RADIUS_SM(12) 比外层 panel 的 RADIUS_LG(28) 小很多，
+      // 上方看着像两层弧度错位。
+      // 改用 ImageFit.Cover 把照片直接撑满整个 250vp 区域，并把 Swiper 圆角
+      // 拉齐到 RADIUS_LG 跟 panel 顶角统一；不再需要模糊底图。
       Swiper() {
         ForEach(this.currentNode.photos, (photo: string) => {
-          // 用同一张图模糊版铺底，再叠原图 Contain：原图竖横比和 250vp 卡片
-          // 不一致时不再露出纯色"白边"，改为同张照片的柔和模糊填充。
           Stack() {
             Image(photo)
               .width('100%')
               .height('100%')
               .objectFit(ImageFit.Cover)
-              .blur(40)
-              .opacity(0.55)
-
-            Image(photo)
-              .width('100%')
-              .height('100%')
-              .objectFit(ImageFit.Contain)
               .opacity(this.getFilterImageOpacity())
 
             Column()
@@ -93,7 +90,7 @@ export struct PhotoCardOverlay {
               .selectedColor(this.styleKit.progressBlockColor)
           : false
       )
-      .borderRadius({ topLeft: AppDimens.RADIUS_SM, topRight: AppDimens.RADIUS_SM })
+      .borderRadius({ topLeft: AppDimens.RADIUS_LG, topRight: AppDimens.RADIUS_LG })
     } else {
       Column() {
         Text('📷')
@@ -107,7 +104,7 @@ export struct PhotoCardOverlay {
       .height(250)
       .justifyContent(FlexAlign.Center)
       .backgroundColor(this.styleKit.cardPhotoBackground)
-      .borderRadius({ topLeft: AppDimens.RADIUS_SM, topRight: AppDimens.RADIUS_SM })
+      .borderRadius({ topLeft: AppDimens.RADIUS_LG, topRight: AppDimens.RADIUS_LG })
     }
   }
 

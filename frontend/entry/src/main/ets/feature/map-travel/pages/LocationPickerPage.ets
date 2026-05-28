@@ -453,8 +453,10 @@ struct LocationPickerPage {
       .position({ x: 0, y: 0 })
 
       Column() {
-        // Stack 默认 alignContent: Center，能让 ⌖ glyph 和 loading spinner 都在按钮里居中；
-        // 之前用 Button(text)，glyph 走 text baseline 渲染，视觉上偏向下不居中。
+        // ⌖ glyph 作为 Text 渲染时，字体 baseline + ascender/descender 让它
+        // 在按钮里偏上/偏下，怎么调 textAlign / Stack alignContent 都摆不正。
+        // 改用 Shape：外环 + 中心圆点的自绘"定位"图标，Stack 默认居中
+        // 对 Shape 是像素级精确的，跟字体度量解耦。
         Stack() {
           if (this.isLocating) {
             LoadingProgress()
@@ -462,10 +464,12 @@ struct LocationPickerPage {
               .height(24)
               .color(AppColors.PRIMARY)
           } else {
-            Text('⌖')
-              .fontSize(28)
-              .fontColor(AppColors.PRIMARY)
-              .textAlign(TextAlign.Center)
+            Circle({ width: 20, height: 20 })
+              .fill(Color.Transparent)
+              .stroke(AppColors.PRIMARY)
+              .strokeWidth(2)
+            Circle({ width: 6, height: 6 })
+              .fill(AppColors.PRIMARY)
           }
         }
         .width(48)
