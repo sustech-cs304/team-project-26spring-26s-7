@@ -265,10 +265,12 @@ struct HelpFeedbackPage {
       const shareToken: string | null = await AiTokenManager.tryGetShareToken()
       const httpReq = http.createHttp()
       try {
-        const headers: FeedbackHeaders = { 'Content-Type': 'application/json' }
-        if (shareToken) {
-          headers['Authorization'] = `Bearer ${shareToken}`
-        }
+        // ArkTS 严格模式：带连字符的字段 ('Content-Type') 只能在 object literal
+        // 初始化时设；后续不能 headers['Authorization'] = ... (arkts-no-props-by-index).
+        // 走三元一次赋值齐两套 headers，避免 bracket 修改。
+        const headers: FeedbackHeaders = shareToken
+          ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${shareToken}` }
+          : { 'Content-Type': 'application/json' }
         const body: FeedbackBody = {
           category: this.selectedCategory,
           content: this.content.trim(),
@@ -277,14 +279,16 @@ struct HelpFeedbackPage {
         if (this.contact.trim().length > 0) {
           body.contact = this.contact.trim()
         }
-        const resp = await httpReq.request(`${API_BASE_URL}/api/v1/feedback`, {
+        // 显式类型避免 ArkTS 严格模式 arkts-no-untyped-obj-literals 误报
+        const options: http.HttpRequestOptions = {
           method: http.RequestMethod.POST,
           header: headers,
           extraData: JSON.stringify(body),
           readTimeout: 10000,
           connectTimeout: 10000,
           expectDataType: http.HttpDataType.OBJECT,
-        })
+        }
+        const resp = await httpReq.request(`${API_BASE_URL}/api/v1/feedback`, options)
         if (resp.responseCode === 200 || resp.responseCode === 201) {
           promptAction.showToast({ message: '反馈提交成功，感谢！', duration: 2000 })
           // 清空表单，留两秒让 toast 看完再返回
