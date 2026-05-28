@@ -1013,7 +1013,7 @@ export struct TripReplayPage {
     lat: number,
     zoom: number,
     bearing: number,
-    vpShiftSouth: number = 200
+    vpShiftSouth: number = 100
   ): CameraTargetOffset {
     const cosLat = Math.cos(lat * Math.PI / 180)
     const mPerPx = (cosLat * 2 * Math.PI * 6378137) / (256 * Math.pow(2, zoom))
