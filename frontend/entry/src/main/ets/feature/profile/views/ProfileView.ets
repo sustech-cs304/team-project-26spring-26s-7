@@ -531,12 +531,31 @@ export struct ProfileView {
             .padding({ left: AppDimens.PADDING_MD, top: AppDimens.PADDING_MD, bottom: 8 })
             .width('100%')
 
-          this.settingItem(
-            '隐私与安全',
-            (this.exifStripAlwaysOn ? 'EXIF 自动剥离' : 'EXIF 未剥离') + ' · ' +
-              (this.aiCloudTaggingEnabled ? '云端识别 已开启' : '云端识别 已关闭'),
-            () => this.showPrivacySettings()
-          )
+          // #224 修：原先用 settingItem(@Builder, 字符串参数) 渲染，发现 @StorageLink
+          // 变化时 @Builder 不一定把新参数 propagate 进去，右侧副标题永远停在
+          // "云端识别 已关闭"。改成内联 Row 直接读 this.aiCloudTaggingEnabled /
+          // this.exifStripAlwaysOn，build() 重渲染时 Text 自动拿到新值。
+          Row() {
+            Text('隐私与安全')
+              .fontSize(AppDimens.FONT_MD)
+              .fontColor(AppColors.TEXT_PRIMARY)
+            Blank()
+            Text(
+              (this.exifStripAlwaysOn ? 'EXIF 自动剥离' : 'EXIF 未剥离') + ' · ' +
+                (this.aiCloudTaggingEnabled ? '云端识别 已开启' : '云端识别 已关闭')
+            )
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.TEXT_HINT)
+              .margin({ right: 4 })
+            Text('>')
+              .fontSize(AppDimens.FONT_MD)
+              .fontColor(AppColors.TEXT_HINT)
+          }
+          .width('100%')
+          .height(52)
+          .padding({ left: AppDimens.PADDING_MD, right: AppDimens.PADDING_MD })
+          .backgroundColor(AppColors.CARD_BG)
+          .onClick(() => this.showPrivacySettings())
           Divider().color(AppColors.DIVIDER)
           this.settingItem('离线地图', '下载全球基础包', () => this.showOfflineMapGuide())
           this.settingItem('用户协议', '', () => router.pushUrl({ url: RouterUrls.USER_AGREEMENT }))

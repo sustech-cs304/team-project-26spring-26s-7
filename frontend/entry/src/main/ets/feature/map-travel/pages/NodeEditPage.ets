@@ -35,8 +35,12 @@ export struct NodeEditPage {
   @State visitedAt: number = 0
   @State tempVisitedAt: number = 0
   @State showDatePicker: boolean = false
-  // #219: 是否有未保存改动；目前仅在标题、正文文本变化时打标，已足够覆盖主流编辑场景
-  @State isDirty: boolean = false
+  // #219 修：原先 updateTitle/updateContent 里无条件 isDirty=true，但 ArkUI 的
+  // TextInput/TextArea onChange 在 `this.title = node.title` 这类初始化路径上
+  // 也会被触发（绑定值变更即回调），导致刚打开页面就被标 dirty，返回时无脑弹窗。
+  // 改成：加载时记下原始值，attemptBack 时按值对比 — 真有改动才弹。
+  private originalTitle: string = ''
+  private originalContent: string = ''
 
   private dataService = getDataService()
 
@@ -151,10 +155,18 @@ export struct NodeEditPage {
       this.longitude = node.longitude
       this.hasPickedLocation = true
       this.visitedAt = node.visitedAt ?? 0
+      // 记下原始值作为脏检查的基线
+      this.originalTitle = node.title
+      this.originalContent = node.content
       await this.loadAvailableTrips()
     } catch (_) {
       promptAction.showToast({ message: '加载节点数据失败' })
     }
+  }
+
+  /** #219 修：值对比代替 flag —— 只有标题或正文跟原始值不同才视为有未保存改动。 */
+  private hasUnsavedChanges(): boolean {
+    return this.title !== this.originalTitle || this.content !== this.originalContent
   }
 
   private async resolveTargetTripId(): Promise<string> {
@@ -175,7 +187,7 @@ export struct NodeEditPage {
 
   // #219: 物理返回键 / 顶部 < 都先走这里，若存在未保存内容会先弹确认
   private attemptBack(): void {
-    if (!this.isDirty) {
+    if (!this.hasUnsavedChanges()) {
       router.back()
       return
     }
@@ -190,7 +202,10 @@ export struct NodeEditPage {
         value: '放弃修改',
         fontColor: AppColors.DANGER,
         action: () => {
-          this.isDirty = false
+          // 用户明确放弃 — 把 baseline 升级到当前值，避免万一 router.back 异步
+          // 导致页面短暂保留时再弹一次
+          this.originalTitle = this.title
+          this.originalContent = this.content
           router.back()
         }
       }
@@ -198,7 +213,7 @@ export struct NodeEditPage {
   }
 
   onBackPress(): boolean {
-    if (!this.isDirty) {
+    if (!this.hasUnsavedChanges()) {
       return false
     }
     this.attemptBack()
@@ -265,7 +280,9 @@ export struct NodeEditPage {
         promptAction.showToast({ message: '记忆已保存' })
       }
       this.bumpTravelDataVersion()
-      this.isDirty = false
+      // 保存成功 → baseline 升级到当前值，路由还没真切走前用户回弹也不会再被拦
+      this.originalTitle = this.title
+      this.originalContent = this.content
       router.back()
     } catch (_) {
       promptAction.showToast({ message: '保存失败，请稍后重试' })
@@ -384,14 +401,14 @@ export struct NodeEditPage {
     this.content = value.length > NODE_CONTENT_MAX_LENGTH
       ? value.slice(0, NODE_CONTENT_MAX_LENGTH)
       : value
-    this.isDirty = true
+    // 不再无脑置 dirty —— attemptBack 用 hasUnsavedChanges() 按值跟 original 对比
   }
 
   private updateTitle(value: string): void {
     this.title = value.length > NODE_TITLE_MAX_LENGTH
       ? value.slice(0, NODE_TITLE_MAX_LENGTH)
       : value
-    this.isDirty = true
+    // 同上
   }
 
   private getTitleCounterColor(): string {

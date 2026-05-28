@@ -25,11 +25,13 @@ export struct TripEditPage {
   @State isLoading: boolean = false
   @State isSaving: boolean = false
   @State nodes: TripNodeItem[] = []
-  // #219: 标题 / isPublic 是否被改过；与 orderDirty 一起决定是否提示未保存
-  @State formDirty: boolean = false
+  // #219 修：原先 formDirty 在 TextInput.onChange / isPublic 切换里无脑置 true，
+  // 但 ArkUI TextInput.onChange 在 `this.title = trip.name` 这类初始化路径上也会
+  // 被触发，导致刚打开页面就被标 dirty。改用快照对比 + orderDirty 离散事件。
+  private originalTitle: string = ''
   private orderDirty: boolean = false
   // v0.8: 进入编辑页时记下原始 isPublic，保存时如果是 公开 → 私密
-  // 的过渡就发"关停所有分享"请求给后端
+  // 的过渡就发"关停所有分享"请求给后端。同时复用为脏检查 baseline。
   private originalIsPublic: boolean = false
 
   private dataService = getDataService()
@@ -117,6 +119,7 @@ export struct TripEditPage {
 
       this.title = trip.name
       this.isPublic = trip.isPublic
+      this.originalTitle = trip.name
       this.originalIsPublic = trip.isPublic
       await this.loadNodesOnly()
     } catch (_) {
@@ -180,9 +183,11 @@ export struct TripEditPage {
     })()
   }
 
-  // #219: 标题、isPublic、节点排序任意一处变更都需在 attemptBack 时提醒
+  // #219 修：标题 / isPublic 改快照对比；节点排序保留 orderDirty 离散事件
   private hasUnsavedChanges(): boolean {
-    return this.formDirty || this.orderDirty
+    return this.title !== this.originalTitle
+        || this.isPublic !== this.originalIsPublic
+        || this.orderDirty
   }
 
   private attemptBack(): void {
@@ -201,7 +206,9 @@ export struct TripEditPage {
         value: '放弃修改',
         fontColor: AppColors.DANGER,
         action: () => {
-          this.formDirty = false
+          // 用户明确放弃 — baseline 升级到当前值，避免 router.back 异步路径再弹
+          this.originalTitle = this.title
+          this.originalIsPublic = this.isPublic
           this.orderDirty = false
           router.back()
         }
@@ -243,7 +250,9 @@ export struct TripEditPage {
           this.revokeSharesAfterPrivacyToggle(this.tripId)
         }
         this.originalIsPublic = this.isPublic
-        this.formDirty = false
+        // 保存成功 → baseline 升级
+        this.originalTitle = this.title
+        this.orderDirty = false
         promptAction.showToast({ message: 'Track 已更新' })
         router.back()
         return
@@ -327,14 +336,14 @@ export struct TripEditPage {
           .backgroundColor(!this.isPublic ? '#A55B00' : AppColors.BACKGROUND)
           .padding({ left: 16, right: 16, top: 10, bottom: 10 })
           .borderRadius(18)
-          .onClick(() => { this.isPublic = false; this.formDirty = true })
+          .onClick(() => { this.isPublic = false })
         Text('公开')
           .fontSize(AppDimens.FONT_MD)
           .fontColor(this.isPublic ? AppColors.TEXT_ON_PRIMARY : AppColors.TEXT_SECONDARY)
           .backgroundColor(this.isPublic ? '#167D3E' : AppColors.BACKGROUND)
           .padding({ left: 16, right: 16, top: 10, bottom: 10 })
           .borderRadius(18)
-          .onClick(() => { this.isPublic = true; this.formDirty = true })
+          .onClick(() => { this.isPublic = true })
       }
       .margin({ top: 12 })
 
@@ -534,7 +543,8 @@ export struct TripEditPage {
                 .placeholderColor(AppColors.INPUT_PLACEHOLDER)
                 .caretColor(AppColors.INPUT_CARET)
                 .backgroundColor(AppColors.INPUT_BG)
-                .onChange((value: string) => { this.title = value; this.formDirty = true })
+                // 不再无脑置 formDirty —— hasUnsavedChanges() 按值跟 originalTitle 对比
+                .onChange((value: string) => { this.title = value })
             }
             .width('100%')
             .padding(AppDimens.PADDING_MD)
