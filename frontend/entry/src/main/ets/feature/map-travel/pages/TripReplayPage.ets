@@ -994,12 +994,14 @@ export struct TripReplayPage {
    * vpShiftSouth 个 vp。原先固定 0.0025° 的纬度偏移在低 zoom（短路线）时几乎不动、
    * 在高 zoom（远景）时又跑得太远，且只在首帧应用；这里换成基于 Web Mercator 的
    * 缩放感知偏移，并在所有相机目标处一致应用。
+   *
+   * 注意：Web Mercator 公式给的 m/px 是"逻辑像素"(HMOS 的 vp)，不要额外 vp2px,
+   * 否则相机会被推到屏幕外几十公里、节点钉和路线全部消失。
    */
-  private cameraLatOffsetForZoom(lat: number, zoom: number, vpShiftSouth: number = 230): number {
+  private cameraLatOffsetForZoom(lat: number, zoom: number, vpShiftSouth: number = 200): number {
     const cosLat = Math.cos(lat * Math.PI / 180)
     const mPerPx = (cosLat * 2 * Math.PI * 6378137) / (256 * Math.pow(2, zoom))
-    const shiftPx = vp2px(vpShiftSouth)
-    const meters = shiftPx * mPerPx
+    const meters = vpShiftSouth * mPerPx
     return meters / 110540
   }
 
