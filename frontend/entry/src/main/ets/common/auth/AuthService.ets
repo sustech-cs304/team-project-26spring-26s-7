@@ -139,7 +139,7 @@ export class AuthService {
     }
     // 清空缓存，重新从 RDB 加载（避免被上次登录的华为数据污染）
     cachedEffectiveProfile = null;
-    // 从 RDB 读取本地 profile
+    // 先从 RDB 读取本地 profile，确保 UI 立刻可用
     const local = await RdbHelper.getInstance().loadUserProfile(user.uid);
     if (local && local.displayName) {
       cachedEffectiveProfile = {
@@ -149,52 +149,52 @@ export class AuthService {
       };
       hilog.info(DOMAIN, TAG, `restoreSession: loaded from RDB "${cachedEffectiveProfile.displayName}"`);
     } else {
-      hilog.info(DOMAIN, TAG, `restoreSession: no local profile, pulling from cloud...`);
-      // RDB 为空时，尝试从云端拉取 profile
-      try {
-        const cloudProfile = await CloudSyncService.fetchProfile(user.uid);
-        if (cloudProfile) {
-          hilog.info(DOMAIN, TAG, `restoreSession: found cloud profile nickname="${cloudProfile.nickname}"`);
-          // 优先设置内存缓存（昵称/bio 立即可用，头像路径下载完成后更新）
-          cachedEffectiveProfile = {
-            displayName: cloudProfile.nickname ?? '',
-            avatarUrl: cloudProfile.avatarCloudPath ?? '',
-            bio: cloudProfile.bio ?? ''
-          };
-          // 写入 RDB 缓存
-          await RdbHelper.getInstance().saveUserProfile(
-            user.uid,
-            cloudProfile.nickname ?? '',
-            cloudProfile.avatarCloudPath ?? '',
-            cloudProfile.bio ?? ''
-          );
-          // 下载云端头像到沙箱（如有）
-          if (cloudProfile.avatarCloudPath && cloudProfile.avatarCloudPath.length > 0) {
-            try {
-              const localPath = await CloudStorageService.downloadProfileAvatar(user.uid);
-              // 用本地路径更新 RDB 和缓存
-              await RdbHelper.getInstance().saveUserProfile(
-                user.uid,
-                cloudProfile.nickname ?? '',
-                localPath,
-                cloudProfile.bio ?? ''
-              );
-              cachedEffectiveProfile.avatarUrl = localPath;
-              cachedEffectiveProfile.displayName = cloudProfile.nickname ?? '';
-              cachedEffectiveProfile.bio = cloudProfile.bio ?? '';
-            } catch (downloadErr) {
-              hilog.warn(DOMAIN, TAG, `downloadProfileAvatar failed: ${(downloadErr as Error).message}, using cloud path as fallback`);
-              // avatarUrl 已在上面的 cachedEffectiveProfile 初始化时设置，无需额外处理
-            }
-          }
-        } else {
-          hilog.info(DOMAIN, TAG, `restoreSession: no cloud profile either`);
-        }
-      } catch (cloudErr) {
-        hilog.warn(DOMAIN, TAG, `restoreSession: fetchProfile failed: ${(cloudErr as Error).message}`);
-      }
+      hilog.info(DOMAIN, TAG, `restoreSession: no local profile, will pull from cloud...`);
     }
+    // #225: 不论 RDB 有没有数据，每次冷启动都从云端再拉一次 profile，覆盖本地。
+    // 否则 Device A 改头像、Device B 重启时本地 RDB 还是旧值，永远拉不到新头像。
+    await AuthService.pullCloudProfileToLocal(user.uid);
     return await CloudStorageService.ensureReady();
+  }
+
+  /** #225 拆出来的辅助：从云端拉 profile + 下载头像到沙箱，写入 RDB 和内存缓存。
+   * restoreSession() 和 SyncManager.replaceLocalWithCloud() 都会调用。
+   */
+  static async pullCloudProfileToLocal(uid: string): Promise<void> {
+    try {
+      const cloudProfile = await CloudSyncService.fetchProfile(uid);
+      if (!cloudProfile) {
+        hilog.info(DOMAIN, TAG, `pullCloudProfileToLocal: no cloud profile for uid=${uid}`);
+        return;
+      }
+      hilog.info(DOMAIN, TAG, `pullCloudProfileToLocal: found cloud profile nickname="${cloudProfile.nickname ?? ''}"`);
+      const nickname = cloudProfile.nickname ?? '';
+      const bio = cloudProfile.bio ?? '';
+      const cloudAvatarPath = cloudProfile.avatarCloudPath ?? '';
+      // 先写入 RDB / 缓存（avatarUrl 先用云端路径），UI 即刻可见昵称变化
+      await RdbHelper.getInstance().saveUserProfile(uid, nickname, cloudAvatarPath, bio);
+      if (cachedEffectiveProfile) {
+        cachedEffectiveProfile.displayName = nickname;
+        cachedEffectiveProfile.bio = bio;
+        cachedEffectiveProfile.avatarUrl = cloudAvatarPath;
+      } else {
+        cachedEffectiveProfile = { displayName: nickname, avatarUrl: cloudAvatarPath, bio };
+      }
+      // 再异步把头像下载到沙箱，落盘后用本地路径覆盖 avatarUrl
+      if (cloudAvatarPath.length > 0) {
+        try {
+          const localPath = await CloudStorageService.downloadProfileAvatar(uid);
+          await RdbHelper.getInstance().saveUserProfile(uid, nickname, localPath, bio);
+          if (cachedEffectiveProfile) {
+            cachedEffectiveProfile.avatarUrl = localPath;
+          }
+        } catch (downloadErr) {
+          hilog.warn(DOMAIN, TAG, `pullCloudProfileToLocal: downloadProfileAvatar failed: ${(downloadErr as Error).message}, keeping cloud path`);
+        }
+      }
+    } catch (err) {
+      hilog.warn(DOMAIN, TAG, `pullCloudProfileToLocal failed: ${(err as Error).message}`);
+    }
   }
 
   static async getEffectiveProfile(): Promise<EffectiveProfile | null> {

@@ -300,6 +300,12 @@ export class SyncManager {
         return
       }
 
+      // #225: travels + memory_nodes 之外，profile（昵称 + 头像）也一并从云端拉。
+      // 之前漏掉这步导致 Device A 改头像后，Device B 点"下载云端"只同步行程数据，
+      // 本地 RDB 头像 URL 永远是旧值。pullCloudProfileToLocal 自带 try/catch
+      // 不会抛出，profile 拉失败也不阻塞后续 travel/node 同步。
+      await AuthService.pullCloudProfileToLocal(user.uid)
+
       const travelRepo = new TravelRepository()
       const nodeRepo = new MemoryNodeRepository()
       const localTravels = await travelRepo.getAllTravelsIncludingDeleted()

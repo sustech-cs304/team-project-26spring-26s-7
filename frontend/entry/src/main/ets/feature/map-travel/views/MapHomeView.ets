@@ -113,6 +113,11 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
   private nodeLookup: Map<string, LoadedNodeData[]> = new Map()
   private photoCache: Map<string, PhotoData> = new Map()
   private badgeCache: Map<string, PhotoData> = new Map()
+  // #220: getCustomIcon 在 zoom 拖动时会被 MapKit 对每个可见 cluster 反复调用，
+  // 每次都做 360×360 ArrayBuffer 分配 + 嵌套像素循环 + SVG→PixelMap 转换 → 卡。
+  // 大部分 zoom tick 上 cluster 的视觉特征 (主图 + 数量 label) 不变，所以按
+  // 这两个 key 缓存渲染好的 PixelMap，重复出现的同形 cluster 直接命中。
+  private iconCache: Map<string, image.PixelMap> = new Map()
 
   constructor(
     clusterItems: mapCommon.ClusterItem[],
@@ -126,7 +131,39 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
     this.photoCache = photoCache
   }
 
+  /** 用 cluster 的视觉特征算缓存 key：
+   * 单点 → 节点封面照片路径；
+   * 多点 → 数量 label + 主图（按 createdAt 排序后的第一张有效封面）路径。
+   * 两个不同 cluster 只要这两项一致，渲染出来的图标像素就完全一样。
+   */
+  private iconCacheKey(clusterItems: mapCommon.ClusterItem[]): string {
+    if (clusterItems.length === 1) {
+      const key = this.posKey(clusterItems[0].position.latitude, clusterItems[0].position.longitude)
+      const bucket = this.nodeLookup.get(key)
+      const target = bucket && bucket.length > 0 ? bucket[0] : undefined
+      const photoPath = target && target.coverPhoto ? target.coverPhoto : ''
+      return `s|${photoPath.length > 0 ? photoPath : '_'}`
+    }
+    const clusterNodes = this.resolveClusterNodes(clusterItems)
+    const count = clusterNodes.length
+    const label = count > 99 ? '99+' : `${count}`
+    let primaryPhotoPath = ''
+    for (const node of clusterNodes) {
+      if (node.coverPhoto && node.coverPhoto.length > 0 && this.photoCache.has(node.coverPhoto)) {
+        primaryPhotoPath = node.coverPhoto
+        break
+      }
+    }
+    return `c|${label}|${primaryPhotoPath.length > 0 ? primaryPhotoPath : '_'}`
+  }
+
   async getCustomIcon(clusterItems: mapCommon.ClusterItem[]): Promise<image.PixelMap> {
+    const cacheKey = this.iconCacheKey(clusterItems)
+    const cached = this.iconCache.get(cacheKey)
+    if (cached) {
+      return cached
+    }
+
     const size = MARKER_SIZE
     const buffer = new ArrayBuffer(size * size * 4)
     const view = new Uint8Array(buffer)
@@ -138,10 +175,12 @@ class NodeClusterOverlayParams implements mapCommon.ClusterOverlayParams {
       await this.fillClusterIcon(view, size, clusterItems)
     }
 
-    return await image.createPixelMap(buffer, {
+    const pixelMap = await image.createPixelMap(buffer, {
       size: { width: size, height: size },
       pixelFormat: image.PixelMapFormat.BGRA_8888
     })
+    this.iconCache.set(cacheKey, pixelMap)
+    return pixelMap
   }
 
   // BGRA_8888 layout: view[idx]=B, [idx+1]=G, [idx+2]=R, [idx+3]=A
