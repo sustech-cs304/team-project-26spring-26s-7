@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 
 from .core.config import get_settings
-from .routers import auth, health, publish, share, viewer
+from .routers import auth, feedback, health, publish, share, viewer
 
 
 def create_app() -> FastAPI:
@@ -62,6 +62,7 @@ def create_app() -> FastAPI:
     app.include_router(share.router)
     app.include_router(publish.router)
     app.include_router(viewer.router)
+    app.include_router(feedback.router)
     return app
 
 

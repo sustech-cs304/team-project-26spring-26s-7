@@ -314,12 +314,37 @@ export struct ProfileView {
       title: '关于 ItsMapPin',
       message:
         'ItsMapPin v1.0.0\n\n' +
-        '基于 HarmonyOS 的地理位置旅行日记应用。\n\n' +
-        '南方科技大学 软件工程课程 第 7 组',
-      confirm: {
+        '基于 HarmonyOS 的地理位置旅行日记应用。\n' +
+        '官网：https://itsmappin.top\n\n' +
+        '南方科技大学 软件工程课程 第 7 组\n\n' +
+        '——————\n' +
+        'ICP 备案：粤ICP备2026065491号-1A\n' +
+        '点击"查询备案"可访问工信部备案系统核实。',
+      primaryButton: {
+        value: '查询备案',
+        action: () => { this.openExternalUrl('https://beian.miit.gov.cn/') }
+      },
+      secondaryButton: {
         value: '关闭',
         action: () => {}
       }
+    })
+  }
+
+  /** 用系统默认浏览器打开外链 */
+  private openExternalUrl(url: string): void {
+    const uiContext = this.getUIContext()
+    const ctx = uiContext.getHostContext() as common.UIAbilityContext
+    if (!ctx) {
+      promptAction.showToast({ message: '无法打开浏览器，请手动访问 ' + url })
+      return
+    }
+    ctx.startAbility({
+      action: 'ohos.want.action.viewData',
+      uri: url,
+      entities: ['entity.system.browsable']
+    }).catch(() => {
+      promptAction.showToast({ message: '打开浏览器失败，请手动访问 ' + url })
     })
   }
 
@@ -517,6 +542,8 @@ export struct ProfileView {
           this.settingItem('用户协议', '', () => router.pushUrl({ url: RouterUrls.USER_AGREEMENT }))
           Divider().color(AppColors.DIVIDER)
           this.settingItem('隐私政策', '', () => router.pushUrl({ url: RouterUrls.PRIVACY_POLICY }))
+          Divider().color(AppColors.DIVIDER)
+          this.settingItem('帮助与客服', '提交反馈', () => router.pushUrl({ url: RouterUrls.HELP_FEEDBACK }))
           Divider().color(AppColors.DIVIDER)
           this.settingItem('关于 ItsMapPin', 'v1.0.0', () => this.showAbout())
         }

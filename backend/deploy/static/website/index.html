@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#FCF4EC">
+  <title>ItsMapPin — 记录每一次旅行</title>
+  <meta name="description" content="ItsMapPin 是一款 HarmonyOS NEXT 旅行记录 App。把每一个去过的地方变成地图上的钉。AI 文案、限时分享、海报 QR 码、隐私保护一应俱全。">
+
+  <!-- 社交分享卡片 (OG) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ItsMapPin — 记录每一次旅行">
+  <meta property="og:description" content="HarmonyOS NEXT 旅行记录 App，AI 文案 / 限时分享 / 隐私优先。">
+  <meta property="og:url" content="https://itsmappin.top">
+  <meta property="og:image" content="https://itsmappin.top/assets/og-cover.png">
+  <meta property="og:locale" content="zh_CN">
+
+  <link rel="icon" href="/assets/favicon.ico">
+
+  <style>
+    :root {
+      --bg-top: #FCF4EC;
+      --bg-bottom: #F7E9DA;
+      --card: #FFFFFF;
+      --brown: #482C11;
+      --text-brown: #60401F;
+      --text-grey: #67615C;
+      --footer-grey: #7B7774;
+      --gold: #DDB582;
+      --gold-dark: #D5A467;
+      --shadow: 0 8px 32px rgba(106, 75, 42, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                   "Hiragino Sans GB", "Microsoft YaHei", Roboto, "Helvetica Neue", sans-serif;
+      color: var(--text-brown);
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---------- Nav ---------- */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(252, 244, 236, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(106, 75, 42, 0.08);
+    }
+    .nav-inner {
+      max-width: 1080px; margin: 0 auto;
+      padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 600; font-size: 19px; color: var(--brown);
+      text-decoration: none;
+    }
+    .logo-dot {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(213, 164, 103, 0.4);
+    }
+    .logo-dot svg { width: 16px; height: 16px; fill: white; }
+    .nav-links { display: flex; gap: 28px; }
+    .nav-links a {
+      color: var(--text-brown); text-decoration: none;
+      font-size: 14px; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--brown); }
+
+    /* ---------- Hero ---------- */
+    .hero {
+      max-width: 1080px; margin: 0 auto;
+      padding: 80px 24px 60px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 48px; font-weight: 700;
+      color: var(--brown);
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+    .hero .tagline {
+      font-size: 20px; color: var(--text-grey);
+      margin-bottom: 36px;
+      max-width: 540px; margin-left: auto; margin-right: auto;
+    }
+    .cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, var(--brown) 0%, #5e3a1e 100%);
+      color: white; text-decoration: none;
+      border-radius: 999px;
+      font-size: 16px; font-weight: 500;
+      box-shadow: 0 6px 18px rgba(72, 44, 17, 0.25);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(72, 44, 17, 0.35);
+    }
+    .cta-note {
+      display: block; margin-top: 12px;
+      font-size: 13px; color: var(--footer-grey);
+    }
+
+    /* ---------- Features ---------- */
+    .features {
+      max-width: 1080px; margin: 0 auto;
+      padding: 40px 24px 60px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+    }
+    .feature-card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+      font-size: 22px;
+    }
+    .feature-card h3 {
+      font-size: 17px; color: var(--brown);
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      font-size: 14px; color: var(--text-grey);
+      line-height: 1.55;
+    }
+
+    /* ---------- About / Privacy section ---------- */
+    .section {
+      max-width: 840px; margin: 0 auto;
+      padding: 60px 24px;
+    }
+    .section h2 {
+      font-size: 28px; color: var(--brown);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .section p {
+      color: var(--text-brown);
+      margin-bottom: 16px;
+    }
+    .section ul {
+      list-style: none;
+      padding: 0;
+    }
+    .section ul li {
+      padding: 8px 0 8px 24px;
+      color: var(--text-brown);
+      position: relative;
+    }
+    .section ul li::before {
+      content: "✓";
+      position: absolute; left: 0;
+      color: var(--gold-dark);
+      font-weight: 600;
+    }
+
+    /* ---------- Footer ---------- */
+    footer {
+      background: rgba(248, 235, 221, 0.6);
+      border-top: 1px solid rgba(106, 75, 42, 0.08);
+      padding: 32px 24px 24px;
+      margin-top: 40px;
+    }
+    .footer-inner {
+      max-width: 1080px; margin: 0 auto;
+      text-align: center;
+      color: var(--footer-grey);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .footer-links {
+      margin-bottom: 12px;
+    }
+    .footer-links a {
+      color: var(--footer-grey);
+      text-decoration: none;
+      margin: 0 12px;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--brown); }
+    .footer-icp a {
+      color: var(--footer-grey);
+      text-decoration: none;
+      margin: 0 8px;
+    }
+    .footer-icp a:hover { color: var(--brown); text-decoration: underline; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 640px) {
+      .hero { padding: 48px 20px 40px; }
+      .hero h1 { font-size: 34px; }
+      .hero .tagline { font-size: 17px; }
+      .nav-links { display: none; }
+      .features { padding: 20px 20px 40px; gap: 16px; }
+      .section { padding: 40px 20px; }
+      .section h2 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="/">
+      <span class="logo-dot">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+      </span>
+      ItsMapPin
+    </a>
+    <div class="nav-links">
+      <a href="#features">功能</a>
+      <a href="#about">关于</a>
+      <a href="#privacy">隐私</a>
+      <a href="#contact">联系</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <h1>记录每一次旅行</h1>
+  <p class="tagline">
+    把每个去过的地方变成地图上的钉。<br>
+    AI 文案、限时分享、海报二维码、隐私优先。
+  </p>
+  <a class="cta" href="#download">
+    立即下载
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+      <path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/>
+    </svg>
+  </a>
+  <span class="cta-note">即将上架华为应用市场（AppGallery）</span>
+</header>
+
+<section class="features" id="features">
+  <div class="feature-card">
+    <div class="feature-icon">📍</div>
+    <h3>地图记录</h3>
+    <p>每个节点带上 POI、心情、标签、照片。沿途路线自动连成一段旅程。</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">✨</div>
+    <h3>AI 文案</h3>
+    <p>4 种风格 × 3 种长度。AI 看着你的照片元数据写出有感觉的中文短文。</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🔗</div>
+    <h3>限时分享</h3>
+    <p>一键生成带签名 + 过期时间的分享链接。微信场景另送海报 QR 码绕开端口限制。</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🔒</div>
+    <h3>隐私优先</h3>
+    <p>EXIF 端侧抽取；照片是否上传完全用户控制；链接随时可撤销。</p>
+  </div>
+</section>
+
+<section class="section" id="about">
+  <h2>关于 ItsMapPin</h2>
+  <p>
+    ItsMapPin 是一款专为 HarmonyOS NEXT 设计的旅行记录 App。
+    我们相信旅行是值得被认真记录的——不是堆积一堆照片，而是把每个走过的地方、每段感受都好好留下。
+  </p>
+  <p>
+    用 AI 让记录更轻松，用签名链接让分享更安全，用本地优先让隐私不让步。
+    所有功能都为一件事服务：<strong>让你能反复回味去过的每个地方</strong>。
+  </p>
+</section>
+
+<section class="section" id="privacy">
+  <h2>我们怎么保护你的数据</h2>
+  <ul>
+    <li>EXIF 元数据完全在端侧抽取，不上传任何照片像素</li>
+    <li>云端图像识别默认关闭，用户主动开启才送给 AI 服务</li>
+    <li>分享链接带 HMAC-SHA256 签名 + 过期时间，无法被伪造或延长</li>
+    <li>所有发布的内容会经过自动审核，违规内容立即下线</li>
+    <li>账号注销时所有数据可一键清除，不在云端留任何残留</li>
+  </ul>
+</section>
+
+<section class="section" id="contact">
+  <h2>联系我们</h2>
+  <p style="text-align: center;">
+    问题反馈、合作洽谈，欢迎邮件到：<br>
+    <a href="mailto:hello@itsmappin.top" style="color: var(--brown); text-decoration: none; font-weight: 500;">
+      hello@itsmappin.top
+    </a>
+  </p>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-links">
+      <a href="#about">关于我们</a>
+      <a href="#privacy">隐私政策</a>
+      <a href="#contact">联系</a>
+    </div>
+    <div>© 2026 ItsMapPin · Made with ❤︎ in Shenzhen</div>
+    <div class="footer-icp" style="margin-top: 8px;">
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026065491号-1A</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

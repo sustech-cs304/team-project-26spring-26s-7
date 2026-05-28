@@ -24,20 +24,15 @@
  */
 
 /**
- * 统一 BASE —— 切换 ICP 备案前/后只改这一行：
+ * 统一 BASE —— ICP 备案通过后已切到标准 443 端口（粤ICP备2026065491号-1A）。
  *
- *   阶段 1（备案审核中，正在用）：'https://audit.itsmappin.top:8443'
- *   阶段 2（备案下来后改成）：    'https://audit.itsmappin.top'
+ *   v1.0+（当前生产）：'https://audit.itsmappin.top'      ← 备案后标准 443
+ *   v0.x（已淘汰）：    'https://audit.itsmappin.top:8443' ← 备案审核中临时端口
  *
- * 为什么是 8443：华为云对未备案域名只拦默认 Web 端口 80/443，非标端口不拦。
- * SSL 证书签的是域名跟端口无关，所以测试期间也能正常 TLS 握手。
- *
- * 切换步骤（ICP 通过后）：
- *   1. 后端跑 Backend_ItsMapPin/deploy/scripts/enable-production.sh
- *   2. 改下面这一行为 'https://audit.itsmappin.top'
- *   3. 重新打包前端
+ * 服务端 nginx 已加 8443 → 443 的 301 跳转兜底，老版本 APP 仍能访问，
+ * 但所有新打包都用 443。
  */
-const AUDIT_BASE: string = 'https://audit.itsmappin.top:8443'
+const AUDIT_BASE: string = 'https://audit.itsmappin.top'
 
 /**
  * 分享服务 base —— 与 nginx /api/* 路由对接

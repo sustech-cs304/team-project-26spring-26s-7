@@ -5,6 +5,7 @@
     "pages/MainPage",
     "pages/UserAgreementPage",
     "pages/PrivacyPolicyPage",
+    "pages/HelpFeedbackPage",
     "feature/map-travel/pages/NodeEditPage",
     "feature/map-travel/pages/NodeDetailPage",
     "feature/map-travel/pages/TripEditPage",
