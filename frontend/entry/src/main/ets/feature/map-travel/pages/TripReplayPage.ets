@@ -969,12 +969,14 @@ export struct TripReplayPage {
   }
 
   private replayZoomForSegment(distMeters: number): number {
-    if (distMeters > 8000) return 12
-    if (distMeters > 3000) return 13
-    if (distMeters > 1000) return 14
-    if (distMeters > 400)  return 15
-    if (distMeters > 150)  return 16
-    if (distMeters > 50)   return 17
+    // 比 #221 初版整体多放大一档：把段的两个钉子推得更开，避免一屏里
+    // 多个节点视觉上挤在一起。这里只影响 zoom，不影响钉子的屏幕落点
+    // (cameraTargetOffsetForBearingZoom 的偏移随 mPerPx 自动等比缩放)。
+    if (distMeters > 8000) return 13
+    if (distMeters > 3000) return 14
+    if (distMeters > 1000) return 15
+    if (distMeters > 400)  return 16
+    if (distMeters > 150)  return 17
     return 18
   }
 
@@ -996,6 +998,23 @@ export struct TripReplayPage {
       to = nodes[index].position
     }
     return this.replayZoomForSegment(this.haversineMeters(from.latitude, from.longitude, to.latitude, to.longitude))
+  }
+
+  /** 计算到达节点 index 时"前向"运镜 bearing，跟自动播放 moveToNode 保持一致。
+   * 一般用 nodes[index-1] → nodes[index] 段的方向；index=0 没有 prev 段，
+   * 退回 nodes[0] → nodes[1] (跟初始绘制保持一致)。
+   */
+  private bearingForReplayIndex(index: number): number {
+    if (!this.replayRoute || this.replayRoute.nodes.length < 2) return 0
+    const nodes = this.replayRoute.nodes
+    const fromIdx = index >= 1 ? index - 1 : 0
+    const toIdx = index >= 1 ? index : 1
+    return this.calculateBearing(
+      nodes[fromIdx].position.latitude,
+      nodes[fromIdx].position.longitude,
+      nodes[toIdx].position.latitude,
+      nodes[toIdx].position.longitude
+    )
   }
 
   /** 让钉子在屏幕上始终落在视觉中心下方约 vpShiftSouth vp（默认 150）。
@@ -1075,17 +1094,21 @@ export struct TripReplayPage {
 
     const targetNode = this.replayRoute.nodes[index]
     if (this.mapController) {
-      // #221 跟进：手动点上/下一节点 / 拖进度条触发的跳转也走动态 zoom，
-      // 跟自动回放的视觉一致（之前固定 15 导致短路线手动跳过去又"缩回原大小"）。
-      // 手动跳转不改 bearing，所以用当前 cameraBearing 计算偏移，保持钉子永远落在屏幕正下方
+      // #221 跟进：手动点上/下一节点 / 拖进度条触发的跳转，跟自动播放
+      // moveToNode 完全对齐——按段长动态 zoom，并把 bearing 也算出来
+      // 显式 set 到 newCameraPosition（之前不传 bearing 会让 map 用旧 bearing
+      // 而我的 offset 又按当前 cameraBearing 算，连按几次就累积出旋转偏移）。
       const dynamicZoom = this.replayZoomForIndex(index)
-      const offset = this.cameraTargetOffsetForBearingZoom(targetNode.position.latitude, dynamicZoom, this.cameraBearing)
+      const segmentBearing = this.bearingForReplayIndex(index)
+      this.cameraBearing = segmentBearing
+      const offset = this.cameraTargetOffsetForBearingZoom(targetNode.position.latitude, dynamicZoom, segmentBearing)
       const cameraUpdate = map.newCameraPosition({
         target: {
           latitude: targetNode.position.latitude + offset.latOffset,
           longitude: targetNode.position.longitude + offset.lngOffset
         },
         zoom: dynamicZoom,
+        bearing: segmentBearing,
         tilt: 45
       })
       this.mapController.animateCamera(cameraUpdate, 420)
