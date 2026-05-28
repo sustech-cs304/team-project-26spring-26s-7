@@ -91,14 +91,14 @@ export struct TripReplayPage {
     },
     zoomControlsEnabled: false,
     compassControlsEnabled: false,
-    // 通过 padding 把地图视觉中心下移到屏幕约 65% 位置，
+    // 通过 padding 把地图视觉中心下移到屏幕下 1/3 处（约 70%），
     // 让相机直接以节点为 target（map 围绕钉子旋转），
-    // 钉子永远落在视觉中心、卡片正下方留出 ~140vp 空白；
-    // 视觉中心 y = (vh - top) / 2 + top = vh/2 + 120（800vp 屏即 520vp）
+    // 钉子落在屏幕下三分之一、卡片下方足够留白；
+    // 视觉中心 y = (vh - top) / 2 + top = vh/2 + 160（800vp 屏即 560vp ≈ 70%）
     padding: {
       left: 0,
       right: 0,
-      top: 240,
+      top: 320,
       bottom: 0
     }
   }
