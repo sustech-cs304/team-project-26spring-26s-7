@@ -110,10 +110,25 @@ struct LoginPage {
           .justifyContent(FlexAlign.Center)
           .margin({ top: 10 })
 
-          Text('登录即代表同意《用户协议》和《隐私政策》')
-            .fontSize(AppDimens.FONT_SM)
-            .fontColor(AppColors.TEXT_HINT)
-            .margin({ top: 16 })
+          // 跟 Index.ets 同意书弹窗里的链接样式保持一致：用 Row + 多个 Text，
+          // 高亮 Text 自带 onClick 路由到对应详情页
+          Row() {
+            Text('登录即代表同意')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.TEXT_HINT)
+            Text('《用户协议》')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.PRIMARY)
+              .onClick(() => router.pushUrl({ url: RouterUrls.USER_AGREEMENT }))
+            Text('和')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.TEXT_HINT)
+            Text('《隐私政策》')
+              .fontSize(AppDimens.FONT_SM)
+              .fontColor(AppColors.PRIMARY)
+              .onClick(() => router.pushUrl({ url: RouterUrls.PRIVACY_POLICY }))
+          }
+          .margin({ top: 16 })
         }
         .margin({ bottom: 60 })
       }
