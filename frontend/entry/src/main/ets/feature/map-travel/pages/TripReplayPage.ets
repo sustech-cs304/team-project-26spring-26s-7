@@ -998,13 +998,12 @@ export struct TripReplayPage {
     return this.replayZoomForSegment(this.haversineMeters(from.latitude, from.longitude, to.latitude, to.longitude))
   }
 
-  /** 让钉子在屏幕上始终落在视觉中心下方约 vpShiftSouth vp（默认 200），
-   * 把卡片和钉子明显错开、钉子稳定在屏幕下三分之一。
+  /** 让钉子在屏幕上始终落在视觉中心下方约 vpShiftSouth vp（默认 150）。
    *
-   * 关键点：bearing 旋转地图后，"屏幕正下方"在世界坐标里跟着转，
-   * 所以纯 lat 偏移在 bearing≠0 时会把钉子甩到屏幕侧面；
-   * 这里按 bearing 把南向偏移拆成 deltaNorth/deltaEast 两个分量,
-   * 钉子无论地图怎么转都落在屏幕正下方。
+   * 推导：假设 HMOS map 是把整张地图按 bearing 顺时针旋转屏幕坐标系
+   * 而不是绕世界垂直轴转相机（screen-rotation 约定，跟标准 CW-from-north
+   * 相机模型差一个 east 分量符号）。要使钉子落在屏幕正下方 (0, +h)，相机
+   * target 需要在世界坐标里相对节点偏移 (−h sin B, +h cos B) (east, north)。
    *
    * 注意：Web Mercator 公式给的 m/px 是逻辑像素(HMOS 的 vp)，不要再 vp2px,
    * 否则相机会被推到节点几公里外、钉子和路线全部移出视野。
@@ -1013,14 +1012,14 @@ export struct TripReplayPage {
     lat: number,
     zoom: number,
     bearing: number,
-    vpShiftSouth: number = 100
+    vpShiftSouth: number = 150
   ): CameraTargetOffset {
     const cosLat = Math.cos(lat * Math.PI / 180)
     const mPerPx = (cosLat * 2 * Math.PI * 6378137) / (256 * Math.pow(2, zoom))
     const meters = vpShiftSouth * mPerPx
     const bearingRad = bearing * Math.PI / 180
     const deltaNorthMeters = meters * Math.cos(bearingRad)
-    const deltaEastMeters = meters * Math.sin(bearingRad)
+    const deltaEastMeters = -meters * Math.sin(bearingRad)
     return {
       latOffset: deltaNorthMeters / 110540,
       lngOffset: deltaEastMeters / (110540 * cosLat)
