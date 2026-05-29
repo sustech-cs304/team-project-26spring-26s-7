@@ -192,6 +192,13 @@ export class AuthService {
           hilog.warn(DOMAIN, TAG, `pullCloudProfileToLocal: downloadProfileAvatar failed: ${(downloadErr as Error).message}, keeping cloud path`);
         }
       }
+      // #225 后续：bump profile_version 让 ProfileView 的 @Watch 重新 loadAuthStatus
+      // 并刷新 avatar Image 的 ?v= 缓存破除器。downloadProfileAvatar 写入的本地
+      // 路径在跨设备拉头像时是固定的 (downloaded/profile_avatar_{uid}.jpg)，
+      // HMOS Image 按 URL 字符串缓存 pixmap，路径不变 → 即使盘上文件被覆盖也
+      // 显示老头像。bump version 在末尾保证 cache hit 和 UI 都失效。
+      const currentVersion = AppStorage.get<number>('profile_version') ?? 0;
+      AppStorage.setOrCreate('profile_version', currentVersion + 1);
     } catch (err) {
       hilog.warn(DOMAIN, TAG, `pullCloudProfileToLocal failed: ${(err as Error).message}`);
     }

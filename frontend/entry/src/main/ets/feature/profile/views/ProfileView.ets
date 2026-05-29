@@ -58,9 +58,11 @@ export struct ProfileView {
   }
 
   private onProfileVersionChanged(): void {
-    if (this.activeTabIndex === 3) {
-      void this.loadAuthStatus()
-    }
+    // #225 后续：不能再卡 activeTabIndex === 3。pullCloudProfileToLocal 在任何
+    // tab 下都会触发 bump（restoreSession 冷启动、SyncManager 下载云端），
+    // 之前的 gate 会让用户从地图 tab 切回设置 tab 看到的还是 @State 里老 avatarUrl，
+    // 跨设备同步永远显示不出来。loadAuthStatus 一次 DB 读，开销可以忽略。
+    void this.loadAuthStatus()
   }
 
   private formatSyncTime(timestamp: number): string {
@@ -382,7 +384,10 @@ export struct ProfileView {
         Row() {
           Column() {
             if (this.avatarUrl.length > 0 && !this.avatarLoadFailed) {
-              Image(this.resolveAvatarUrl(this.avatarUrl))
+              // #225 后续：?v=profileVersion 破除 HMOS Image 按 URL 缓存 pixmap 的
+              // 行为。downloadProfileAvatar 跨次写入是同一个本地文件路径，光改
+              // 盘上的 byte 不够 — URL 字符串不变 Image 就吃缓存还显示老头像。
+              Image(`${this.resolveAvatarUrl(this.avatarUrl)}?v=${this.profileVersion}`)
                 .width(56)
                 .height(56)
                 .borderRadius(28)
