@@ -555,7 +555,7 @@ async def _init_baidu_gateway():
     _baidu_text_sem = asyncio.Semaphore(_BAIDU_QUEUE_DEPTH)
     _baidu_image_lock = asyncio.Lock()
     _baidu_text_lock = asyncio.Lock()
-    _baidu_client = httpx.AsyncClient(timeout=30.0)
+    _baidu_client = httpx.AsyncClient(timeout=30.0, transport=httpx.AsyncHTTPTransport(local_address="0.0.0.0"))
     logger.info(
         "[boot] baidu gateway initialized: qps_interval=%.2fs queue_depth=%d (image+text independent)",
         _BAIDU_QPS_INTERVAL, _BAIDU_QUEUE_DEPTH,
@@ -667,8 +667,31 @@ async def _do_censor(
     else:
         raise HTTPException(status_code=400, detail="Either image or imgUrl must be provided")
 
-    resp = await _baidu_call_serial(endpoint, kind="image", data=data, headers=headers, timeout=60.0)
-    raw = resp.json()
+    # 调百度，最多重试 2 次（间歇性空 body / 429 都会触发）
+    last_exc = None
+    raw = None
+    for _attempt in range(2):
+        resp = await _baidu_call_serial(endpoint, kind="image", data=data, headers=headers, timeout=60.0)
+        if not resp.content:
+            logger.warning("[censor] Baidu empty body attempt=%d status=%s headers=%s req_img_len=%d - retrying",
+                           _attempt + 1, resp.status_code, dict(resp.headers), len(image_b64 or img_url or ""))
+            continue
+        try:
+            raw = resp.json()
+            break
+        except Exception as _je:
+            last_exc = _je
+            body_preview = (resp.content[:500] or b"").decode("utf-8", errors="replace")
+            logger.warning("[censor] Baidu non-JSON attempt=%d status=%s body_len=%d req_img_len=%d body[:200]=%r exc=%s - retrying",
+                           _attempt + 1, resp.status_code, len(resp.content), len(image_b64 or img_url or ""), body_preview[:200], _je)
+            continue
+    if raw is None:
+        body_preview = (resp.content[:500] or b"").decode("utf-8", errors="replace") if resp is not None else ""
+        logger.error("[censor] Baidu still bad after 2 attempts: status=%s body_len=%d body[:200]=%r last_exc=%s",
+                     resp.status_code if resp is not None else None,
+                     len(resp.content) if resp is not None else 0,
+                     body_preview[:200], last_exc)
+        raise HTTPException(status_code=502, detail={"code": "baidu_bad_response", "message": "上游审核服务暂时异常，请稍后重试", "baidu_status": resp.status_code if resp is not None else None, "baidu_body": body_preview[:200]})
 
     log_id = raw.get("log_id", 0)
     conclusion = raw.get("conclusion", "审核失败")
