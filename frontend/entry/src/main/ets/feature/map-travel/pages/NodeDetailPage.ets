@@ -106,7 +106,14 @@ export struct NodeDetailPage {
 
   onPageShow(): void {
     this.pageVisible = true
-    // 从子页面返回时重新加载节点数据（首次加载由 aboutToAppear 处理）
+    // 从子页面（NodeEditPage 等）返回时显式重新加载——之前注释说会重载但
+    // 实际只设了 pageVisible，导致改完正文返回详情页正文不刷新。
+    // 不能光指望 @StorageLink('travelDataVersion') 的 @Watch：HMOS 在
+    // 子页栈顶时父页不一定即时响应 AppStorage 变化。aboutToAppear 只首次跑，
+    // 所以 onPageShow 兜底拉一次最稳。
+    if (this.nodeId.length > 0 && !this.isLoading) {
+      this.loadNodeDetail()
+    }
   }
 
   onPageHide(): void {

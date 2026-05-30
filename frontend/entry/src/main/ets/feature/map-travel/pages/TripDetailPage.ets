@@ -747,7 +747,12 @@ export struct TripDetailPage {
         .backgroundColor(AppColors.CARD_BG)
         .borderRadius(AppDimens.RADIUS_SM)
         .shadow({ radius: 8, color: '#0000001A', offsetY: 4 })
-        .position({ x: '55%', y: 56 })
+        // 改成相对右边定位：'55%' 只在窄屏手机上恰好落在 "..." 按钮下方，
+        // 折叠屏展开后 55% 是屏幕中部、和右上角按钮完全脱节。
+        // "..." 按钮在 Row 里 margin right:12 + width 44，所以菜单宽 140
+        // 加 12 右边距正好对齐按钮下方。
+        .position({ x: '100%', y: 56 })
+        .translate({ x: -(140 + 12) })
       }
     }
   }
