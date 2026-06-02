@@ -507,3 +507,10 @@
 - [2026-06-02-00-00-00] - UPDATE - `README.md` - Replaced the incorrect MIT statement with a proprietary license summary and links to `LICENSE` and `THIRD_PARTY_NOTICES.md`.
 - [2026-06-02-00-00-00] - UPDATE - `memory/01_project_state.md` - Recorded the durable repository licensing change for future agents.
 - [2026-06-02-00-00-00] - UPDATE - `THIRD_PARTY_NOTICES.md` - Replaced the placeholder template with an initial inventory covering OHPM packages, npm tooling, HarmonyOS sample references, replay music, and image assets requiring source verification.
+
+---
+
+## 2026-06-02 (Backend CI pytest security bump)
+
+- [2026-06-02-00-00-00] - UPDATE - `backend/ci/ci-requirements.txt` - Bumped `pytest` from `8.3.3` to `9.0.3` to address Dependabot alert `GHSA-6w46-j5rx-g56g` / `CVE-2025-71176`.
+- [2026-06-02-00-00-00] - UPDATE - `backend/share-service/requirements.txt` - Raised the test dependency bound from `pytest>=8.0,<9.0` to `pytest>=9.0.3,<10.0` so the Jenkins backend venv does not conflict with the CI tooling pin.
