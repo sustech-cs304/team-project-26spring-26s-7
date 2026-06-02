@@ -1,0 +1,46 @@
+TravelPin Proprietary License
+
+Copyright (c) 2026 TravelPin Team.
+All rights reserved.
+
+This repository and all contents in it, including but not limited to source
+code, documentation, configuration, screenshots, images, design assets, and
+other project materials, are proprietary and protected by copyright law.
+
+Permission is granted to view this repository and its contents solely for
+personal reference, academic evaluation, code review, and non-commercial
+demonstration of the TravelPin project.
+
+No permission is granted, except with prior written authorization from the
+copyright holders, to:
+
+1. copy, reproduce, redistribute, or republish any substantial portion of this
+   repository;
+2. modify, adapt, translate, reverse engineer, or create derivative works from
+   this repository;
+3. use this repository or any portion of it for commercial purposes;
+4. train, fine-tune, or evaluate machine learning models on the contents of
+   this repository beyond ordinary code search, indexing, or repository hosting
+   needed to display the project;
+5. remove, alter, or obscure any copyright, attribution, or notice included in
+   this repository.
+
+This repository is made available publicly for inspection and project
+presentation only. Public availability does not grant any open source license
+or other implied rights.
+
+Third-party components, libraries, datasets, fonts, icons, media, and other
+materials that may appear in this repository remain subject to their own
+licenses and notices. See THIRD_PARTY_NOTICES.md when applicable.
+
+THE REPOSITORY IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE REPOSITORY OR THE USE OF OR OTHER DEALINGS
+IN THE REPOSITORY.
+
+For licensing inquiries, collaboration requests, or permission requests,
+contact the TravelPin Team maintainers through the repository owners or the
+course team.

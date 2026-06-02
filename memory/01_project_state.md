@@ -1,10 +1,14 @@
 # Project State
 
-**Last Updated**: 2026-05-19
+**Last Updated**: 2026-06-02
 **Project**: TravelPin - HarmonyOS Travel Journal App
 **Repository**: D:\Mydata\1University\3Junior\Software_Engineering\project\frontendv1\team-project-26spring-26s-7
 **Current Branch**: incremental-dev-20260423
 **Main Branch**: main
+
+**2026-06-02 Durable Notes**:
+- The repository licensing metadata was aligned for public visibility: a root `LICENSE` file now declares a proprietary "all rights reserved" style license for TravelPin instead of MIT.
+- `README.md` now points to the proprietary license and a new `THIRD_PARTY_NOTICES.md` template for tracking redistributed third-party components and assets.
 
 **2026-05-19 Durable Notes**:
 - The local branch history was soft-reset back to `ac53184` so the requested commits are no longer in local history, while the code changes remain in the working tree / index.

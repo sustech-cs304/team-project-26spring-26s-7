@@ -372,4 +372,14 @@ cd team-project-26spring-26s-7
 
 ## License
 
-MIT License
+This repository is released under a proprietary license, not MIT.
+
+Copyright (c) 2026 TravelPin Team. All rights reserved.
+
+The source code and project materials are published for viewing, academic
+evaluation, and project demonstration only. No permission is granted to copy,
+modify, redistribute, or use this repository commercially without prior written
+authorization from the copyright holders.
+
+See [LICENSE](LICENSE) for the full repository license and
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party notices.

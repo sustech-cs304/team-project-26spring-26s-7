@@ -497,3 +497,13 @@
 - [2026-05-19-00-00-00] - UPDATE - `frontend/entry/src/main/ets/feature/map-travel/views/TripListView.ets` - Replaced the misspelled `TransitionEffect.OPPHONENT` reference with `TransitionEffect.OPACITY`.
 - [2026-05-19-00-00-00] - UPDATE - `frontend/entry/src/main/ets/feature/ai-copy/pages/AiCopyPage.ets` - Restored the `LengthMetrics` import from `@kit.ArkUI` and used `LengthMetrics.vp(8)` for Flex spacing.
 - [2026-05-19-00-00-00] - BUILD - `frontend/build.ps1 --mode module -p module=entry@default assembleHap` succeeded after the fix; only pre-existing warnings remain.
+
+---
+
+## 2026-06-02 (Repository licensing clarification)
+
+- [2026-06-02-00-00-00] - CREATE - `LICENSE` - Added a proprietary repository license for public-viewing / non-commercial evaluation without granting an open source license.
+- [2026-06-02-00-00-00] - CREATE - `THIRD_PARTY_NOTICES.md` - Added a template for tracking third-party software, assets, attribution, and redistribution status.
+- [2026-06-02-00-00-00] - UPDATE - `README.md` - Replaced the incorrect MIT statement with a proprietary license summary and links to `LICENSE` and `THIRD_PARTY_NOTICES.md`.
+- [2026-06-02-00-00-00] - UPDATE - `memory/01_project_state.md` - Recorded the durable repository licensing change for future agents.
+- [2026-06-02-00-00-00] - UPDATE - `THIRD_PARTY_NOTICES.md` - Replaced the placeholder template with an initial inventory covering OHPM packages, npm tooling, HarmonyOS sample references, replay music, and image assets requiring source verification.
