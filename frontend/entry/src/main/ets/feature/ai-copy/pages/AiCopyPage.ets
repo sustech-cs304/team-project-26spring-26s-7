@@ -9,6 +9,7 @@ import {
   AiCopyResponse,
   PhotoPickerUtil,
   ConsentManager,
+  AI_GENERATED_MARKER,
   logger
 } from '../../../common'
 
@@ -489,13 +490,23 @@ export struct AiCopyPage {
 
   /**
    * 将生成的文案应用到节点内容并返回
+   *
+   * 合规要点（《人工智能生成合成内容标识办法》第四条）：
+   * AI 生成的文本必须显式标识为 AI 生成。这里在文案前面拼 AI_GENERATED_MARKER
+   * 前缀（"AI 生成 · "），marker 嵌入到 content 字符串里，会跟随 DB 存储 /
+   * 节点详情展示 / 分享 viewer / 用户复制粘贴等所有传播路径一起带出去。
+   * 避免重复加：如果 generatedCopy 自身已经带前缀（重复点应用 / 上一次的
+   * 残留），就不再加。
    */
   private handleApplyToNode(): void {
     if (!this.generatedCopy) {
       return;
     }
+    const markedContent = this.generatedCopy.startsWith(AI_GENERATED_MARKER)
+      ? this.generatedCopy
+      : `${AI_GENERATED_MARKER}${this.generatedCopy}`;
     AppStorage.setOrCreate('aiCopyApplied', true);
-    AppStorage.setOrCreate('aiCopyContent', this.generatedCopy);
+    AppStorage.setOrCreate('aiCopyContent', markedContent);
     promptAction.showToast({ message: '文案已应用' });
     router.back();
   }

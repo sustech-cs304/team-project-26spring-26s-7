@@ -226,6 +226,17 @@ export class TravelSpecialValues {
 export const DEFAULT_MAP_LATITUDE: number = 22.55
 export const DEFAULT_MAP_LONGITUDE: number = 113.96
 
+/**
+ * 《人工智能生成合成内容标识办法》第四条要求：AI 生成的文本必须包含
+ * "AI"或"人工智能" + "生成"或"合成" 两个要素的显式标识，位置在文本
+ * 起始 / 末尾 / 中间皆可。这里固定用前缀写法："AI 生成 · {原文}"——
+ * marker 内嵌到 content 字符串里，跟随存储 / 复制 / 分享 viewer 一起
+ * 传播，也满足"提供下载、复制、导出功能时应当确保文件中含有显式标识"。
+ *
+ * 中间用居中点 "·" (U+00B7) 隔开，方便审计时按 marker 字符串精确识别。
+ */
+export const AI_GENERATED_MARKER: string = 'AI 生成 · '
+
 export class RouterUrls {
   static readonly INDEX: string = 'pages/Index'
   static readonly LOGIN: string = 'pages/LoginPage'

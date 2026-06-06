@@ -1,0 +1,5 @@
+真机截图放这里，命名建议：
+- 01-aicopy-page.png          AiCopyPage 生成完文案的样子
+- 02-nodeedit-after-apply.png 应用到 NodeEditPage 后正文带 "AI 生成 · " 前缀
+- 03-nodedetail-display.png   NodeDetailPage 展示正文带 marker
+- 04-share-viewer.png         分享出去的 HTML 页面里 marker 同样可见
