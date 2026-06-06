@@ -229,13 +229,15 @@ export const DEFAULT_MAP_LONGITUDE: number = 113.96
 /**
  * 《人工智能生成合成内容标识办法》第四条要求：AI 生成的文本必须包含
  * "AI"或"人工智能" + "生成"或"合成" 两个要素的显式标识，位置在文本
- * 起始 / 末尾 / 中间皆可。这里固定用前缀写法："AI 生成 · {原文}"——
- * marker 内嵌到 content 字符串里，跟随存储 / 复制 / 分享 viewer 一起
- * 传播，也满足"提供下载、复制、导出功能时应当确保文件中含有显式标识"。
+ * 起始 / 末尾 / 中间皆可。这里固定用前缀写法："【AI生成】{原文}"——
+ * 中文方头括号是常见的中文文本标注风格，跟法规字面示例 "AI生成" 完全
+ * 等价（"AI"+"生成"两要素），过审最稳。
  *
- * 中间用居中点 "·" (U+00B7) 隔开，方便审计时按 marker 字符串精确识别。
+ * marker 内嵌到 content 字符串里跟随 DB 存储 / 详情展示 / 用户复制 /
+ * 分享 viewer HTML 全路径自动传播，满足"提供下载、复制、导出功能时
+ * 应当确保文件中含有显式标识"的要求。
  */
-export const AI_GENERATED_MARKER: string = 'AI 生成 · '
+export const AI_GENERATED_MARKER: string = '【AI生成】'
 
 export class RouterUrls {
   static readonly INDEX: string = 'pages/Index'

@@ -24,31 +24,52 @@ ItsMapPin 仅有 **一类** AI 生成合成内容：
 
 ## 二、显式标识实现
 
+### 显式 vs 隐式 —— 不能做"更隐式"
+
+法规明确给了两个互斥的定义：
+
+| 类型 | 定义（办法第三条原文） | 适用对象 |
+|---|---|---|
+| **显式标识** | 在生成合成内容或者**交互场景界面**中添加的，以文字 / 声音 / 图形等方式呈现并**可以被用户明显感知到**的标识 | **AI 文本内容**必须有 |
+| **隐式标识** | 采取技术措施在生成合成内容**文件数据**中添加的，**不易被用户明显感知到**的标识 | 文件 metadata，**仅限可导出的文件** |
+
+也就是说："让用户感知不到" 在法规里属于"隐式标识"，**而隐式标识只针对可导出的文件 metadata**——我们 app 没有"导出 AI 文本"功能，所以隐式标识对我们既不适用也满足不了"显式"要求。**显式标识不能"做隐"**，必须用户感知到。
+
+**用户可能后续编辑掉 marker——这个不是合规问题**：法规义务在"服务提供者**生成时**添加"，用户后续手动改文本是用户的事。我们只要保证生成的瞬间出现 marker，截图能证明就够了。
+
 ### 代码改动（已完成）
 
 | 文件 | 改动 |
 |---|---|
-| `frontend/entry/src/main/ets/common/utils/Constants.ets` | 新增 `AI_GENERATED_MARKER = 'AI 生成 · '` 常量，含"AI"+"生成"双要素，满足办法第四条文本标识要求 |
-| `frontend/entry/src/main/ets/common/index.ets` | 把常量从 common barrel 导出 |
-| `frontend/entry/src/main/ets/feature/ai-copy/pages/AiCopyPage.ets` | `handleApplyToNode` 在写入 `aiCopyContent` 时强制加 marker 前缀；二次应用幂等（已带前缀不重复加） |
+| `frontend/entry/src/main/ets/common/utils/Constants.ets` | `AI_GENERATED_MARKER = '【AI生成】'` 常量，含"AI"+"生成"双要素，用中文方头括号包起来（中文文本常见标注风格） |
+| `frontend/entry/src/main/ets/common/index.ets` | barrel export |
+| `frontend/entry/src/main/ets/feature/ai-copy/pages/AiCopyPage.ets` | `handleApplyToNode` 写入 `aiCopyContent` 时加 `【AI生成】` 前缀；二次应用幂等（已带前缀不重复加） + 生成结果上方一直显示黄底警示文本 "⚠ 本段文字由 AI 生成，请人工核对后再使用"（满足办法第四条第六款"其他生成合成服务场景根据自身应用特点添加显著的提示标识"） |
 
-### Marker 内嵌 vs UI 角标
+### 双层标识策略
 
-采取 **内嵌前缀写法** ("AI 生成 · {原文}")，原因：
-- marker 作为 content 字符串的一部分，跨**存储**（SQLite）、**展示**（NodeDetailPage / NodeListView）、**分享**（share-service viewer HTML 渲染 `node.content`）、**复制**（剪贴板按字符串复制） 全路径自动传播
-- 满足办法第四条 "提供生成合成内容下载、复制、导出等功能时，应当确保**文件**中含有满足要求的显式标识" 的要求
-- 不依赖任何额外 UI 渲染逻辑，share viewer / 第三方截屏工具看到的都是同一段带 marker 的文本
+| 层 | 形式 | 何时可见 | 满足的条款 |
+|---|---|---|---|
+| **L1 界面提示** | AiCopyPage 上方黄底警示横幅 | 用户在 AI 生成页面看到 | 第四条第六款（交互场景界面） |
+| **L2 内嵌文本前缀** | 节点 content 字符串开头 `【AI生成】` | DB / 详情页 / 分享 viewer / 复制粘贴 都看得到 | 第四条第一款（文本起始位置）+ 第四条最后一段（下载、复制、导出场景） |
 
-### 提交时需提供的截图
+L1 保证用户**生成时**就看到 "这是 AI 生成的"，L2 保证 marker 跟随文本传到所有下游。两条互补、缺一不可。
 
-需要在真机上至少各截一张：
+### 提交时需提供的截图（4 张）
 
-- [ ] **生成阶段**：AiCopyPage 生成完文案后的界面（生成的预览框里的文字本身**不必**带 marker，因为还没"应用"；但页面顶/底显示了"由 AI 生成"的提示）
-- [ ] **应用后**：NodeEditPage 接收到 AI 文案后，正文 TextArea 里**开头**带 "AI 生成 · " 前缀
-- [ ] **节点详情页**：NodeDetailPage 展示节点正文，前缀 "AI 生成 · " 清晰可见
-- [ ] **分享后**：发布分享链接后用浏览器打开 `https://audit.itsmappin.top:8443/s/{code}?...`，渲染出来的 HTML 节点正文里 marker 同样存在
+每张都有明确的 "看哪个像素证明合规" 的目标，照下面表格截就行：
 
-> 截图保存到 `references/documents/appgallery-submission/screenshots/` 目录。
+| # | 在哪个屏幕 | 截图里要清晰可见的关键元素 | 为什么 |
+|---|---|---|---|
+| 1 | **AiCopyPage**（AI 文案助手页）生成完一段文案后 | 黄底警示横幅 "⚠ 本段文字由 AI 生成，请人工核对后再使用" + "AI 生成结果" 标题 + 下面的预览文本 | 证明 L1 界面提示存在 |
+| 2 | **NodeEditPage**（节点编辑页）AiCopyPage 点"应用"返回后 | 正文 TextArea 里**开头有** `【AI生成】` 4 个字（紧跟着原文） | 证明 L2 marker 已写入节点 content |
+| 3 | **NodeDetailPage**（节点详情页）保存退出再次进入后 | 正文区域顶部显示 `【AI生成】今天去深圳湾散步……` 这种带前缀的渲染 | 证明 marker 持久化 + 详情展示路径保留 marker |
+| 4 | **分享 viewer**（浏览器打开 `https://audit.itsmappin.top:8443/s/{code}?…`） | HTML 卡片里节点正文同样以 `【AI生成】` 开头 | 证明 marker 通过 share-service 传到 web viewer，第三方接收方也能看到 |
+
+> **PNG 截图记得转 JPG** 再放进 zip——AGC 上传栏只接受 JPG / JPEG / BMP / PDF。
+>
+> 命令行批量转换：`for f in *.png; do convert "$f" "${f%.png}.jpg"; done`（需要 ImageMagick）。
+>
+> 截图保存到 `references/documents/appgallery-submission/screenshots/`。
 
 ---
 
@@ -111,7 +132,7 @@ ItsMapPin 仅有 **一类** AI 生成合成内容：
 内 "AI 文案" 功能生成中文旅行短文，作为该节点的正文内容。
 
 应用已按照《人工智能生成合成内容标识办法》和《人工智能生成合成内容
-标识方法》要求，在生成合成内容上添加 **显式标识**："AI 生成 · " 文本
+标识方法》要求，在生成合成内容上添加 **显式标识**："【AI生成】" 文本
 前缀（包含"AI"+"生成"双要素），随 content 字段在应用内展示 / 复制 /
 分享传播。
 
@@ -175,7 +196,7 @@ AppGallery Connect → 应用信息 → 滚到 **AI 功能声明**：
 itsmappin-aigc-materials.zip
 ├── 01-explicit-marker-screenshots/
 │   ├── aicopy-page.jpg          ← AiCopyPage 生成完文案
-│   ├── nodeedit-after-apply.jpg ← 应用到 NodeEditPage 后正文带 "AI 生成 · " 前缀
+│   ├── nodeedit-after-apply.jpg ← 应用到 NodeEditPage 后正文带 "【AI生成】" 前缀
 │   ├── nodedetail-display.jpg   ← NodeDetailPage 展示正文带 marker
 │   └── share-viewer.jpg         ← 分享 HTML 页面里 marker 同样可见
 └── 02-declaration/
@@ -207,11 +228,11 @@ HTML meta 标签出现 AIGC JSON 的画面。
 ## 六、复核要点（push 前 / 真机自测）
 
 打开节点编辑页 → AI 文案 → 生成 → 应用 → 返回节点编辑：
-- [ ] 正文 TextArea 的最开头是否出现 "AI 生成 · " 字样
+- [ ] 正文 TextArea 的最开头是否出现 "【AI生成】" 字样
 - [ ] 用户在该前缀后追加 / 修改文字，前缀保留不被破坏（手动保留）
-- [ ] 保存节点 → 进节点详情页，正文是否仍然以 "AI 生成 · " 开头
-- [ ] 长按选中正文 → 复制 → 在备忘录里粘贴，是否保留了 "AI 生成 · " 前缀
+- [ ] 保存节点 → 进节点详情页，正文是否仍然以 "【AI生成】" 开头
+- [ ] 长按选中正文 → 复制 → 在备忘录里粘贴，是否保留了 "【AI生成】" 前缀
 - [ ] 该节点所在路线点 "分享路线" → 用浏览器打开链接 → HTML 节点卡片里
-  正文同样以 "AI 生成 · " 开头
+  正文同样以 "【AI生成】" 开头
 
 全部对齐再发版。

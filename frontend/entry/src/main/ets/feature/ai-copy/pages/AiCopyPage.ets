@@ -948,7 +948,7 @@ export struct AiCopyPage {
           if (this.generatedCopy) {
             Column() {
               Row() {
-                Text('生成结果')
+                Text('AI 生成结果')
                   .fontSize(AppDimens.FONT_MD)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(AppColors.TEXT_PRIMARY)
@@ -963,6 +963,18 @@ export struct AiCopyPage {
               }
               .width('100%')
               .margin({ bottom: 8 })
+
+              // 《人工智能生成合成内容标识办法》要求"交互场景界面" 显式提示。
+              // 这条提示在生成结果框上方一直显示，跟内嵌的【AI生成】前缀
+              // 双重标识——前者满足"界面标识"，后者跟随复制 / 分享传播。
+              Text('⚠ 本段文字由 AI 生成，请人工核对后再使用')
+                .fontSize(AppDimens.FONT_SM)
+                .fontColor(AppColors.TEXT_SECONDARY)
+                .width('100%')
+                .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+                .backgroundColor('#FFF8E1')
+                .borderRadius(AppDimens.RADIUS_SM)
+                .margin({ bottom: 8 })
 
               Scroll() {
                 Text(this.generatedCopy)
