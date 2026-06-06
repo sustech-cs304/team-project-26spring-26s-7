@@ -151,12 +151,52 @@ ItsMapPin 仅有 **一类** AI 生成合成内容：
 
 ## 五、上架流程提交清单
 
-按华为指南 FAQ 第 5 条，**本应用应当上交的材料 = 仅一项**：
+### AGC 后台位置
 
-- [ ] **应用内生成合成内容中已添加显式标识的截图**（按上面第二节列的 4 张截图）
+AppGallery Connect → 应用信息 → 滚到 **AI 功能声明**：
+- `AI 生成合成服务`：选 **涉及**
+- `AI 生成合成服务类型`：勾 **文本**（其他不勾）
 
-**不需要** 上交（FAQ 明确说"无需"）：
-- ☒ 文件元数据隐式标识说明函
+→ 提示文本会引导到 **版权信息 > 授权书及其他材料** 的 zip 上传栏。
+
+### zip 包格式约束（来自 AGC 上传栏的字面要求）
+
+- 压缩包格式必须是 **zip**
+- 大小 ≤ **200 MB**
+- 包内只允许这几种文件类型：**JPG / JPEG / BMP / PDF**
+  - **不收 PNG！**HMOS 设备截屏默认是 PNG，务必转 JPG 再放进去
+  - 文档（说明函等）要以 PDF 提交，不收 docx
+- 文件夹层级 ≤ 3 层
+- 文件总数 ≤ 200
+
+### zip 内推荐结构
+
+```
+itsmappin-aigc-materials.zip
+├── 01-explicit-marker-screenshots/
+│   ├── aicopy-page.jpg          ← AiCopyPage 生成完文案
+│   ├── nodeedit-after-apply.jpg ← 应用到 NodeEditPage 后正文带 "AI 生成 · " 前缀
+│   ├── nodedetail-display.jpg   ← NodeDetailPage 展示正文带 marker
+│   └── share-viewer.jpg         ← 分享 HTML 页面里 marker 同样可见
+└── 02-declaration/
+    └── AIGC-说明函.pdf          ← 可选；FAQ 说"无需"但放进去当兜底，
+                                      用 shangjia/extracted/ 里的 docx 模板
+                                      填完盖章后用 Word 导出 PDF
+```
+
+### 必交（按华为 FAQ 第 5 条第 2 项）
+
+- [ ] **应用内生成合成内容中已添加显式标识的截图** —— 即 `01-explicit-marker-screenshots/` 下那 4 张
+
+### 可选 / 兜底（华为 FAQ 第 5 条第 1、3 项说"无需"，但建议放进去）
+
+- [ ] **AIGC-说明函.pdf** —— `02-declaration/` 下；如果审核员真要才有用，平时空着 AGC 也不报错
+
+### 不需要（FAQ 明确说"无需"，且我们也没有）
+
+- ☒ 文件元数据隐式标识截图（应用不导出 AI 文件、没法截）
+- ☒ 软著方授权发行方 "版权授权书"（自研项目，AGC 界面上灰字写明"如自研可不提供（选填）"）
+- ☒ 特种行业许可证（旅行 app 非特种行业）
 - ☒ 文件元数据中已添加隐式标识的截图
 
 如华为审核员仍要求，提交备查草稿（本文档第四节）+ 截图浏览器中
