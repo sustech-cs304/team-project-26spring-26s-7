@@ -16,9 +16,17 @@ struct LoginPage {
   @StorageLink('appThemeVersion') themeVersion: number = 0
   @State isLoggingIn: boolean = false
   @State loginProgressText: string = ''
+  // 审核要求"明示同意"——默认未勾选；勾选了登录按钮才可点。
+  @State hasConsented: boolean = false
 
   private async handleHuaweiLogin(): Promise<void> {
     if (this.isLoggingIn) {
+      return
+    }
+
+    // 兜底守卫：即使 UI 出现 race 让按钮意外可点，没勾同意框也直接拦下。
+    if (!this.hasConsented) {
+      promptAction.showToast({ message: '请先勾选同意《用户协议》和《隐私政策》' })
       return
     }
 
@@ -90,7 +98,9 @@ struct LoginPage {
             .height(48)
             .fontSize(AppDimens.FONT_LG)
             .backgroundColor(AppColors.PRIMARY)
-            .enabled(!this.isLoggingIn)
+            // 必须勾选同意 + 没在登录中 才允许点
+            .enabled(!this.isLoggingIn && this.hasConsented)
+            .opacity(this.hasConsented ? 1 : 0.5)
             .onClick(() => this.handleHuaweiLogin())
 
           Row() {
@@ -110,12 +120,20 @@ struct LoginPage {
           .justifyContent(FlexAlign.Center)
           .margin({ top: 10 })
 
-          // 跟 Index.ets 同意书弹窗里的链接样式保持一致：用 Row + 多个 Text，
-          // 高亮 Text 自带 onClick 路由到对应详情页
+          // 审核要求："登录页提供空白复选框且用户自愿明确勾选" —— 前面加 Checkbox，
+          // 默认 hasConsented = false，未勾选时按钮 disabled + opacity 0.5。
+          // 文案从"登录即代表同意"改成"我已阅读并同意"，跟 opt-in 模型匹配。
           Row() {
-            Text('登录即代表同意')
+            Checkbox({ name: 'loginConsent', group: 'loginConsent' })
+              .select(this.hasConsented)
+              .selectedColor(AppColors.PRIMARY)
+              .width(18)
+              .height(18)
+              .onChange((value: boolean) => { this.hasConsented = value })
+            Text('我已阅读并同意')
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.TEXT_HINT)
+              .margin({ left: 6 })
             Text('《用户协议》')
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.PRIMARY)
@@ -128,6 +146,7 @@ struct LoginPage {
               .fontColor(AppColors.PRIMARY)
               .onClick(() => router.pushUrl({ url: RouterUrls.PRIVACY_POLICY }))
           }
+          .alignItems(VerticalAlign.Center)
           .margin({ top: 16 })
         }
         .margin({ bottom: 60 })

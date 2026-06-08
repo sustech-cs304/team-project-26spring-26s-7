@@ -318,7 +318,7 @@ export struct ProfileView {
         'ItsMapPin v1.0.0\n\n' +
         '基于 HarmonyOS 的地理位置旅行日记应用。\n' +
         '官网：https://itsmappin.top\n\n' +
-        '南方科技大学 软件工程课程 第 7 组\n\n' +
+        '开发者：冉明东\n\n' +
         '——————\n' +
         'ICP 备案：粤ICP备2026065491号-1A\n' +
         '点击"查询备案"可访问工信部备案系统核实。',
