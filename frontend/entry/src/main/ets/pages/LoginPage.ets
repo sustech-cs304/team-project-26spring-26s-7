@@ -92,6 +92,8 @@ struct LoginPage {
         Blank()
 
         // 登录按钮区域
+        // margin top 32 — 跟上面"钉住每一段旅途记忆"留出明显呼吸距离，
+        // 不然 Blank 居中后按钮会贴着 slogan，视觉上太挤。
         Column() {
           Button(this.isLoggingIn ? '处理中...' : '华为账号一键登录')
             .width('80%')
@@ -103,6 +105,9 @@ struct LoginPage {
             .opacity(this.hasConsented ? 1 : 0.5)
             .onClick(() => this.handleHuaweiLogin())
 
+          // 进度提示区——固定高度 24 / 上间距 6，保证布局稳定的同时
+          // 让按钮跟下面同意框的整体距离从原 54vp 收紧到 ~32vp，
+          // 不会出现"按钮孤零零悬在上面、同意行远在底下"的视感
           Row() {
             if (this.isLoggingIn) {
               LoadingProgress()
@@ -116,19 +121,22 @@ struct LoginPage {
             }
           }
           .width('80%')
-          .height(28)
+          .height(24)
           .justifyContent(FlexAlign.Center)
-          .margin({ top: 10 })
+          .margin({ top: 6 })
 
-          // 审核要求："登录页提供空白复选框且用户自愿明确勾选" —— 前面加 Checkbox，
-          // 默认 hasConsented = false，未勾选时按钮 disabled + opacity 0.5。
+          // 审核要求："登录页提供空白复选框且用户自愿明确勾选"。
+          // Checkbox 默认 hasConsented = false；未勾时按钮 disabled + opacity 0.5。
           // 文案从"登录即代表同意"改成"我已阅读并同意"，跟 opt-in 模型匹配。
+          // 登录进行中 (isLoggingIn) 时 Checkbox 也 disable + 半透，避免用户
+          // 点了登录又把同意取消、造成"已开始登录但已撤回同意"的不合理中间态。
           Row() {
             Checkbox({ name: 'loginConsent', group: 'loginConsent' })
               .select(this.hasConsented)
               .selectedColor(AppColors.PRIMARY)
               .width(18)
               .height(18)
+              .enabled(!this.isLoggingIn)
               .onChange((value: boolean) => { this.hasConsented = value })
             Text('我已阅读并同意')
               .fontSize(AppDimens.FONT_SM)
@@ -146,10 +154,11 @@ struct LoginPage {
               .fontColor(AppColors.PRIMARY)
               .onClick(() => router.pushUrl({ url: RouterUrls.PRIVACY_POLICY }))
           }
+          .opacity(this.isLoggingIn ? 0.6 : 1)
           .alignItems(VerticalAlign.Center)
-          .margin({ top: 16 })
+          .margin({ top: 10 })
         }
-        .margin({ bottom: 60 })
+        .margin({ top: 32, bottom: 60 })
       }
       .width('100%')
       .constraintSize({ minHeight: '100%' })
