@@ -209,7 +209,7 @@ struct HelpFeedbackPage {
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.TEXT_HINT)
               .margin({ bottom: 8 })
-            Text('邮箱：hello@itsmappin.top')
+            Text('邮箱：Ranmd.cs@outlook.com')
               .fontSize(AppDimens.FONT_SM)
               .fontColor(AppColors.TEXT_SECONDARY)
             Text('官网：https://itsmappin.top')
