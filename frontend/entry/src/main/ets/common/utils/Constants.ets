@@ -239,6 +239,22 @@ export const DEFAULT_MAP_LONGITUDE: number = 113.96
  */
 export const AI_GENERATED_MARKER: string = '【AI生成】'
 
+/**
+ * AI 文案生成功能总开关。
+ *
+ * 二次上架审核反馈："AI 文本生成模块需补充提交《安全评估报告》..."
+ * 审核员给的两个处理选项里只有 (1) 提交报告 / (2) 移除模块。本期我们
+ * 选 (2)：把唯一的用户入口（NodeEditPage 里的 "AI 助手 帮你润色内容"
+ * 按钮）藏起来，AiCopyPage / VisionLLMPage 的页面文件 + 路由声明 +
+ * 后端 ai-relay 全部保留，等开发者取得《生成式人工智能服务安全评估》
+ * 凭证后，把这个常量切回 true 就能整套重启。
+ *
+ * 维护方法：用 `if (AI_FEATURE_ENABLED) { ... }` 包住所有用户可触达的
+ * AI 入口；非入口的代码 (Constants / AiGatewayClient / AiCopyPage 本体)
+ * 保留不动，让重启时只动这一个开关。
+ */
+export const AI_FEATURE_ENABLED: boolean = false
+
 export class RouterUrls {
   static readonly INDEX: string = 'pages/Index'
   static readonly LOGIN: string = 'pages/LoginPage'

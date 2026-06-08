@@ -1,5 +1,5 @@
 import { router, promptAction } from '@kit.ArkUI'
-import { AppColors, AppDimens, RouterUrls, TravelSpecialValues, getDataService } from '../../../common'
+import { AppColors, AppDimens, RouterUrls, TravelSpecialValues, getDataService, AI_FEATURE_ENABLED } from '../../../common'
 import { RouterParam } from '../../../common'
 import type { Trip } from '../../../common'
 import { PhotoSelector } from '../components/PhotoSelector'
@@ -726,29 +726,33 @@ export struct NodeEditPage {
             .borderRadius(AppDimens.RADIUS_SM)
             .alignItems(HorizontalAlign.Start)
 
-            // AI 助手按钮
-            Row() {
-              Text('AI 助手')
-                .fontSize(AppDimens.FONT_MD)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(AppColors.PRIMARY)
-              Text('  帮你润色内容')
-                .fontSize(AppDimens.FONT_SM)
-                .fontColor(AppColors.TEXT_SECONDARY)
-              Blank()
-              Text('>')
-                .fontSize(AppDimens.FONT_LG)
-                .fontColor(AppColors.PRIMARY)
+            // AI 助手按钮 —— 用 AI_FEATURE_ENABLED 总开关包起来；
+            // 二次上架因审核要求《安全评估报告》，本期把入口隐藏，等
+            // 开发者取得评估通过后把 Constants.ets 里的常量切回 true 即可恢复。
+            if (AI_FEATURE_ENABLED) {
+              Row() {
+                Text('AI 助手')
+                  .fontSize(AppDimens.FONT_MD)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor(AppColors.PRIMARY)
+                Text('  帮你润色内容')
+                  .fontSize(AppDimens.FONT_SM)
+                  .fontColor(AppColors.TEXT_SECONDARY)
+                Blank()
+                Text('>')
+                  .fontSize(AppDimens.FONT_LG)
+                  .fontColor(AppColors.PRIMARY)
+              }
+              .width('100%')
+              .padding(AppDimens.PADDING_MD)
+              .backgroundColor(this.getGlassButtonBg())
+              .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
+              .border({ width: 0.8, color: this.getGlassButtonBorder() })
+              .borderRadius(AppDimens.RADIUS_SM)
+              .shadow({ radius: 18, color: AppDimens.SHADOW_FLOAT, offsetY: 8 })
+              .margin({ bottom: 12, top: 8 })
+              .onClick(() => this.handleNavigateToAI())
             }
-            .width('100%')
-            .padding(AppDimens.PADDING_MD)
-            .backgroundColor(this.getGlassButtonBg())
-            .backgroundBlurStyle(BlurStyle.Thin, { colorMode: ThemeColorMode.SYSTEM, adaptiveColor: AdaptiveColor.DEFAULT })
-            .border({ width: 0.8, color: this.getGlassButtonBorder() })
-            .borderRadius(AppDimens.RADIUS_SM)
-            .shadow({ radius: 18, color: AppDimens.SHADOW_FLOAT, offsetY: 8 })
-            .margin({ bottom: 12, top: 8 })
-            .onClick(() => this.handleNavigateToAI())
 
             // 标签
             Column() {
