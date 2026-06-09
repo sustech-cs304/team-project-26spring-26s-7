@@ -3,13 +3,11 @@ import { webview } from '@kit.ArkWeb'
 import { AppColors, AppDimens } from '../common'
 
 /**
- * 直接加载 AGC 托管的隐私政策 HTML——上次审核被打回的根因之一是应用内本地
- * privacy_policy.html 跟 AGC 在线版本主体描述不一致（一边说"南方科技大学 ...
- * 7 组"、一边说"冉明东"）。改成直接 load AGC URL，**单一信息源**，开发者
- * 在 AGC 控制台改一次内容，app 内立刻同步，永远不会再出现"线上 / 线下版本
- * 不一致"的审核问题。
+ * 直接加载 AGC 托管的隐私政策 HTML —— 保证应用内 / AGC 控制台单一信息源。
+ * 开发者在 AGC 控制台改一次内容，app 内立刻同步，避免"线上 / 线下版本不一致"
+ * 的审核风险。
  *
- * 本地 rawfile/privacy_policy.html 保留作为备份参考（含合规更新后的文案），
+ * 本地 rawfile/privacy_policy.html 保留作为离线备份参考（含合规更新后的文案），
  * 不再被 Web src 引用。
  */
 const AGC_PRIVACY_URL: string = 'https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1967100735216704704'

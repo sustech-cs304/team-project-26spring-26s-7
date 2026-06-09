@@ -18,9 +18,6 @@
 // Pages 导出
 export { SharePage } from './pages/SharePage';
 
-// Components 导出
-export { QRCodeShare } from './components/QRCodeShare';
-
 // Services 导出
 export { ShareService, SharePhoto, ShareCallResult } from './services/ShareService';
 export { SharePhotoHelper } from './services/SharePhotoHelper';

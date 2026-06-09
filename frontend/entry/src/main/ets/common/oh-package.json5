@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Common utilities and types",
   "main": "index.ets",
-  "author": "",
-  "license": "Apache-2.0",
+  "author": "Ranmd",
+  "license": "MIT",
   "types": "index.ets"
 }

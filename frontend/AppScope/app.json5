@@ -1,7 +1,7 @@
 {
   "app": {
     "bundleName": "its.map.pin",
-    "vendor": "SUSTech-SE-26S7",
+    "vendor": "Ranmd",
     "versionCode": 103,
     "versionName": "1.0.0",
     "icon": "$media:layered_image",

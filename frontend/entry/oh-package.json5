@@ -1,10 +1,10 @@
 {
   "name": "entry",
   "version": "1.0.0",
-  "description": "Please describe the basic information.",
+  "description": "ItsMapPin entry module",
   "main": "",
-  "author": "",
-  "license": "",
+  "author": "Ranmd",
+  "license": "MIT",
   "dependencies": {
     "@hw-agconnect/auth-component": "^1.0.0",
     "@hw-agconnect/cloud": "^1.0.0",
