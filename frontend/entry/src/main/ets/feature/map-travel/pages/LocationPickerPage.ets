@@ -1,6 +1,7 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map, site } from '@kit.MapKit'
 import { AsyncCallback } from '@kit.BasicServicesKit'
+import { MapAttribution } from '../components/MapAttribution'
 import {
   AppColors,
   AppDimens,
@@ -520,6 +521,10 @@ struct LocationPickerPage {
         .position({ x: 0, y: '100%' })
         .translate({ y: '-100%' })
       }
+
+      // 法规：地图显著位置明示审图号 + 合作单位
+      // 底部"已选位置"卡片大约 100vp 高，避开它
+      MapAttribution({ bottomOffset: this.hasSelected ? 110 : 16 })
     }
     .width('100%')
     .height('100%')

@@ -26,7 +26,7 @@
     },
     {
       "name": "internet_reason",
-      "value": "Used for cloud data sync, map loading, and AI-generated captions"
+      "value": "Used for cloud data sync and map loading"
     },
     {
       "name": "network_info_reason",

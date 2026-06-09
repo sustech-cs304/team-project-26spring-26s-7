@@ -1,5 +1,6 @@
 import { router, promptAction } from '@kit.ArkUI'
 import { MapComponent, mapCommon, map } from '@kit.MapKit'
+import { MapAttribution } from '../components/MapAttribution'
 import { AsyncCallback } from '@kit.BasicServicesKit'
 import {
   AppColors,
@@ -341,6 +342,9 @@ export struct TripDetailPage {
       .backgroundColor('#00000055')
       .alignItems(HorizontalAlign.Start)
       .position({ x: 0, y: 0 })
+
+      // 法规：地图显著位置明示审图号 + 合作单位
+      MapAttribution()
     }
     .width('100%')
     .height(this.getRouteHeroHeight())

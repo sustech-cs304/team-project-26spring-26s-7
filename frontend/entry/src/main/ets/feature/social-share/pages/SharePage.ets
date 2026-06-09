@@ -74,8 +74,9 @@ export struct SharePage {
   // 主动抓 OG meta 的接收方也能渲染卡片。
   private coverPhotoUrl: string = ''
 
+  // 三档分享有效期；之前还有 "5 分钟（测试）" 一项是 dev 用，
+  // AGC 审核当作测试数据驳回，已移除。
   private expiryOptions: ExpiryOption[] = [
-    new ExpiryOption('5 分钟（测试）', 0, 5),
     new ExpiryOption('1 天', 24, 0),
     new ExpiryOption('7 天', 168, 0),
     new ExpiryOption('30 天', 720, 0),
@@ -262,11 +263,10 @@ export struct SharePage {
       return this.cachedReq
     }
 
-    this.cachedReq = this.buildDemoTrip()
-    this.cachedNodes = []
-    this.useDemoPhotos = true
-    this.currentTripName = this.cachedReq.tripName
-    return this.cachedReq
+    // resolveTrip 已经不会再返回 KIND_DEMO（见上面的修改），到这里只能是没
+    // 命中任何分支的异常情况，按 ERROR 处理；不再启用 buildDemoTrip() 兜底。
+    this.errorMsg = '加载失败，请稍后重试'
+    return null
   }
 
   private async resolveTrip(): Promise<TripResolution> {
@@ -292,7 +292,13 @@ export struct SharePage {
 
     const allTrips = await ds.getAllTravels()
     if (allTrips.length === 0) {
-      return { kind: KIND_DEMO }
+      // 之前这里返回 KIND_DEMO 会渲染 "深圳周末骑行 Demo" 假数据，AGC 审核
+      // 视为 "应用内含测试数据" 驳回。改成明确的引导性 ERROR——用户必须先
+      // 创建一条真实旅行才进得来分享流程，根除假数据触发路径。
+      return {
+        kind: KIND_ERROR,
+        message: '请先在地图页创建一段旅行，再来这里分享',
+      }
     }
 
     let latest: Trip = allTrips[0]

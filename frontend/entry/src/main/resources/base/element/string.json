@@ -26,7 +26,7 @@
     },
     {
       "name": "internet_reason",
-      "value": "用于云端数据同步、地图加载和 AI 文案生成"
+      "value": "用于云端数据同步和地图加载"
     },
     {
       "name": "network_info_reason",

@@ -20,6 +20,7 @@ import type { ReplayTripPreferences } from '../../../common'
 import { RouterParam, ReplayNode, ReplayRoute, Position } from '../../../common'
 import type { MemoryNode } from '../../../common'
 import { ReplayPhotoCard } from '../components/ReplayPhotoCard'
+import { MapAttribution } from '../components/MapAttribution'
 import { ReplayProgressBar } from '../components/ReplayProgressBar'
 import { PhotoCardOverlay } from '../components/PhotoCardOverlay'
 import { ReplaySettingsSheet } from '../components/ReplaySettingsSheet'
@@ -1476,6 +1477,10 @@ export struct TripReplayPage {
           }
         })
       }
+
+      // 法规：地图显著位置明示审图号 + 合作单位。
+      // 底部播放控制 + 进度条大约占 230vp，所以 bottomOffset 给大一点避开。
+      MapAttribution({ bottomOffset: 240 })
     }
     .width('100%')
     .height('100%')

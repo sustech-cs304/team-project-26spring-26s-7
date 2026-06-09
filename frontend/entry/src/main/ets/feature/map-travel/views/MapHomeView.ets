@@ -21,6 +21,7 @@ import {
 } from '../../../common'
 import { MapNodeInfo, RouterParam } from '../../../common'
 import type { MemoryNode } from '../../../common'
+import { MapAttribution } from '../components/MapAttribution'
 
 interface LoadedNodeData {
   id: string
@@ -2068,6 +2069,10 @@ export struct MapHomeView {
         .height('100%')
         .padding({ bottom: FLOATING_TAB_BAR_HEIGHT })
       }
+
+      // 法规要求：地图显著位置明示审图号 + 合作单位（华为终端）。
+      // bottomOffset 给大一点，避开底部浮动 tab 条 + 右侧定位按钮。
+      MapAttribution({ bottomOffset: FLOATING_TAB_BAR_HEIGHT + 12 })
     }
     .width('100%')
     .height('100%')
