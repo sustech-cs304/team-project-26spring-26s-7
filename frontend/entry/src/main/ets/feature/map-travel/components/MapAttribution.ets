@@ -12,16 +12,13 @@ import { AppDimens } from '../../../common'
  * + 持证方公司名显式标注出来。
  *
  * 数值由 MAP_ATTRIBUTION_TEXT 常量统一管理；若华为之后更换审图号需要更新，
- * 只改一个文件。
+ * 只改一个文件，4 个地图页面自动同步。
  *
- * ⚠️ TODO 上线前真机核对审图号：上面的 GS京(2024)2429号 是参考值，
- * 真实值请按以下任一办法获取：
- *   a) 真机打开「花瓣地图」app → 我的 → 设置 → 关于花瓣地图，截图审图号
- *   b) 真机进入本应用任一地图页，看 Map Kit 是否在 MapComponent 底部
- *      自动渲染了审图号文本，若有以 Map Kit 自动值为准（保持一致）
- *   c) 查询 https://developer.huawei.com/consumer/cn/doc/app/64077474
- *      华为地图服务协议页底部
- * 拿到真实值后改下面这行常量即可，4 个地图页面自动同步。
+ * 当前审图号 GS京(2024)2429号 已 2026-06 真机核对：跟 Map Kit MapComponent
+ * 底部自动渲染值完全一致。下次怀疑过期时按下面顺序复核：
+ *   a) 真机进入本应用任一地图页，看 MapComponent 自动渲染的审图号文本
+ *   b) 真机打开「花瓣地图」app → 我的 → 设置 → 关于花瓣地图
+ *   c) https://developer.huawei.com/consumer/cn/doc/app/64077474
  *
  * 用法：放在地图页 Stack 内部，组件自己 position 到右下角；
  *   Stack() {
