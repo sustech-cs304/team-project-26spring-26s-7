@@ -320,7 +320,7 @@ export struct ProfileView {
         '官网：https://itsmappin.top\n\n' +
         '开发者：冉明东\n\n' +
         '——————\n' +
-        'ICP 备案：粤ICP备2026065491号-1A\n' +
+        'ICP 备案：粤ICP备2026065491号-2\n' +
         '点击"查询备案"可访问工信部备案系统核实。',
       primaryButton: {
         value: '查询备案',
