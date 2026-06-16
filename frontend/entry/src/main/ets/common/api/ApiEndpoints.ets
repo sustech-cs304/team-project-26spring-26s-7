@@ -24,12 +24,14 @@
  */
 
 /**
- * 统一 BASE —— ICP 备案 粤ICP备2026065491号-2 已通过；audit.itsmappin.top
- * 在 443 / 8443 都开着。当前生产仍指 8443 兜底（保持跟正在跑的客户端兼容），
- * 待全量切到 443 后可以删掉 8443 server 段。
+ * 统一 BASE —— ICP 主体备案已通过（粤ICP备2026065491号-1A），但华为云"接入备案"
+ * 同步窗口期内 80/443 仍被 ADM 拦截；同时 itsmappin.top 仅做 APP 备案，
+ * 是否能用 443 还在跟华为云客服确认。
  *
- *   当前：'https://audit.itsmappin.top:8443'  ← 一直可用
- *   未来：'https://audit.itsmappin.top'        ← 切回标准端口（443 也已通）
+ * 因此暂时把 BASE 留在 8443 兜底（华为云不拦非标端口）。
+ *
+ *   当前（备案接入同步中）：'https://audit.itsmappin.top:8443'  ← 一直可用
+ *   未来（443 通且政策允许后）：'https://audit.itsmappin.top'   ← 切回标准端口
  *
  * 服务端 nginx 同时在 443 + 8443 提供完整路由（mirror），两个端口任意使用。
  */
