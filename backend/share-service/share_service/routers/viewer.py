@@ -59,13 +59,19 @@ async def viewer_s_dispatch(
     t: Optional[str] = Query(None),
     s: Optional[str] = Query(None),
 ):
+    # v1.3 (2026-06): 短链 /s/{code}.{sig} 原本返回 client-side demo viewer.html，
+    # 没有任何 OG/wxcard meta，导致微信 / QQ 分享卡片只显示标题、看不到封面图
+    # 和简介。改成也走 SSR _render_publish_viewer：URL 格式不变（不破坏已发出
+    # 的链接），但响应里把 og:title / og:description / og:image / wxcard:*
+    # 全部渲染出来，让 IM 抓取直接拿到卡片素材。
     if "." in path:
-        # Demo flow: legacy /s/{code}.{sig} → simple viewer (client fetches JSON)
-        return FileResponse(
-            _VIEWER_SIMPLE,
-            media_type="text/html; charset=utf-8",
-            headers=_NOCACHE,
-        )
+        code, _, sig = path.partition(".")
+        # 短链里没有 t（expiry），从 DB 查出来再调 SSR；签名最终还是由
+        # _validate_and_fetch_share 里的 HMAC + 表行对比双重校验。
+        row = repo_publish.fetch_publish(code)
+        if row is None:
+            return _err_html(*_ERR_404)
+        return _render_publish_viewer(code, str(row["expires_at_s"]), sig)
     return _render_publish_viewer(path, t, s)
 
 
