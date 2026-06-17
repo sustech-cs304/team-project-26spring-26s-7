@@ -35,6 +35,12 @@
   <meta name="wxcard:title"       content="{{HTML_TITLE}}">
   <meta name="wxcard:description" content="{{SHARE_DESCRIPTION}}">
   <meta name="wxcard:image"       content="{{COVER_PHOTO_URL}}">
+
+  <!-- Schema.org itemprop 备份：部分国内 IM/聊天工具抓不到 og:* 时会回退
+       看 itemprop，把同样的 title/desc/image 也喂一份，提高卡片渲染概率。 -->
+  <meta itemprop="name"        content="{{HTML_TITLE}}">
+  <meta itemprop="description" content="{{SHARE_DESCRIPTION}}">
+  <meta itemprop="image"       content="{{COVER_PHOTO_URL}}">
   <style>
     /* ===== A. 视觉 ===== */
     * { box-sizing: border-box; margin: 0; padding: 0; }

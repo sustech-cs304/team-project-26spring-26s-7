@@ -561,14 +561,20 @@ def _build_share_description(
         if len(mood) > 6:                # 防止用户把 mood 当 note 写
             mood = mood[:6]
 
-    parts: list[str] = []
+    # 硬编码品牌前缀 + 行动号召，保证微信 / QQ 卡片"description"那行始终
+    # 有足量、有辨识度的文本可渲染（之前只剩 "1 节点  XX  ItsMapPin 旅行回放"
+    # 这种 30 字以内的干瘪句，微信卡片有时直接不显示）。
+    BRAND_PREFIX = "ItsMapPin · HarmonyOS NEXT 旅行记忆"
+    BRAND_CTA = "点击查看完整路线"
+
+    parts: list[str] = [BRAND_PREFIX]
     if chip_parts:
         parts.append(" · ".join(chip_parts))
     if preview:
         parts.append(preview)
     if mood:
         parts.append(f"#{mood}")
-    parts.append("ItsMapPin 旅行回放")
-    desc = "  ".join(parts) if parts else f"{trip_name} · ItsMapPin 分享"
+    parts.append(BRAND_CTA)
+    desc = "｜".join(parts)
     # 兜底裁剪到 150（避免极端长 trip_name 撑爆）
     return desc[:150]
